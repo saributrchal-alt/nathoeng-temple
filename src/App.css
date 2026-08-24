@@ -198,6 +198,34 @@ nav a:hover {
   text-decoration: underline;
 }
 
+.inlineButtonLink {
+  background: none;
+  border: none;
+  color: #9b7226;
+  font-size: 14px;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.inlineButtonLink:hover {
+  text-decoration: underline;
+}
+
+.textLinkButton {
+  background: none;
+  border: none;
+  color: #9b7226;
+  font-size: 14px;
+  padding: 0;
+  cursor: pointer;
+  margin-top: 14px;
+  display: inline-block;
+  text-align: left;
+}
+.textLinkButton:hover {
+  text-decoration: underline;
+}
+
 
 /* =========================================
    ABOUT
@@ -205,13 +233,9 @@ nav a:hover {
 
 .aboutSection {
   width: 100%;
-
-  /* White breathing space after Hero */
   margin-top: 85px;
-
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
-
   background: #ffffff;
 }
 
@@ -223,16 +247,13 @@ nav a:hover {
 .aboutImage img {
   width: 100%;
   height: 100%;
-
   display: block;
-
   object-fit: cover;
   object-position: center;
 }
 
 .aboutContent {
   padding: 85px 9%;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -241,11 +262,8 @@ nav a:hover {
 
 .aboutContent h2 {
   max-width: 520px;
-
   margin: 0 0 30px;
-
   color: #302d29;
-
   font-size: clamp(2rem, 3.8vw, 3.2rem);
   line-height: 1.2;
   font-weight: 400;
@@ -253,11 +271,8 @@ nav a:hover {
 
 .aboutContent p {
   max-width: 560px;
-
   margin: 0 0 20px;
-
   color: #625d55;
-
   font-size: 16px;
   line-height: 1.9;
 }
@@ -269,27 +284,20 @@ nav a:hover {
 
 .featureSection {
   width: 100%;
-
   margin-top: 90px;
-
   padding: 90px 6%;
-
   background: #f6f4ef;
 }
 
 .sectionHeading {
   max-width: 720px;
-
   margin: 0 auto 55px;
-
   text-align: center;
 }
 
 .sectionHeading h2 {
   margin: 0;
-
   color: #302d29;
-
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1.2;
   font-weight: 400;
@@ -302,18 +310,14 @@ nav a:hover {
 
 .cards {
   width: 100%;
-
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-
   gap: 28px;
 }
 
 .imageCard {
   background: #ffffff;
-
   overflow: hidden;
-
   display: flex;
   flex-direction: column;
 }
@@ -321,18 +325,14 @@ nav a:hover {
 .cardImage {
   width: 100%;
   height: 270px;
-
   overflow: hidden;
 }
 
 .cardImage img {
   width: 100%;
   height: 100%;
-
   display: block;
-
   object-fit: cover;
-
   transition: transform 0.5s ease;
 }
 
@@ -342,52 +342,30 @@ nav a:hover {
 
 .cardContent {
   flex: 1;
-
   padding: 42px 34px 45px;
-
   text-align: center;
 }
 
 .cardIcon {
   display: block;
-
   margin-bottom: 22px;
-
   color: #a57929;
-
   font-size: 24px;
 }
 
 .cardContent h3 {
   margin: 0 0 20px;
-
   color: #332f2a;
-
   font-size: 23px;
   font-weight: 400;
 }
 
 .cardContent p {
   max-width: 330px;
-
   margin: 0 auto 26px;
-
   color: #716b62;
-
   font-size: 15px;
   line-height: 1.8;
-}
-
-.cardContent a,
-.cardContent a:visited {
-  color: #9b7226;
-
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.cardContent a:hover {
-  text-decoration: underline;
 }
 
 
@@ -397,34 +375,27 @@ nav a:hover {
 
 .quietSection {
   width: 100%;
-
   margin-top: 90px;
-
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
-
   background: #ffffff;
 }
 
 .quietImage {
   min-height: 540px;
-
   overflow: hidden;
 }
 
 .quietImage img {
   width: 100%;
   height: 100%;
-
   display: block;
-
   object-fit: cover;
   object-position: center;
 }
 
 .quietContent {
   padding: 90px 10%;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -433,11 +404,8 @@ nav a:hover {
 
 .quietContent h2 {
   max-width: 520px;
-
   margin: 0 0 28px;
-
   color: #302d29;
-
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1.2;
   font-weight: 400;
@@ -445,11 +413,8 @@ nav a:hover {
 
 .quietContent p {
   max-width: 550px;
-
   margin: 0;
-
   color: #6c675f;
-
   font-size: 16px;
   line-height: 1.9;
 }
@@ -461,11 +426,8 @@ nav a:hover {
 
 .support {
   margin-top: 90px;
-
   padding: 110px 30px;
-
   background: #ede8dd;
-
   text-align: center;
 }
 
@@ -476,37 +438,26 @@ nav a:hover {
 
 .support h2 {
   margin: 0 0 25px;
-
   color: #302d29;
-
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 400;
 }
 
 .support p:not(.eyebrow) {
   max-width: 620px;
-
   margin: 0 auto 35px;
-
   color: #6c675f;
-
   font-size: 16px;
   line-height: 1.9;
 }
 
 .support button {
   padding: 14px 30px;
-
   border: 1px solid #8f6a27;
-
   background: transparent;
-
   color: #73531e;
-
   font-size: 14px;
-
   cursor: pointer;
-
   transition: 0.25s ease;
 }
 
@@ -522,21 +473,15 @@ nav a:hover {
 
 .contactSection {
   max-width: 850px;
-
   margin: 0 auto;
-
   padding: 100px 30px;
-
   text-align: center;
-
   background: #ffffff;
 }
 
 .contactSection h2 {
   margin: 0 0 26px;
-
   color: #302d29;
-
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.2;
   font-weight: 400;
@@ -544,26 +489,130 @@ nav a:hover {
 
 .contactSection > p:not(.eyebrow) {
   max-width: 650px;
-
   margin: 0 auto;
-
   color: #6c675f;
-
   font-size: 16px;
   line-height: 1.9;
 }
 
 .lotus {
   margin-top: 34px;
-
   color: #a57929;
-
   font-size: 25px;
 }
 
 
 /* =========================================
-   FOOTER (Updated Style)
+   NEW PAGE: VISIT & STAY GUIDE (ระเบียบปฏิบัติธรรม)
+   ========================================= */
+
+.guidePage {
+  width: 100%;
+  padding: 80px 20px;
+  background: #fbf9f5;
+}
+
+.guideContainer {
+  max-width: 850px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 60px 50px;
+  border: 1px solid #eeeae2;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: #9b7226;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 30px;
+  font-weight: 500;
+}
+.backButton:hover {
+  text-decoration: underline;
+}
+
+.guideContainer h1 {
+  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-weight: 400;
+  color: #302d29;
+  margin: 0 0 20px 0;
+  line-height: 1.2;
+}
+
+.guideIntro {
+  font-size: 16px;
+  line-height: 1.9;
+  color: #625d55;
+  margin-bottom: 40px;
+}
+
+.guideSectionBox {
+  margin-bottom: 35px;
+}
+
+.guideSectionBox h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #302d29;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #f0ece4;
+  padding-bottom: 8px;
+}
+
+.guideSectionBox ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.guideSectionBox li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #625d55;
+  margin-bottom: 10px;
+}
+
+.guideContactBox {
+  margin-top: 50px;
+  padding: 30px;
+  background: #f6f4ef;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.guideContactBox h3 {
+  margin-top: 0;
+  color: #302d29;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.guideContactBox p {
+  color: #625d55;
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.primaryContactBtn {
+  background: #9b7226;
+  color: #ffffff;
+  border: none;
+  padding: 12px 25px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.primaryContactBtn:hover {
+  background: #805c1e;
+}
+
+
+/* =========================================
+   FOOTER
    ========================================= */
 
 footer {
@@ -627,246 +676,11 @@ footer > .footer-content > p {
 
 
 /* =========================================
-   TABLET
-   ========================================= */
-
-@media (max-width: 900px) {
-
-  header {
-    padding-left: 5%;
-    padding-right: 5%;
-  }
-
-  .language {
-    right: 5%;
-  }
-
-  nav {
-    gap: 20px;
-    padding: 15px 0;
-  }
-
-
-  .hero {
-    height: 58vw;
-    min-height: 420px;
-  }
-
-
-  .aboutSection {
-    margin-top: 65px;
-
-    grid-template-columns: 1fr;
-  }
-
-  .aboutImage {
-    min-height: 430px;
-  }
-
-  .aboutContent {
-    padding: 70px 7%;
-  }
-
-
-  .featureSection {
-    margin-top: 65px;
-
-    padding: 70px 5%;
-  }
-
-  .cards {
-    grid-template-columns: 1fr;
-
-    gap: 28px;
-  }
-
-  .cardImage {
-    height: 390px;
-  }
-
-
-  .quietSection {
-    margin-top: 65px;
-
-    grid-template-columns: 1fr;
-  }
-
-  .quietImage {
-    min-height: 430px;
-  }
-
-  .quietContent {
-    padding: 70px 7%;
-  }
-
-
-  .support {
-    margin-top: 65px;
-  }
-}
-
-
-/* =========================================
-   MOBILE
+   RESPONSIVE (MOBILE)
    ========================================= */
 
 @media (max-width: 600px) {
-
-  header {
-    padding: 20px 20px 0;
-  }
-
-
-  .brand {
-    min-height: 95px;
-
-    padding-left: 55px;
-    padding-right: 55px;
-  }
-
-  .brand .dharma {
-    font-size: 24px;
-  }
-
-  .brand strong {
-    font-size: 17px;
-  }
-
-  .brand span {
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
-
-  .language {
-    top: 22px;
-    right: 18px;
-
-    gap: 6px;
-  }
-
-  .language button {
-    font-size: 11px;
-  }
-
-
-  nav {
-    justify-content: flex-start;
-
-    flex-wrap: nowrap;
-
-    overflow-x: auto;
-
-    min-height: 58px;
-
-    margin-top: 8px;
-
-    padding: 0 4px;
-
-    gap: 22px;
-
-    scrollbar-width: none;
-  }
-
-  nav::-webkit-scrollbar {
-    display: none;
-  }
-
-  nav a,
-  nav a:visited {
-    font-size: 13px;
-  }
-
-
-  .hero {
-    height: 62vh;
-
-    min-height: 430px;
-    max-height: 600px;
-
-    background-position: center center;
-  }
-
-
-  .aboutSection {
-    margin-top: 45px;
-  }
-
-  .aboutImage {
-    min-height: 320px;
-  }
-
-  .aboutContent {
-    padding: 58px 24px;
-  }
-
-  .aboutContent h2 {
-    font-size: 2rem;
-  }
-
-  .aboutContent p {
-    font-size: 15px;
-  }
-
-
-  .featureSection {
-    margin-top: 45px;
-
-    padding: 60px 18px;
-  }
-
-  .sectionHeading {
-    margin-bottom: 38px;
-  }
-
-  .sectionHeading h2 {
-    font-size: 2rem;
-  }
-
-
-  .cardImage {
-    height: 250px;
-  }
-
-  .cardContent {
-    padding: 38px 24px 42px;
-  }
-
-
-  .quietSection {
-    margin-top: 45px;
-  }
-
-  .quietImage {
-    min-height: 320px;
-  }
-
-  .quietContent {
-    padding: 60px 24px;
-  }
-
-  .quietContent h2 {
-    font-size: 2rem;
-  }
-
-  .quietContent p {
-    font-size: 15px;
-  }
-
-
-  .support {
-    margin-top: 45px;
-
-    padding: 75px 24px;
-  }
-
-
-  .contactSection {
-    padding: 75px 24px;
-  }
-
-
-  footer {
-    padding: 50px 20px;
+  .guideContainer {
+    padding: 30px 20px;
   }
 }
