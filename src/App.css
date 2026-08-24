@@ -15,6 +15,7 @@ body {
   background: #ffffff;
   color: #332f2a;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 button,
@@ -24,6 +25,7 @@ a {
 
 img {
   max-width: 100%;
+  height: auto;
 }
 
 .site {
@@ -34,14 +36,14 @@ img {
 
 
 /* =========================================
-   HEADER
+   HEADER & MOBILE HAMBURGER MENU
    ========================================= */
 
 header {
   position: relative;
   width: 100%;
   background: #ffffff;
-  padding: 28px 7% 0;
+  padding: 24px 5% 0;
   border-bottom: 1px solid #eeeae2;
 }
 
@@ -51,43 +53,40 @@ header {
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 85px;
+  min-height: 80px;
 }
 
 .brand .dharma {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #9b7226;
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .brand strong {
   display: block;
   color: #302d29;
-  font-size: 22px;
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
   font-weight: 500;
   letter-spacing: 0.02em;
 }
 
 .brand span {
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
   color: #777066;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 0.03em;
 }
 
-
 /* LANGUAGE */
-
 .language {
   position: absolute;
-  top: 36px;
-  right: 7%;
-
+  top: 24px;
+  right: 5%;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
 }
 
 .language button {
@@ -113,18 +112,31 @@ header {
   color: #b9b3aa;
 }
 
+/* ปุ่มแฮมเบอร์เกอร์ (ซ่อนบนจอคอมพิวเตอร์) */
+.menuToggleBtn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #302d29;
+  cursor: pointer;
+  position: absolute;
+  top: 24px;
+  left: 5%;
+  padding: 4px;
+}
 
-/* NAV */
-
+/* NAV สำหรับ Desktop */
 nav {
-  min-height: 70px;
-  margin-top: 15px;
+  min-height: 60px;
+  margin-top: 12px;
   border-top: 1px solid #eeeae2;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: 30px;
+  gap: 15px 30px;
+  padding: 10px 0;
 }
 
 nav a,
@@ -147,10 +159,9 @@ nav a:hover {
 
 .hero {
   width: 100%;
-  height: min(68vw, 680px);
-  min-height: 480px;
-  background-image:
-    url('/images/487812128_689539323451771_1128859791552978185_n.jpg');
+  height: min(55vw, 500px);
+  min-height: 320px;
+  background-image: url('/images/487812128_689539323451771_1128859791552978185_n.jpg');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -162,26 +173,14 @@ nav a:hover {
    ========================================= */
 
 .eyebrow {
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   color: #a57929;
-  font-size: 12px;
-  letter-spacing: 0.22em;
+  font-size: 11px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
-.textLink,
-.textLink:visited {
-  display: inline-block;
-  margin-top: 14px;
-  color: #9b7226;
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.textLink:hover {
-  text-decoration: underline;
-}
-
+.textLinkButton,
 .inlineButtonLink {
   background: none;
   border: none;
@@ -190,43 +189,32 @@ nav a:hover {
   padding: 0;
   cursor: pointer;
   font-family: inherit;
-}
-.inlineButtonLink:hover {
-  text-decoration: underline;
-}
-
-.textLinkButton {
-  background: none;
-  border: none;
-  color: #9b7226;
-  font-size: 14px;
-  padding: 0;
-  cursor: pointer;
-  margin-top: 14px;
-  display: inline-block;
   text-align: left;
+  display: inline-block;
+  margin-top: 14px;
 }
-.textLinkButton:hover {
+.textLinkButton:hover,
+.inlineButtonLink:hover {
   text-decoration: underline;
 }
 
 
 /* =========================================
-   ABOUT (ปรับให้รูปแสดงเต็มรูป ไม่ถูกตัด)
+   ABOUT
    ========================================= */
 
 .aboutSection {
   width: 100%;
-  margin-top: 85px;
+  margin-top: 60px;
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   background: #ffffff;
 }
 
 .aboutImage {
-  min-height: 570px;
+  min-height: 400px;
   overflow: hidden;
-  background: #fcfbfa; /* พื้นหลังรองรับกรณีภาพแสดงเต็มรูป */
+  background: #fcfbfa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -236,12 +224,12 @@ nav a:hover {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: contain; /* เปลี่ยนเป็น contain เพื่อให้เห็นภาพเต็มรูป ไม่โดนตัดขอบ */
+  object-fit: contain;
   object-position: center;
 }
 
 .aboutContent {
-  padding: 85px 9%;
+  padding: 60px 7%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -250,19 +238,19 @@ nav a:hover {
 
 .aboutContent h2 {
   max-width: 520px;
-  margin: 0 0 30px;
+  margin: 0 0 24px;
   color: #302d29;
-  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
   line-height: 1.2;
   font-weight: 500;
 }
 
 .aboutContent p {
   max-width: 560px;
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   color: #625d55;
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
 
@@ -272,35 +260,30 @@ nav a:hover {
 
 .featureSection {
   width: 100%;
-  margin-top: 90px;
-  padding: 90px 6%;
+  margin-top: 70px;
+  padding: 70px 5%;
   background: #f6f4ef;
 }
 
 .sectionHeading {
   max-width: 720px;
-  margin: 0 auto 55px;
+  margin: 0 auto 40px;
   text-align: center;
 }
 
 .sectionHeading h2 {
   margin: 0;
   color: #302d29;
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
   line-height: 1.2;
   font-weight: 500;
 }
-
-
-/* =========================================
-   IMAGE CARDS
-   ========================================= */
 
 .cards {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  gap: 24px;
 }
 
 .imageCard {
@@ -308,11 +291,12 @@ nav a:hover {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
 
 .cardImage {
   width: 100%;
-  height: 270px;
+  height: 240px;
   overflow: hidden;
   background: #fcfbfa;
   display: flex;
@@ -334,47 +318,47 @@ nav a:hover {
 
 .cardContent {
   flex: 1;
-  padding: 42px 34px 45px;
+  padding: 30px 24px 35px;
   text-align: center;
 }
 
 .cardIcon {
   display: block;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
   color: #a57929;
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .cardContent h3 {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   color: #332f2a;
-  font-size: 23px;
+  font-size: 20px;
   font-weight: 500;
 }
 
 .cardContent p {
   max-width: 330px;
-  margin: 0 auto 26px;
+  margin: 0 auto 20px;
   color: #716b62;
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 
 /* =========================================
-   RETREATS / QUIET PRACTICE
+   RETREATS / SUPPORT / CONTACT
    ========================================= */
 
 .quietSection {
   width: 100%;
-  margin-top: 90px;
+  margin-top: 70px;
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   background: #ffffff;
 }
 
 .quietImage {
-  min-height: 540px;
+  min-height: 420px;
   overflow: hidden;
   background: #fcfbfa;
   display: flex;
@@ -391,7 +375,7 @@ nav a:hover {
 }
 
 .quietContent {
-  padding: 90px 10%;
+  padding: 70px 8%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -400,9 +384,9 @@ nav a:hover {
 
 .quietContent h2 {
   max-width: 520px;
-  margin: 0 0 28px;
+  margin: 0 0 24px;
   color: #302d29;
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
   line-height: 1.2;
   font-weight: 500;
 }
@@ -411,18 +395,13 @@ nav a:hover {
   max-width: 550px;
   margin: 0;
   color: #6c675f;
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
-
-/* =========================================
-   SUPPORT
-   ========================================= */
-
 .support {
-  margin-top: 90px;
-  padding: 110px 30px;
+  margin-top: 70px;
+  padding: 90px 20px;
   background: #ede8dd;
   text-align: center;
 }
@@ -433,22 +412,22 @@ nav a:hover {
 }
 
 .support h2 {
-  margin: 0 0 25px;
+  margin: 0 0 20px;
   color: #302d29;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
   font-weight: 500;
 }
 
 .support p:not(.eyebrow) {
   max-width: 620px;
-  margin: 0 auto 35px;
+  margin: 0 auto 30px;
   color: #6c675f;
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
 .support button {
-  padding: 14px 30px;
+  padding: 12px 28px;
   border: 1px solid #8f6a27;
   background: transparent;
   color: #73531e;
@@ -456,29 +435,23 @@ nav a:hover {
   cursor: pointer;
   transition: 0.25s ease;
 }
-
 .support button:hover {
   background: #8f6a27;
   color: #ffffff;
 }
 
-
-/* =========================================
-   CONTACT
-   ========================================= */
-
 .contactSection {
   max-width: 850px;
   margin: 0 auto;
-  padding: 100px 30px;
+  padding: 80px 20px;
   text-align: center;
   background: #ffffff;
 }
 
 .contactSection h2 {
-  margin: 0 0 26px;
+  margin: 0 0 20px;
   color: #302d29;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
   line-height: 1.2;
   font-weight: 500;
 }
@@ -487,24 +460,24 @@ nav a:hover {
   max-width: 650px;
   margin: 0 auto;
   color: #6c675f;
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
 .lotus {
-  margin-top: 34px;
+  margin-top: 30px;
   color: #a57929;
-  font-size: 25px;
+  font-size: 24px;
 }
 
 
 /* =========================================
-   NEW PAGES & GUIDE
+   PAGES & GUIDE
    ========================================= */
 
 .guidePage {
   width: 100%;
-  padding: 80px 20px;
+  padding: 60px 16px;
   background: #fbf9f5;
 }
 
@@ -512,7 +485,7 @@ nav a:hover {
   max-width: 850px;
   margin: 0 auto;
   background: #ffffff;
-  padding: 60px 50px;
+  padding: 50px 40px;
   border: 1px solid #eeeae2;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   text-align: left;
@@ -526,7 +499,7 @@ nav a:hover {
   font-size: 14px;
   cursor: pointer;
   padding: 0 0 5px 0;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   font-weight: 500;
   text-align: left;
 }
@@ -536,49 +509,49 @@ nav a:hover {
 
 .guideContainer .eyebrow {
   display: block;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   text-align: left;
 }
 
 .guideContainer h1 {
-  font-size: clamp(2rem, 3.5vw, 2.8rem);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
   font-weight: 500;
   color: #302d29;
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   line-height: 1.2;
   text-align: left;
 }
 
 .guideIntro {
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.8;
   color: #625d55;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
 }
 
 .guideContentBlock {
-  margin-bottom: 40px;
+  margin-bottom: 35px;
 }
 
 .guideContentBlock h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 500;
   color: #302d29;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border-bottom: 1px solid #f0ece4;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .guideContentBlock p {
   font-size: 15px;
   line-height: 1.8;
   color: #625d55;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .guideImageFrame {
   width: 100%;
-  margin: 25px 0;
+  margin: 20px 0;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid #eeeae2;
@@ -589,15 +562,15 @@ nav a:hover {
 .guideImageFrame img {
   width: auto;
   max-width: 100%;
-  max-height: 600px;
+  max-height: 500px;
   object-fit: contain;
   display: inline-block;
 }
 
 .imageCaption {
   display: block;
-  padding: 12px 15px;
-  font-size: 13px;
+  padding: 10px 14px;
+  font-size: 12px;
   color: #b0a89d;
   text-align: center;
   font-style: italic;
@@ -606,33 +579,33 @@ nav a:hover {
 }
 
 .guideSectionBox {
-  margin-bottom: 35px;
+  margin-bottom: 30px;
 }
 
 .guideSectionBox h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 500;
   color: #302d29;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   border-bottom: 1px solid #f0ece4;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .guideSectionBox ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 18px;
 }
 
 .guideSectionBox li {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.8;
   color: #625d55;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .guideContactBox {
-  margin-top: 50px;
-  padding: 30px;
+  margin-top: 40px;
+  padding: 25px;
   background: #f6f4ef;
   text-align: center;
   border-radius: 4px;
@@ -641,22 +614,22 @@ nav a:hover {
 .guideContactBox h3 {
   margin-top: 0;
   color: #302d29;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 500;
 }
 
 .guideContactBox p {
   color: #625d55;
-  font-size: 15px;
-  line-height: 1.8;
-  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 16px;
 }
 
 .primaryContactBtn {
   background: #9b7226;
   color: #ffffff;
   border: none;
-  padding: 12px 25px;
+  padding: 12px 24px;
   font-size: 14px;
   cursor: pointer;
   transition: background 0.2s;
@@ -672,7 +645,7 @@ nav a:hover {
 
 footer {
   width: 100%;
-  padding: 60px 20px;
+  padding: 50px 20px;
   background: #1c1a17;
   color: #b0a89d;
   text-align: center;
@@ -685,38 +658,38 @@ footer {
 }
 
 footer .dharma {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #C59B27;
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1;
 }
 
 footer strong {
   display: block;
   color: #e6dfd5;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 500;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 footer > .footer-content > p {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   color: #8c8378;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .footer-divider {
-  width: 50px;
+  width: 40px;
   height: 1px;
   background-color: #3a3630;
-  margin: 20px auto;
+  margin: 16px auto;
 }
 
 .footer-bottom-info div {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #b0a89d;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .footer-bottom-info div:first-child {
@@ -726,16 +699,76 @@ footer > .footer-content > p {
 
 .footer-bottom-info div:last-child {
   color: #8c8378;
-  font-size: 0.80rem;
+  font-size: 0.75rem;
 }
 
 
 /* =========================================
-   RESPONSIVE (MOBILE)
+   RESPONSIVE (TABLET & MOBILE MENU)
    ========================================= */
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
+  .aboutSection,
+  .quietSection {
+    grid-template-columns: 1fr;
+  }
+  .aboutImage,
+  .quietImage {
+    min-height: 320px;
+  }
+  .aboutContent,
+  .quietContent {
+    padding: 50px 8%;
+  }
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+/* สำหรับมือถือ (แสดงปุ่มเมนูแฮมเบอร์เกอร์และเปิด-ปิดเมนู) */
+@media (max-width: 768px) {
+  header {
+    padding: 20px 5% 0;
+  }
+
+  .menuToggleBtn {
+    display: block; /* แสดงปุ่มแฮมเบอร์เกอร์บนมือถือ */
+  }
+
+  /* ซ่อนเมนูปรกติเมื่อยังไม่กดเปิด */
+  nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    padding: 15px 0 20px;
+    gap: 15px;
+    border-top: 1px solid #eeeae2;
+  }
+
+  /* แสดงเมนูลอยลงมาเมื่อกดเปิดแล้ว */
+  nav.navOpen {
+    display: flex;
+  }
+
+  nav a {
+    font-size: 15px;
+    padding: 6px 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
   .guideContainer {
-    padding: 30px 20px;
+    padding: 30px 18px;
+  }
+
+  .support,
+  .contactSection {
+    padding: 60px 16px;
   }
 }
