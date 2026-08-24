@@ -87,7 +87,7 @@ const content = {
 
 function App() {
   const [lang, setLang] = useState('en')
-  const [currentPage, setCurrentPage] = useState('home')
+  const [currentPage, setCurrentPage] = useState('home') // 'home', 'teachings-page', 'visit-guide', 'event-kathina', 'contact-page'
   const t = content[lang]
 
   const goToPage = (page) => {
@@ -136,7 +136,10 @@ function App() {
               href={item.href} 
               key={item.href}
               onClick={(e) => {
-                if (item.href === '#contact') {
+                if (item.href === '#teachings') {
+                  e.preventDefault()
+                  goToPage('teachings-page')
+                } else if (item.href === '#contact') {
                   e.preventDefault()
                   goToPage('contact-page')
                 } else if (currentPage !== 'home') {
@@ -198,9 +201,9 @@ function App() {
                     : 'วัดเป็นสถานที่สำหรับการภาวนา เจริญสติ ศึกษาธรรมะ และร่วมกิจกรรมทางพระพุทธศาสนาอย่างเรียบง่าย'}
                 </p>
 
-                <a href="#teachings" className="textLink">
+                <button onClick={() => goToPage('teachings-page')} className="textLinkButton">
                   {lang === 'en' ? 'Discover monastery life →' : 'สัมผัสวิถีชีวิตภายในวัด →'}
-                </a>
+                </button>
 
               </div>
 
@@ -223,7 +226,7 @@ function App() {
 
               <div className="cards">
 
-                {/* DHAMMA */}
+                {/* DHAMMA (คลิกแล้วลิงก์ไปหน้าคำสอนหลวงปู่มั่น) */}
                 <article id="teachings" className="imageCard">
 
                   <div className="cardImage">
@@ -237,7 +240,12 @@ function App() {
                     <span className="cardIcon">☸</span>
                     <h3>{t.teachings}</h3>
                     <p>{t.teachingsText}</p>
-                    <a href="#retreats">{t.learn} →</a>
+                    <button 
+                      onClick={() => goToPage('teachings-page')}
+                      className="inlineButtonLink"
+                    >
+                      {t.learn} →
+                    </button>
                   </div>
 
                 </article>
@@ -370,6 +378,90 @@ function App() {
 
             </section>
           </>
+        ) : currentPage === 'teachings-page' ? (
+          /* ================= PAGE: DHAMMA TEACHINGS (หลวงปู่มั่น ภูริทัตโต) ================= */
+          <div className="guidePage">
+            <div className="guideContainer">
+              
+              <button className="backButton" onClick={() => goToPage('home')}>
+                ← {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+              </button>
+
+              <span className="eyebrow">
+                {lang === 'en' ? 'DHAMMA TEACHINGS' : 'พระธรรมคำสอนทรงคุณค่า'}
+              </span>
+
+              <h1>
+                {lang === 'en' ? 'Teachings of Venerable Luang Pu Mun Phuritatto' : 'คำสอน...หลวงปู่มั่น ภูริทัตโต'}
+              </h1>
+
+              <p className="guideIntro">
+                {lang === 'en'
+                  ? 'Essential Dhamma teachings and contemplation guidelines from Venerable Luang Pu Mun Phuritatto, the master of the Forest Tradition in Thailand, for cultivating mindfulness, wisdom, and inner peace.'
+                  : 'รวบรวมคติธรรมและโอวาทธรรมคำสอนอันทรงคุณค่ายิ่งขององค์หลวงปู่มั่น ภูริทัตโต พระอริยสงฆ์สายวัดป่ากรรมฐาน เพื่อการดับทุกข์ อบรมจิตใจ และฝึกสมาธิภาวนา'}
+              </p>
+
+              {/* ภาพหลวงปู่มั่น */}
+              <div className="guideImageFrame">
+                <img src="/images/93b4f839-927c-4ce7-8ea1-b8fd15651182.jpg" alt="หลวงปู่มั่น ภูริทัตโต" />
+                <span className="imageCaption">
+                  {lang === 'en' ? 'Venerable Luang Pu Mun Phuritatto' : 'องค์พระอาจารย์มั่น ภูริทัตตเถระ (หลวงปู่มั่น ภูริทัตโต)'}
+                </span>
+              </div>
+
+              {/* 1. การตำหนิตนเองและผู้อื่น */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '1. Self-Reflection & Non-Judgment' : '1. การไม่ติเตียนผู้อื่น และการมองตนเอง'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Even if others are truly at fault, focusing on their faults only brings agitation to one’s own mind. Wise teachers consider non-judgment essential for inner peace.'
+                    : 'ถึงเขาจะผิดจริงก็อย่าไปติเตียนเขา การไปนึกถึงความผิดของผู้อื่น มีแต่จะทำให้ใจตนเองขุ่นมัวและกระวนกระวาย การสำรวจและติเตียนตนเองเพื่อปรับปรุงแก้ไข จึงเป็นทางแห่งความสงบเย็นอย่างแท้จริง'}
+                </p>
+              </div>
+
+              {/* 2. คติพจน์หลัก */}
+              <div className="guideSectionBox">
+                <h3>{lang === 'en' ? '2. Core Principles of Goodness' : '2. คติพจน์ล้ำค่าของหลวงปู่มั่น'}</h3>
+                <ul>
+                  <li><strong>{lang === 'en' ? 'Pure Goodness:' : 'ดีใดไม่มีโทษ:'}</strong> {lang === 'en' ? 'Goodness without harm is the supreme goodness.' : 'ดีใดไม่มีโทษ ดีนั้นชื่อว่าดีเลิศ'}</li>
+                  <li><strong>{lang === 'en' ? 'True Wealth:' : 'การได้ตนเอง:'}</strong> {lang === 'en' ? 'Gaining all worldly treasures is not equal to gaining mastery over one’s own mind.' : 'ได้สมบัติทั้งปวงไม่ประเสริฐเท่าได้ตน'}</li>
+                </ul>
+              </div>
+
+              {/* 3. คุณค่าของจิตใจ */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '3. The Value of the Mind' : '3. คุณค่าอันล้ำค่าของจิตใจ'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'The mind is the most valuable treasure within us. It requires training through meditation so that it does not drift away aimlessly into suffering.'
+                    : 'ใจคือสมบัติอันล้ำค่าที่สุดในตัวเรา การภาวนาคือการฝึกสังเกตและรักษาใจตนเอง ไม่ปล่อยให้ใจกระสับกระส่ายไปตามอารมณ์ภายนอก การเจริญสมาธิภาวนาจึงเป็นการอบรมจิตใจให้เกิดความมั่นคงสว่างไสว'}
+                </p>
+              </div>
+
+              {/* 4. การฝึกสมาธิภาวนา */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '4. Meditation Practice' : '4. การฝึกสมาธิภาวนาพุทโธ'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Cultivate mindfulness through the repetition of "Buddho" alongside the breath, bringing quietness and clarity to the heart.'
+                    : 'การภาวนาพุทโธพร้อมระลึกรู้ลมหายใจเข้าออก เป็นเครื่องมือกำหนดสติ เพื่อให้จิตเข้าสู่ความสงบ ถอนความกังวลในเรื่องทางโลก และสัมผัสกับความสงบระงับภายใน'}
+                </p>
+              </div>
+
+              <div className="guideContactBox">
+                <h3>{lang === 'en' ? 'Experience Forest Meditation' : 'สัมผัสวิถีแห่งการปฏิบัติธรรมวัดป่า'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Visit Buddhist Park Monastery of Nathoeng to practice meditation in peaceful natural surroundings.'
+                    : 'วัดพุทธอุทยานนาเทิง ยินดีต้อนรับผู้ศรัทธาทุกท่านที่ประสงค์จะมาศึกษาธรรมะและฝึกสมาธิภาวนาในบรรยากาศอันสงบ'}
+                </p>
+                <button onClick={() => { goToPage('visit-guide'); }} className="primaryContactBtn">
+                  {lang === 'en' ? 'View Practice & Stay Guidelines →' : 'ดูข้อมูลการเข้าพักปฏิบัติธรรม →'}
+                </button>
+              </div>
+
+            </div>
+          </div>
         ) : currentPage === 'visit-guide' ? (
           /* ================= PAGE: VISIT & STAY GUIDE ================= */
           <div className="guidePage">
@@ -552,7 +644,7 @@ function App() {
             </div>
           </div>
         ) : (
-          /* ================= PAGE: CONTACT & MAP (ซ่อนเบอร์โทรแล้ว) ================= */
+          /* ================= PAGE: CONTACT & MAP ================= */
           <div className="guidePage">
             <div className="guideContainer">
               
@@ -574,7 +666,6 @@ function App() {
                   : 'วัดพุทธอุทยานนาเทิง ยินดีต้อนรับพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน ท่านสามารถตรวจสอบแผนที่ ที่อยู่ และช่องทางการติดต่อของทางวัดได้ด้านล่างนี้'}
               </p>
 
-              {/* ADDRESS & INFO BLOCK (ซ่อนเบอร์โทรศัพท์ตามคำขอ) */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? 'Monastery Address' : 'ที่อยู่ของวัด'}</h3>
                 <p style={{ fontSize: '16px', lineHeight: '1.8', color: '#302d29', fontWeight: '500' }}>
@@ -583,7 +674,6 @@ function App() {
                 </p>
               </div>
 
-              {/* GOOGLE MAPS EMBED PREVIEW */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? 'Location Map' : 'แผนที่ตั้งของวัด'}</h3>
                 <p style={{ fontSize: '14px', color: '#625d55', marginBottom: '15px' }}>
@@ -617,7 +707,6 @@ function App() {
                 </div>
               </div>
 
-              {/* SOCIAL MEDIA BUTTON */}
               <div className="guideSectionBox" style={{ marginTop: '40px', textAlign: 'center' }}>
                 <h3>{lang === 'en' ? 'Official Social Media' : 'ช่องทางติดต่อออนไลน์อย่างเป็นทางการ'}</h3>
                 <p style={{ fontSize: '15px', color: '#625d55', marginBottom: '20px' }}>
