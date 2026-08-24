@@ -403,7 +403,7 @@ function App() {
     width: "100%",
     textAlign: "center",
     margin: "20px auto 0",
-    lineHeight: "1.8"
+    lineHeight: "1.2"
   }}
 >
   <div>Buddhist Park Monastery of Nathoeng</div>
