@@ -87,7 +87,7 @@ const content = {
 
 function App() {
   const [lang, setLang] = useState('en')
-  const [currentPage, setCurrentPage] = useState('home') // 'home', 'visit-guide', 'event-kathina', 'contact-page'
+  const [currentPage, setCurrentPage] = useState('home')
   const t = content[lang]
 
   const goToPage = (page) => {
@@ -243,7 +243,7 @@ function App() {
                 </article>
 
 
-                {/* EVENTS (คลิกแล้วลิงก์ไปหน้างานกฐิน) */}
+                {/* EVENTS */}
                 <article id="events" className="imageCard">
 
                   <div className="cardImage">
@@ -360,7 +360,6 @@ function App() {
 
               <p>{t.contactText}</p>
 
-              {/* ปุ่มคลิกเพื่อไปหน้าแผนที่และรายละเอียดการติดต่อ */}
               <div style={{ marginTop: '25px' }}>
                 <button onClick={() => goToPage('contact-page')} className="primaryContactBtn">
                   {lang === 'en' ? 'View Map & Contact Details →' : 'ดูแผนที่และช่องทางการติดต่อ →'}
@@ -448,7 +447,7 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'event-kathina' ? (
-          /* ================= PAGE: KATHINA EVENT (งานบุญกฐินสามัคคี 2569) ================= */
+          /* ================= PAGE: KATHINA EVENT ================= */
           <div className="guidePage">
             <div className="guideContainer">
               
@@ -470,7 +469,6 @@ function App() {
                   : 'วัดพุทธอุทยานนาเทิง จังหวัดสกลนคร ขออำนวยพรและบอกบุญมายังพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน มาร่วมบำเพ็ญกุศลในงานบุญกฐินสามัคคี ประจำปีพุทธศักราช 2569 เพื่อสมทบทุนทำนุบำรุงพระพุทธศาสนาและพัฒนาเสนาสนะภายในวัด'}
               </p>
 
-              {/* 1. ขบวนแห่กฐิน */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '1. Grand Procession (Kathina Parade)' : '1. ขบวนแห่กฐินสามัคคีอันเบิกบานใจ'}</h3>
                 <p>
@@ -479,14 +477,13 @@ function App() {
                     : 'บรรยากาศขบวนแห่กฐินอันครื้นเครง เต็มไปด้วยรอยยิ้ม ความสามัคคี และความเลื่อมใสศรัทธาของพุทธศาสนิกชนที่มาร่วมบุญกันอย่างคับคั่ง'}
                 </p>
                 <div className="guideImageFrame">
-                  <img src="/images/561914583_836239988781703_4146873103108656226_n.jpg" alt="ขบวนแห่กฐินสามัคคี วัดพุทธอุทยานนาเทิง" />
+                  <img src="/images/561914583_836239988781703_4146873103108656226_n.jpg" alt="ขบวนแห่กฐินสามัคคี" />
                   <span className="imageCaption">
                     {lang === 'en' ? 'Traditional procession during the Kathina celebration' : 'ขบวนแห่กฐินสามัคคีอันอบอุ่นและงดงามตามประเพณีไทย'}
                   </span>
                 </div>
               </div>
 
-              {/* 2. โรงทานในงาน */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '2. Charity Food Stalls (Rongthan)' : '2. โรงทานอิ่มบุญอิ่มใจ'}</h3>
                 <p>
@@ -502,7 +499,6 @@ function App() {
                 </div>
               </div>
 
-              {/* 3. การทำบุญตักบาตร วันที่ 8 พ.ย. */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '3. Morning Alms Giving (November 8)' : '3. พิธีทำบุญตักบาตร (วันที่ 8 พฤศจิกายน 2569)'}</h3>
                 <p>
@@ -518,7 +514,6 @@ function App() {
                 </div>
               </div>
 
-              {/* 4. พิธีถวายผ้ากฐิน */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '4. Kathina Offering Ceremony' : '4. พิธีถวายผ้ากฐินสามัคคี'}</h3>
                 <p>
@@ -534,7 +529,6 @@ function App() {
                 </div>
               </div>
 
-              {/* SCHEDULE SUMMARY */}
               <div className="guideSectionBox">
                 <h3>{lang === 'en' ? 'Event Schedule Summary' : 'สรุปกำหนดการงานบุญ (7 - 8 พฤศจิกายน 2569)'}</h3>
                 <ul>
@@ -558,7 +552,7 @@ function App() {
             </div>
           </div>
         ) : (
-          /* ================= PAGE: CONTACT & MAP (หน้าแผนที่และช่องทางติดต่อ) ================= */
+          /* ================= PAGE: CONTACT & MAP (ซ่อนเบอร์โทรแล้ว) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               
@@ -580,25 +574,22 @@ function App() {
                   : 'วัดพุทธอุทยานนาเทิง ยินดีต้อนรับพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน ท่านสามารถตรวจสอบแผนที่ ที่อยู่ และช่องทางการติดต่อของทางวัดได้ด้านล่างนี้'}
               </p>
 
-              {/* ADDRESS & INFO BLOCK */}
+              {/* ADDRESS & INFO BLOCK (ซ่อนเบอร์โทรศัพท์ตามคำขอ) */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? 'Monastery Address' : 'ที่อยู่ของวัด'}</h3>
                 <p style={{ fontSize: '16px', lineHeight: '1.8', color: '#302d29', fontWeight: '500' }}>
                   วัดพุทธอุทยานนาเทิง (Buddhist Park Monastery of Nathoeng)<br />
                   231 หมู่ 2 ตำบลธาตุ อำเภอวานรนิวาส จังหวัดสกลนคร 47120 ประเทศไทย
                 </p>
-                <p style={{ fontSize: '15px', color: '#625d55' }}>
-                  {lang === 'en' ? 'Telephone: 095 138 0829' : 'เบอร์โทรศัพท์ติดต่อ: 095-138-0829'}
-                </p>
               </div>
 
-              {/* GOOGLE MAPS EMBED PREVIEW (FREE & NO API KEY REQUIRED) */}
+              {/* GOOGLE MAPS EMBED PREVIEW */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? 'Location Map' : 'แผนที่ตั้งของวัด'}</h3>
                 <p style={{ fontSize: '14px', color: '#625d55', marginBottom: '15px' }}>
                   {lang === 'en' 
-                    ? 'Coordinates: 17.621679, 103.653418 (Click view larger map or directions below)'
-                    : 'พิกัด GPS: 17.621679, 103.653418 (ท่านสามารถคลิกดูแผนที่ขนาดใหญ่หรือขอเส้นทางนำทางได้ทันที)'}
+                    ? 'Coordinates: 17.621679, 103.653418'
+                    : 'พิกัด GPS: 17.621679, 103.653418'}
                 </p>
                 
                 <div className="mapContainer" style={{ width: '100%', height: '400px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #eeeae2' }}>
@@ -626,7 +617,7 @@ function App() {
                 </div>
               </div>
 
-              {/* SOCIAL MEDIA / CONTACT CHANNELS (HIDDEN URL) */}
+              {/* SOCIAL MEDIA BUTTON */}
               <div className="guideSectionBox" style={{ marginTop: '40px', textAlign: 'center' }}>
                 <h3>{lang === 'en' ? 'Official Social Media' : 'ช่องทางติดต่อออนไลน์อย่างเป็นทางการ'}</h3>
                 <p style={{ fontSize: '15px', color: '#625d55', marginBottom: '20px' }}>
