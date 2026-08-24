@@ -14,7 +14,7 @@ body {
   margin: 0;
   background: #ffffff;
   color: #332f2a;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 button,
@@ -92,15 +92,11 @@ header {
 
 .language button {
   padding: 4px 2px 6px;
-
   border: 0;
   border-bottom: 1px solid transparent;
-
   background: transparent;
-
   color: #817b72;
   font-size: 13px;
-
   cursor: pointer;
 }
 
@@ -123,14 +119,11 @@ header {
 nav {
   min-height: 70px;
   margin-top: 15px;
-
   border-top: 1px solid #eeeae2;
-
   display: flex;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-
   gap: 30px;
 }
 
@@ -140,7 +133,6 @@ nav a:visited {
   font-size: 14px;
   text-decoration: none;
   white-space: nowrap;
-
   transition: color 0.2s ease;
 }
 
@@ -155,13 +147,10 @@ nav a:hover {
 
 .hero {
   width: 100%;
-
   height: min(68vw, 680px);
   min-height: 480px;
-
   background-image:
     url('/images/487812128_689539323451771_1128859791552978185_n.jpg');
-
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -174,9 +163,7 @@ nav a:hover {
 
 .eyebrow {
   margin: 0 0 22px;
-
   color: #a57929;
-
   font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -185,11 +172,8 @@ nav a:hover {
 .textLink,
 .textLink:visited {
   display: inline-block;
-
   margin-top: 14px;
-
   color: #9b7226;
-
   font-size: 14px;
   text-decoration: none;
 }
@@ -266,7 +250,7 @@ nav a:hover {
   color: #302d29;
   font-size: clamp(2rem, 3.8vw, 3.2rem);
   line-height: 1.2;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .aboutContent p {
@@ -300,7 +284,7 @@ nav a:hover {
   color: #302d29;
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1.2;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 
@@ -357,7 +341,7 @@ nav a:hover {
   margin: 0 0 20px;
   color: #332f2a;
   font-size: 23px;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .cardContent p {
@@ -408,7 +392,7 @@ nav a:hover {
   color: #302d29;
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1.2;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .quietContent p {
@@ -440,7 +424,7 @@ nav a:hover {
   margin: 0 0 25px;
   color: #302d29;
   font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .support p:not(.eyebrow) {
@@ -484,7 +468,7 @@ nav a:hover {
   color: #302d29;
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.2;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .contactSection > p:not(.eyebrow) {
@@ -503,7 +487,7 @@ nav a:hover {
 
 
 /* =========================================
-   NEW PAGE: VISIT & STAY GUIDE (ระเบียบปฏิบัติธรรม)
+   NEW PAGES & GUIDE
    ========================================= */
 
 .guidePage {
@@ -546,7 +530,7 @@ nav a:hover {
 
 .guideContainer h1 {
   font-size: clamp(2rem, 3.5vw, 2.8rem);
-  font-weight: 400;
+  font-weight: 500;
   color: #302d29;
   margin: 0 0 20px 0;
   line-height: 1.2;
@@ -580,31 +564,34 @@ nav a:hover {
   margin-bottom: 20px;
 }
 
+/* ปรับปรุงกรอบรูปให้แสดงภาพเต็มองค์โดยไม่ถูกตัด */
 .guideImageFrame {
   width: 100%;
-  margin: 20px 0;
+  margin: 25px 0;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid #eeeae2;
-  background: #fcfbfa;
+  background: #1c1a17; /* พื้นหลังเข้มขับให้รูปโดดเด่น */
+  text-align: center;
 }
 
 .guideImageFrame img {
-  width: 100%;
-  max-height: 420px;
-  object-fit: cover;
-  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 600px; /* ขยายความสูงให้รองรับรูปแนวตั้งเต็มตัว */
+  object-fit: contain; /* แสดงภาพเต็มรูป 100% ไม่ซูมตัดขอบ */
+  display: inline-block;
 }
 
 .imageCaption {
   display: block;
   padding: 12px 15px;
   font-size: 13px;
-  color: #8c8378;
+  color: #b0a89d;
   text-align: center;
   font-style: italic;
-  background: #f9f7f2;
-  border-top: 1px solid #f0ece4;
+  background: #1c1a17;
+  border-top: 1px solid #2e2b26;
 }
 
 .guideSectionBox {
