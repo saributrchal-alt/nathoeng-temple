@@ -87,10 +87,9 @@ const content = {
 
 function App() {
   const [lang, setLang] = useState('en')
-  const [currentPage, setCurrentPage] = useState('home') // 'home' หรือ 'visit-guide'
+  const [currentPage, setCurrentPage] = useState('home')
   const t = content[lang]
 
-  // ฟังก์ชันสำหรับเปลี่ยนหน้าและเลื่อนขึ้นด้านบนสุด
   const goToPage = (page) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -168,11 +167,7 @@ function App() {
               <div className="aboutImage">
                 <img
                   src="/images/watermarked_img_18048839418065383299.jpg"
-                  alt={
-                    lang === 'en'
-                      ? 'Buddhist Park Monastery of Nathoeng'
-                      : 'วัดพุทธอุทยานนาเทิง'
-                  }
+                  alt={lang === 'en' ? 'Buddhist Park Monastery' : 'วัดพุทธอุทยานนาเทิง'}
                 />
               </div>
 
@@ -265,7 +260,7 @@ function App() {
                 </article>
 
 
-                {/* VISIT (คลิกแล้วเปลี่ยนหน้าไปที่ระเบียบปฏิบัติ) */}
+                {/* VISIT */}
                 <article id="visit" className="imageCard">
 
                   <div className="cardImage">
@@ -365,58 +360,73 @@ function App() {
           /* ================= PAGE: VISIT & STAY GUIDE ================= */
           <div className="guidePage">
             <div className="guideContainer">
+              
               <button className="backButton" onClick={() => goToPage('home')}>
                 ← {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
               </button>
 
               <span className="eyebrow">
-                {lang === 'en' ? 'VISIT & STAY GUIDELINES' : 'ระเบียบการและข้อมูลการปฏิบัติธรรม'}
+                {lang === 'en' ? 'VISIT & STAY GUIDELINES' : 'ระเบียบการและสถานที่พักปฏิบัติธรรม'}
               </span>
 
               <h1>
-                {lang === 'en' ? 'Monastery Stay & Meditation Practice' : 'ระเบียบการเข้าพักและปฏิบัติธรรม'}
+                {lang === 'en' ? 'Monastery Stay & Practice Atmosphere' : 'สถานที่พักและบรรยากาศการปฏิบัติธรรม'}
               </h1>
 
               <p className="guideIntro">
                 {lang === 'en'
-                  ? 'Welcome to Buddhist Park Monastery of Nathoeng. To ensure a peaceful and conducive environment for spiritual practice, we have established guidelines for visitors and retreatants.'
-                  : 'วัดพุทธอุทยานนาเทิง ยินดีต้อนรับผู้มีจิตศรัทธาทุกท่านที่ประสงค์จะมาปฏิบัติธรรมและพักอาศัย เพื่อความสงบเรียบร้อยและเอื้อต่อการเจริญสติภาวนา ทางวัดจึงขอแจ้งระเบียบและแนวทางปฏิบัติดังนี้'}
+                  ? 'At Buddhist Park Monastery of Nathoeng, we provide a peaceful and supportive environment for practitioners to cultivate mindfulness, quiet the mind, and immerse themselves in the Dhamma.'
+                  : 'วัดพุทธอุทยานนาเทิง จัดเตรียมพื้นที่และสภาพแวดล้อมอันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างเรียบง่าย สงบเย็น และเอื้อต่อการเจริญสติภาวนาอย่างแท้จริง'}
               </p>
 
-              <div className="guideSectionBox">
-                <h3>{lang === 'en' ? '1. General Qualifications' : '1. คุณสมบัติของผู้ปฏิบัติธรรม'}</h3>
-                <ul>
-                  <li>{lang === 'en' ? 'Must be in good physical and mental health.' : 'มีสุขภาพร่างกายและจิตใจสมบูรณ์แข็งแรง ไม่เป็นโรคติดต่อร้ายแรง'}</li>
-                  <li>{lang === 'en' ? 'Able to strictly follow the monastery rules and schedule.' : 'สามารถรักษาศีล 5 หรือศีล 8 และปฏิบัติตามระเบียบวินัยของวัดได้อย่างเคร่งครัด'}</li>
-                  <li>{lang === 'en' ? 'Respectful to monks, novices, and fellow practitioners.' : 'มีความเคารพและสำรวมในพระรัตนตรัย พระภิกษุสงฆ์ และเพื่อนร่วมปฏิบัติธรรม'}</li>
-                </ul>
+              {/* SECTION 1: ACCOMMODATION */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '1. Accommodation & Facilities' : '1. สถานที่พักสำหรับผู้ปฏิบัติธรรม'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Our monastery offers clean, orderly, and peaceful accommodation nestled in natural surroundings, designed to support simple living and dedicated meditation.'
+                    : 'ทางวัดมีอาคารที่พักและกุฏิสำหรับผู้ปฏิบัติธรรม ที่มีความสะอาด เป็นระเบียบเรียบร้อย ตั้งอยู่ท่ามกลางธรรมชาติอันร่มรื่น เงียบสงบ เหมาะแก่การพักผ่อนและปฏิบัติธรรมประจำวัน'}
+                </p>
+                <div className="guideImageFrame">
+                  <img src="/images/8301.jpg" alt="สถานที่พักผู้ปฏิบัติธรรม วัดพุทธอุทยานนาเทิง" />
+                  <span className="imageCaption">
+                    {lang === 'en' ? 'Peaceful accommodation area at the monastery' : 'บรรยากาศอาคารที่พักและพื้นที่รอบบริเวณวัด'}
+                  </span>
+                </div>
               </div>
 
-              <div className="guideSectionBox">
-                <h3>{lang === 'en' ? '2. What to Bring' : '2. สิ่งที่ต้องเตรียมมา'}</h3>
-                <ul>
-                  <li>{lang === 'en' ? 'White clothing for meditation practice.' : 'ชุดปฏิบัติธรรมสีขาวสุภาพเรียบร้อย'}</li>
-                  <li>{lang === 'en' ? 'Personal ID card for registration.' : 'บัตรประจำตัวประชาชน (สำหรับลงทะเบียนเข้าพัก)'}</li>
-                  <li>{lang === 'en' ? 'Personal toiletries and necessary medications.' : 'ของใช้ส่วนตัวที่จำเป็น เช่น สบู่ แปรงสีฟัน ยาสระผม และยาประจำตัว'}</li>
-                  <li>{lang === 'en' ? 'A personal blanket (as mountain nights can be cool).' : 'ผ้าห่มส่วนตัว (เนื่องจากอากาศในยามค่ำคืนค่อนข้างเย็น)'}</li>
-                </ul>
+              {/* SECTION 2: PRACTICE ATMOSPHERE */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '2. Atmosphere of Practice & Meditation' : '2. บรรยากาศการปฏิบัติธรรมและการเจริญสติ'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Practitioners gather in a serene environment to engage in group meditation, chanting, and listening to Dhamma teachings, fostering mutual support and inner peace.'
+                    : 'ผู้ปฏิบัติธรรมจะได้ร่วมกิจกรรมทำวัตรสวดมนต์ นั่งสมาธิ เจริญสติ และฟังพระธรรมคำสอนร่วมกันในบรรยากาศที่อบอุ่น เรียบง่าย และเต็มไปด้วยความสงบเยือกเย็นของกัลยาณมิตร'}
+                </p>
+                <div className="guideImageFrame">
+                  <img src="/images/559063252_835057645566604_50190803944267715_n.jpg" alt="บรรยากาศการปฏิบัติธรรม วัดพุทธอุทยานนาเทิง" />
+                  <span className="imageCaption">
+                    {lang === 'en' ? 'Practitioners in white attire engaged in meditation and Dhamma practice' : 'บรรยากาศผู้ปฏิบัติธรรมชุดขาวร่วมเจริญสติและปฏิบัติภาวนาภายในวัด'}
+                  </span>
+                </div>
               </div>
 
+              {/* SECTION 3: RULES */}
               <div className="guideSectionBox">
-                <h3>{lang === 'en' ? '3. Rules & Conduct' : '3. ข้อควรปฏิบัติภายในวัด'}</h3>
+                <h3>{lang === 'en' ? '3. Rules & Guidelines for Stay' : '3. ระเบียบปฏิบัติและข้อควรปฏิบัติเบื้องต้น'}</h3>
                 <ul>
-                  <li>{lang === 'en' ? 'Observe noble silence and speak only when necessary.' : 'ลดการพูดคุย งดการใช้โทรศัพท์มือถือ เพื่อความสงบในการภาวนา'}</li>
-                  <li>{lang === 'en' ? 'Strictly refrain from bringing valuables, gold, or expensive items.' : 'งดเว้นการนำเครื่องประดับ ของมีค่า หรือเงินจำนวนมากติดตัวมา'}</li>
-                  <li>{lang === 'en' ? 'Participate in monastery group chanting and meditation schedule.' : 'ร่วมทำวัตรสวดมนต์และกิจกรรมภาวนาตามตารางเวลาของวัด'}</li>
+                  <li>{lang === 'en' ? 'Observe the Five or Eight Precepts strictly during your stay.' : 'รักษาศีล 5 หรือศีล 8 อย่างเคร่งครัดตลอดระยะเวลาที่เข้าพัก'}</li>
+                  <li>{lang === 'en' ? 'Maintain noble silence and minimize mobile phone usage to protect the meditative atmosphere.' : 'งดการพูดคุยเพ้อเจ้อ และจำกัดการใช้โทรศัพท์มือถือ เพื่อรักษาความสงบสงัด'}</li>
+                  <li>{lang === 'en' ? 'Participate in daily routines, chanting, and meditation schedules.' : 'ร่วมทำกิจกรรมทำวัตรสวดมนต์และปฏิบัติภาวนาตามตารางของทางวัด'}</li>
                 </ul>
               </div>
 
               <div className="guideContactBox">
-                <h3>{lang === 'en' ? 'For Inquiry and Advance Booking' : 'ติดต่อสอบถามและจองเวลาเข้าปฏิบัติธรรม'}</h3>
+                <h3>{lang === 'en' ? 'Interested in Joining? Contact Us' : 'สนใจเข้าร่วมปฏิบัติธรรม / สอบถามข้อมูลเพิ่มเติม'}</h3>
                 <p>
                   {lang === 'en'
-                    ? 'Please contact the monastery office in advance before your visit to ensure accommodation availability.'
-                    : 'กรุณาติดต่อประสานงานล่วงหน้าก่อนเดินทางมา เพื่อความสะดวกในการจัดเตรียมสถานที่และที่พัก'}
+                    ? 'Please reach out to the monastery in advance to plan your visit and check accommodation availability.'
+                    : 'ผู้ที่สนใจสามารถติดต่อสอบถามรายละเอียด หรือจองเวลาเข้าปฏิบัติธรรมล่วงหน้าได้ทางช่องทางติดต่อของวัด'}
                 </p>
                 <button onClick={() => { goToPage('home'); setTimeout(() => { document.getElementById('contact').scrollIntoView({ behavior: 'smooth' }) }, 100) }} className="primaryContactBtn">
                   {lang === 'en' ? 'Contact Us →' : 'ติดต่อทางวัด →'}

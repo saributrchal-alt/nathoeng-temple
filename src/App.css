@@ -519,18 +519,18 @@ nav a:hover {
   padding: 60px 50px;
   border: 1px solid #eeeae2;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-  text-align: left; /* จัดเนื้อหาภายในให้ชิดซ้ายเป็นระเบียบ */
+  text-align: left;
 }
 
 .backButton {
-  display: inline-block;       /* บังคับให้อยู่บรรทัดบนสุดแยกเด็ดขาด */
+  display: inline-block;
   background: none;
   border: none;
   color: #9b7226;
   font-size: 14px;
   cursor: pointer;
   padding: 0 0 5px 0;
-  margin-bottom: 30px;         /* เว้นระยะห่างจากหัวข้อด้านล่าง */
+  margin-bottom: 30px;
   font-weight: 500;
   text-align: left;
 }
@@ -558,6 +558,53 @@ nav a:hover {
   line-height: 1.9;
   color: #625d55;
   margin-bottom: 40px;
+}
+
+.guideContentBlock {
+  margin-bottom: 40px;
+}
+
+.guideContentBlock h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #302d29;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f0ece4;
+  padding-bottom: 8px;
+}
+
+.guideContentBlock p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #625d55;
+  margin-bottom: 20px;
+}
+
+.guideImageFrame {
+  width: 100%;
+  margin: 20px 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #eeeae2;
+  background: #fcfbfa;
+}
+
+.guideImageFrame img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  display: block;
+}
+
+.imageCaption {
+  display: block;
+  padding: 12px 15px;
+  font-size: 13px;
+  color: #8c8378;
+  text-align: center;
+  font-style: italic;
+  background: #f9f7f2;
+  border-top: 1px solid #f0ece4;
 }
 
 .guideSectionBox {
