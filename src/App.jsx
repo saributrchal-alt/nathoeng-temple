@@ -148,7 +148,7 @@ function App() {
 
           <div className="aboutImage">
             <img
-              src="/images/c42dcd61-87cc-4b75-b8a4-0fc5e792162e.png"
+              src="/images/watermarked_img_18048839418065383299.jpg"
               alt={
                 lang === 'en'
                   ? 'Buddhist Park Monastery of Nathoeng'
