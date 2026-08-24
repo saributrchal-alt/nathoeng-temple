@@ -76,7 +76,13 @@ const content = {
     contactSectionTitle: 'For More Information',
     contactSectionText: 'You are welcome to join us in person or contact the monastery directly for further details.',
     contactBtn: 'View Map & Contact Details →',
-    backHome: '← Back to Home'
+    backHome: '← Back to Home',
+
+    // Contact Page English Content
+    contactPageEyebrow: 'LOCATION & CONTACT',
+    contactPageTitle: 'Buddhist Park Monastery of Nathoeng',
+    contactPageAddress: '231 Moo 2, That Sub-district, Waritchaphum / Wanon Niwat District, Sakon Nakhon 47120, Thailand',
+    mapOpenBtn: 'Open in Google Maps →'
   },
 
   th: {
@@ -153,7 +159,13 @@ const content = {
     contactSectionTitle: 'ติดต่อสอบถามข้อมูลการมาร่วมงาน',
     contactSectionText: 'ท่านสามารถมาร่วมงานบุญด้วยตนเอง หรือติดต่อสอบถามรายละเอียดเพิ่มเติมได้ที่วัดพุทธอุทยานนาเทิง จ.สกลนคร',
     contactBtn: 'ดูแผนที่และช่องทางติดต่อ →',
-    backHome: '← กลับสู่หน้าหลัก'
+    backHome: '← กลับสู่หน้าหลัก',
+
+    // Contact Page Thai Content
+    contactPageEyebrow: 'แผนที่และการเดินทาง',
+    contactPageTitle: 'วัดพุทธอุทยานนาเทิง',
+    contactPageAddress: '231 หมู่ 2 ตำบลธาตุ อำเภอวานรนิวาส จังหวัดสกลนคร 47120 ประเทศไทย',
+    mapOpenBtn: 'เปิดใน Google Maps เพื่อนำทาง →'
   }
 }
 
@@ -531,15 +543,15 @@ function App() {
             </div>
           </div>
         ) : (
-          /* ================= PAGE: CONTACT & MAP ================= */
+          /* ================= PAGE: CONTACT & MAP (Bilingual) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
-                {content[lang].backHome}
+                {t.backHome}
               </button>
-              <span className="eyebrow">{lang === 'en' ? 'LOCATION & CONTACT' : 'แผนที่และการเดินทาง'}</span>
-              <h1>วัดพุทธอุทยานนาเทิง</h1>
-              <p className="guideIntro">231 หมู่ 2 ตำบลธาตุ อำเภอวานรนิวาส จังหวัดสกลนคร 47120 ประเทศไทย</p>
+              <span className="eyebrow">{t.contactPageEyebrow}</span>
+              <h1>{t.contactPageTitle}</h1>
+              <p className="guideIntro">{t.contactPageAddress}</p>
               
               <div className="guideContentBlock">
                 <div className="mapContainer" style={{ width: '100%', height: '350px', borderRadius: '4px', overflow: 'hidden' }}>
@@ -555,7 +567,7 @@ function App() {
                 </div>
                 <div style={{ textAlign: 'center', marginTop: '15px' }}>
                   <a href="https://maps.google.com/?q=17.621679,103.653418" target="_blank" rel="noopener noreferrer" className="primaryContactBtn" style={{ display: 'inline-block', textDecoration: 'none' }}>
-                    {lang === 'en' ? 'Open in Google Maps →' : 'เปิดใน Google Maps เพื่อนำทาง →'}
+                    {t.mapOpenBtn}
                   </a>
                 </div>
               </div>
