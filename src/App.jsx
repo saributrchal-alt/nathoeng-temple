@@ -87,7 +87,7 @@ const content = {
 
 function App() {
   const [lang, setLang] = useState('en')
-  const [currentPage, setCurrentPage] = useState('home')
+  const [currentPage, setCurrentPage] = useState('home') // 'home', 'visit-guide', 'event-kathina'
   const t = content[lang]
 
   const goToPage = (page) => {
@@ -240,7 +240,7 @@ function App() {
                 </article>
 
 
-                {/* EVENTS */}
+                {/* EVENTS (คลิกแล้วลิงก์ไปหน้างานกฐิน) */}
                 <article id="events" className="imageCard">
 
                   <div className="cardImage">
@@ -254,7 +254,12 @@ function App() {
                     <span className="cardIcon">◷</span>
                     <h3>{t.events}</h3>
                     <p>{t.eventsText}</p>
-                    <a href="#events">{t.learn} →</a>
+                    <button 
+                      onClick={() => goToPage('event-kathina')}
+                      className="inlineButtonLink"
+                    >
+                      {t.learn} →
+                    </button>
                   </div>
 
                 </article>
@@ -356,8 +361,8 @@ function App() {
 
             </section>
           </>
-        ) : (
-          /* ================= PAGE: VISIT & STAY GUIDE WITH IMAGES ================= */
+        ) : currentPage === 'visit-guide' ? (
+          /* ================= PAGE: VISIT & STAY GUIDE ================= */
           <div className="guidePage">
             <div className="guideContainer">
               
@@ -379,7 +384,6 @@ function App() {
                   : 'วัดพุทธอุทยานนาเทิง จัดเตรียมพื้นที่และสภาพแวดล้อมอันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างเรียบง่าย สงบเย็น และเอื้อต่อการเจริญสติภาวนาอย่างแท้จริง'}
               </p>
 
-              {/* SECTION 1: ACCOMMODATION WITH IMAGE */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '1. Accommodation & Facilities' : '1. สถานที่พักสำหรับผู้ปฏิบัติธรรม'}</h3>
                 <p>
@@ -388,45 +392,153 @@ function App() {
                     : 'ทางวัดมีอาคารที่พักและกุฏิสำหรับผู้ปฏิบัติธรรม ที่มีความสะอาด เป็นระเบียบเรียบร้อย ตั้งอยู่ท่ามกลางธรรมชาติอันร่มรื่น เงียบสงบ เหมาะแก่การพักผ่อนและปฏิบัติธรรมประจำวัน'}
                 </p>
                 <div className="guideImageFrame">
-                  <img src="/images/8301.jpg" alt="สถานที่พักผู้ปฏิบัติธรรม วัดพุทธอุทยานนาเทิง" />
+                  <img src="/images/8301.jpg" alt="สถานที่พักผู้ปฏิบัติธรรม" />
                   <span className="imageCaption">
-                    {lang === 'en' ? 'Peaceful accommodation area at the monastery' : 'บรรยากาศอาคารที่พักและพื้นที่รอบบริเวณวัด'}
+                    {lang === 'en' ? 'Peaceful accommodation area' : 'บรรยากาศอาคารที่พักและพื้นที่รอบบริเวณวัด'}
                   </span>
                 </div>
               </div>
 
-              {/* SECTION 2: PRACTICE ATMOSPHERE WITH IMAGE */}
               <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '2. Atmosphere of Practice & Meditation' : '2. บรรยากาศการปฏิบัติธรรมและการเจริญสติ'}</h3>
+                <h3>{lang === 'en' ? '2. Atmosphere of Practice' : '2. บรรยากาศการปฏิบัติธรรมและการเจริญสติ'}</h3>
                 <p>
                   {lang === 'en'
-                    ? 'Practitioners gather in a serene environment to engage in group meditation, chanting, and listening to Dhamma teachings, fostering mutual support and inner peace.'
-                    : 'ผู้ปฏิบัติธรรมจะได้ร่วมกิจกรรมทำวัตรสวดมนต์ นั่งสมาธิ เจริญสติ และฟังพระธรรมคำสอนร่วมกันในบรรยากาศที่อบอุ่น เรียบง่าย และเต็มไปด้วยความสงบเยือกเย็นของกัลยาณมิตร'}
+                    ? 'Practitioners gather in a serene environment to engage in group meditation, chanting, and listening to Dhamma teachings.'
+                    : 'ผู้ปฏิบัติธรรมจะได้ร่วมกิจกรรมทำวัตรสวดมนต์ นั่งสมาธิ เจริญสติ และฟังพระธรรมคำสอนร่วมกันในบรรยากาศที่อบอุ่น เรียบง่าย และเต็มไปด้วยความสงบเยือกเย็น'}
                 </p>
                 <div className="guideImageFrame">
-                  <img src="/images/559063252_835057645566604_50190803944267715_n.jpg" alt="บรรยากาศการปฏิบัติธรรม วัดพุทธอุทยานนาเทิง" />
+                  <img src="/images/559063252_835057645566604_50190803944267715_n.jpg" alt="บรรยากาศการปฏิบัติธรรม" />
                   <span className="imageCaption">
-                    {lang === 'en' ? 'Practitioners in white attire engaged in meditation and Dhamma practice' : 'บรรยากาศผู้ปฏิบัติธรรมชุดขาวร่วมเจริญสติและปฏิบัติภาวนาภายในวัด'}
+                    {lang === 'en' ? 'Practitioners in white attire in meditation' : 'บรรยากาศผู้ปฏิบัติธรรมชุดขาวร่วมเจริญสติภายในวัด'}
                   </span>
                 </div>
               </div>
 
-              {/* SECTION 3: RULES */}
               <div className="guideSectionBox">
-                <h3>{lang === 'en' ? '3. Rules & Guidelines for Stay' : '3. ระเบียบปฏิบัติและข้อควรปฏิบัติเบื้องต้น'}</h3>
+                <h3>{lang === 'en' ? '3. Rules & Guidelines' : '3. ระเบียบปฏิบัติและข้อควรปฏิบัติเบื้องต้น'}</h3>
                 <ul>
-                  <li>{lang === 'en' ? 'Observe the Five or Eight Precepts strictly during your stay.' : 'รักษาศีล 5 หรือศีล 8 อย่างเคร่งครัดตลอดระยะเวลาที่เข้าพัก'}</li>
-                  <li>{lang === 'en' ? 'Maintain noble silence and minimize mobile phone usage to protect the meditative atmosphere.' : 'งดการพูดคุยเพ้อเจ้อ และจำกัดการใช้โทรศัพท์มือถือ เพื่อรักษาความสงบสงัด'}</li>
-                  <li>{lang === 'en' ? 'Participate in daily routines, chanting, and meditation schedules.' : 'ร่วมทำกิจกรรมทำวัตรสวดมนต์และปฏิบัติภาวนาตามตารางของทางวัด'}</li>
+                  <li>{lang === 'en' ? 'Observe the Five or Eight Precepts strictly.' : 'รักษาศีล 5 หรือศีล 8 อย่างเคร่งครัดตลอดระยะเวลาที่เข้าพัก'}</li>
+                  <li>{lang === 'en' ? 'Maintain noble silence and limit mobile phone usage.' : 'งดการพูดคุยเพ้อเจ้อ และจำกัดการใช้โทรศัพท์มือถือ เพื่อรักษาความสงบ'}</li>
+                  <li>{lang === 'en' ? 'Participate in daily routines and chanting schedules.' : 'ร่วมทำกิจกรรมทำวัตรสวดมนต์และปฏิบัติภาวนาตามตารางของทางวัด'}</li>
                 </ul>
               </div>
 
               <div className="guideContactBox">
-                <h3>{lang === 'en' ? 'Interested in Joining? Contact Us' : 'สนใจเข้าร่วมปฏิบัติธรรม / สอบถามข้อมูลเพิ่มเติม'}</h3>
+                <h3>{lang === 'en' ? 'Contact Us' : 'สนใจเข้าร่วมปฏิบัติธรรม / สอบถามข้อมูลเพิ่มเติม'}</h3>
                 <p>
                   {lang === 'en'
-                    ? 'Please reach out to the monastery in advance to plan your visit and check accommodation availability.'
+                    ? 'Please reach out to the monastery in advance to plan your visit.'
                     : 'ผู้ที่สนใจสามารถติดต่อสอบถามรายละเอียด หรือจองเวลาเข้าปฏิบัติธรรมล่วงหน้าได้ทางช่องทางติดต่อของวัด'}
+                </p>
+                <button onClick={() => { goToPage('home'); setTimeout(() => { document.getElementById('contact').scrollIntoView({ behavior: 'smooth' }) }, 100) }} className="primaryContactBtn">
+                  {lang === 'en' ? 'Contact Us →' : 'ติดต่อทางวัด →'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        ) : (
+          /* ================= PAGE: KATHINA EVENT (งานบุญกฐินสามัคคี 2569) ================= */
+          <div className="guidePage">
+            <div className="guideContainer">
+              
+              <button className="backButton" onClick={() => goToPage('home')}>
+                ← {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+              </button>
+
+              <span className="eyebrow">
+                {lang === 'en' ? 'UPCOMING EVENT · 2026' : 'ข่าวประชาสัมพันธ์งานบุญใหญ่ · พ.ศ. 2569'}
+              </span>
+
+              <h1>
+                {lang === 'en' ? 'Annual Kathina Ceremony 2026' : 'ขอเชิญร่วมงานบุญกฐินสามัคคี ประจำปี 2569'}
+              </h1>
+
+              <p className="guideIntro">
+                {lang === 'en'
+                  ? 'We cordially invite all Buddhists and devotees to join our Annual Kathina Merit-Making Ceremony at Buddhist Park Monastery of Nathoeng, Sakon Nakhon, to be held on November 7-8, 2026.'
+                  : 'วัดพุทธอุทยานนาเทิง จังหวัดสกลนคร ขออำนวยพรและบอกบุญมายังพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน มาร่วมบำเพ็ญกุศลในงานบุญกฐินสามัคคี ประจำปีพุทธศักราช 2569 เพื่อสมทบทุนทำนุบำรุงพระพุทธศาสนาและพัฒนาเสนาสนะภายในวัด'}
+              </p>
+
+              {/* 1. ขบวนแห่กฐิน */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '1. Grand Procession (Kathina Parade)' : '1. ขบวนแห่กฐินสามัคคีอัน  เบิกบานใจ'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'The joyful traditional procession filled with community devotion, music, and cultural celebration.'
+                    : 'บรรยากาศขบวนแห่กฐินอันครื้นเครง เต็มไปด้วยรอยยิ้ม ความสามัคคี และความเลื่อมใสศรัทธาของพุทธศาสนิกชนที่มาร่วมบุญกันอย่างคับคั่ง'}
+                </p>
+                <div className="guideImageFrame">
+                  <img src="/images/561914583_836239988781703_4146873103108656226_n.jpg" alt="ขบวนแห่กฐินสามัคคี วัดพุทธอุทยานนาเทิง" />
+                  <span className="imageCaption">
+                    {lang === 'en' ? 'Traditional procession during the Kathina celebration' : 'ขบวนแห่กฐินสามัคคีอันอบอุ่นและงดงามตามประเพณีไทย'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 2. โรงทานในงาน */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '2. Charity Food Stalls (Rongthan)' : '2. โรงทานอิ่มบุญอิ่มใจ'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Generous devotees setup charity food stalls to serve delicious meals and refreshments to all participants and visitors.'
+                    : 'อิ่มบุญและอิ่มท้องไปกับโรงทานจากผู้มีจิตศรัทธา ที่นำอาหาร ขนม และเครื่องดื่มมาบริการแจกจ่ายให้แก่คณะศรัทธาและผู้มาร่วมงานฟรีตลอดงาน'}
+                </p>
+                <div className="guideImageFrame">
+                  <img src="/images/487913616_689541166784920_1785354843670392147_n.jpg" alt="โรงทานในงานกฐิน" />
+                  <span className="imageCaption">
+                    {lang === 'en' ? 'Charity food stalls serving meals to devotees' : 'บรรยากาศโรงทานการกุศลที่มีผู้ใจบุญร่วมออกร้านให้บริการในงาน'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 3. การทำบุญตักบาตร วันที่ 8 พ.ย. */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '3. Morning Alms Giving (November 8)' : '3. พิธีทำบุญตักบาตร (วันที่ 8 พฤศจิกายน 2569)'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'On the morning of November 8, practitioners and villagers gather to offer alms to monks in the serene monastery environment.'
+                    : 'ในเช้าวันที่ 8 พฤศจิกายน คณะศรัทธาทุกท่านจะได้ร่วมกันทำบุญตักบาตรข้าวสารอาหารแห้งแด่พระภิกษุสงฆ์ ท่ามกลางบรรยากาศยามเช้าอันร่มรื่นและเป็นสิริมงคล'}
+                </p>
+                <div className="guideImageFrame">
+                  <img src="/images/560188892_836240912114944_3910816619043716260_n.jpg" alt="ทำบุญตักบาตร วันที่ 8 พฤศจิกายน" />
+                  <span className="imageCaption">
+                    {lang === 'en' ? 'Morning alms-giving ceremony with monks on November 8' : 'บรรยากาศการทำบุญตักบาตรอันอบอุ่นในเช้าวันที่ 8 พฤศจิกายน'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 4. พิธีถวายผ้ากฐิน */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? '4. Kathina Offering Ceremony' : '4. พิธีถวายผ้ากฐินสามัคคี'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'The sacred ceremony of offering the Kathina robe to the monastic community, completing our annual religious tradition.'
+                    : 'พิธีถวายผ้ากฐินอันศักดิ์สิทธิ์และเปี่ยมด้วยอานิสงส์ โดยคณะศรัทธาทุกท่านร่วมกันถวายผ้ากฐินแด่พระสงฆ์ผู้จำพรรษากาลถ้วนไตรมาส'}
+                </p>
+                <div className="guideImageFrame">
+                  <img src="/images/561340868_836253482113687_5055104485744791787_n.jpg" alt="พิธีถวายผ้ากฐิน" />
+                  <span className="imageCaption">
+                    {lang === 'en' ? 'Kathina robe offering ceremony inside the monastery' : 'พิธีถวายผ้ากฐินสามัคคีภายในวัดพุทธอุทยานนาเทิง'}
+                  </span>
+                </div>
+              </div>
+
+              {/* SCHEDULE SUMMARY */}
+              <div className="guideSectionBox">
+                <h3>{lang === 'en' ? 'Event Schedule Summary' : 'สรุปกำหนดการงานบุญ (7 - 8 พฤศจิกายน 2569)'}</h3>
+                <ul>
+                  <li><strong>{lang === 'en' ? 'Nov 7:' : '7 พฤศจิกายน 2569:'}</strong> {lang === 'en' ? 'Procession, opening of charity stalls, evening chanting.' : 'ตั้งองค์กฐิน, ขบวนแห่กฐินสามัคคี, เที่ยวชมโรงทาน และทำวัตรสวดมนต์เย็น'}</li>
+                  <li><strong>{lang === 'en' ? 'Nov 8:' : '8 พฤศจิกายน 2569:'}</strong> {lang === 'en' ? 'Morning alms giving, Kathina offering ceremony, and sharing merits.' : 'พิธีทำบุญตักบาตรยามเช้า, ถวายผ้ากฐินสามัคคี, ถวายภัตตาหาร และรับพร'}</li>
+                </ul>
+              </div>
+
+              <div className="guideContactBox">
+                <h3>{lang === 'en' ? 'For Donations & Enquiries' : 'ร่วมทำบุญหรือสอบถามรายละเอียดเพิ่มเติม'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'Contact the monastery directly for participation and contribution details.'
+                    : 'ท่านสามารถมาร่วมงานบุญด้วยตนเอง หรือติดต่อสอบถามรายละเอียดเพิ่มเติมได้ที่วัดพุทธอุทยานนาเทิง จ.สกลนคร'}
                 </p>
                 <button onClick={() => { goToPage('home'); setTimeout(() => { document.getElementById('contact').scrollIntoView({ behavior: 'smooth' }) }, 100) }} className="primaryContactBtn">
                   {lang === 'en' ? 'Contact Us →' : 'ติดต่อทางวัด →'}
