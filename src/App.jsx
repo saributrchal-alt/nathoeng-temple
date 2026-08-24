@@ -357,7 +357,7 @@ function App() {
             </section>
           </>
         ) : (
-          /* ================= PAGE: VISIT & STAY GUIDE ================= */
+          /* ================= PAGE: VISIT & STAY GUIDE WITH IMAGES ================= */
           <div className="guidePage">
             <div className="guideContainer">
               
@@ -379,7 +379,7 @@ function App() {
                   : 'วัดพุทธอุทยานนาเทิง จัดเตรียมพื้นที่และสภาพแวดล้อมอันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างเรียบง่าย สงบเย็น และเอื้อต่อการเจริญสติภาวนาอย่างแท้จริง'}
               </p>
 
-              {/* SECTION 1: ACCOMMODATION */}
+              {/* SECTION 1: ACCOMMODATION WITH IMAGE */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '1. Accommodation & Facilities' : '1. สถานที่พักสำหรับผู้ปฏิบัติธรรม'}</h3>
                 <p>
@@ -395,7 +395,7 @@ function App() {
                 </div>
               </div>
 
-              {/* SECTION 2: PRACTICE ATMOSPHERE */}
+              {/* SECTION 2: PRACTICE ATMOSPHERE WITH IMAGE */}
               <div className="guideContentBlock">
                 <h3>{lang === 'en' ? '2. Atmosphere of Practice & Meditation' : '2. บรรยากาศการปฏิบัติธรรมและการเจริญสติ'}</h3>
                 <p>
