@@ -40,8 +40,7 @@ const content = {
     contactText:
       'For visits, monastery information and general enquiries, please contact us.',
 
-    footer:
-      'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand'
+    footerSubtitle: 'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand'
   },
 
   th: {
@@ -82,8 +81,7 @@ const content = {
     contactText:
       'สำหรับการเยี่ยมชม ข้อมูลเกี่ยวกับวัด หรือสอบถามรายละเอียด สามารถติดต่อทางวัดได้',
 
-    footer:
-      'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย'
+    footerSubtitle: 'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย'
   }
 }
 
@@ -388,28 +386,23 @@ function App() {
 
       {/* FOOTER */}
       <footer>
-
-        <div className="dharma">☸</div>
-
-        <strong>
-          {lang === 'en'
-            ? 'Buddhist Park Monastery of Nathoeng'
-            : 'วัดพุทธอุทยานนาเทิง'}
-        </strong>
-
-        <p>{t.footer}</p>
-<div
-  style={{
-    width: "100%",
-    textAlign: "center",
-    margin: "20px auto 0",
-    lineHeight: "1.2"
-  }}
->
-  <div>Buddhist Park Monastery of Nathoeng</div>
-  <div>Copyright © 2026</div>
-  <div>Powered by Nathoeng Community of Tech Team</div>
-</div>
+        <div className="footer-content">
+          <div className="dharma">☸</div>
+          <strong>
+            {lang === 'en'
+              ? 'Buddhist Park Monastery of Nathoeng'
+              : 'วัดพุทธอุทยานนาเทิง'}
+          </strong>
+          <p>{t.footerSubtitle}</p>
+          
+          <div className="footer-divider"></div>
+          
+          <div className="footer-bottom-info">
+            <div>Buddhist Park Monastery of Nathoeng</div>
+            <div>Copyright © 2026</div>
+            <div>Powered by Nathoeng Community of Tech Team</div>
+          </div>
+        </div>
       </footer>
 
     </div>
