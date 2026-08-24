@@ -368,7 +368,7 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'event-kathina' ? (
-          /* ================= PAGE: KATHINA EVENT (7-8 Nov 2026 with estimated times) ================= */
+          /* ================= PAGE: KATHINA EVENT (7-8 Nov 2026 fully updated) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
@@ -415,7 +415,7 @@ function App() {
                     <li><strong>เวลา 08.00 น.</strong> - ถวายภัตตาหารเช้าแด่พระสงฆ์ และมีพิธีสำคัญ:
                       <ul style={{ marginTop: '6px', marginBottom: '10px' }}>
                         <li>พิธีถวายกุฏิ <strong>"สกุลคุณสวัสดิ์ 3"</strong></li>
-                        <li>พิธีถวาย <strong>"ที่ระลึกหลวงปู่มั่น"</strong></li>
+                        <li>พิธีถวายกุฏิที่ระลึกหลวงปู่มั่น</li>
                         <li>พิธีถวายพระประธาน</li>
                       </ul>
                     </li>
