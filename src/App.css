@@ -522,17 +522,23 @@ nav a:hover {
 }
 
 .backButton {
+  display: block;              /* ทำให้ปุ่มแยกบรรทัดอิสระ ไม่เบียด */
   background: none;
   border: none;
   color: #9b7226;
   font-size: 15px;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 30px;
+  margin-bottom: 25px;         /* เว้นระยะห่างด้านล่างให้สวยงาม */
   font-weight: 500;
 }
 .backButton:hover {
   text-decoration: underline;
+}
+
+.guideContainer .eyebrow {
+  display: block;
+  margin-bottom: 15px;
 }
 
 .guideContainer h1 {
