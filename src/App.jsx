@@ -454,8 +454,8 @@ function App() {
           
           <div className="footer-bottom-info">
             <div>Buddhist Park Monastery of Nathoeng</div>
-            <div>Copyright © 2026</div>
-            <div>Powered by Nathoeng Community of Tech Team</div>
+            <div>Copyright © 2026 All Rights Reserved</div>
+            <div>Powered by Nathoeng Tech Community</div>
           </div>
         </div>
       </footer>
