@@ -398,7 +398,18 @@ function App() {
         </strong>
 
         <p>{t.footer}</p>
-
+<div
+  style={{
+    width: "100%",
+    textAlign: "center",
+    margin: "20px auto 0",
+    lineHeight: "1.8"
+  }}
+>
+  <div>Buddhist Park Monastery of Nathoeng</div>
+  <div>Copyright © 2026</div>
+  <div>Powered by Nathoeng Community of Tech Team</div>
+</div>
       </footer>
 
     </div>
