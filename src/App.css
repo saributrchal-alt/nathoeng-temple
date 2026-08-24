@@ -519,18 +519,20 @@ nav a:hover {
   padding: 60px 50px;
   border: 1px solid #eeeae2;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  text-align: left; /* จัดเนื้อหาภายในให้ชิดซ้ายเป็นระเบียบ */
 }
 
 .backButton {
-  display: block;              /* ทำให้ปุ่มแยกบรรทัดอิสระ ไม่เบียด */
+  display: inline-block;       /* บังคับให้อยู่บรรทัดบนสุดแยกเด็ดขาด */
   background: none;
   border: none;
   color: #9b7226;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
-  padding: 0;
-  margin-bottom: 25px;         /* เว้นระยะห่างด้านล่างให้สวยงาม */
+  padding: 0 0 5px 0;
+  margin-bottom: 30px;         /* เว้นระยะห่างจากหัวข้อด้านล่าง */
   font-weight: 500;
+  text-align: left;
 }
 .backButton:hover {
   text-decoration: underline;
@@ -539,6 +541,7 @@ nav a:hover {
 .guideContainer .eyebrow {
   display: block;
   margin-bottom: 15px;
+  text-align: left;
 }
 
 .guideContainer h1 {
@@ -547,6 +550,7 @@ nav a:hover {
   color: #302d29;
   margin: 0 0 20px 0;
   line-height: 1.2;
+  text-align: left;
 }
 
 .guideIntro {
