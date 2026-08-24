@@ -1,0 +1,851 @@
+/* =========================================
+   Buddhist Park Monastery of Nathoeng
+   ========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #332f2a;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+button,
+a {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+.site {
+  width: 100%;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+header {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  padding: 28px 7% 0;
+  border-bottom: 1px solid #eeeae2;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 85px;
+}
+
+.brand .dharma {
+  margin-bottom: 10px;
+  color: #9b7226;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.brand strong {
+  display: block;
+  color: #302d29;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.brand span {
+  display: block;
+  margin-top: 6px;
+  color: #777066;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+
+/* LANGUAGE */
+
+.language {
+  position: absolute;
+  top: 36px;
+  right: 7%;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.language button {
+  padding: 4px 2px 6px;
+
+  border: 0;
+  border-bottom: 1px solid transparent;
+
+  background: transparent;
+
+  color: #817b72;
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.language button:hover {
+  color: #9b7226;
+}
+
+.language button.active {
+  color: #9b7226;
+  border-bottom-color: #9b7226;
+}
+
+.language span {
+  color: #b9b3aa;
+}
+
+
+/* NAV */
+
+nav {
+  min-height: 70px;
+  margin-top: 15px;
+
+  border-top: 1px solid #eeeae2;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 30px;
+}
+
+nav a,
+nav a:visited {
+  color: #302d29;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+
+  transition: color 0.2s ease;
+}
+
+nav a:hover {
+  color: #a77a25;
+}
+
+
+/* =========================================
+   HERO
+   ========================================= */
+
+.hero {
+  width: 100%;
+
+  height: min(68vw, 680px);
+  min-height: 480px;
+
+  background-image:
+    url('/images/487812128_689539323451771_1128859791552978185_n.jpg');
+
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+
+/* =========================================
+   COMMON
+   ========================================= */
+
+.eyebrow {
+  margin: 0 0 22px;
+
+  color: #a57929;
+
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.textLink,
+.textLink:visited {
+  display: inline-block;
+
+  margin-top: 14px;
+
+  color: #9b7226;
+
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.textLink:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================
+   ABOUT
+   ========================================= */
+
+.aboutSection {
+  width: 100%;
+
+  /* White breathing space after Hero */
+  margin-top: 85px;
+
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+
+  background: #ffffff;
+}
+
+.aboutImage {
+  min-height: 570px;
+  overflow: hidden;
+}
+
+.aboutImage img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+}
+
+.aboutContent {
+  padding: 85px 9%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.aboutContent h2 {
+  max-width: 520px;
+
+  margin: 0 0 30px;
+
+  color: #302d29;
+
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.aboutContent p {
+  max-width: 560px;
+
+  margin: 0 0 20px;
+
+  color: #625d55;
+
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+
+/* =========================================
+   FEATURE SECTION
+   ========================================= */
+
+.featureSection {
+  width: 100%;
+
+  margin-top: 90px;
+
+  padding: 90px 6%;
+
+  background: #f6f4ef;
+}
+
+.sectionHeading {
+  max-width: 720px;
+
+  margin: 0 auto 55px;
+
+  text-align: center;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+
+  color: #302d29;
+
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+
+/* =========================================
+   IMAGE CARDS
+   ========================================= */
+
+.cards {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 28px;
+}
+
+.imageCard {
+  background: #ffffff;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.cardImage {
+  width: 100%;
+  height: 270px;
+
+  overflow: hidden;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition: transform 0.5s ease;
+}
+
+.imageCard:hover .cardImage img {
+  transform: scale(1.025);
+}
+
+.cardContent {
+  flex: 1;
+
+  padding: 42px 34px 45px;
+
+  text-align: center;
+}
+
+.cardIcon {
+  display: block;
+
+  margin-bottom: 22px;
+
+  color: #a57929;
+
+  font-size: 24px;
+}
+
+.cardContent h3 {
+  margin: 0 0 20px;
+
+  color: #332f2a;
+
+  font-size: 23px;
+  font-weight: 400;
+}
+
+.cardContent p {
+  max-width: 330px;
+
+  margin: 0 auto 26px;
+
+  color: #716b62;
+
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.cardContent a,
+.cardContent a:visited {
+  color: #9b7226;
+
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.cardContent a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================
+   RETREATS / QUIET PRACTICE
+   ========================================= */
+
+.quietSection {
+  width: 100%;
+
+  margin-top: 90px;
+
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+
+  background: #ffffff;
+}
+
+.quietImage {
+  min-height: 540px;
+
+  overflow: hidden;
+}
+
+.quietImage img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+  object-position: center;
+}
+
+.quietContent {
+  padding: 90px 10%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.quietContent h2 {
+  max-width: 520px;
+
+  margin: 0 0 28px;
+
+  color: #302d29;
+
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.quietContent p {
+  max-width: 550px;
+
+  margin: 0;
+
+  color: #6c675f;
+
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+
+/* =========================================
+   SUPPORT
+   ========================================= */
+
+.support {
+  margin-top: 90px;
+
+  padding: 110px 30px;
+
+  background: #ede8dd;
+
+  text-align: center;
+}
+
+.support > div {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.support h2 {
+  margin: 0 0 25px;
+
+  color: #302d29;
+
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+}
+
+.support p:not(.eyebrow) {
+  max-width: 620px;
+
+  margin: 0 auto 35px;
+
+  color: #6c675f;
+
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+.support button {
+  padding: 14px 30px;
+
+  border: 1px solid #8f6a27;
+
+  background: transparent;
+
+  color: #73531e;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.support button:hover {
+  background: #8f6a27;
+  color: #ffffff;
+}
+
+
+/* =========================================
+   CONTACT
+   ========================================= */
+
+.contactSection {
+  max-width: 850px;
+
+  margin: 0 auto;
+
+  padding: 100px 30px;
+
+  text-align: center;
+
+  background: #ffffff;
+}
+
+.contactSection h2 {
+  margin: 0 0 26px;
+
+  color: #302d29;
+
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.contactSection > p:not(.eyebrow) {
+  max-width: 650px;
+
+  margin: 0 auto;
+
+  color: #6c675f;
+
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+.lotus {
+  margin-top: 34px;
+
+  color: #a57929;
+
+  font-size: 25px;
+}
+
+
+/* =========================================
+   FOOTER
+   ========================================= */
+
+footer {
+  width: 100%;
+
+  padding: 75px 30px;
+
+  background: #282723;
+
+  color: #ded9ce;
+
+  text-align: center;
+}
+
+footer .dharma {
+  margin-bottom: 20px;
+
+  color: #c69a46;
+
+  font-size: 30px;
+}
+
+footer strong {
+  display: block;
+
+  color: #ffffff;
+
+  font-size: 20px;
+  font-weight: 400;
+}
+
+footer p {
+  margin: 14px 0 0;
+
+  color: #aaa59b;
+
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+
+/* =========================================
+   TABLET
+   ========================================= */
+
+@media (max-width: 900px) {
+
+  header {
+    padding-left: 5%;
+    padding-right: 5%;
+  }
+
+  .language {
+    right: 5%;
+  }
+
+  nav {
+    gap: 20px;
+    padding: 15px 0;
+  }
+
+
+  .hero {
+    height: 58vw;
+    min-height: 420px;
+  }
+
+
+  .aboutSection {
+    margin-top: 65px;
+
+    grid-template-columns: 1fr;
+  }
+
+  .aboutImage {
+    min-height: 430px;
+  }
+
+  .aboutContent {
+    padding: 70px 7%;
+  }
+
+
+  .featureSection {
+    margin-top: 65px;
+
+    padding: 70px 5%;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+
+    gap: 28px;
+  }
+
+  .cardImage {
+    height: 390px;
+  }
+
+
+  .quietSection {
+    margin-top: 65px;
+
+    grid-template-columns: 1fr;
+  }
+
+  .quietImage {
+    min-height: 430px;
+  }
+
+  .quietContent {
+    padding: 70px 7%;
+  }
+
+
+  .support {
+    margin-top: 65px;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  header {
+    padding: 20px 20px 0;
+  }
+
+
+  .brand {
+    min-height: 95px;
+
+    padding-left: 55px;
+    padding-right: 55px;
+  }
+
+  .brand .dharma {
+    font-size: 24px;
+  }
+
+  .brand strong {
+    font-size: 17px;
+  }
+
+  .brand span {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+
+  .language {
+    top: 22px;
+    right: 18px;
+
+    gap: 6px;
+  }
+
+  .language button {
+    font-size: 11px;
+  }
+
+
+  nav {
+    justify-content: flex-start;
+
+    flex-wrap: nowrap;
+
+    overflow-x: auto;
+
+    min-height: 58px;
+
+    margin-top: 8px;
+
+    padding: 0 4px;
+
+    gap: 22px;
+
+    scrollbar-width: none;
+  }
+
+  nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  nav a,
+  nav a:visited {
+    font-size: 13px;
+  }
+
+
+  .hero {
+    height: 62vh;
+
+    min-height: 430px;
+    max-height: 600px;
+
+    background-position: center center;
+  }
+
+
+  .aboutSection {
+    margin-top: 45px;
+  }
+
+  .aboutImage {
+    min-height: 320px;
+  }
+
+  .aboutContent {
+    padding: 58px 24px;
+  }
+
+  .aboutContent h2 {
+    font-size: 2rem;
+  }
+
+  .aboutContent p {
+    font-size: 15px;
+  }
+
+
+  .featureSection {
+    margin-top: 45px;
+
+    padding: 60px 18px;
+  }
+
+  .sectionHeading {
+    margin-bottom: 38px;
+  }
+
+  .sectionHeading h2 {
+    font-size: 2rem;
+  }
+
+
+  .cardImage {
+    height: 250px;
+  }
+
+  .cardContent {
+    padding: 38px 24px 42px;
+  }
+
+
+  .quietSection {
+    margin-top: 45px;
+  }
+
+  .quietImage {
+    min-height: 320px;
+  }
+
+  .quietContent {
+    padding: 60px 24px;
+  }
+
+  .quietContent h2 {
+    font-size: 2rem;
+  }
+
+  .quietContent p {
+    font-size: 15px;
+  }
+
+
+  .support {
+    margin-top: 45px;
+
+    padding: 75px 24px;
+  }
+
+
+  .contactSection {
+    padding: 75px 24px;
+  }
+
+
+  footer {
+    padding: 60px 24px;
+  }
+}
