@@ -88,12 +88,12 @@ const content = {
 function App() {
   const [lang, setLang] = useState('th')
   const [currentPage, setCurrentPage] = useState('home')
-  const [menuOpen, setMenuOpen] = useState(false) // สถานะเปิด-ปิดเมนวมือถือ
+  const [menuOpen, setMenuOpen] = useState(false)
   const t = content[lang]
 
   const goToPage = (page) => {
     setCurrentPage(page)
-    setMenuOpen(false) // ปิดเมนูเมื่อเปลี่ยนหน้า
+    setMenuOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -127,7 +127,7 @@ function App() {
           </button>
         </div>
 
-        {/* ปุ่มแฮมเบอร์เกอร์สำหรับมือถือ (แสดงเฉพาะหน้าจอเล็ก) */}
+        {/* Hamburger Menu Button */}
         <button 
           className="menuToggleBtn" 
           onClick={() => setMenuOpen(!menuOpen)}
@@ -136,14 +136,14 @@ function App() {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        {/* เมนูนำทาง (ปรับให้เปิด-ปิดได้บนมือถือ) */}
+        {/* Navigation */}
         <nav className={menuOpen ? 'navOpen' : ''}>
           {t.nav.map((item) => (
             <a 
               href={item.href} 
               key={item.href}
               onClick={(e) => {
-                setMenuOpen(false) // คลิกแล้วปิดเมนอูอัตโนมัติ
+                setMenuOpen(false)
                 if (item.href === '#contact') {
                   e.preventDefault()
                   goToPage('contact-page')
@@ -368,20 +368,53 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'event-kathina' ? (
-          /* ================= PAGE: KATHINA EVENT ================= */
+          /* ================= PAGE: KATHINA EVENT WITH DETAILED SCHEDULE ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
                 ← {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
               </button>
-              <span className="eyebrow">{lang === 'en' ? 'UPCOMING EVENT' : 'ข่าวประชาสัมพันธ์งานบุญใหญ่'}</span>
-              <h1>{lang === 'en' ? 'Kathina Ceremony 2026' : 'ขอเชิญร่วมงานบุญกฐินสามัคคี ประจำปี 2569'}</h1>
-              <p className="guideIntro">7 - 8 พฤศจิกายน 2569</p>
-              
+              <span className="eyebrow">ข่าวประชาสัมพันธ์งานบุญใหญ่ · พ.ศ. 2569</span>
+              <h1>ขอเชิญร่วมงานบุญกฐินสามัคคี ประจำปี 2569</h1>
+              <p className="guideIntro">
+                วัดพุทธอุทยานนาเทิง จังหวัดสกลนคร ขออำนวยพรและบอกบุญมายังพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน มาร่วมบำเพ็ญกุศลในงานบุญกฐินสามัคคี ประจำปีพุทธศักราช 2569 เพื่อสมทบทุนทำนุบำรุงพระพุทธศาสนาและพัฒนาเสนาสนะภายในวัด
+              </p>
+
+              {/* กำหนดการอย่างละเอียด */}
+              <div className="guideSectionBox" style={{ background: '#f6f4ef', padding: '25px 30px', borderRadius: '4px', marginBottom: '40px', border: '1px solid #eeeae2' }}>
+                <h3 style={{ borderBottom: '1px solid #dcd5c8', paddingBottom: '10px', marginTop: 0, color: '#302d29' }}>
+                  📋 กำหนดการงานบุญกฐินสามัคคี ประจำปี 2569
+                </h3>
+                
+                <div style={{ marginTop: '20px' }}>
+                  <h4 style={{ color: '#9b7226', fontSize: '1.1rem', marginBottom: '10px' }}>
+                    วันแรก: วันศุกร์ที่ ... พฤศจิกายน 2569 (วันตั้งองค์กฐิน / สมโภช)
+                  </h4>
+                  <ul style={{ marginBottom: '20px', lineHeight: '1.8' }}>
+                    <li><strong>เวลา 13.00 น.</strong> - คณะศรัทธาญาติโยมเดินทางมาถึงวัดพุทธอุทยานนาเทิง พร้อมใจกันตั้งองค์กฐินและเครื่องบริวารกฐิน ณ มณฑลพิธีของวัด</li>
+                    <li><strong>เวลา 15.30 น.</strong> - เปิดโรงทานการกุศลจากผู้มีจิตศรัทธา เพื่อต้อนรับคณะศรัทธาและผู้มาร่วมงาน (อิ่มบุญอิ่มใจร่วมกัน)</li>
+                    <li><strong>เวลา 18.00 น.</strong> - คณะสงฆ์และคณะศรัทธาพร้อมกัน เจริญพระพุทธมนต์ ทำวัตรสวดมนต์เย็น และฟังพระธรรมเทศนา / ฟังเรื่องราวความเป็นมาของกฐิน</li>
+                  </ul>
+
+                  <h4 style={{ color: '#9b7226', fontSize: '1.1rem', marginBottom: '10px' }}>
+                    วันที่สอง: วันเสาร์ที่ ... พฤศจิกายน 2569 (วันทอดกฐินสามัคคี)
+                  </h4>
+                  <ul style={{ lineHeight: '1.8' }}>
+                    <li><strong>เวลา 07.00 น.</strong> - พิธีทำบุญตักบาตรข้าวสารอาหารแห้งแด่พระภิกษุสงฆ์ยามเช้า และถวายภัตตาหารเช้า</li>
+                    <li><strong>เวลา 09.00 น.</strong> - ขบวนแห่ผ้ากฐินสามัคคีรอบมณฑลพิธี ด้วยความเบิกบานใจและสามัคคี</li>
+                    <li><strong>เวลา 09.30 น.</strong> - เริ่มพิธีทอดกฐินสามัคคี (จุดธูปเทียนบูชาพระรัตนตรัย สมาทานศีล ตัวแทนกล่าวคำถวายผ้ากฐิน พระสงฆ์ทำพิธีอปโลกน์กฐิน และถวายจตุปัจจัยไทยธรรม)</li>
+                    <li><strong>เวลา 11.00 น.</strong> - พระสงฆ์อนุโมทนา / กรวดน้ำรับพร เสร็จสิ้นพิธีทอดกฐิน</li>
+                    <li><strong>เวลา 11.30 น.</strong> - เชิญชวนคณะศรัทธาทุกท่านร่วมรับประทานอาหารกลางวันและร่วมโรงทานภายในวัด</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* ภาพประกอบในงาน */}
               <div className="guideContentBlock">
-                <h3>1. ขบวนแห่กฐินสามัคคี</h3>
+                <h3>1. ขบวนแห่กฐินสามัคคีอันอบอุ่น</h3>
                 <div className="guideImageFrame">
                   <img src="/images/561914583_836239988781703_4146873103108656226_n.jpg" alt="ขบวนแห่กฐิน" />
+                  <span className="imageCaption">ขบวนแห่กฐินสามัคคีตามประเพณีไทย</span>
                 </div>
               </div>
 
@@ -389,13 +422,15 @@ function App() {
                 <h3>2. โรงทานอิ่มบุญอิ่มใจ</h3>
                 <div className="guideImageFrame">
                   <img src="/images/487913616_689541166784920_1785354843670392147_n.jpg" alt="โรงทาน" />
+                  <span className="imageCaption">บรรยากาศโรงทานการกุศลในงาน</span>
                 </div>
               </div>
 
               <div className="guideContentBlock">
-                <h3>3. พิธีทำบุญตักบาตร (8 พ.ย.)</h3>
+                <h3>3. พิธีทำบุญตักบาตรยามเช้า</h3>
                 <div className="guideImageFrame">
                   <img src="/images/560188892_836240912114944_3910816619043716260_n.jpg" alt="ตักบาตร" />
+                  <span className="imageCaption">ทำบุญตักบาตรข้าวสารอาหารแห้ง</span>
                 </div>
               </div>
 
@@ -403,8 +438,18 @@ function App() {
                 <h3>4. พิธีถวายผ้ากฐินสามัคคี</h3>
                 <div className="guideImageFrame">
                   <img src="/images/561340868_836253482113687_5055104485744791787_n.jpg" alt="ถวายผ้ากฐิน" />
+                  <span className="imageCaption">พิธีถวายผ้ากฐินภายในวัดพุทธอุทยานนาเทิง</span>
                 </div>
               </div>
+
+              <div className="guideContactBox">
+                <h3>ติดต่อสอบถามข้อมูลการมาร่วมงาน</h3>
+                <p>ท่านสามารถมาร่วมงานบุญด้วยตนเอง หรือติดต่อสอบถามรายละเอียดเพิ่มเติมได้ที่วัดพุทธอุทยานนาเทิง จ.สกลนคร</p>
+                <button onClick={() => goToPage('contact-page')} className="primaryContactBtn">
+                  ดูแผนที่และช่องทางติดต่อ →
+                </button>
+              </div>
+
             </div>
           </div>
         ) : (
