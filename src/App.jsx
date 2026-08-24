@@ -87,7 +87,7 @@ const content = {
 
 function App() {
   const [lang, setLang] = useState('en')
-  const [currentPage, setCurrentPage] = useState('home') // 'home', 'visit-guide', 'event-kathina'
+  const [currentPage, setCurrentPage] = useState('home') // 'home', 'visit-guide', 'event-kathina', 'contact-page'
   const t = content[lang]
 
   const goToPage = (page) => {
@@ -136,7 +136,10 @@ function App() {
               href={item.href} 
               key={item.href}
               onClick={(e) => {
-                if (currentPage !== 'home') {
+                if (item.href === '#contact') {
+                  e.preventDefault()
+                  goToPage('contact-page')
+                } else if (currentPage !== 'home') {
                   e.preventDefault()
                   goToPage('home')
                   setTimeout(() => {
@@ -357,6 +360,13 @@ function App() {
 
               <p>{t.contactText}</p>
 
+              {/* ปุ่มคลิกเพื่อไปหน้าแผนที่และรายละเอียดการติดต่อ */}
+              <div style={{ marginTop: '25px' }}>
+                <button onClick={() => goToPage('contact-page')} className="primaryContactBtn">
+                  {lang === 'en' ? 'View Map & Contact Details →' : 'ดูแผนที่และช่องทางการติดต่อ →'}
+                </button>
+              </div>
+
               <div className="lotus">❦</div>
 
             </section>
@@ -430,14 +440,14 @@ function App() {
                     ? 'Please reach out to the monastery in advance to plan your visit.'
                     : 'ผู้ที่สนใจสามารถติดต่อสอบถามรายละเอียด หรือจองเวลาเข้าปฏิบัติธรรมล่วงหน้าได้ทางช่องทางติดต่อของวัด'}
                 </p>
-                <button onClick={() => { goToPage('home'); setTimeout(() => { document.getElementById('contact').scrollIntoView({ behavior: 'smooth' }) }, 100) }} className="primaryContactBtn">
-                  {lang === 'en' ? 'Contact Us →' : 'ติดต่อทางวัด →'}
+                <button onClick={() => { goToPage('contact-page'); }} className="primaryContactBtn">
+                  {lang === 'en' ? 'Contact Details & Map →' : 'ดูแผนที่และช่องทางติดต่อ →'}
                 </button>
               </div>
 
             </div>
           </div>
-        ) : (
+        ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (งานบุญกฐินสามัคคี 2569) ================= */
           <div className="guidePage">
             <div className="guideContainer">
@@ -462,7 +472,7 @@ function App() {
 
               {/* 1. ขบวนแห่กฐิน */}
               <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '1. Grand Procession (Kathina Parade)' : '1. ขบวนแห่กฐินสามัคคีอัน  เบิกบานใจ'}</h3>
+                <h3>{lang === 'en' ? '1. Grand Procession (Kathina Parade)' : '1. ขบวนแห่กฐินสามัคคีอันเบิกบานใจ'}</h3>
                 <p>
                   {lang === 'en'
                     ? 'The joyful traditional procession filled with community devotion, music, and cultural celebration.'
@@ -540,9 +550,109 @@ function App() {
                     ? 'Contact the monastery directly for participation and contribution details.'
                     : 'ท่านสามารถมาร่วมงานบุญด้วยตนเอง หรือติดต่อสอบถามรายละเอียดเพิ่มเติมได้ที่วัดพุทธอุทยานนาเทิง จ.สกลนคร'}
                 </p>
-                <button onClick={() => { goToPage('home'); setTimeout(() => { document.getElementById('contact').scrollIntoView({ behavior: 'smooth' }) }, 100) }} className="primaryContactBtn">
-                  {lang === 'en' ? 'Contact Us →' : 'ติดต่อทางวัด →'}
+                <button onClick={() => { goToPage('contact-page'); }} className="primaryContactBtn">
+                  {lang === 'en' ? 'Contact Details & Map →' : 'ดูแผนที่และช่องทางติดต่อ →'}
                 </button>
+              </div>
+
+            </div>
+          </div>
+        ) : (
+          /* ================= PAGE: CONTACT & MAP (หน้าแผนที่และช่องทางติดต่อ) ================= */
+          <div className="guidePage">
+            <div className="guideContainer">
+              
+              <button className="backButton" onClick={() => goToPage('home')}>
+                ← {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+              </button>
+
+              <span className="eyebrow">
+                {lang === 'en' ? 'LOCATION & CONTACT' : 'แผนที่และการเดินทาง'}
+              </span>
+
+              <h1>
+                {lang === 'en' ? 'Wat Phuttha Uthayan Na Thoeng' : 'วัดพุทธอุทยานนาเทิง'}
+              </h1>
+
+              <p className="guideIntro">
+                {lang === 'en'
+                  ? 'We warmly welcome all visitors and devotees to our monastery. Below are our location details, map, and official contact channels.'
+                  : 'วัดพุทธอุทยานนาเทิง ยินดีต้อนรับพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน ท่านสามารถตรวจสอบแผนที่ ที่อยู่ และช่องทางการติดต่อของทางวัดได้ด้านล่างนี้'}
+              </p>
+
+              {/* ADDRESS & INFO BLOCK */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? 'Monastery Address' : 'ที่อยู่ของวัด'}</h3>
+                <p style={{ fontSize: '16px', lineHeight: '1.8', color: '#302d29', fontWeight: '500' }}>
+                  วัดพุทธอุทยานนาเทิง (Buddhist Park Monastery of Nathoeng)<br />
+                  231 หมู่ 2 ตำบลธาตุ อำเภอวานรนิวาส จังหวัดสกลนคร 47120 ประเทศไทย
+                </p>
+                <p style={{ fontSize: '15px', color: '#625d55' }}>
+                  {lang === 'en' ? 'Telephone: 095 138 0829' : 'เบอร์โทรศัพท์ติดต่อ: 095-138-0829'}
+                </p>
+              </div>
+
+              {/* GOOGLE MAPS EMBED PREVIEW (FREE & NO API KEY REQUIRED) */}
+              <div className="guideContentBlock">
+                <h3>{lang === 'en' ? 'Location Map' : 'แผนที่ตั้งของวัด'}</h3>
+                <p style={{ fontSize: '14px', color: '#625d55', marginBottom: '15px' }}>
+                  {lang === 'en' 
+                    ? 'Coordinates: 17.621679, 103.653418 (Click view larger map or directions below)'
+                    : 'พิกัด GPS: 17.621679, 103.653418 (ท่านสามารถคลิกดูแผนที่ขนาดใหญ่หรือขอเส้นทางนำทางได้ทันที)'}
+                </p>
+                
+                <div className="mapContainer" style={{ width: '100%', height: '400px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #eeeae2' }}>
+                  <iframe 
+                    title="Wat Phuttha Uthayan Na Thoeng Map"
+                    src="https://maps.google.com/maps?q=17.621679,103.653418&z=15&output=embed" 
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }} 
+                    allowFullScreen="" 
+                    loading="lazy"
+                  ></iframe>
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                  <a 
+                    href="https://maps.google.com/?q=17.621679,103.653418" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="primaryContactBtn"
+                    style={{ display: 'inline-block', textDecoration: 'none' }}
+                  >
+                    {lang === 'en' ? 'Open in Google Maps / Get Directions →' : 'เปิดใน Google Maps เพื่อนำทาง →'}
+                  </a>
+                </div>
+              </div>
+
+              {/* SOCIAL MEDIA / CONTACT CHANNELS (HIDDEN URL) */}
+              <div className="guideSectionBox" style={{ marginTop: '40px', textAlign: 'center' }}>
+                <h3>{lang === 'en' ? 'Official Social Media' : 'ช่องทางติดต่อออนไลน์อย่างเป็นทางการ'}</h3>
+                <p style={{ fontSize: '15px', color: '#625d55', marginBottom: '20px' }}>
+                  {lang === 'en'
+                    ? 'Stay connected with our monastery activities and announcements on Facebook.'
+                    : 'ติดตามข่าวสาร งานบุญ และกิจกรรมต่างๆ ของวัดได้ทางหน้าเพจ Facebook อย่างเป็นทางการของวัด'}
+                </p>
+                
+                <a 
+                  href="https://web.facebook.com/profile.php?id=100071871291608" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    background: '#1877f2',
+                    color: '#ffffff',
+                    padding: '12px 30px',
+                    borderRadius: '4px',
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    fontSize: '15px',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {lang === 'en' ? 'Visit Official Facebook Page' : 'เยี่ยมชมเพจ Facebook ของวัด'}
+                </a>
               </div>
 
             </div>
