@@ -47,7 +47,7 @@ const content = {
     kathinaTitle: 'Annual Kathina Robe Offering Ceremony 2026',
     kathinaIntro: 'Buddhist Park Monastery of Nathoeng, Sakon Nakhon warmly invites all devotees and friends to join the annual Kathina Robe Offering Ceremony for the year 2026, to support the monastery and community developments.',
     chairpersonTitle: '🙏 Kathina Chairperson 2026',
-    chairpersonName: 'Mr. Pichai Sakunkunsawat and Family & Relatives',
+    chairpersonName: 'Mr. Pichai - Mrs. Supharat Sakunkunsawat and Family & Relatives',
     scheduleTitle: '📋 Kathina Ceremony Schedule (November 7 - 8, 2026)',
     day1Title: 'Day 1: Friday, November 7, 2026 (Kathina Foundation & Celebration)',
     day1List: [
@@ -65,8 +65,8 @@ const content = {
       '• Offering of the Principal Buddha Statue',
       '09.00 AM: Formation of the Kathina procession to the monastery.',
       '09.30 AM: Kathina Robe Offering Ceremony and presentation of offerings.',
+      '10.00 AM: Monks chant blessings and transfer of merits, concluding the Kathina offering ceremony.',
       '10.30 AM: Auspicious lucky draw activity for blessed items from the ceremony (such as Kathinaบริวาร, sugarcane, bananas, Kathina flags, etc.).',
-      '11.00 AM: Monks chant blessings and transfer of merits.',
       '11.30 AM: Vegetarian and general food stalls (Rong Than) open for all participants.'
     ],
     imgCaption1: 'Warm Kathina Procession',
@@ -137,7 +137,7 @@ const content = {
     kathinaTitle: 'ขอเชิญร่วมงานบุญกฐินสามัคคี ประจำปี 2569',
     kathinaIntro: 'วัดพุทธอุทยานนาเทิง จังหวัดสกลนคร ขออำนวยพรและบอกบุญมายังพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน มาร่วมบำเพ็ญกุศลในงานบุญกฐินสามัคคี ประจำปีพุทธศักราช 2569 เพื่อสมทบทุนทำนุบำรุงพระพุทธศาสนาและพัฒนาเสนาสนะภายในวัด ระหว่างวันที่ 7 - 8 พฤศจิกายน 2569 นี้',
     chairpersonTitle: '🙏 ประธานกฐินสามัคคี ประจำปี 2569',
-    chairpersonName: 'คุณพิชัย สกุลคุณสวัสดิ์ พร้อมด้วยครอบครัวและญาติพี่น้อง',
+    chairpersonName: 'คุณพิชัย - คุณศุภรัตน์ สกุลคุณสวัสดิ์ พร้อมด้วยครอบครัวและญาติพี่น้อง',
     scheduleTitle: '📋 กำหนดการงานบุญกฐินสามัคคี (7 - 8 พฤศจิกายน 2569)',
     day1Title: 'วันแรก: วันศุกร์ที่ 7 พฤศจิกายน 2569 (วันตั้งองค์กฐิน / สมโภช)',
     day1List: [
@@ -155,8 +155,8 @@ const content = {
       '• พิธีถวายพระประธาน',
       'เวลา 09.00 น. - ตั้งขบวนแห่กฐินและเคลื่อนขบวนแห่มายังวัดเพื่อทำพิธีถวายผ้ากฐินสามัคคี',
       'เวลา 09.30 น. - ประกอบพิธีทอดกฐินสามัคคี / ถวายจตุปัจจัยไทยธรรม',
+      'เวลา 10.00 น. - พระสงฆ์อนุโมทนา / กรวดน้ำรับพร เป็นอันเสร็จสิ้นพิธีทอดกฐิน',
       'เวลา 10.30 น. - กิจกรรมมงคล: ร่วมสนุกกับการจับฉลากรับของมงคลจากงาน เช่น เครื่องบริวารกฐิน, อ้อย, กล้วย, ธงกฐิน ฯลฯ',
-      'เวลา 11.00 น. - พระสงฆ์อนุโมทนา / กรวดน้ำรับพร เป็นอันเสร็จสิ้นพิธีทอดกฐิน',
       'เวลา 11.30 น. - เชิญชวนคณะศรัทธาทุกท่านร่วมรับประทานอาหารกลางวันและร่วมโรงทานภายในวัด'
     ],
     imgCaption1: 'ขบวนแห่กฐินสามัคคีตามประเพณีไทย',
@@ -190,7 +190,6 @@ function App() {
   const [copied, setCopied] = useState(false)
   const t = content[lang]
 
-  // รองรับการอ่านค่า Hash จาก URL เมื่อโหลดหน้าเว็บหรือกดปุ่ม Back/Forward
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '')
@@ -201,7 +200,7 @@ function App() {
       }
     }
 
-    handleHashChange() // เช็คตอนเปิดเว็บครั้งแรก
+    handleHashChange()
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
@@ -209,7 +208,7 @@ function App() {
   const goToPage = (page) => {
     setCurrentPage(page)
     setMenuOpen(false)
-    window.location.hash = page // เปลี่ยน Hash ใน URL ทันที
+    window.location.hash = page
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
