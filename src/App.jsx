@@ -198,6 +198,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState('home')
   const [menuOpen, setMenuOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [user, setUser] = useState(null)
   const t = content[lang]
 
   useEffect(() => {
@@ -225,6 +226,30 @@ function App() {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  // ตรวจสอบ Callback จาก LINE Login
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const code = urlParams.get('code')
+    if (code) {
+      setUser({
+        name: 'ผู้ใช้งาน LINE'
+      })
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash)
+    }
+  }, [])
+
+  const handleLineLogin = () => {
+    const channelId = "2011256873" // <-- ใส่ Channel ID ของท่านจาก LINE Developers
+    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#home")
+    const state = "random_state_123"
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
+    window.location.href = lineAuthUrl
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+  }
 
   const goToPage = (page) => {
     setCurrentPage(page)
@@ -255,20 +280,54 @@ function App() {
           </div>
         </div>
 
-        <div className="language">
-          <button
-            className={lang === 'en' ? 'active' : ''}
-            onClick={() => setLang('en')}
-          >
-            EN
-          </button>
-          <span>/</span>
-          <button
-            className={lang === 'th' ? 'active' : ''}
-            onClick={() => setLang('th')}
-          >
-            TH
-          </button>
+        {/* ส่วนจัดการภาษา และ LINE Login */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="language">
+            <button
+              className={lang === 'en' ? 'active' : ''}
+              onClick={() => setLang('en')}
+            >
+              EN
+            </button>
+            <span>/</span>
+            <button
+              className={lang === 'th' ? 'active' : ''}
+              onClick={() => setLang('th')}
+            >
+              TH
+            </button>
+          </div>
+
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
+              <span style={{ fontWeight: '500' }}>{user.name}</span>
+              <button 
+                onClick={handleLogout}
+                style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
+              >
+                {lang === 'en' ? 'Logout' : 'ออก'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleLineLogin}
+              style={{
+                background: '#06c755',
+                color: '#fff',
+                border: 'none',
+                padding: '5px 12px',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              🟢 {lang === 'en' ? 'LINE Login' : 'เข้าสู่ระบบ LINE'}
+            </button>
+          )}
         </div>
 
         {/* Hamburger Menu Button */}
@@ -744,7 +803,6 @@ function App() {
             <div>Copyright © 2026 All Rights Reserved</div>
             <div>Powered by Nathoeng Community Tech Team</div>
             
-            {/* ลิงก์นโยบายและเงื่อนไข อยู่บรรทัดล่างสุด ไม่มีขีดเส้น ไม่มีกรอบ */}
             <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center', gap: '15px', alignItems: 'center' }}>
               <button 
                 onClick={() => goToPage('privacy-policy')}
