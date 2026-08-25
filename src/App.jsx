@@ -195,7 +195,7 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '')
-      if (hash === 'event-kathina' || hash === 'teachings-page' || hash === 'visit-guide' || hash === 'contact-page') {
+      if (hash === 'event-kathina' || hash === 'teachings-page' || hash === 'visit-guide' || hash === 'contact-page' || hash === 'booking-page') {
         setCurrentPage(hash)
       } else {
         setCurrentPage('home')
@@ -278,6 +278,9 @@ function App() {
                 } else if (item.href === '#events') {
                   e.preventDefault()
                   goToPage('event-kathina')
+                } else if (item.href === '#retreats') {
+                  e.preventDefault()
+                  goToPage('visit-guide') // ให้วิ่งมาหน้าระเบียบการและสถานที่พักก่อน
                 } else if (currentPage !== 'home') {
                   e.preventDefault()
                   goToPage('home')
@@ -398,7 +401,7 @@ function App() {
                 <h2>{t.retreats}</h2>
                 <p>{t.retreatsText}</p>
                 <button onClick={() => goToPage('visit-guide')} className="textLinkButton">
-                  {lang === 'en' ? 'Plan your visit →' : 'ข้อมูลการมาปฏิบัติธรรม →'}
+                  {lang === 'en' ? 'Read guidelines & book stay →' : 'อ่านระเบียบการและจองเข้าพัก →'}
                 </button>
               </div>
             </section>
@@ -468,31 +471,122 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'visit-guide' ? (
-          /* ================= PAGE: VISIT & STAY GUIDE ================= */
+          /* ================= PAGE: VISIT & STAY GUIDE (ระเบียบการและสถานที่พัก) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
                 {content[lang].backHome}
               </button>
               <span className="eyebrow">{lang === 'en' ? 'VISIT & STAY GUIDELINES' : 'ระเบียบการและสถานที่พัก'}</span>
-              <h1>{lang === 'en' ? 'Monastery Stay' : 'สถานที่พักและบรรยากาศการปฏิบัติธรรม'}</h1>
+              <h1>{lang === 'en' ? 'Monastery Stay' : 'ระเบียบการเข้าพักและบรรยากาศการปฏิบัติธรรม'}</h1>
               <p className="guideIntro">
-                {lang === 'en' ? 'A peaceful and supportive environment for practitioners.' : 'วัดพุทธอุทยานนาเทิง จัดเตรียมพื้นที่อันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างสงบเย็น'}
+                {lang === 'en' 
+                  ? 'A peaceful and supportive environment for practitioners. Please read our guidelines before booking your stay.' 
+                  : 'วัดพุทธอุทยานนาเทิง จัดเตรียมพื้นที่อันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างสงบเย็น กรุณาอ่านระเบียบปฏิบัติและทำความเข้าใจก่อนทำการจองเข้าพัก'}
               </p>
+              
               <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '1. Accommodation' : '1. สถานที่พักสำหรับผู้ปฏิบัติธรรม'}</h3>
+                <h3>{lang === 'en' ? '1. Accommodation' : '1. ระเบียบการเข้าพักและข้อปฏิบัติทั่วไป'}</h3>
+                <p>
+                  {lang === 'en' 
+                    ? 'Simple and quiet accommodations are provided. Practitioners are expected to maintain silence, observe precepts, and participate in monastery chores.'
+                    : 'ทางวัดจัดเตรียมอาคารที่พักและกุฏิสำหรับผู้ปฏิบัติธรรม ผู้เข้าพักทุกท่านต้องรักษาศีล สำรวมระวังในกายวาจาใจ และช่วยเหลืองานภายในวัดตามความเหมาะสม'}
+                </p>
                 <div className="guideImageFrame">
                   <img src="/images/8301.jpg" alt="Accommodation" />
-                  <span className="imageCaption">{lang === 'en' ? 'Peaceful area' : 'บรรยากาศอาคารที่พัก'}</span>
+                  <span className="imageCaption">{lang === 'en' ? 'Peaceful area' : 'บรรยากาศอาคารที่พักและธรรมชาติภายในวัด'}</span>
                 </div>
               </div>
+
               <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '2. Practice Atmosphere' : '2. บรรยากาศการปฏิบัติธรรม'}</h3>
+                <h3>{lang === 'en' ? '2. Practice Atmosphere' : '2. บรรยากาศการปฏิบัติภาวนา'}</h3>
+                <p>
+                  {lang === 'en' 
+                    ? 'Dedicated space for meditation, walking meditation, and listening to Dhamma teachings.'
+                    : 'พื้นที่โดยรอบมีความสงบเงียบ เหมาะแก่การเดินจงกรม นั่งสมาธิภาวนา และฟังธรรมเพื่อขัดเกลาจิตใจ'}
+                </p>
                 <div className="guideImageFrame">
                   <img src="/images/559063252_835057645566604_50190803944267715_n.jpg" alt="Practice" />
-                  <span className="imageCaption">{lang === 'en' ? 'Meditation' : 'การเจริญสติภาวนา'}</span>
+                  <span className="imageCaption">{lang === 'en' ? 'Meditation' : 'การเจริญสติและภาวนาในบรรยากาศร่มรื่น'}</span>
                 </div>
               </div>
+
+              {/* ปุ่มกดเพื่อไปหน้าจองเข้าพัก (หลังอ่านระเบียบการเสร็จ) */}
+              <div className="guideContactBox" style={{ marginTop: '40px', background: '#f6f4ef', padding: '30px', textAlign: 'center', borderRadius: '4px' }}>
+                <h3 style={{ marginBottom: '12px', fontSize: '1.2rem' }}>
+                  {lang === 'en' ? 'Ready to join us?' : 'อ่านระเบียบการและเข้าใจเรียบร้อยแล้วใช่หรือไม่?'}
+                </h3>
+                <p style={{ marginBottom: '20px', color: '#625d55' }}>
+                  {lang === 'en' 
+                    ? 'You can now proceed to submit your stay reservation request.' 
+                    : 'ท่านสามารถกดปุ่มด้านล่างนี้เพื่อกรอกรายละเอียดส่งคำขอจองวันเข้าพักปฏิบัติธรรมกับทางวัดได้เลยครับ'}
+                </p>
+                <button onClick={() => goToPage('booking-page')} className="primaryContactBtn" style={{ padding: '14px 28px', fontSize: '15px' }}>
+                  {lang === 'en' ? 'Proceed to Book Stay →' : 'กรอกฟอร์มจองเข้าปฏิบัติธรรม →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : currentPage === 'booking-page' ? (
+          /* ================= PAGE: BOOKING FORM ================= */
+          <div className="guidePage">
+            <div className="guideContainer">
+              <button className="backButton" onClick={() => goToPage('visit-guide')}>
+                {lang === 'en' ? '← Back to Guidelines' : '← กลับไปหน้าระเบียบการ'}
+              </button>
+              <span className="eyebrow">{lang === 'en' ? 'MONASTERY STAY RESERVATION' : 'ระบบจองเข้าพักปฏิบัติธรรม'}</span>
+              <h1>{lang === 'en' ? 'Book Your Stay' : 'กรอกข้อมูลการจองเข้าพัก'}</h1>
+              <p className="guideIntro">
+                {lang === 'en' 
+                  ? 'Please fill in your details below to request a stay for meditation and practice.' 
+                  : 'กรุณากรอกข้อมูลส่วนตัวและช่วงเวลาที่ต้องการเข้ามาปฏิบัติธรรม เพื่อให้ทางวัดเตรียมความพร้อม'}
+              </p>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                alert(lang === 'th' ? 'ส่งคำขอจองสำเร็จ ทางวัดจะติดต่อกลับ' : 'Reservation request submitted successfully!');
+                goToPage('home');
+              }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
+                    {lang === 'th' ? 'ชื่อ - นามสกุล' : 'Full Name'}
+                  </label>
+                  <input type="text" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder={lang === 'th' ? 'ระบุชื่อและนามสกุลของคุณ' : 'Enter your full name'} />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
+                    {lang === 'th' ? 'เบอร์โทรศัพท์ (ที่ติดต่อได้)' : 'Phone Number'}
+                  </label>
+                  <input type="tel" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="0xx-xxx-xxxx" />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
+                      {lang === 'th' ? 'วันที่ต้องการเข้าพัก' : 'Check-in Date'}
+                    </label>
+                    <input type="date" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
+                      {lang === 'th' ? 'วันที่สิ้นสุดการพัก' : 'Check-out Date'}
+                    </label>
+                    <input type="date" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '25px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
+                    {lang === 'th' ? 'จุดประสงค์ / หมายเหตุเพิ่มเติม' : 'Purpose / Notes'}
+                  </label>
+                  <textarea rows="4" style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder={lang === 'th' ? 'เช่น ถือศีล 8, ปฏิบัติภาวนา 3 วัน' : 'e.g., Meditation retreat for 3 days'}></textarea>
+                </div>
+
+                <button type="submit" className="primaryContactBtn" style={{ width: '100%', padding: '14px' }}>
+                  {lang === 'th' ? 'ยืนยันการส่งคำขอจอง' : 'Submit Reservation'}
+                </button>
+              </form>
             </div>
           </div>
         ) : currentPage === 'event-kathina' ? (
