@@ -730,7 +730,7 @@ function App() {
         )}
       </main>
 
-      {/* FOOTER - บังคับแสดงผลอย่างชัดเจน */}
+      {/* FOOTER */}
       <footer style={{ background: '#1c1a17', color: '#fff', padding: '40px 20px', textAlign: 'center', borderTop: '1px solid #332f2a' }}>
         <div className="footer-content" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="dharma" style={{ fontSize: '24px', marginBottom: '10px', color: '#c5a880' }}>☸</div>
@@ -739,27 +739,31 @@ function App() {
           </strong>
           <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '20px' }}>{t.footerSubtitle}</p>
           
-          {/* ลิงก์นโยบายและความเป็นส่วนตัว / เงื่อนไขการใช้งาน */}
-          <div style={{ margin: '20px auto', padding: '15px 0', borderTop: '1px solid #3a3530', borderBottom: '1px solid #3a3530', maxWidth: '450px', display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center' }}>
-            <button 
-              onClick={() => goToPage('privacy-policy')}
-              style={{ background: 'transparent', border: 'none', color: '#ffecb3', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline', fontWeight: '500' }}
-            >
-              {lang === 'en' ? 'Privacy Policy' : '🔒 นโยบายความเป็นส่วนตัว'}
-            </button>
-            <span style={{ color: '#666' }}>|</span>
-            <button 
-              onClick={() => goToPage('terms-page')}
-              style={{ background: 'transparent', border: 'none', color: '#ffecb3', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline', fontWeight: '500' }}
-            >
-              {lang === 'en' ? 'Terms & Conditions' : '📄 เงื่อนไขการใช้งาน'}
-            </button>
-          </div>
-
-          <div className="footer-bottom-info" style={{ color: '#888', fontSize: '12px', lineHeight: '1.6', marginTop: '15px' }}>
+          <div className="footer-bottom-info" style={{ color: '#888', fontSize: '12px', lineHeight: '2', marginTop: '15px' }}>
             <div>Buddhist Park Monastery of Nathoeng</div>
             <div>Copyright © 2026 All Rights Reserved</div>
             <div>Powered by Nathoeng Community Tech Team</div>
+            
+            {/* ลิงก์นโยบายและเงื่อนไข อยู่บรรทัดล่างสุด ไม่มีขีดเส้น ไม่มีกรอบ */}
+            <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center', gap: '15px', alignItems: 'center' }}>
+              <button 
+                onClick={() => goToPage('privacy-policy')}
+                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
+                onMouseOver={(e) => e.target.style.color = '#c5a880'}
+                onMouseOut={(e) => e.target.style.color = '#888'}
+              >
+                {t.privacyLink}
+              </button>
+              <span>·</span>
+              <button 
+                onClick={() => goToPage('terms-page')}
+                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
+                onMouseOver={(e) => e.target.style.color = '#c5a880'}
+                onMouseOut={(e) => e.target.style.color = '#888'}
+              >
+                {t.termsLink}
+              </button>
+            </div>
           </div>
         </div>
       </footer>
