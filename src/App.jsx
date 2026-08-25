@@ -6,6 +6,7 @@ import DonationPage from './pages/DonationPage'
 import DonationListPage from './pages/DonationListPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
+import LoginPage from './pages/LoginPage'
 
 const content = {
   en: {
@@ -48,6 +49,7 @@ const content = {
     footerSubtitle: 'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand',
     privacyLink: 'Privacy Policy',
     termsLink: 'Terms & Conditions',
+    loginMenu: 'Member Login',
 
     // Kathina Page English Content
     kathinaEyebrow: 'Major Merit-Making Event · November 7 - 8, 2026',
@@ -140,6 +142,7 @@ const content = {
     footerSubtitle: 'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย',
     privacyLink: 'นโยบายความเป็นส่วนตัว',
     termsLink: 'เงื่อนไขการใช้งาน',
+    loginMenu: 'เข้าสู่ระบบสมาชิก',
 
     // Kathina Page Thai Content
     kathinaEyebrow: 'ข่าวประชาสัมพันธ์งานบุญใหญ่ · 7 - 8 พฤศจิกายน 2569',
@@ -214,7 +217,8 @@ function App() {
         hash === 'donation-page' ||
         hash === 'donation-list' ||
         hash === 'privacy-policy' ||
-        hash === 'terms-page'
+        hash === 'terms-page' ||
+        hash === 'login-page'
       ) {
         setCurrentPage(hash)
       } else {
@@ -240,8 +244,8 @@ function App() {
   }, [])
 
   const handleLineLogin = () => {
-    const channelId = "2011256873" // <-- ใส่ Channel ID ของท่านจาก LINE Developers
-    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#home")
+    const channelId = "2011256837" // Channel ID ของท่าน
+    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page")
     const state = "random_state_123"
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
     window.location.href = lineAuthUrl
@@ -280,7 +284,7 @@ function App() {
           </div>
         </div>
 
-        {/* ส่วนจัดการภาษา และ LINE Login */}
+        {/* ส่วนจัดการภาษา และปุ่มไปหน้า Login */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className="language">
             <button
@@ -299,8 +303,8 @@ function App() {
           </div>
 
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
-              <span style={{ fontWeight: '500' }}>{user.name}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+              <span style={{ fontWeight: '500', color: '#06c755' }}>🟢 {user.name}</span>
               <button 
                 onClick={handleLogout}
                 style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
@@ -310,12 +314,12 @@ function App() {
             </div>
           ) : (
             <button
-              onClick={handleLineLogin}
+              onClick={() => goToPage('login-page')}
               style={{
                 background: '#06c755',
                 color: '#fff',
                 border: 'none',
-                padding: '5px 12px',
+                padding: '6px 14px',
                 borderRadius: '20px',
                 cursor: 'pointer',
                 fontWeight: '500',
@@ -325,7 +329,7 @@ function App() {
                 gap: '5px'
               }}
             >
-              🟢 {lang === 'en' ? 'LINE Login' : 'เข้าสู่ระบบ LINE'}
+              🟢 {t.loginMenu}
             </button>
           )}
         </div>
@@ -634,6 +638,9 @@ function App() {
         ) : currentPage === 'terms-page' ? (
           /* ================= PAGE: TERMS & CONDITIONS ================= */
           <TermsPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'login-page' ? (
+          /* ================= PAGE: LOGIN PAGE ================= */
+          <LoginPage lang={lang} goToPage={goToPage} user={user} handleLineLogin={handleLineLogin} handleLogout={handleLogout} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
