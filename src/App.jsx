@@ -78,6 +78,13 @@ const content = {
     contactBtn: 'View Map & Contact Details →',
     backHome: '← Back to Home',
 
+    // Share labels
+    shareTitle: 'Share this news:',
+    shareFb: 'Share on Facebook',
+    shareLine: 'Share on LINE',
+    shareCopy: 'Copy Link',
+    copiedText: 'Copied link to clipboard!',
+
     // Contact Page English Content
     contactPageEyebrow: 'LOCATION & CONTACT',
     contactPageTitle: 'Buddhist Park Monastery of Nathoeng',
@@ -161,6 +168,13 @@ const content = {
     contactBtn: 'ดูแผนที่และช่องทางติดต่อ →',
     backHome: '← กลับสู่หน้าหลัก',
 
+    // Share labels
+    shareTitle: 'แชร์บอกบุญข่าวนี้:',
+    shareFb: 'แชร์ไป Facebook',
+    shareLine: 'แชร์ไป LINE',
+    shareCopy: 'คัดลอกลิงก์',
+    copiedText: 'คัดลอกลิงก์เรียบร้อยแล้ว!',
+
     // Contact Page Thai Content
     contactPageEyebrow: 'แผนที่และการเดินทาง',
     contactPageTitle: 'วัดพุทธอุทยานนาเทิง',
@@ -173,12 +187,21 @@ function App() {
   const [lang, setLang] = useState('th')
   const [currentPage, setCurrentPage] = useState('home')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const t = content[lang]
 
   const goToPage = (page) => {
     setCurrentPage(page)
     setMenuOpen(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const currentUrl = window.location.href
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(currentUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 3000)
   }
 
   return (
@@ -461,6 +484,36 @@ function App() {
               <span className="eyebrow">{t.kathinaEyebrow}</span>
               <h1>{t.kathinaTitle}</h1>
               <p className="guideIntro">{t.kathinaIntro}</p>
+
+              {/* SHARE SECTION */}
+              <div className="shareSectionBox" style={{ background: '#fcfbfa', padding: '15px 20px', borderRadius: '4px', marginBottom: '25px', border: '1px solid #eeeae2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: '500', color: '#555' }}>{t.shareTitle}</span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <a 
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ background: '#1877f2', color: '#fff', padding: '6px 12px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    f {t.shareFb}
+                  </a>
+                  <a 
+                    href={`https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(currentUrl)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ background: '#06c755', color: '#fff', padding: '6px 12px', borderRadius: '4px', textDecoration: 'none', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    💬 {t.shareLine}
+                  </a>
+                  <button 
+                    onClick={handleCopyLink}
+                    style={{ background: '#736f66', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}
+                  >
+                    📋 {t.shareCopy}
+                  </button>
+                </div>
+                {copied && <div style={{ width: '100%', color: '#2e7d32', fontSize: '0.85rem', textAlign: 'center', marginTop: '5px' }}>{t.copiedText}</div>}
+              </div>
 
               {/* ประธานกฐิน */}
               <div className="guideSectionBox" style={{ background: '#fcfbfa', padding: '20px 25px', borderRadius: '4px', marginBottom: '30px', border: '1px solid #eeeae2', textAlign: 'center' }}>
