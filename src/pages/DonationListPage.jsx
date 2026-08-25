@@ -13,8 +13,7 @@ export default function DonationListPage({ lang, goToPage }) {
       purposeHeader: 'Purpose',
       receiptHeader: 'Tax Receipt',
       amountHeader: 'Amount (THB)',
-      totalLabel: 'Total Donations:',
-      clearBtn: 'Clear All Records'
+      totalLabel: 'Total Donations:'
     },
     th: {
       back: '← กลับสู่หน้าฟอร์มบริจาค',
@@ -27,8 +26,7 @@ export default function DonationListPage({ lang, goToPage }) {
       purposeHeader: 'วัตถุประสงค์',
       receiptHeader: 'ใบอนุโมทนาฯ',
       amountHeader: 'ยอดเงิน (บาท)',
-      totalLabel: 'ยอดบริจาคสะสมรวมทั้งสิ้น:',
-      clearBtn: 'ล้างข้อมูลทั้งหมด'
+      totalLabel: 'ยอดบริจาคสะสมรวมทั้งสิ้น:'
     }
   }
 
@@ -43,30 +41,15 @@ export default function DonationListPage({ lang, goToPage }) {
     }
   }, [])
 
-  const handleClear = () => {
-    if (window.confirm(lang === 'th' ? 'ต้องการล้างประวัติการบริจาคทั้งหมดใช่หรือไม่?' : 'Clear all donation records?')) {
-      localStorage.removeItem('nathoeng_donations')
-      setDonations([])
-    }
-  }
-
   const totalAmount = donations.reduce((sum, item) => sum + Number(String(item.amount).replace(/,/g, '')), 0)
 
   return (
     <div className="guidePage">
       <div className="guideContainer" style={{ maxWidth: '1000px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <button className="backButton" onClick={() => goToPage('donation-page')} style={{ margin: 0 }}>
             {t.back}
           </button>
-          {donations.length > 0 && (
-            <button 
-              onClick={handleClear}
-              style={{ background: '#d32f2f', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
-            >
-              {t.clearBtn}
-            </button>
-          )}
         </div>
 
         <span className="eyebrow">{t.eyebrow}</span>
