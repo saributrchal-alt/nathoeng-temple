@@ -47,16 +47,16 @@ const content = {
     kathinaTitle: 'Annual Kathina Robe Offering Ceremony 2026',
     kathinaIntro: 'Buddhist Park Monastery of Nathoeng, Sakon Nakhon warmly invites all devotees and friends to join the annual Kathina Robe Offering Ceremony for the year 2026, to support the monastery and community developments.',
     chairpersonTitle: '🙏 Kathina Chairperson 2026',
-    chairpersonName: 'Mr. Pichai - Mrs. Supharat Sakunkunsawat and Family & Relatives',
+    chairpersonName: 'Mr. Pichai - Mrs. Supharat Sakunkunsawat and Family & Relatives (Chonburi)',
     scheduleTitle: '📋 Kathina Ceremony Schedule (November 7 - 8, 2026)',
-    day1Title: 'Day 1: Friday, November 7, 2026 (Kathina Foundation & Celebration)',
+    day1Title: 'Day 1: Saturday, November 7, 2026 (Kathina Foundation & Celebration)',
     day1List: [
       '08.30 AM onwards: Devotees gather to set up the Kathina fund and offerings, continuing throughout the day.',
       '03.30 PM: Chanting ceremony and celebration of the Kathina fund.',
       '04.30 PM: Traditional Baisi Sukhwan blessing ceremony for the chairperson, accompanied by welcoming traditional dances.',
       '06.00 PM: Community "Khaolaeng" (traditional northern/northeastern dinner) shared warmly between locals and guests.'
     ],
-    day2Title: 'Day 2: Saturday, November 8, 2026 (Kathina Offering Day)',
+    day2Title: 'Day 2: Sunday, November 8, 2026 (Kathina Offering Day)',
     day2List: [
       '07.00 AM: Monks go on alms round around the courtyard in front of the pavilion; devotees offer morning alms.',
       '08.00 AM: Offering of breakfast to the monks, followed by auspicious dedication ceremonies:',
@@ -138,16 +138,16 @@ const content = {
     kathinaTitle: 'ขอเชิญร่วมงานบุญกฐินสามัคคี ประจำปี 2569',
     kathinaIntro: 'วัดพุทธอุทยานนาเทิง จังหวัดสกลนคร ขออำนวยพรและบอกบุญมายังพุทธศาสนิกชนและผู้มีจิตศรัทธาทุกท่าน มาร่วมบำเพ็ญกุศลในงานบุญกฐินสามัคคี ประจำปีพุทธศักราช 2569 เพื่อสมทบทุนทำนุบำรุงพระพุทธศาสนาและพัฒนาเสนาสนะภายในวัด ระหว่างวันที่ 7 - 8 พฤศจิกายน 2569 นี้',
     chairpersonTitle: '🙏 ประธานกฐินสามัคคี ประจำปี 2569',
-    chairpersonName: 'คุณพิชัย - คุณศุภรัตน์ สกุลคุณสวัสดิ์ พร้อมด้วยครอบครัวและญาติพี่น้อง',
+    chairpersonName: 'คุณพิชัย - คุณศุภรัตน์ สกุลคุณสวัสดิ์ พร้อมด้วยครอบครัวและญาติพี่น้อง (จ.ชลบุรี)',
     scheduleTitle: '📋 กำหนดการงานบุญกฐินสามัคคี (7 - 8 พฤศจิกายน 2569)',
-    day1Title: 'วันแรก: วันศุกร์ที่ 7 พฤศจิกายน 2569 (วันตั้งองค์กฐิน / สมโภช)',
+    day1Title: 'วันแรก: วันเสาร์ที่ 7 พฤศจิกายน 2569 (วันตั้งองค์กฐิน / สมโภช)',
     day1List: [
       'เวลา 08.30 น. เป็นต้นไป - คณะศรัทธาญาติโยมร่วมกันตั้งกองกฐินและเครื่องบริวารกฐิน ดำเนินกิจกรรมต่อเนื่องไปตลอดทั้งวัน',
       'เวลา 15.30 น. - พิธีเจริญพระพุทธมนต์ สมโภชกองกฐิน',
       'เวลา 16.30 น. - พิธีบายศรีสู่ขวัญคณะเจ้าภาพ, การรำเชิญขวัญและรำต้อนรับอันงดงามตามประเพณี',
       'เวลา 18.00 น. - คณะชาวบ้านและคณะเจ้าภาพร่วมรับประทานอาหาร "ข้าวแลง" (อาหารเย็น) อีสานร่วมกันด้วยความอบอุ่นและสามัคคี'
     ],
-    day2Title: 'วันที่สอง: วันเสาร์ที่ 8 พฤศจิกายน 2569 (วันทอดกฐินสามัคคี)',
+    day2Title: 'วันที่สอง: วันอาทิตย์ที่ 8 พฤศจิกายน 2569 (วันทอดกฐินสามัคคี)',
     day2List: [
       'เวลา 07.00 น. - คณะสงฆ์ออกเดินบิณฑบาต รอบลานวัดหน้าศาลา คณะศรัทธาญาติโยมร่วมทำบุญตักบาตรยามเช้า',
       'เวลา 08.00 น. - ถวายภัตตาหารเช้าแด่พระสงฆ์ และมีพิธีสำคัญ:',
