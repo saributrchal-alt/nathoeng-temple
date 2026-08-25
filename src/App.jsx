@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 const content = {
@@ -190,9 +190,26 @@ function App() {
   const [copied, setCopied] = useState(false)
   const t = content[lang]
 
+  // รองรับการอ่านค่า Hash จาก URL เมื่อโหลดหน้าเว็บหรือกดปุ่ม Back/Forward
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '')
+      if (hash === 'event-kathina' || hash === 'teachings-page' || hash === 'visit-guide' || hash === 'contact-page') {
+        setCurrentPage(hash)
+      } else {
+        setCurrentPage('home')
+      }
+    }
+
+    handleHashChange() // เช็คตอนเปิดเว็บครั้งแรก
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
   const goToPage = (page) => {
     setCurrentPage(page)
     setMenuOpen(false)
+    window.location.hash = page // เปลี่ยน Hash ใน URL ทันที
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -257,6 +274,9 @@ function App() {
                 } else if (item.href === '#teachings') {
                   e.preventDefault()
                   goToPage('teachings-page')
+                } else if (item.href === '#events') {
+                  e.preventDefault()
+                  goToPage('event-kathina')
                 } else if (currentPage !== 'home') {
                   e.preventDefault()
                   goToPage('home')
