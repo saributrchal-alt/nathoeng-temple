@@ -252,8 +252,8 @@ function App() {
   }, [])
 
   const handleLineLogin = () => {
-    const channelId = "2011257294" // Channel ID ของท่าน
-    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page")
+    const channelId = "2011258009" // Channel ID ของท่าน
+    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#home")
     const state = "random_state_123"
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
     window.location.href = lineAuthUrl
