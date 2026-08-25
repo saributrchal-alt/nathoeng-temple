@@ -12,8 +12,7 @@ export default function DonationListPage({ lang, goToPage }) {
       nameHeader: 'Full Name',
       purposeHeader: 'Purpose',
       receiptHeader: 'Tax Receipt',
-      amountHeader: 'Amount (THB)',
-      totalLabel: 'Total Donations:'
+      amountHeader: 'Amount (THB)'
     },
     th: {
       back: '← กลับสู่หน้าฟอร์มบริจาค',
@@ -25,8 +24,7 @@ export default function DonationListPage({ lang, goToPage }) {
       nameHeader: 'ชื่อ - สกุล',
       purposeHeader: 'วัตถุประสงค์',
       receiptHeader: 'ใบอนุโมทนาฯ',
-      amountHeader: 'ยอดเงิน (บาท)',
-      totalLabel: 'ยอดบริจาคสะสมรวมทั้งสิ้น:'
+      amountHeader: 'ยอดเงิน (บาท)'
     }
   }
 
@@ -40,8 +38,6 @@ export default function DonationListPage({ lang, goToPage }) {
       setDonations(JSON.parse(saved))
     }
   }, [])
-
-  const totalAmount = donations.reduce((sum, item) => sum + Number(String(item.amount).replace(/,/g, '')), 0)
 
   return (
     <div className="guidePage">
@@ -62,11 +58,6 @@ export default function DonationListPage({ lang, goToPage }) {
           </div>
         ) : (
           <div>
-            <div style={{ background: '#f6f4ef', padding: '20px', borderRadius: '6px', marginBottom: '20px', border: '1px solid #eeeae2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '16px', fontWeight: '500', color: '#302d29' }}>{t.totalLabel}</span>
-              <span style={{ fontSize: '20px', fontWeight: '600', color: '#9b7226' }}>{totalAmount.toLocaleString()} ฿</span>
-            </div>
-
             <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #eeeae2', borderRadius: '6px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
                 <thead>
