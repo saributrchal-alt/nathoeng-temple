@@ -40,10 +40,15 @@ export default function LoginPage({ lang, goToPage, user, handleLineLogin, handl
 
           <div className="guideSectionBox" style={{ background: '#fcfbfa', padding: '40px 30px', borderRadius: '8px', border: '1px solid #eeeae2', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
             
-            <div style={{ fontSize: '48px', marginBottom: '15px' }}>☸</div>
-
             {user ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                {user.picture && (
+                  <img 
+                    src={user.picture} 
+                    alt="Profile" 
+                    style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #06c755' }} 
+                  />
+                )}
                 <h3 style={{ color: '#302d29', margin: 0 }}>{t.welcome} {user.name}</h3>
                 <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>{t.loggedInDesc}</p>
                 <button 
@@ -55,6 +60,7 @@ export default function LoginPage({ lang, goToPage, user, handleLineLogin, handl
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '5px' }}>☸</div>
                 <button
                   onClick={handleLineLogin}
                   style={{

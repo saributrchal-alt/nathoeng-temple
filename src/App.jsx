@@ -231,20 +231,28 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // ตรวจสอบ Callback จาก LINE Login
+  // ตรวจสอบ Callback จาก LINE Login และจัดการดึงโปรไฟล์ผู้ใช้
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
     if (code) {
-      setUser({
-        name: 'ผู้ใช้งาน LINE'
-      })
+      const loggedUser = {
+        name: 'ผู้ใช้งาน LINE (สมาชิกวัด)',
+        picture: ''
+      }
+      setUser(loggedUser)
+      localStorage.setItem('line_user', JSON.stringify(loggedUser))
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash)
+    } else {
+      const savedUser = localStorage.getItem('line_user')
+      if (savedUser) {
+        setUser(JSON.parse(savedUser))
+      }
     }
   }, [])
 
   const handleLineLogin = () => {
-    const channelId = "2011257294" // Channel ID ของท่าน
+    const channelId = "2011256837" // Channel ID ของท่าน
     const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page")
     const state = "random_state_123"
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
@@ -253,6 +261,8 @@ function App() {
 
   const handleLogout = () => {
     setUser(null)
+    localStorage.removeItem('line_user')
+    goToPage('home')
   }
 
   const goToPage = (page) => {
@@ -284,7 +294,7 @@ function App() {
           </div>
         </div>
 
-        {/* ส่วนจัดการภาษา / แสดงสถานะผู้ใช้ (ถ้าล็อกอินแล้ว) */}
+        {/* ส่วนจัดการภาษา และแสดงสถานะผู้ใช้ถ้าล็อกอินแล้ว */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className="language">
             <button
@@ -324,7 +334,7 @@ function App() {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        {/* Navigation - รวมเมนู "เข้าสู่ระบบ" ต่อท้ายเมนูอื่นๆ */}
+        {/* Navigation */}
         <nav className={menuOpen ? 'navOpen' : ''}>
           {t.nav.map((item) => (
             <a 
