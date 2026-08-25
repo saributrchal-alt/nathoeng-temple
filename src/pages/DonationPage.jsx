@@ -34,10 +34,8 @@ export default function DonationPage({ lang, goToPage }) {
       purposeHeader: 'Purpose',
       receiptHeader: 'Receipt',
       amountHeader: 'Amount',
-      yesText: 'Yes',
-      noText: 'No',
       successTitle: '🙏 Sadhu! อนุโมทนากุศลจิต',
-      successMsg: 'May the Triple Gem bless you and your family with peace, health, and prosperity. Your donation record has been successfully saved by the monastery.',
+      successMsg: 'May the Triple Gem bless you and your family with peace, health, and prosperity. Your donation details have been securely sent to the monastery.',
       okBtn: 'OK (Back to Home)'
     },
     th: {
@@ -71,17 +69,15 @@ export default function DonationPage({ lang, goToPage }) {
       purposeHeader: 'วัตถุประสงค์',
       receiptHeader: 'ใบอนุโมทนาฯ',
       amountHeader: 'ยอดเงิน',
-      yesText: 'ต้องการ',
-      noText: 'ไม่ต้องการ',
       successTitle: '🙏 สาธุ อนุโมทนาบุญด้วยครับ',
-      successMsg: 'ขออานุภาพแห่งคุณพระศรีรัตนตรัย จงดลบันดาลให้ท่านและครอบครัวประสบแต่ความสุข ความเจริญ มีอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติทุกประการ ทางวัดได้ทำการบันทึกรายการบริจาคของคุณเรียบร้อยแล้ว',
+      successMsg: 'ขออานุภาพแห่งคุณพระศรีรัตนตรัย จงดลบันดาลให้ท่านและครอบครัวประสบแต่ความสุข ความเจริญ มีอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติทุกประการ ทางวัดได้ทำการบันทึกและส่งข้อมูลให้ทางวัดเรียบร้อยแล้ว',
       okBtn: 'ตกลง (กลับสู่หน้าหลัก)'
     }
   }
 
   const t = text[lang]
 
-  // State สำหรับเก็บข้อมูลฟอร์ม (เพิ่ม taxReceipt เป็นค่าว่างเพื่อให้บังคับเลือก)
+  // State สำหรับเก็บข้อมูลฟอร์ม
   const [formData, setFormData] = useState({
     fullName: '',
     idNumber: '',
@@ -91,7 +87,7 @@ export default function DonationPage({ lang, goToPage }) {
     taxReceipt: ''
   })
 
-  // State สำหรับเก็บรายการจำลอง (Preview List)
+  // State สำหรับเก็บรายการ Preview หน้าเว็บ (ไม่แสดงเลข 13 หลักต่อสาธารณะ)
   const [donationList, setDonationList] = useState([
     {
       date: '2026-06-06 10:30',
@@ -110,16 +106,16 @@ export default function DonationPage({ lang, goToPage }) {
   ])
 
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validation ตรวจสอบข้อมูลสำคัญรวมถึงการเลือกใบอนุโมทนาบัตร
     if (!formData.fullName || !formData.idNumber || !formData.amount || !formData.taxReceipt) {
       alert(lang === 'th' ? 'กรุณากรอกข้อมูลและเลือกรายการให้ครบถ้วน' : 'Please fill in all required fields and select receipt option.')
       return
@@ -133,21 +129,55 @@ export default function DonationPage({ lang, goToPage }) {
       selectedPurposeText = found ? found.label : formData.purpose
     }
 
-    const now = new Date()
-    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-      now.getDate()
-    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    setLoading(true)
 
-    const newEntry = {
-      date: formattedDate,
-      name: formData.fullName,
-      purpose: selectedPurposeText,
-      receipt: formData.taxReceipt,
-      amount: Number(formData.amount).toLocaleString()
+    try {
+      // ส่งข้อมูลเข้า Web3Forms (สามารถเปลี่ยน Access Key ให้ตรงกับที่คุณใช้ใน BookingPage ได้เลยครับ)
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: "56740213-dd22-4925-948b-66e1bf47d993", // ใส่ Access Key ของคุณที่นี่
+          subject: `New Donation from ${formData.fullName}`,
+          from_name: "Buddhist Park Monastery Website",
+          "Full Name": formData.fullName,
+          "ID / Tax ID": formData.idNumber, // เลข 13 หลักส่งเข้าเมลวัดอย่างปลอดภัย
+          "Amount (THB)": formData.amount,
+          "Purpose": selectedPurposeText,
+          "Needs Tax Receipt": formData.taxReceipt === 'yes' ? 'Yes (ต้องการ)' : 'No (ไม่ต้องการ)'
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        const now = new Date()
+        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+          now.getDate()
+        ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+        // เพิ่มข้อมูลลงใน Preview ตารางหน้าเว็บ (ไม่เอาเลข 13 หลักมาโชว์)
+        const newEntry = {
+          date: formattedDate,
+          name: formData.fullName,
+          purpose: selectedPurposeText,
+          receipt: formData.taxReceipt,
+          amount: Number(formData.amount).toLocaleString()
+        }
+
+        setDonationList([newEntry, ...donationList])
+        setIsSubmitted(true)
+      } else {
+        alert(lang === 'th' ? 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' : 'Something went wrong. Please try again.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert(lang === 'th' ? 'ไม่สามารถเชื่อมต่อระบบได้' : 'Network error.')
+    } finally {
+      setLoading(false)
     }
-
-    setDonationList([newEntry, ...donationList])
-    setIsSubmitted(true)
   }
 
   const handleResetAndGoHome = () => {
@@ -286,13 +316,13 @@ export default function DonationPage({ lang, goToPage }) {
               </div>
 
               <div>
-                <button type="submit" className="primaryContactBtn" style={{ padding: '14px 28px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                  {t.submitBtn} →
+                <button type="submit" disabled={loading} className="primaryContactBtn" style={{ padding: '14px 28px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+                  {loading ? (lang === 'th' ? 'กำลังส่งข้อมูล...' : 'Submitting...') : `${t.submitBtn} →`}
                 </button>
               </div>
             </form>
 
-            {/* ส่วน Preview รายการบริจาค */}
+            {/* ส่วน Preview รายการบริจาค (ซ่อนเลข 13 หลัก ไม่แสดงต่อสาธารณะ) */}
             <div style={{ background: '#f6f4ef', padding: '25px', borderRadius: '6px', border: '1px solid #eeeae2' }}>
               <h3 style={{ marginTop: '0', fontSize: '1.1rem', color: '#302d29', marginBottom: '15px' }}>
                 {t.previewTitle}
