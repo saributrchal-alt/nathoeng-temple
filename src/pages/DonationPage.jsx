@@ -1,7 +1,6 @@
 import { useState } from 'react'
 
 export default function DonationPage({ lang, goToPage }) {
-  // ข้อความรองรับ 2 ภาษา
   const text = {
     en: {
       back: '← Back to Home',
@@ -27,8 +26,10 @@ export default function DonationPage({ lang, goToPage }) {
       taxReceiptYes: 'Yes, I require a receipt',
       taxReceiptNo: 'No, I do not require a receipt',
       submitBtn: 'Confirm Donation',
+      showPreviewBtn: '📋 View Recent Donations List',
+      hidePreviewBtn: '▲ Hide Donations List',
       previewTitle: '📋 Recent Donations Preview',
-      noDonations: 'No donations recorded yet.',
+      noDonations: 'No donations recorded yet in this session.',
       dateHeader: 'Date',
       nameHeader: 'Name',
       purposeHeader: 'Purpose',
@@ -62,8 +63,10 @@ export default function DonationPage({ lang, goToPage }) {
       taxReceiptYes: 'ต้องการรับใบอนุโมทนาบัตร',
       taxReceiptNo: 'ไม่ต้องการรับใบอนุโมทนาบัตร',
       submitBtn: 'ยืนยันการบริจาค',
-      previewTitle: '📋 ตัวอย่างรายการบริจาคล่าสุด (Preview)',
-      noDonations: 'ยังไม่มีประวัติการบริจาคในระบบ',
+      showPreviewBtn: '📋 คลิกเพื่อดูรายการบริจาคล่าสุด',
+      hidePreviewBtn: '▲ ซ่อนรายการบริจาค',
+      previewTitle: '📋 รายการบริจาคล่าสุด (Preview)',
+      noDonations: 'ยังไม่มีรายการบริจาคใหม่ในขณะนี้',
       dateHeader: 'วันเดือนปี',
       nameHeader: 'ชื่อบุคคล',
       purposeHeader: 'วัตถุประสงค์',
@@ -77,7 +80,6 @@ export default function DonationPage({ lang, goToPage }) {
 
   const t = text[lang]
 
-  // State สำหรับเก็บข้อมูลฟอร์ม
   const [formData, setFormData] = useState({
     fullName: '',
     idNumber: '',
@@ -87,23 +89,11 @@ export default function DonationPage({ lang, goToPage }) {
     taxReceipt: ''
   })
 
-  // State สำหรับเก็บรายการ Preview หน้าเว็บ (ไม่แสดงเลข 13 หลักต่อสาธารณะ)
-  const [donationList, setDonationList] = useState([
-    {
-      date: '2026-06-06 10:30',
-      name: 'คุณโยมใจบุญ (ตัวอย่าง)',
-      purpose: 'ทำบุญตามอัธยาศัยทางคณะสงฆ์',
-      receipt: 'yes',
-      amount: '1,000'
-    },
-    {
-      date: '2026-06-06 11:15',
-      name: 'ครอบครัวสกุลคุณสวัสดิ์',
-      purpose: 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ',
-      receipt: 'no',
-      amount: '5,000'
-    }
-  ])
+  // ตั้งค่าเริ่มต้นเป็นอาเรย์ว่าง (ไม่มีข้อมูลมั่วๆ โชว์แล้ว)
+  const [donationList, setDonationList] = useState([])
+  
+  // State สำหรับควบคุมการเปิด-ปิดตาราง Preview
+  const [showPreview, setShowPreview] = useState(false)
 
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -132,7 +122,6 @@ export default function DonationPage({ lang, goToPage }) {
     setLoading(true)
 
     try {
-      // ส่งข้อมูลเข้า Web3Forms (สามารถเปลี่ยน Access Key ให้ตรงกับที่คุณใช้ใน BookingPage ได้เลยครับ)
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         headers: {
@@ -140,11 +129,11 @@ export default function DonationPage({ lang, goToPage }) {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          access_key: "56740213-dd22-4925-948b-66e1bf47d993", // ใส่ Access Key ของคุณที่นี่
+          access_key: "YOUR_WEB3FORMS_ACCESS_KEY", // ใส่ Access Key ของคุณ
           subject: `New Donation from ${formData.fullName}`,
           from_name: "Buddhist Park Monastery Website",
           "Full Name": formData.fullName,
-          "ID / Tax ID": formData.idNumber, // เลข 13 หลักส่งเข้าเมลวัดอย่างปลอดภัย
+          "ID / Tax ID": formData.idNumber,
           "Amount (THB)": formData.amount,
           "Purpose": selectedPurposeText,
           "Needs Tax Receipt": formData.taxReceipt === 'yes' ? 'Yes (ต้องการ)' : 'No (ไม่ต้องการ)'
@@ -158,7 +147,6 @@ export default function DonationPage({ lang, goToPage }) {
           now.getDate()
         ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 
-        // เพิ่มข้อมูลลงใน Preview ตารางหน้าเว็บ (ไม่เอาเลข 13 หลักมาโชว์)
         const newEntry = {
           date: formattedDate,
           name: formData.fullName,
@@ -199,7 +187,7 @@ export default function DonationPage({ lang, goToPage }) {
             <h1>{t.title}</h1>
             <p className="guideIntro">{t.intro}</p>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '30px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
@@ -284,7 +272,6 @@ export default function DonationPage({ lang, goToPage }) {
                 </div>
               )}
 
-              {/* ส่วนเลือกขอใบอนุโมทนาบัตร แบบบังคับเลือก */}
               <div style={{ background: '#fcfbfa', padding: '15px 20px', borderRadius: '4px', border: '1px solid #eeeae2' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '10px', color: '#302d29' }}>
                   {t.taxReceiptLabel}
@@ -322,45 +309,65 @@ export default function DonationPage({ lang, goToPage }) {
               </div>
             </form>
 
-            {/* ส่วน Preview รายการบริจาค (ซ่อนเลข 13 หลัก ไม่แสดงต่อสาธารณะ) */}
-            <div style={{ background: '#f6f4ef', padding: '25px', borderRadius: '6px', border: '1px solid #eeeae2' }}>
-              <h3 style={{ marginTop: '0', fontSize: '1.1rem', color: '#302d29', marginBottom: '15px' }}>
-                {t.previewTitle}
-              </h3>
-              {donationList.length === 0 ? (
-                <p style={{ color: '#777', fontSize: '14px' }}>{t.noDonations}</p>
-              ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #dcd5c8', color: '#625d55' }}>
-                        <th style={{ padding: '10px' }}>{t.dateHeader}</th>
-                        <th style={{ padding: '10px' }}>{t.nameHeader}</th>
-                        <th style={{ padding: '10px' }}>{t.purposeHeader}</th>
-                        <th style={{ padding: '10px', textAlign: 'center' }}>{t.receiptHeader}</th>
-                        <th style={{ padding: '10px', textAlign: 'right' }}>{t.amountHeader}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {donationList.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e6dfd5' }}>
-                          <td style={{ padding: '10px', color: '#777', fontSize: '13px' }}>{item.date}</td>
-                          <td style={{ padding: '10px', fontWeight: '500', color: '#302d29' }}>{item.name}</td>
-                          <td style={{ padding: '10px', color: '#625d55' }}>{item.purpose}</td>
-                          <td style={{ padding: '10px', textAlign: 'center', color: '#625d55' }}>
-                            {item.receipt === 'yes' ? (lang === 'th' ? '✓ ต้องการ' : '✓ Yes') : (lang === 'th' ? '- ไม่ต้องการ' : '- No')}
-                          </td>
-                          <td style={{ padding: '10px', textAlign: 'right', fontWeight: '600', color: '#9b7226' }}>{item.amount} ฿</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            {/* ปุ่มกดเพื่อแสดง/ซ่อน ตาราง Preview */}
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #9b7226',
+                  color: '#9b7226',
+                  padding: '10px 20px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                {showPreview ? t.hidePreviewBtn : t.showPreviewBtn}
+              </button>
             </div>
+
+            {/* ส่วนแสดงตาราง Preview เฉพาะเมื่อกดปุ่มเปิดเท่านั้น */}
+            {showPreview && (
+              <div style={{ background: '#f6f4ef', padding: '25px', borderRadius: '6px', border: '1px solid #eeeae2', marginTop: '15px' }}>
+                <h3 style={{ marginTop: '0', fontSize: '1.1rem', color: '#302d29', marginBottom: '15px' }}>
+                  {t.previewTitle}
+                </h3>
+                {donationList.length === 0 ? (
+                  <p style={{ color: '#777', fontSize: '14px', margin: 0 }}>{t.noDonations}</p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #dcd5c8', color: '#625d55' }}>
+                          <th style={{ padding: '10px' }}>{t.dateHeader}</th>
+                          <th style={{ padding: '10px' }}>{t.nameHeader}</th>
+                          <th style={{ padding: '10px' }}>{t.purposeHeader}</th>
+                          <th style={{ padding: '10px', textAlign: 'center' }}>{t.receiptHeader}</th>
+                          <th style={{ padding: '10px', textAlign: 'right' }}>{t.amountHeader}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {donationList.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #e6dfd5' }}>
+                            <td style={{ padding: '10px', color: '#777', fontSize: '13px' }}>{item.date}</td>
+                            <td style={{ padding: '10px', fontWeight: '500', color: '#302d29' }}>{item.name}</td>
+                            <td style={{ padding: '10px', color: '#625d55' }}>{item.purpose}</td>
+                            <td style={{ padding: '10px', textAlign: 'center', color: '#625d55' }}>
+                              {item.receipt === 'yes' ? (lang === 'th' ? '✓ ต้องการ' : '✓ Yes') : (lang === 'th' ? '- ไม่ต้องการ' : '- No')}
+                            </td>
+                            <td style={{ padding: '10px', textAlign: 'right', fontWeight: '600', color: '#9b7226' }}>{item.amount} ฿</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         ) : (
-          /* หน้าจอคำอำนวยพรหลังกดบันทึกสำเร็จ */
           <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fcfbfa', borderRadius: '6px', border: '1px solid #eeeae2' }}>
             <div style={{ fontSize: '48px', marginBottom: '15px' }}>🙏</div>
             <h2 style={{ color: '#9b7226', fontSize: '1.8rem', marginBottom: '20px', fontWeight: '500' }}>
