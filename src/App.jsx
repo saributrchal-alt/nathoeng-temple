@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import BookingPage from './pages/BookingPage'
 import CalendarPage from './pages/CalendarPage'
+import DonationPage from './pages/DonationPage'
 
 const content = {
   en: {
@@ -195,7 +196,15 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '')
-      if (hash === 'event-kathina' || hash === 'teachings-page' || hash === 'visit-guide' || hash === 'contact-page' || hash === 'booking-page' || hash === 'calendar-page') {
+      if (
+        hash === 'event-kathina' || 
+        hash === 'teachings-page' || 
+        hash === 'visit-guide' || 
+        hash === 'contact-page' || 
+        hash === 'booking-page' || 
+        hash === 'calendar-page' ||
+        hash === 'donation-page'
+      ) {
         setCurrentPage(hash)
       } else {
         setCurrentPage('home')
@@ -417,7 +426,9 @@ function App() {
                 <p className="eyebrow">{lang === 'en' ? 'GENEROSITY' : 'การให้'}</p>
                 <h2>{t.support}</h2>
                 <p>{t.supportText}</p>
-                <button>{t.learn}</button>
+                <button onClick={() => goToPage('donation-page')} className="primaryContactBtn" style={{ background: '#8f6a27', color: '#fff', padding: '12px 28px', border: '1px solid #8f6a27', cursor: 'pointer' }}>
+                  {lang === 'en' ? 'Proceed to Donate →' : 'ร่วมทำบุญบริจาคเงินสนับสนุนวัด →'}
+                </button>
               </div>
             </section>
 
@@ -494,7 +505,7 @@ function App() {
                 <h3>{lang === 'en' ? '1. Accommodation' : '1. ระเบียบการเข้าพักและข้อปฏิบัติทั่วไป'}</h3>
                 <p>
                   {lang === 'en' 
-                    ? 'Simple and quiet accommodations are provided. Practitioners are expected to maintain silence, observe precepts, and participate in monastery chores.'
+                    ? 'Simple and quiet accommodations are provided. Practitioners are expected to maintain silence, observe precepts, and participate in monastery chores.' 
                     : 'ทางวัดจัดเตรียมอาคารที่พักและกุฏิสำหรับผู้ปฏิบัติธรรม ผู้เข้าพักทุกท่านต้องรักษาศีล สำรวมระวังในกายวาจาใจ และช่วยเหลืองานภายในวัดตามความเหมาะสม'}
                 </p>
                 <div className="guideImageFrame">
@@ -507,7 +518,7 @@ function App() {
                 <h3>{lang === 'en' ? '2. Practice Atmosphere' : '2. บรรยากาศการปฏิบัติภาวนา'}</h3>
                 <p>
                   {lang === 'en' 
-                    ? 'Dedicated space for meditation, walking meditation, and listening to Dhamma teachings.'
+                    ? 'Dedicated space for meditation, walking meditation, and listening to Dhamma teachings.' 
                     : 'พื้นที่โดยรอบมีความสงบเงียบ เหมาะแก่การเดินจงกรม นั่งสมาธิภาวนา และฟังธรรมเพื่อขัดเกลาจิตใจ'}
                 </p>
                 <div className="guideImageFrame">
@@ -542,6 +553,9 @@ function App() {
         ) : currentPage === 'calendar-page' ? (
           /* ================= PAGE: CALENDAR SCHEDULE ================= */
           <CalendarPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'donation-page' ? (
+          /* ================= PAGE: DONATION FORM ================= */
+          <DonationPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
