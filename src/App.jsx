@@ -69,10 +69,11 @@ const content = {
       '10.30 AM: Auspicious lucky draw activity for blessed items from the ceremony (such as Kathinaบริวาร, sugarcane, bananas, Kathina flags, etc.).',
       '11.30 AM: Vegetarian and general food stalls (Rong Than) open for all participants.'
     ],
-    imgCaption1: 'Warm Kathina Procession',
-    imgCaption2: 'Charity Food Stalls (Rong Than)',
-    imgCaption3: 'Morning Alms Offering',
-    imgCaption4: 'Kathina Offering Ceremony',
+    imgCaption1: 'A warm and joyous Kathina procession filled with smiles, joyful hearts, and beautiful traditional Thai devotion.',
+    imgCaption2: 'The charitable food stalls (Rong Than), brimming with kindness and sharing, offering a wonderful taste of community warmth and merit.',
+    imgCaption3: 'Starting the auspicious day with morning alms-giving alongside family and spiritual friends amidst the serene forest monastery.',
+    imgCaption4: 'The sacred and meaningful Kathina Robe Offering Ceremony at Buddhist Park Monastery, preserving the Dhamma and making great merits together.',
+    
     contactSectionTitle: 'For More Information',
     contactSectionText: 'You are welcome to join us in person or contact the monastery directly for further details.',
     contactBtn: 'View Map & Contact Details →',
@@ -159,10 +160,11 @@ const content = {
       'เวลา 10.30 น. - กิจกรรมมงคล: ร่วมสนุกกับการจับฉลากรับของมงคลจากงาน เช่น เครื่องบริวารกฐิน, อ้อย, กล้วย, ธงกฐิน ฯลฯ',
       'เวลา 11.30 น. - เชิญชวนคณะศรัทธาทุกท่านร่วมรับประทานอาหารกลางวันและร่วมโรงทานภายในวัด'
     ],
-    imgCaption1: 'ขบวนแห่กฐินสามัคคีตามประเพณีไทย',
-    imgCaption2: 'บรรยากาศโรงทานการกุศลในงาน',
-    imgCaption3: 'ทำบุญตักบาตรข้าวสารอาหารแห้ง',
-    imgCaption4: 'พิธีถวายผ้ากฐินภายในวัดพุทธอุทยานนาเทิง',
+    imgCaption1: 'ขบวนแห่กฐินสามัคคีอันอบอุ่นและม่วนซื่น เต็มไปด้วยรอยยิ้ม เสียงหัวใจที่พองโต และแรงศรัทธาอันงดงามตามวิถีไทย',
+    imgCaption2: 'บรรยากาศโรงทานการกุศล เปี่ยมด้วยน้ำใจไมตรีและการแบ่งปัน อิ่มอร่อยและอิ่มบุญร่วมกันในยามมาเยือนวัด',
+    imgCaption3: 'เริ่มต้นวันใหม่อย่างเป็นมงคล ด้วยการทำบุญตักบาตรยามเช้าเคียงข้างครอบครัวและกัลยาณมิตร ท่ามกลางบรรยากาศวัดป่าอันสงบเย็น',
+    imgCaption4: 'พิธีถวายผ้ากฐินอันศักดิ์สิทธิ์และทรงคุณค่า ณ วัดพุทธอุทยานนาเทิง เพื่อสืบสานพระพุทธศาสนาและสร้างมหากุศลร่วมกัน',
+    
     contactSectionTitle: 'ติดต่อสอบถามข้อมูลการมาร่วมงาน',
     contactSectionText: 'ท่านสามารถมาร่วมงานบุญด้วยตนเอง หรือติดต่อสอบถามรายละเอียดเพิ่มเติมได้ที่วัดพุทธอุทยานนาเทิง จ.สกลนคร',
     contactBtn: 'ดูแผนที่และช่องทางติดต่อ →',
