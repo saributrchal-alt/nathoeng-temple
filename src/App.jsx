@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import BookingPage from './pages/BookingPage'
 
 const content = {
   en: {
@@ -280,7 +281,7 @@ function App() {
                   goToPage('event-kathina')
                 } else if (item.href === '#retreats') {
                   e.preventDefault()
-                  goToPage('visit-guide') // ให้วิ่งมาหน้าระเบียบการและสถานที่พักก่อน
+                  goToPage('visit-guide')
                 } else if (currentPage !== 'home') {
                   e.preventDefault()
                   goToPage('home')
@@ -471,7 +472,7 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'visit-guide' ? (
-          /* ================= PAGE: VISIT & STAY GUIDE (ระเบียบการและสถานที่พัก) ================= */
+          /* ================= PAGE: VISIT & STAY GUIDE ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
@@ -511,7 +512,6 @@ function App() {
                 </div>
               </div>
 
-              {/* ปุ่มกดเพื่อไปหน้าจองเข้าพัก (หลังอ่านระเบียบการเสร็จ) */}
               <div className="guideContactBox" style={{ marginTop: '40px', background: '#f6f4ef', padding: '30px', textAlign: 'center', borderRadius: '4px' }}>
                 <h3 style={{ marginBottom: '12px', fontSize: '1.2rem' }}>
                   {lang === 'en' ? 'Ready to join us?' : 'อ่านระเบียบการและเข้าใจเรียบร้อยแล้วใช่หรือไม่?'}
@@ -528,67 +528,8 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'booking-page' ? (
-          /* ================= PAGE: BOOKING FORM ================= */
-          <div className="guidePage">
-            <div className="guideContainer">
-              <button className="backButton" onClick={() => goToPage('visit-guide')}>
-                {lang === 'en' ? '← Back to Guidelines' : '← กลับไปหน้าระเบียบการ'}
-              </button>
-              <span className="eyebrow">{lang === 'en' ? 'MONASTERY STAY RESERVATION' : 'ระบบจองเข้าพักปฏิบัติธรรม'}</span>
-              <h1>{lang === 'en' ? 'Book Your Stay' : 'กรอกข้อมูลการจองเข้าพัก'}</h1>
-              <p className="guideIntro">
-                {lang === 'en' 
-                  ? 'Please fill in your details below to request a stay for meditation and practice.' 
-                  : 'กรุณากรอกข้อมูลส่วนตัวและช่วงเวลาที่ต้องการเข้ามาปฏิบัติธรรม เพื่อให้ทางวัดเตรียมความพร้อม'}
-              </p>
-
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                alert(lang === 'th' ? 'ส่งคำขอจองสำเร็จ ทางวัดจะติดต่อกลับ' : 'Reservation request submitted successfully!');
-                goToPage('home');
-              }}>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                    {lang === 'th' ? 'ชื่อ - นามสกุล' : 'Full Name'}
-                  </label>
-                  <input type="text" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder={lang === 'th' ? 'ระบุชื่อและนามสกุลของคุณ' : 'Enter your full name'} />
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                    {lang === 'th' ? 'เบอร์โทรศัพท์ (ที่ติดต่อได้)' : 'Phone Number'}
-                  </label>
-                  <input type="tel" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="0xx-xxx-xxxx" />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                      {lang === 'th' ? 'วันที่ต้องการเข้าพัก' : 'Check-in Date'}
-                    </label>
-                    <input type="date" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                      {lang === 'th' ? 'วันที่สิ้นสุดการพัก' : 'Check-out Date'}
-                    </label>
-                    <input type="date" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '25px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                    {lang === 'th' ? 'จุดประสงค์ / หมายเหตุเพิ่มเติม' : 'Purpose / Notes'}
-                  </label>
-                  <textarea rows="4" style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder={lang === 'th' ? 'เช่น ถือศีล 8, ปฏิบัติภาวนา 3 วัน' : 'e.g., Meditation retreat for 3 days'}></textarea>
-                </div>
-
-                <button type="submit" className="primaryContactBtn" style={{ width: '100%', padding: '14px' }}>
-                  {lang === 'th' ? 'ยืนยันการส่งคำขอจอง' : 'Submit Reservation'}
-                </button>
-              </form>
-            </div>
-          </div>
+          /* ================= PAGE: BOOKING FORM (เรียกใช้จากโฟลเดอร์ pages) ================= */
+          <BookingPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
