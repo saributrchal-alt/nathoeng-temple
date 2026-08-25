@@ -5,6 +5,7 @@ import CalendarPage from './pages/CalendarPage'
 import DonationPage from './pages/DonationPage'
 import DonationListPage from './pages/DonationListPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import TermsPage from './pages/TermsPage'
 
 const content = {
   en: {
@@ -46,6 +47,7 @@ const content = {
 
     footerSubtitle: 'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand',
     privacyLink: 'Privacy Policy',
+    termsLink: 'Terms & Conditions',
 
     // Kathina Page English Content
     kathinaEyebrow: 'Major Merit-Making Event · November 7 - 8, 2026',
@@ -137,6 +139,7 @@ const content = {
 
     footerSubtitle: 'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย',
     privacyLink: 'นโยบายความเป็นส่วนตัว',
+    termsLink: 'เงื่อนไขการใช้งาน',
 
     // Kathina Page Thai Content
     kathinaEyebrow: 'ข่าวประชาสัมพันธ์งานบุญใหญ่ · 7 - 8 พฤศจิกายน 2569',
@@ -209,7 +212,8 @@ function App() {
         hash === 'calendar-page' ||
         hash === 'donation-page' ||
         hash === 'donation-list' ||
-        hash === 'privacy-policy'
+        hash === 'privacy-policy' ||
+        hash === 'terms-page'
       ) {
         setCurrentPage(hash)
       } else {
@@ -568,6 +572,9 @@ function App() {
         ) : currentPage === 'privacy-policy' ? (
           /* ================= PAGE: PRIVACY POLICY ================= */
           <PrivacyPolicyPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'terms-page' ? (
+          /* ================= PAGE: TERMS & CONDITIONS ================= */
+          <TermsPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
@@ -730,12 +737,19 @@ function App() {
           <strong>{lang === 'en' ? 'Buddhist Park Monastery' : 'วัดพุทธอุทยานนาเทิง'}</strong>
           <p>{t.footerSubtitle}</p>
           
-          <div style={{ margin: '15px 0' }}>
+          <div style={{ margin: '20px 0', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
             <button 
               onClick={() => goToPage('privacy-policy')}
-              style={{ background: 'none', border: 'none', color: '#c5a880', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
+              style={{ background: 'transparent', border: 'none', color: '#e6c594', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline', fontWeight: '500' }}
             >
               {t.privacyLink}
+            </button>
+            <span style={{ color: '#666' }}>|</span>
+            <button 
+              onClick={() => goToPage('terms-page')}
+              style={{ background: 'transparent', border: 'none', color: '#e6c594', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline', fontWeight: '500' }}
+            >
+              {t.termsLink}
             </button>
           </div>
 
