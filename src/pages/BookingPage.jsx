@@ -18,7 +18,7 @@ export default function BookingPage({ lang, goToPage }) {
         {/* ใช้ form แบบมาตรฐานส่งข้อมูลตรงไป Web3Forms */}
         <form action="https://api.web3forms.com/submit" method="POST">
           
-          {/* ซ่อน Access Key ไว้ */}
+          {/* ซ่อน Access Key ไว้ (ตรวจสอบไม่ให้มีช่องว่างเกิน) */}
           <input type="hidden" name="access_key" value="6b26fb7a-9a99-4d69-a100-333e89a50ae3" />
 
           {/* คำนำหน้า และ ชื่อ-นามสกุล */}
