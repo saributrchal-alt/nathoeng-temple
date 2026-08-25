@@ -7,7 +7,7 @@ export default function BookingPage({ lang, goToPage }) {
     e.preventDefault();
     setSubmitting(true);
     const formData = new FormData(e.target);
-    formData.append("access_key", "YOUR_ACCESS_KEY_HERE"); // ใส่ Access Key จาก Web3Forms ตรงนี้
+    formData.append("access_key", "0ff0a63a-1c29-43a9-9bc6-028011c9495f"); // ใส่ Access Key จาก Web3Forms ตรงนี้
 
     try {
       const response = await fetch("https://api.web3forms.com/submit", {
