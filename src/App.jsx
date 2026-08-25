@@ -4,6 +4,7 @@ import BookingPage from './pages/BookingPage'
 import CalendarPage from './pages/CalendarPage'
 import DonationPage from './pages/DonationPage'
 import DonationListPage from './pages/DonationListPage'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 
 const content = {
   en: {
@@ -44,6 +45,7 @@ const content = {
       'For visits, monastery information and general enquiries, please contact us.',
 
     footerSubtitle: 'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand',
+    privacyLink: 'Privacy Policy',
 
     // Kathina Page English Content
     kathinaEyebrow: 'Major Merit-Making Event · November 7 - 8, 2026',
@@ -134,6 +136,7 @@ const content = {
       'สำหรับการเยี่ยมชม ข้อมูลเกี่ยวกับวัด หรือสอบถามรายละเอียด สามารถติดต่อทางวัดได้',
 
     footerSubtitle: 'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย',
+    privacyLink: 'นโยบายความเป็นส่วนตัว',
 
     // Kathina Page Thai Content
     kathinaEyebrow: 'ข่าวประชาสัมพันธ์งานบุญใหญ่ · 7 - 8 พฤศจิกายน 2569',
@@ -205,7 +208,8 @@ function App() {
         hash === 'booking-page' || 
         hash === 'calendar-page' ||
         hash === 'donation-page' ||
-        hash === 'donation-list'
+        hash === 'donation-list' ||
+        hash === 'privacy-policy'
       ) {
         setCurrentPage(hash)
       } else {
@@ -561,6 +565,9 @@ function App() {
         ) : currentPage === 'donation-list' ? (
           /* ================= PAGE: DONATION LIST (ADMIN) ================= */
           <DonationListPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'privacy-policy' ? (
+          /* ================= PAGE: PRIVACY POLICY ================= */
+          <PrivacyPolicyPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
@@ -722,6 +729,16 @@ function App() {
           <div className="dharma">☸</div>
           <strong>{lang === 'en' ? 'Buddhist Park Monastery' : 'วัดพุทธอุทยานนาเทิง'}</strong>
           <p>{t.footerSubtitle}</p>
+          
+          <div style={{ margin: '15px 0' }}>
+            <button 
+              onClick={() => goToPage('privacy-policy')}
+              style={{ background: 'none', border: 'none', color: '#c5a880', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
+            >
+              {t.privacyLink}
+            </button>
+          </div>
+
           <div className="footer-divider"></div>
           <div className="footer-bottom-info">
             <div>Buddhist Park Monastery of Nathoeng</div>
