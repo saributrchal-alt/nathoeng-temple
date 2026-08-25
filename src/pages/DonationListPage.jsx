@@ -4,13 +4,12 @@ export default function DonationListPage({ lang, goToPage }) {
   const text = {
     en: {
       back: '← Back to Donation Form',
-      eyebrow: 'MONASTERY ADMINISTRATION',
-      title: 'All Donation Records',
-      intro: 'List of all recorded contributions. You can review donors and check who requested a tax receipt.',
+      eyebrow: 'PUBLIC DONATIONS',
+      title: 'Recent Donation Records',
+      intro: 'List of contributions from our generous donors. Thank you for supporting the monastery.',
       noData: 'No donation records found.',
       dateHeader: 'Date',
       nameHeader: 'Full Name',
-      idHeader: 'ID / Tax ID',
       purposeHeader: 'Purpose',
       receiptHeader: 'Tax Receipt',
       amountHeader: 'Amount (THB)',
@@ -19,13 +18,12 @@ export default function DonationListPage({ lang, goToPage }) {
     },
     th: {
       back: '← กลับสู่หน้าฟอร์มบริจาค',
-      eyebrow: 'ระบบจัดการภายในวัด',
-      title: 'รายชื่อผู้บริจาคทั้งหมด',
-      intro: 'รวบรวมประวัติการทำบุญและบริจาคทั้งหมด เพื่อให้ทางวัดตรวจสอบรายชื่อและผู้ที่ต้องการขอรับใบอนุโมทนาบัตร',
+      eyebrow: 'รายชื่อผู้บริจาค',
+      title: 'ประวัติการทำบุญและบริจาค',
+      intro: 'รวบรวมรายชื่อผู้มีจิตศรัทธาทุกท่านที่ร่วมทำบุญ เพื่อร่วมอนุโมทนาบุญร่วมกัน ขอขอบพระคุณและอนุโมทนามา ณ ที่นี้',
       noData: 'ยังไม่มีประวัติการบริจาคในระบบ',
       dateHeader: 'วันเวลา',
       nameHeader: 'ชื่อ - สกุล',
-      idHeader: 'เลขบัตร / ผู้เสียภาษี',
       purposeHeader: 'วัตถุประสงค์',
       receiptHeader: 'ใบอนุโมทนาฯ',
       amountHeader: 'ยอดเงิน (บาท)',
@@ -56,7 +54,7 @@ export default function DonationListPage({ lang, goToPage }) {
 
   return (
     <div className="guidePage">
-      <div className="guideContainer" style={{ maxWidth: '1050px' }}>
+      <div className="guideContainer" style={{ maxWidth: '1000px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <button className="backButton" onClick={() => goToPage('donation-page')} style={{ margin: 0 }}>
             {t.back}
@@ -92,7 +90,6 @@ export default function DonationListPage({ lang, goToPage }) {
                   <tr style={{ background: '#fcfbfa', borderBottom: '2px solid #dcd5c8', color: '#625d55' }}>
                     <th style={{ padding: '12px' }}>{t.dateHeader}</th>
                     <th style={{ padding: '12px' }}>{t.nameHeader}</th>
-                    <th style={{ padding: '12px' }}>{t.idHeader}</th>
                     <th style={{ padding: '12px' }}>{t.purposeHeader}</th>
                     <th style={{ padding: '12px', textAlign: 'center' }}>{t.receiptHeader}</th>
                     <th style={{ padding: '12px', textAlign: 'right' }}>{t.amountHeader}</th>
@@ -103,7 +100,6 @@ export default function DonationListPage({ lang, goToPage }) {
                     <tr key={idx} style={{ borderBottom: '1px solid #e6dfd5' }}>
                       <td style={{ padding: '12px', color: '#777', fontSize: '13px', whiteSpace: 'nowrap' }}>{item.date}</td>
                       <td style={{ padding: '12px', fontWeight: '500', color: '#302d29' }}>{item.name}</td>
-                      <td style={{ padding: '12px', color: '#555', fontFamily: 'monospace' }}>{item.idNumber || '-'}</td>
                       <td style={{ padding: '12px', color: '#625d55' }}>{item.purpose}</td>
                       <td style={{ padding: '12px', textAlign: 'center' }}>
                         {item.receipt === 'yes' ? (
