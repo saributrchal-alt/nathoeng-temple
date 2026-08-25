@@ -129,7 +129,7 @@ export default function DonationPage({ lang, goToPage }) {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          access_key: "YOUR_WEB3FORMS_ACCESS_KEY", // ใส่ Access Key ของคุณ
+          access_key: "56740213-dd22-4925-948b-66e1bf47d993", // ใส่ Access Key ของคุณ
           subject: `New Donation from ${formData.fullName}`,
           from_name: "Buddhist Park Monastery Website",
           "Full Name": formData.fullName,
