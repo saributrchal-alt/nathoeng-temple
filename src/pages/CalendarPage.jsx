@@ -1,10 +1,10 @@
 import React from 'react';
 
 export default function CalendarPage({ lang, goToPage }) {
-  // ข้อมูลจำลองการจอง (สามารถดึงข้อมูลจากระบบจริงมาแสดงผลตรงนี้ได้ในอนาคต)
+  // รายการข้อมูลการจองจริงที่อัปเดตล่าสุด
   const bookings = [
+    { name: 'Punya Pasuto', checkIn: '2026-09-03', checkOut: '2026-09-05', purpose: 'เพื่อความสงบใจ' },
     { name: 'คุณ Chaloempol S.', checkIn: '2026-08-27', checkOut: '2026-08-31', purpose: 'หลักสูตร เสือดำ' },
-    // สามารถเพิ่มรายการจองอื่นๆ ตรงนี้ได้ครับ
   ];
 
   return (
