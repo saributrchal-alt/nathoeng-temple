@@ -245,7 +245,7 @@ function App() {
 
   const handleLineLogin = () => {
     const channelId = "2011256837" // Channel ID ของท่าน
-    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page")
+    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page") // ตรงกับ LINE Developers
     const state = "random_state_123"
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
     window.location.href = lineAuthUrl
@@ -284,7 +284,42 @@ function App() {
           </div>
         </div>
 
-        {/* ส่วนจัดการภาษา และปุ่มไปหน้า Login */}
+        {/* Navigation */}
+        <nav className={menuOpen ? 'navOpen' : ''}>
+          {t.nav.map((item) => (
+            <a 
+              href={item.href} 
+              key={item.href}
+              onClick={(e) => {
+                setMenuOpen(false)
+                if (item.href === '#contact') {
+                  e.preventDefault()
+                  goToPage('contact-page')
+                } else if (item.href === '#teachings') {
+                  e.preventDefault()
+                  goToPage('teachings-page')
+                } else if (item.href === '#events') {
+                  e.preventDefault()
+                  goToPage('event-kathina')
+                } else if (item.href === '#visit') {
+                  e.preventDefault()
+                  goToPage('visit-guide')
+                } else if (currentPage !== 'home') {
+                  e.preventDefault()
+                  goToPage('home')
+                  setTimeout(() => {
+                    const el = document.querySelector(item.href)
+                    if (el) el.scrollIntoView({ behavior: 'smooth' })
+                  }, 100)
+                }
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        {/* ส่วนจัดการภาษา และปุ่มไปหน้า Login (มุมขวาบน) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className="language">
             <button
@@ -342,41 +377,6 @@ function App() {
         >
           {menuOpen ? '✕' : '☰'}
         </button>
-
-        {/* Navigation */}
-        <nav className={menuOpen ? 'navOpen' : ''}>
-          {t.nav.map((item) => (
-            <a 
-              href={item.href} 
-              key={item.href}
-              onClick={(e) => {
-                setMenuOpen(false)
-                if (item.href === '#contact') {
-                  e.preventDefault()
-                  goToPage('contact-page')
-                } else if (item.href === '#teachings') {
-                  e.preventDefault()
-                  goToPage('teachings-page')
-                } else if (item.href === '#events') {
-                  e.preventDefault()
-                  goToPage('event-kathina')
-                } else if (item.href === '#visit') {
-                  e.preventDefault()
-                  goToPage('visit-guide')
-                } else if (currentPage !== 'home') {
-                  e.preventDefault()
-                  goToPage('home')
-                  setTimeout(() => {
-                    const el = document.querySelector(item.href)
-                    if (el) el.scrollIntoView({ behavior: 'smooth' })
-                  }, 100)
-                }
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
 
       </header>
 
@@ -823,7 +823,7 @@ function App() {
               <button 
                 onClick={() => goToPage('terms-page')}
                 style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
-                onMouseOver={(e) => e.target.style.color = '#c5a880'}
+                onMouseOver={(e) => e.target.style.color = '#y'}
                 onMouseOut={(e) => e.target.style.color = '#888'}
               >
                 {t.termsLink}
