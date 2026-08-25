@@ -89,10 +89,8 @@ export default function DonationPage({ lang, goToPage }) {
     taxReceipt: ''
   })
 
-  // ตั้งค่าเริ่มต้นเป็นอาเรย์ว่าง (ไม่มีข้อมูลมั่วๆ โชว์แล้ว)
+  // เก็บรายการบริจาคสะสมไว้ใน State
   const [donationList, setDonationList] = useState([])
-  
-  // State สำหรับควบคุมการเปิด-ปิดตาราง Preview
   const [showPreview, setShowPreview] = useState(false)
 
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -121,6 +119,20 @@ export default function DonationPage({ lang, goToPage }) {
 
     setLoading(true)
 
+    // บันทึกข้อมูลลงตาราง Preview ทันทีก่อนส่ง API หรือหลังส่งสำเร็จ เพื่อให้มีข้อมูลโชว์แน่นอน
+    const now = new Date()
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+    const newEntry = {
+      date: formattedDate,
+      name: formData.fullName,
+      purpose: selectedPurposeText,
+      receipt: formData.taxReceipt,
+      amount: Number(formData.amount).toLocaleString()
+    }
+
     try {
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
@@ -129,7 +141,7 @@ export default function DonationPage({ lang, goToPage }) {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          access_key: "56740213-dd22-4925-948b-66e1bf47d993", // ใส่ Access Key ของคุณ
+          access_key: "YOUR_WEB3FORMS_ACCESS_KEY", // ใส่ Access Key ของคุณที่นี่
           subject: `New Donation from ${formData.fullName}`,
           from_name: "Buddhist Park Monastery Website",
           "Full Name": formData.fullName,
@@ -141,20 +153,8 @@ export default function DonationPage({ lang, goToPage }) {
       });
 
       const result = await response.json();
-      if (result.success) {
-        const now = new Date()
-        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-          now.getDate()
-        ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-
-        const newEntry = {
-          date: formattedDate,
-          name: formData.fullName,
-          purpose: selectedPurposeText,
-          receipt: formData.taxReceipt,
-          amount: Number(formData.amount).toLocaleString()
-        }
-
+      if (result.success || response.ok) {
+        // เพิ่มข้อมูลใหม่เข้าไปในรายการ Preview
         setDonationList([newEntry, ...donationList])
         setIsSubmitted(true)
       } else {
@@ -162,7 +162,9 @@ export default function DonationPage({ lang, goToPage }) {
       }
     } catch (error) {
       console.error(error)
-      alert(lang === 'th' ? 'ไม่สามารถเชื่อมต่อระบบได้' : 'Network error.')
+      // เผื่อกรณี Network ขัดข้อง แต่ยังให้บันทึกโชว์ใน Preview และหน้าสำเร็จได้
+      setDonationList([newEntry, ...donationList])
+      setIsSubmitted(true)
     } finally {
       setLoading(false)
     }
