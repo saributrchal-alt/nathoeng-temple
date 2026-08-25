@@ -3,6 +3,7 @@ import './App.css'
 import BookingPage from './pages/BookingPage'
 import CalendarPage from './pages/CalendarPage'
 import DonationPage from './pages/DonationPage'
+import DonationListPage from './pages/DonationListPage'
 
 const content = {
   en: {
@@ -203,7 +204,8 @@ function App() {
         hash === 'contact-page' || 
         hash === 'booking-page' || 
         hash === 'calendar-page' ||
-        hash === 'donation-page'
+        hash === 'donation-page' ||
+        hash === 'donation-list'
       ) {
         setCurrentPage(hash)
       } else {
@@ -556,6 +558,9 @@ function App() {
         ) : currentPage === 'donation-page' ? (
           /* ================= PAGE: DONATION FORM ================= */
           <DonationPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'donation-list' ? (
+          /* ================= PAGE: DONATION LIST (ADMIN) ================= */
+          <DonationListPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
@@ -721,7 +726,7 @@ function App() {
           <div className="footer-bottom-info">
             <div>Buddhist Park Monastery of Nathoeng</div>
             <div>Copyright © 2026 All Rights Reserved</div>
-            <div>Powered by Nathoeng Tech Community</div>
+            <div>Powered by Nathoeng Community Tech Team</div>
           </div>
         </div>
       </footer>

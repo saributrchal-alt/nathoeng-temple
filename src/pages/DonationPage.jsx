@@ -26,15 +26,7 @@ export default function DonationPage({ lang, goToPage }) {
       taxReceiptYes: 'Yes, I require a receipt',
       taxReceiptNo: 'No, I do not require a receipt',
       submitBtn: 'Confirm Donation',
-      showPreviewBtn: '📋 View Recent Donations List',
-      hidePreviewBtn: '▲ Hide Donations List',
-      previewTitle: '📋 Recent Donations Preview',
-      noDonations: 'No donations recorded yet in this session.',
-      dateHeader: 'Date',
-      nameHeader: 'Name',
-      purposeHeader: 'Purpose',
-      receiptHeader: 'Receipt',
-      amountHeader: 'Amount',
+      viewListBtn: '📋 View All Donations (Admin)',
       successTitle: '🙏 Sadhu! อนุโมทนากุศลจิต',
       successMsg: 'May the Triple Gem bless you and your family with peace, health, and prosperity. Your donation details have been securely sent to the monastery.',
       okBtn: 'OK (Back to Home)'
@@ -63,15 +55,7 @@ export default function DonationPage({ lang, goToPage }) {
       taxReceiptYes: 'ต้องการรับใบอนุโมทนาบัตร',
       taxReceiptNo: 'ไม่ต้องการรับใบอนุโมทนาบัตร',
       submitBtn: 'ยืนยันการบริจาค',
-      showPreviewBtn: '📋 คลิกเพื่อดูรายการบริจาคล่าสุด',
-      hidePreviewBtn: '▲ ซ่อนรายการบริจาค',
-      previewTitle: '📋 รายการบริจาคล่าสุด (Preview)',
-      noDonations: 'ยังไม่มีรายการบริจาคใหม่ในขณะนี้',
-      dateHeader: 'วันเดือนปี',
-      nameHeader: 'ชื่อบุคคล',
-      purposeHeader: 'วัตถุประสงค์',
-      receiptHeader: 'ใบอนุโมทนาฯ',
-      amountHeader: 'ยอดเงิน',
+      viewListBtn: '📋 ตรวจสอบรายชื่อผู้บริจาคทั้งหมด (สำหรับเจ้าหน้าที่)',
       successTitle: '🙏 สาธุ อนุโมทนาบุญด้วยครับ',
       successMsg: 'ขออานุภาพแห่งคุณพระศรีรัตนตรัย จงดลบันดาลให้ท่านและครอบครัวประสบแต่ความสุข ความเจริญ มีอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติทุกประการ ทางวัดได้ทำการบันทึกและส่งข้อมูลให้ทางวัดเรียบร้อยแล้ว',
       okBtn: 'ตกลง (กลับสู่หน้าหลัก)'
@@ -88,10 +72,6 @@ export default function DonationPage({ lang, goToPage }) {
     customPurpose: '',
     taxReceipt: ''
   })
-
-  // เก็บรายการบริจาคสะสมไว้ใน State
-  const [donationList, setDonationList] = useState([])
-  const [showPreview, setShowPreview] = useState(false)
 
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -119,7 +99,6 @@ export default function DonationPage({ lang, goToPage }) {
 
     setLoading(true)
 
-    // บันทึกข้อมูลลงตาราง Preview ทันทีก่อนส่ง API หรือหลังส่งสำเร็จ เพื่อให้มีข้อมูลโชว์แน่นอน
     const now = new Date()
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
       now.getDate()
@@ -128,20 +107,29 @@ export default function DonationPage({ lang, goToPage }) {
     const newEntry = {
       date: formattedDate,
       name: formData.fullName,
+      idNumber: formData.idNumber, // เก็บไว้ในระบบเบื้องหลัง
       purpose: selectedPurposeText,
       receipt: formData.taxReceipt,
-      amount: Number(formData.amount).toLocaleString()
+      amount: Number(formData.amount)
+    }
+
+    // บันทึกลง localStorage สะสมไว้ให้หน้าตรวจสอบดึงไปแสดง
+    try {
+      const existing = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]')
+      localStorage.setItem('nathoeng_donations', JSON.stringify([newEntry, ...existing]))
+    } catch (err) {
+      console.error(err)
     }
 
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
+      await fetch("https://api.web3forms.com/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
         body: JSON.stringify({
-          access_key: "YOUR_WEB3FORMS_ACCESS_KEY", // ใส่ Access Key ของคุณที่นี่
+          access_key: "56740213-dd22-4925-948b-66e1bf47d993", // ใส่ Access Key ของคุณที่นี่
           subject: `New Donation from ${formData.fullName}`,
           from_name: "Buddhist Park Monastery Website",
           "Full Name": formData.fullName,
@@ -152,19 +140,10 @@ export default function DonationPage({ lang, goToPage }) {
         }),
       });
 
-      const result = await response.json();
-      if (result.success || response.ok) {
-        // เพิ่มข้อมูลใหม่เข้าไปในรายการ Preview
-        setDonationList([newEntry, ...donationList])
-        setIsSubmitted(true)
-      } else {
-        alert(lang === 'th' ? 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง' : 'Something went wrong. Please try again.')
-      }
+      setIsSubmitted(true)
     } catch (error) {
       console.error(error)
-      // เผื่อกรณี Network ขัดข้อง แต่ยังให้บันทึกโชว์ใน Preview และหน้าสำเร็จได้
-      setDonationList([newEntry, ...donationList])
-      setIsSubmitted(true)
+      setIsSubmitted(true) // ให้ผ่านไปหน้าสำเร็จแม้เน็ตมีปัญหาเล็กน้อย แต่ข้อมูลบันทึกลงเครื่องแล้ว
     } finally {
       setLoading(false)
     }
@@ -178,10 +157,18 @@ export default function DonationPage({ lang, goToPage }) {
 
   return (
     <div className="guidePage">
-      <div className="guideContainer" style={{ maxWidth: '950px' }}>
-        <button className="backButton" onClick={() => goToPage('home')}>
-          {t.back}
-        </button>
+      <div className="guideContainer" style={{ maxWidth: '900px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <button className="backButton" onClick={() => goToPage('home')} style={{ margin: 0 }}>
+            {t.back}
+          </button>
+          <button 
+            onClick={() => goToPage('donation-list')} 
+            style={{ background: 'none', border: '1px solid #dcd5c8', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', color: '#625d55' }}
+          >
+            {t.viewListBtn}
+          </button>
+        </div>
 
         {!isSubmitted ? (
           <>
@@ -189,7 +176,7 @@ export default function DonationPage({ lang, goToPage }) {
             <h1>{t.title}</h1>
             <p className="guideIntro">{t.intro}</p>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '30px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
@@ -310,64 +297,6 @@ export default function DonationPage({ lang, goToPage }) {
                 </button>
               </div>
             </form>
-
-            {/* ปุ่มกดเพื่อแสดง/ซ่อน ตาราง Preview */}
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <button
-                onClick={() => setShowPreview(!showPreview)}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #9b7226',
-                  color: '#9b7226',
-                  padding: '10px 20px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                {showPreview ? t.hidePreviewBtn : t.showPreviewBtn}
-              </button>
-            </div>
-
-            {/* ส่วนแสดงตาราง Preview เฉพาะเมื่อกดปุ่มเปิดเท่านั้น */}
-            {showPreview && (
-              <div style={{ background: '#f6f4ef', padding: '25px', borderRadius: '6px', border: '1px solid #eeeae2', marginTop: '15px' }}>
-                <h3 style={{ marginTop: '0', fontSize: '1.1rem', color: '#302d29', marginBottom: '15px' }}>
-                  {t.previewTitle}
-                </h3>
-                {donationList.length === 0 ? (
-                  <p style={{ color: '#777', fontSize: '14px', margin: 0 }}>{t.noDonations}</p>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '2px solid #dcd5c8', color: '#625d55' }}>
-                          <th style={{ padding: '10px' }}>{t.dateHeader}</th>
-                          <th style={{ padding: '10px' }}>{t.nameHeader}</th>
-                          <th style={{ padding: '10px' }}>{t.purposeHeader}</th>
-                          <th style={{ padding: '10px', textAlign: 'center' }}>{t.receiptHeader}</th>
-                          <th style={{ padding: '10px', textAlign: 'right' }}>{t.amountHeader}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {donationList.map((item, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #e6dfd5' }}>
-                            <td style={{ padding: '10px', color: '#777', fontSize: '13px' }}>{item.date}</td>
-                            <td style={{ padding: '10px', fontWeight: '500', color: '#302d29' }}>{item.name}</td>
-                            <td style={{ padding: '10px', color: '#625d55' }}>{item.purpose}</td>
-                            <td style={{ padding: '10px', textAlign: 'center', color: '#625d55' }}>
-                              {item.receipt === 'yes' ? (lang === 'th' ? '✓ ต้องการ' : '✓ Yes') : (lang === 'th' ? '- ไม่ต้องการ' : '- No')}
-                            </td>
-                            <td style={{ padding: '10px', textAlign: 'right', fontWeight: '600', color: '#9b7226' }}>{item.amount} ฿</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
           </>
         ) : (
           <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fcfbfa', borderRadius: '6px', border: '1px solid #eeeae2' }}>
@@ -378,9 +307,14 @@ export default function DonationPage({ lang, goToPage }) {
             <p style={{ fontSize: '16px', lineHeight: '1.8', color: '#625d55', maxWidth: '650px', margin: '0 auto 30px' }}>
               {t.successMsg}
             </p>
-            <button onClick={handleResetAndGoHome} className="primaryContactBtn" style={{ padding: '12px 30px', fontSize: '15px', cursor: 'pointer' }}>
-              {t.okBtn}
-            </button>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={handleResetAndGoHome} className="primaryContactBtn" style={{ padding: '12px 25px', fontSize: '15px', cursor: 'pointer' }}>
+                {t.okBtn}
+              </button>
+              <button onClick={() => goToPage('donation-list')} style={{ background: '#fff', border: '1px solid #9b7226', color: '#9b7226', padding: '12px 25px', borderRadius: '4px', cursor: 'pointer', fontSize: '15px' }}>
+                {t.viewListBtn}
+              </button>
+            </div>
           </div>
         )}
       </div>

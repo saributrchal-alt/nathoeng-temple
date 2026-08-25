@@ -1,0 +1,132 @@
+import { useState, useEffect } from 'react'
+
+export default function DonationListPage({ lang, goToPage }) {
+  const text = {
+    en: {
+      back: '← Back to Donation Form',
+      eyebrow: 'MONASTERY ADMINISTRATION',
+      title: 'All Donation Records',
+      intro: 'List of all recorded contributions. You can review donors and check who requested a tax receipt.',
+      noData: 'No donation records found.',
+      dateHeader: 'Date',
+      nameHeader: 'Full Name',
+      idHeader: 'ID / Tax ID',
+      purposeHeader: 'Purpose',
+      receiptHeader: 'Tax Receipt',
+      amountHeader: 'Amount (THB)',
+      totalLabel: 'Total Donations:',
+      clearBtn: 'Clear All Records'
+    },
+    th: {
+      back: '← กลับสู่หน้าฟอร์มบริจาค',
+      eyebrow: 'ระบบจัดการภายในวัด',
+      title: 'รายชื่อผู้บริจาคทั้งหมด',
+      intro: 'รวบรวมประวัติการทำบุญและบริจาคทั้งหมด เพื่อให้ทางวัดตรวจสอบรายชื่อและผู้ที่ต้องการขอรับใบอนุโมทนาบัตร',
+      noData: 'ยังไม่มีประวัติการบริจาคในระบบ',
+      dateHeader: 'วันเวลา',
+      nameHeader: 'ชื่อ - สกุล',
+      idHeader: 'เลขบัตร / ผู้เสียภาษี',
+      purposeHeader: 'วัตถุประสงค์',
+      receiptHeader: 'ใบอนุโมทนาฯ',
+      amountHeader: 'ยอดเงิน (บาท)',
+      totalLabel: 'ยอดบริจาคสะสมรวมทั้งสิ้น:',
+      clearBtn: 'ล้างข้อมูลทั้งหมด'
+    }
+  }
+
+  const t = text[lang]
+
+  const [donations, setDonations] = useState([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('nathoeng_donations')
+    if (saved) {
+      setDonations(JSON.parse(saved))
+    }
+  }, [])
+
+  const handleClear = () => {
+    if (window.confirm(lang === 'th' ? 'ต้องการล้างประวัติการบริจาคทั้งหมดใช่หรือไม่?' : 'Clear all donation records?')) {
+      localStorage.removeItem('nathoeng_donations')
+      setDonations([])
+    }
+  }
+
+  const totalAmount = donations.reduce((sum, item) => sum + Number(String(item.amount).replace(/,/g, '')), 0)
+
+  return (
+    <div className="guidePage">
+      <div className="guideContainer" style={{ maxWidth: '1050px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <button className="backButton" onClick={() => goToPage('donation-page')} style={{ margin: 0 }}>
+            {t.back}
+          </button>
+          {donations.length > 0 && (
+            <button 
+              onClick={handleClear}
+              style={{ background: '#d32f2f', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+            >
+              {t.clearBtn}
+            </button>
+          )}
+        </div>
+
+        <span className="eyebrow">{t.eyebrow}</span>
+        <h1>{t.title}</h1>
+        <p className="guideIntro">{t.intro}</p>
+
+        {donations.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', background: '#fcfbfa', borderRadius: '6px', border: '1px solid #eeeae2' }}>
+            <p style={{ color: '#777', fontSize: '15px' }}>{t.noData}</p>
+          </div>
+        ) : (
+          <div>
+            <div style={{ background: '#f6f4ef', padding: '20px', borderRadius: '6px', marginBottom: '20px', border: '1px solid #eeeae2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '16px', fontWeight: '500', color: '#302d29' }}>{t.totalLabel}</span>
+              <span style={{ fontSize: '20px', fontWeight: '600', color: '#9b7226' }}>{totalAmount.toLocaleString()} ฿</span>
+            </div>
+
+            <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #eeeae2', borderRadius: '6px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: '#fcfbfa', borderBottom: '2px solid #dcd5c8', color: '#625d55' }}>
+                    <th style={{ padding: '12px' }}>{t.dateHeader}</th>
+                    <th style={{ padding: '12px' }}>{t.nameHeader}</th>
+                    <th style={{ padding: '12px' }}>{t.idHeader}</th>
+                    <th style={{ padding: '12px' }}>{t.purposeHeader}</th>
+                    <th style={{ padding: '12px', textAlign: 'center' }}>{t.receiptHeader}</th>
+                    <th style={{ padding: '12px', textAlign: 'right' }}>{t.amountHeader}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {donations.map((item, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #e6dfd5' }}>
+                      <td style={{ padding: '12px', color: '#777', fontSize: '13px', whiteSpace: 'nowrap' }}>{item.date}</td>
+                      <td style={{ padding: '12px', fontWeight: '500', color: '#302d29' }}>{item.name}</td>
+                      <td style={{ padding: '12px', color: '#555', fontFamily: 'monospace' }}>{item.idNumber || '-'}</td>
+                      <td style={{ padding: '12px', color: '#625d55' }}>{item.purpose}</td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>
+                        {item.receipt === 'yes' ? (
+                          <span style={{ background: '#e8f5e9', color: '#2e7d32', padding: '3px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '500' }}>
+                            {lang === 'th' ? '✓ ต้องการ' : '✓ Yes'}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#999', fontSize: '12px' }}>
+                            {lang === 'th' ? 'ไม่ต้องการ' : 'No'}
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#9b7226' }}>
+                        {Number(String(item.amount).replace(/,/g, '')).toLocaleString()} ฿
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
