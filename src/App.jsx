@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import BookingPage from './pages/BookingPage'
+import CalendarPage from './pages/CalendarPage'
 
 const content = {
   en: {
@@ -11,6 +12,7 @@ const content = {
       { label: 'News & Events', href: '#events' },
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Retreats', href: '#retreats' },
+      { label: 'Schedule', href: '#schedule' },
       { label: 'Support', href: '#support' },
       { label: 'Contact', href: '#contact' }
     ],
@@ -102,6 +104,7 @@ const content = {
       { label: 'ข่าวและกิจกรรม', href: '#events' },
       { label: 'เยี่ยมชมและพัก', href: '#visit' },
       { label: 'ปฏิบัติธรรม', href: '#retreats' },
+      { label: 'ตารางการจอง', href: '#schedule' },
       { label: 'สนับสนุนวัด', href: '#support' },
       { label: 'ติดต่อ', href: '#contact' }
     ],
@@ -196,7 +199,7 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '')
-      if (hash === 'event-kathina' || hash === 'teachings-page' || hash === 'visit-guide' || hash === 'contact-page' || hash === 'booking-page') {
+      if (hash === 'event-kathina' || hash === 'teachings-page' || hash === 'visit-guide' || hash === 'contact-page' || hash === 'booking-page' || hash === 'calendar-page') {
         setCurrentPage(hash)
       } else {
         setCurrentPage('home')
@@ -282,6 +285,9 @@ function App() {
                 } else if (item.href === '#retreats') {
                   e.preventDefault()
                   goToPage('visit-guide')
+                } else if (item.href === '#schedule') {
+                  e.preventDefault()
+                  goToPage('calendar-page')
                 } else if (currentPage !== 'home') {
                   e.preventDefault()
                   goToPage('home')
@@ -401,9 +407,14 @@ function App() {
                 <p className="eyebrow">{lang === 'en' ? 'PRACTICE' : 'การปฏิบัติ'}</p>
                 <h2>{t.retreats}</h2>
                 <p>{t.retreatsText}</p>
-                <button onClick={() => goToPage('visit-guide')} className="textLinkButton">
-                  {lang === 'en' ? 'Read guidelines & book stay →' : 'อ่านระเบียบการและจองเข้าพัก →'}
-                </button>
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: '15px' }}>
+                  <button onClick={() => goToPage('visit-guide')} className="textLinkButton">
+                    {lang === 'en' ? 'Read guidelines & book stay →' : 'อ่านระเบียบการและจองเข้าพัก →'}
+                  </button>
+                  <button onClick={() => goToPage('calendar-page')} className="textLinkButton" style={{ color: '#9b7226' }}>
+                    {lang === 'en' ? 'View Schedule →' : 'ดูตารางการจองเข้าพัก →'}
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -512,24 +523,32 @@ function App() {
                 </div>
               </div>
 
-              <div className="guideContactBox" style={{ marginTop: '40px', background: '#f6f4ef', padding: '30px', textAlign: 'center', borderRadius: '4px' }}>
-                <h3 style={{ marginBottom: '12px', fontSize: '1.2rem' }}>
+              <div className="guideContactBox" style={{ marginTop: '40px', background: '#f6f4ef', padding: '30px', textAlign: 'center', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
                   {lang === 'en' ? 'Ready to join us?' : 'อ่านระเบียบการและเข้าใจเรียบร้อยแล้วใช่หรือไม่?'}
                 </h3>
-                <p style={{ marginBottom: '20px', color: '#625d55' }}>
+                <p style={{ margin: 0, color: '#625d55' }}>
                   {lang === 'en' 
-                    ? 'You can now proceed to submit your stay reservation request.' 
-                    : 'ท่านสามารถกดปุ่มด้านล่างนี้เพื่อกรอกรายละเอียดส่งคำขอจองวันเข้าพักปฏิบัติธรรมกับทางวัดได้เลยครับ'}
+                    ? 'You can check the schedule or proceed to book your stay.' 
+                    : 'ท่านสามารถตรวจสอบตารางเวลาว่าง หรือกดปุ่มด้านล่างเพื่อกรอกฟอร์มจองเข้าพักได้เลยครับ'}
                 </p>
-                <button onClick={() => goToPage('booking-page')} className="primaryContactBtn" style={{ padding: '14px 28px', fontSize: '15px' }}>
-                  {lang === 'en' ? 'Proceed to Book Stay →' : 'กรอกฟอร์มจองเข้าปฏิบัติธรรม →'}
-                </button>
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button onClick={() => goToPage('calendar-page')} className="secondaryContactBtn" style={{ padding: '12px 24px', fontSize: '14px', background: '#fff', border: '1px solid #9b7226', color: '#9b7226', borderRadius: '4px', cursor: 'pointer' }}>
+                    {lang === 'en' ? '📅 View Schedule' : '📅 ดูตารางการจอง'}
+                  </button>
+                  <button onClick={() => goToPage('booking-page')} className="primaryContactBtn" style={{ padding: '12px 24px', fontSize: '14px' }}>
+                    {lang === 'en' ? 'Proceed to Book Stay →' : 'กรอกฟอร์มจองเข้าปฏิบัติธรรม →'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ) : currentPage === 'booking-page' ? (
-          /* ================= PAGE: BOOKING FORM (เรียกใช้จากโฟลเดอร์ pages) ================= */
+          /* ================= PAGE: BOOKING FORM ================= */
           <BookingPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'calendar-page' ? (
+          /* ================= PAGE: CALENDAR SCHEDULE ================= */
+          <CalendarPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
