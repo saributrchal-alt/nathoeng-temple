@@ -17,7 +17,8 @@ const content = {
       { label: 'News & Events', href: '#events' },
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Support', href: '#support' },
-      { label: 'Contact', href: '#contact' }
+      { label: 'Contact', href: '#contact' },
+      { label: 'Login', href: '#login-page' }
     ],
 
     teachings: 'Dhamma Teachings',
@@ -49,7 +50,6 @@ const content = {
     footerSubtitle: 'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand',
     privacyLink: 'Privacy Policy',
     termsLink: 'Terms & Conditions',
-    loginMenu: 'Member Login',
 
     // Kathina Page English Content
     kathinaEyebrow: 'Major Merit-Making Event · November 7 - 8, 2026',
@@ -110,7 +110,8 @@ const content = {
       { label: 'ข่าวและกิจกรรม', href: '#events' },
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
-      { label: 'ติดต่อ', href: '#contact' }
+      { label: 'ติดต่อ', href: '#contact' },
+      { label: 'เข้าสู่ระบบ', href: '#login-page' }
     ],
 
     teachings: 'พระธรรมคำสอน',
@@ -142,7 +143,6 @@ const content = {
     footerSubtitle: 'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย',
     privacyLink: 'นโยบายความเป็นส่วนตัว',
     termsLink: 'เงื่อนไขการใช้งาน',
-    loginMenu: 'เข้าสู่ระบบสมาชิก',
 
     // Kathina Page Thai Content
     kathinaEyebrow: 'ข่าวประชาสัมพันธ์งานบุญใหญ่ · 7 - 8 พฤศจิกายน 2569',
@@ -245,7 +245,7 @@ function App() {
 
   const handleLineLogin = () => {
     const channelId = "2011256837" // Channel ID ของท่าน
-    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page") // ตรงกับ LINE Developers
+    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#login-page")
     const state = "random_state_123"
     const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
     window.location.href = lineAuthUrl
@@ -284,42 +284,7 @@ function App() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className={menuOpen ? 'navOpen' : ''}>
-          {t.nav.map((item) => (
-            <a 
-              href={item.href} 
-              key={item.href}
-              onClick={(e) => {
-                setMenuOpen(false)
-                if (item.href === '#contact') {
-                  e.preventDefault()
-                  goToPage('contact-page')
-                } else if (item.href === '#teachings') {
-                  e.preventDefault()
-                  goToPage('teachings-page')
-                } else if (item.href === '#events') {
-                  e.preventDefault()
-                  goToPage('event-kathina')
-                } else if (item.href === '#visit') {
-                  e.preventDefault()
-                  goToPage('visit-guide')
-                } else if (currentPage !== 'home') {
-                  e.preventDefault()
-                  goToPage('home')
-                  setTimeout(() => {
-                    const el = document.querySelector(item.href)
-                    if (el) el.scrollIntoView({ behavior: 'smooth' })
-                  }, 100)
-                }
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* ส่วนจัดการภาษา และปุ่มไปหน้า Login (มุมขวาบน) */}
+        {/* ส่วนจัดการภาษา / แสดงสถานะผู้ใช้ (ถ้าล็อกอินแล้ว) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className="language">
             <button
@@ -337,7 +302,7 @@ function App() {
             </button>
           </div>
 
-          {user ? (
+          {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
               <span style={{ fontWeight: '500', color: '#06c755' }}>🟢 {user.name}</span>
               <button 
@@ -347,25 +312,6 @@ function App() {
                 {lang === 'en' ? 'Logout' : 'ออก'}
               </button>
             </div>
-          ) : (
-            <button
-              onClick={() => goToPage('login-page')}
-              style={{
-                background: '#06c755',
-                color: '#fff',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                cursor: 'pointer',
-                fontWeight: '500',
-                fontSize: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
-            >
-              🟢 {t.loginMenu}
-            </button>
           )}
         </div>
 
@@ -377,6 +323,39 @@ function App() {
         >
           {menuOpen ? '✕' : '☰'}
         </button>
+
+        {/* Navigation - รวมเมนู "เข้าสู่ระบบ" ต่อท้ายเมนูอื่นๆ */}
+        <nav className={menuOpen ? 'navOpen' : ''}>
+          {t.nav.map((item) => (
+            <a 
+              href={item.href} 
+              key={item.href}
+              onClick={(e) => {
+                setMenuOpen(false)
+                e.preventDefault()
+                if (item.href === '#contact') {
+                  goToPage('contact-page')
+                } else if (item.href === '#teachings') {
+                  goToPage('teachings-page')
+                } else if (item.href === '#events') {
+                  goToPage('event-kathina')
+                } else if (item.href === '#visit') {
+                  goToPage('visit-guide')
+                } else if (item.href === '#login-page') {
+                  goToPage('login-page')
+                } else {
+                  goToPage('home')
+                  setTimeout(() => {
+                    const el = document.querySelector(item.href)
+                    if (el) el.scrollIntoView({ behavior: 'smooth' })
+                  }, 100)
+                }
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
 
       </header>
 
@@ -823,7 +802,7 @@ function App() {
               <button 
                 onClick={() => goToPage('terms-page')}
                 style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
-                onMouseOver={(e) => e.target.style.color = '#y'}
+                onMouseOver={(e) => e.target.style.color = '#c5a880'}
                 onMouseOut={(e) => e.target.style.color = '#888'}
               >
                 {t.termsLink}
