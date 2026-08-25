@@ -10,9 +10,14 @@ const content = {
       { label: 'About', href: '#about' },
       { label: 'Teachings', href: '#teachings' },
       { label: 'News & Events', href: '#events' },
-      { label: 'Visit & Stay', href: '#visit' },
-      { label: 'Retreats', href: '#retreats' },
-      { label: 'Schedule', href: '#schedule' },
+      { 
+        label: 'Visit & Stay', 
+        href: '#visit',
+        sub: [
+          { label: 'Retreats & Practice', href: '#retreats' },
+          { label: 'Reservation Schedule', href: '#schedule' }
+        ]
+      },
       { label: 'Support', href: '#support' },
       { label: 'Contact', href: '#contact' }
     ],
@@ -102,9 +107,14 @@ const content = {
       { label: 'เกี่ยวกับวัด', href: '#about' },
       { label: 'ธรรมะ', href: '#teachings' },
       { label: 'ข่าวและกิจกรรม', href: '#events' },
-      { label: 'เยี่ยมชมและพัก', href: '#visit' },
-      { label: 'ปฏิบัติธรรม', href: '#retreats' },
-      { label: 'ตารางการจอง', href: '#schedule' },
+      { 
+        label: 'ปฏิบัติธรรม / เยี่ยมชม', 
+        href: '#visit',
+        sub: [
+          { label: 'ระเบียบการเข้าพัก', href: '#retreats' },
+          { label: 'ตารางการจองเข้าพัก', href: '#schedule' }
+        ]
+      },
       { label: 'สนับสนุนวัด', href: '#support' },
       { label: 'ติดต่อ', href: '#contact' }
     ],
@@ -267,39 +277,62 @@ function App() {
 
         {/* Navigation */}
         <nav className={menuOpen ? 'navOpen' : ''}>
-          {t.nav.map((item) => (
-            <a 
-              href={item.href} 
-              key={item.href}
-              onClick={(e) => {
-                setMenuOpen(false)
-                if (item.href === '#contact') {
-                  e.preventDefault()
-                  goToPage('contact-page')
-                } else if (item.href === '#teachings') {
-                  e.preventDefault()
-                  goToPage('teachings-page')
-                } else if (item.href === '#events') {
-                  e.preventDefault()
-                  goToPage('event-kathina')
-                } else if (item.href === '#retreats') {
-                  e.preventDefault()
-                  goToPage('visit-guide')
-                } else if (item.href === '#schedule') {
-                  e.preventDefault()
-                  goToPage('calendar-page')
-                } else if (currentPage !== 'home') {
-                  e.preventDefault()
-                  goToPage('home')
-                  setTimeout(() => {
-                    const el = document.querySelector(item.href)
-                    if (el) el.scrollIntoView({ behavior: 'smooth' })
-                  }, 100)
-                }
-              }}
-            >
-              {item.label}
-            </a>
+          {t.nav.map((item, idx) => (
+            item.sub ? (
+              <div key={idx} className="dropdownMenu" style={{ position: 'relative', display: 'inline-block' }}>
+                <span className="dropdownToggle" style={{ cursor: 'pointer', padding: '8px 12px', display: 'inline-block' }}>
+                  {item.label} ▼
+                </span>
+                <div className="dropdownContent" style={{ display: 'none', position: 'absolute', background: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', minWidth: '180px', zIndex: 100, borderRadius: '4px', border: '1px solid #eeeae2' }}>
+                  {item.sub.map((subItem, subIdx) => (
+                    <a 
+                      key={subIdx} 
+                      href={subItem.href}
+                      style={{ display: 'block', padding: '10px 15px', color: '#302d29', textDecoration: 'none', fontSize: '14px', borderBottom: subIdx === 0 ? '1px solid #eeeae2' : 'none' }}
+                      onClick={(e) => {
+                        setMenuOpen(false)
+                        if (subItem.href === '#retreats') {
+                          e.preventDefault()
+                          goToPage('visit-guide')
+                        } else if (subItem.href === '#schedule') {
+                          e.preventDefault()
+                          goToPage('calendar-page')
+                        }
+                      }}
+                    >
+                      {subItem.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <a 
+                href={item.href} 
+                key={item.href}
+                onClick={(e) => {
+                  setMenuOpen(false)
+                  if (item.href === '#contact') {
+                    e.preventDefault()
+                    goToPage('contact-page')
+                  } else if (item.href === '#teachings') {
+                    e.preventDefault()
+                    goToPage('teachings-page')
+                  } else if (item.href === '#events') {
+                    e.preventDefault()
+                    goToPage('event-kathina')
+                  } else if (currentPage !== 'home') {
+                    e.preventDefault()
+                    goToPage('home')
+                    setTimeout(() => {
+                      const el = document.querySelector(item.href)
+                      if (el) el.scrollIntoView({ behavior: 'smooth' })
+                    }, 100)
+                  }
+                }}
+              >
+                {item.label}
+              </a>
+            )
           ))}
         </nav>
 
