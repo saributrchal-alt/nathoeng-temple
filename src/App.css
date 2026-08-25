@@ -2,6 +2,9 @@
    Buddhist Park Monastery of Nathoeng
    ========================================= */
 
+/* ดึงฟอนต์ Prompt จาก Google Fonts มาใช้งาน */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
+
 * {
   box-sizing: border-box;
 }
@@ -14,7 +17,8 @@ body {
   margin: 0;
   background: #ffffff;
   color: #332f2a;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* เปลี่ยนฟอนต์หลักเป็น Prompt รองรับภาษาไทยได้สวยงามและอ่านง่ายขึ้น */
+  font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
 }
 
