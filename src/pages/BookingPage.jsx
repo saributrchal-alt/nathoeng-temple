@@ -19,7 +19,7 @@ export default function BookingPage({ lang, goToPage }) {
         <form action="https://api.web3forms.com/submit" method="POST">
           
           {/* ซ่อน Access Key ไว้ (ตรวจสอบไม่ให้มีช่องว่างเกิน) */}
-          <input type="hidden" name="access_key" value="6b26fb7a-9a99-4d69-a100-333e89a50ae3" />
+          <input type="hidden" name="access_key" value="a70db5d6-c329-47ce-a5e6-c550fd7fee3c" />
 
           {/* คำนำหน้า และ ชื่อ-นามสกุล */}
           <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: '15px', marginBottom: '20px' }}>
