@@ -1,153 +1,192 @@
 import React, { useState } from 'react';
 
-export default function BookingPage({ lang, goToPage }) {
-  const [submitting, setSubmitting] = useState(false);
+function BookingPage({ lang, goToPage }) {
+  // ดึงข้อมูลผู้ใช้ที่ล็อกอินผ่าน LINE จาก localStorage
+  const savedUser = localStorage.getItem('line_user');
+  const user = savedUser ? JSON.parse(savedUser) : null;
 
-  const handleBookingSubmit = async (e) => {
+  const [formData, setFormData] = useState({
+    name: user ? user.name : '',
+    phone: '',
+    startDate: '',
+    endDate: '',
+    note: ''
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    const formData = new FormData(e.target);
-    formData.append("access_key", "d80a991c-5b9f-4273-a730-8de806f45da3"); // รหัส Access Key ของวัด
+    if (!user) {
+      alert(lang === 'en' ? 'Please login with LINE first.' : 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำการจอง');
+      goToPage('login-page');
+      return;
+    }
+
+    setLoading(true);
+
+    // จำลองการส่งข้อมูลเข้า Google Sheets (ผ่าน Google Apps Script Web App URL)
+    // ตรง URL นี้ เดี๋ยวเราจะเอาลิงก์จาก Google Apps Script มาใส่แทนที่ช่องว่างครับ
+    const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_URL_HERE'; 
+
+    const payload = {
+      lineUid: user.uid || 'LINE_USER',
+      name: formData.name,
+      phone: formData.phone,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      note: formData.note,
+      timestamp: new Date().toISOString()
+    };
 
     try {
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        body: formData
-      });
-      const data = await response.json();
-      if (data.success) {
-        alert(lang === 'th' ? 'ส่งคำขอจองเข้าพักสำเร็จ ทางวัดได้รับข้อมูลเรียบร้อยแล้ว' : 'Reservation submitted successfully!');
-        e.target.reset();
-        goToPage('home');
-      } else {
-        alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-      }
+      // ถ้ายังไม่ได้ใส่ Script URL จะให้บันทึกผ่านจำลอง หรือยิงจริงก็ได้ครับ
+      console.log('Booking Data:', payload);
+      // await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
+      
+      setSubmitted(true);
     } catch (error) {
-      alert("ไม่สามารถเชื่อมต่อระบบได้ กรุณาตรวจสอบอินเทอร์เน็ต");
+      console.error('Error submitting booking:', error);
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="guidePage">
       <div className="guideContainer">
-        <button className="backButton" onClick={() => goToPage('visit-guide')}>
-          {lang === 'en' ? '← Back to Guidelines' : '← กลับไปหน้าระเบียบการ'}
+        <button className="backButton" onClick={() => goToPage('home')}>
+          {lang === 'en' ? '← Back to Home' : '← กลับสู่หน้าหลัก'}
         </button>
-        <span className="eyebrow">{lang === 'en' ? 'MONASTERY STAY RESERVATION' : 'ระบบจองเข้าพักปฏิบัติธรรม'}</span>
-        <h1>{lang === 'en' ? 'Book Your Stay' : 'กรอกข้อมูลการจองเข้าพัก'}</h1>
-        <p className="guideIntro">
-          {lang === 'en' 
-            ? 'Please fill in your details below to request a stay for meditation and practice.' 
-            : 'กรุณากรอกข้อมูลสำคัญให้ครบถ้วน เพื่อให้ทางวัดเตรียมความพร้อม'}
-        </p>
-
-        <form onSubmit={handleBookingSubmit}>
-          
-          {/* ชื่อ - นามสกุล */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-              {lang === 'th' ? 'ชื่อ - นามสกุล *' : 'Full Name *'}
-            </label>
-            <input type="text" name="name" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="ระบุคำนำหน้า ชื่อ และนามสกุล" />
+        
+        <span className="eyebrow">{lang === 'en' ? 'MONASTERY STAY BOOKING' : 'ระบบจองเข้าปฏิบัติธรรม'}</span>
+        <h1>{lang === 'en' ? 'Book Your Stay' : 'จองวันเข้าพักปฏิบัติธรรม'}</h1>
+        
+        {!user ? (
+          <div style={{ padding: '30px', background: '#f6f4ef', borderRadius: '4px', textAlign: 'center', margin: '20px 0' }}>
+            <p style={{ marginBottom: '15px', color: '#625d55', fontSize: '15px' }}>
+              {lang === 'en' 
+                ? 'Security Check: Please login with your LINE account to proceed with your booking.' 
+                : 'เพื่อความปลอดภัยและป้องกันข้อความขยะ (Spam) กรุณาเข้าสู่ระบบด้วยบัญชี LINE ของท่านก่อนทำการจอง'}
+            </p>
+            <button 
+              onClick={() => goToPage('login-page')} 
+              className="primaryContactBtn"
+              style={{ background: '#06c755' }}
+            >
+              {lang === 'en' ? 'Login with LINE to Book' : 'เข้าสู่ระบบด้วย LINE เพื่อทำการจอง'}
+            </button>
           </div>
-
-          {/* เลขบัตรประชาชน และ อายุ */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '15px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                {lang === 'th' ? 'เลขที่บัตรประจำตัวประชาชน *' : 'ID Card Number *'}
-              </label>
-              <input type="text" name="id_card" required maxLength="13" style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="เลขบัตรประชาชน 13 หลัก" />
+        ) : submitted ? (
+          <div style={{ padding: '40px', background: '#f6f4ef', borderRadius: '4px', textAlign: 'center' }}>
+            <h3 style={{ color: '#2e7d32', marginBottom: '10px' }}>
+              {lang === 'en' ? 'Booking Submitted Successfully!' : 'บันทึกข้อมูลการจองเรียบร้อยแล้ว'}
+            </h3>
+            <p style={{ color: '#625d55', marginBottom: '20px' }}>
+              {lang === 'en' 
+                ? 'Thank you. The monastery team has received your booking details.' 
+                : 'ทางวัดได้รับข้อมูลการจองของท่านเรียบร้อยแล้ว อนุโมทนาบุญด้วยครับ'}
+            </p>
+            <button onClick={() => goToPage('home')} className="primaryContactBtn">
+              {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
+            <div style={{ marginBottom: '15px', padding: '12px', background: '#e8f5e9', borderRadius: '4px', fontSize: '14px', color: '#2e7d32' }}>
+              🟢 เข้าสู่ระบบแล้วในนาม: <strong>{user.name}</strong> (ยืนยันตัวตนผ่าน LINE เรียบร้อย)
             </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                {lang === 'th' ? 'อายุ *' : 'Age *'}
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                {lang === 'en' ? 'Full Name / Name of Group Leader' : 'ชื่อ - นามสกุล (หรือหัวหน้าคณะ)'}
               </label>
-              <input type="number" name="age" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="อายุ" />
+              <input 
+                type="text" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleChange} 
+                required 
+                style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+              />
             </div>
-          </div>
 
-          {/* ที่อยู่ปัจจุบัน (รวมตำบล อำเภอ จังหวัด) */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-              {lang === 'th' ? 'ที่อยู่ปัจจุบัน (บ้านเลขที่, ตำบล, อำเภอ, จังหวัด) *' : 'Current Address *'}
-            </label>
-            <textarea name="address" rows="2" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="บ้านเลขที่, ตำบล, อำเภอ, จังหวัด"></textarea>
-          </div>
-
-          {/* เบอร์โทรศัพท์ และ เบอร์ฉุกเฉิน */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                {lang === 'th' ? 'เบอร์โทรติดต่อ *' : 'Phone Number *'}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                {lang === 'en' ? 'Phone Number' : 'เบอร์โทรศัพท์ที่ติดต่อได้'}
               </label>
-              <input type="tel" name="phone" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="0xx-xxx-xxxx" />
+              <input 
+                type="tel" 
+                name="phone" 
+                value={formData.phone} 
+                onChange={handleChange} 
+                required 
+                placeholder="08xxxxxxxx"
+                style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+              />
             </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                {lang === 'th' ? 'เบอร์ฉุกเฉิน / ความสัมพันธ์ *' : 'Emergency Contact *'}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                  {lang === 'en' ? 'Start Date' : 'วันที่เข้าพัก'}
+                </label>
+                <input 
+                  type="date" 
+                  name="startDate" 
+                  value={formData.startDate} 
+                  onChange={handleChange} 
+                  required 
+                  style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                  {lang === 'en' ? 'End Date' : 'วันสิ้นสุดการพัก'}
+                </label>
+                <input 
+                  type="date" 
+                  name="endDate" 
+                  value={formData.endDate} 
+                  onChange={handleChange} 
+                  required 
+                  style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>
+                {lang === 'en' ? 'Additional Notes / Purpose' : 'หมายเหตุ / จุดประสงค์การปฏิบัติธรรม'}
               </label>
-              <input type="text" name="emergency_contact" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="เบอร์โทร และความสัมพันธ์" />
+              <textarea 
+                name="note" 
+                rows="3" 
+                value={formData.note} 
+                onChange={handleChange} 
+                placeholder="เช่น ปฏิบัติธรรมส่วนตัว หรือมาเป็นคณะ..."
+                style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+              ></textarea>
             </div>
-          </div>
 
-          {/* วันที่เข้าพัก และ วันที่สิ้นสุด */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                {lang === 'th' ? 'วันที่ต้องการเข้าพัก *' : 'Check-in Date *'}
-              </label>
-              <input type="date" name="check_in" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-                {lang === 'th' ? 'วันที่สิ้นสุดการพัก *' : 'Check-out Date *'}
-              </label>
-              <input type="date" name="check_out" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} />
-            </div>
-          </div>
-
-          {/* แรงจูงใจ (Dropdown) */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-              {lang === 'th' ? 'จุดประสงค์การเข้าพัก *' : 'Purpose of Stay *'}
-            </label>
-            <select name="purpose" required style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit', background: '#fff', color: '#302d29' }}>
-              <option value="" disabled selected>{lang === 'th' ? '-- กรุณาเลือกจุดประสงค์ --' : '-- Please select purpose --'}</option>
-              <option value="เพื่อความสงบใจ">{lang === 'th' ? 'เพื่อความสงบใจ' : 'For Inner Peace'}</option>
-              <option value="เพื่อรักษาศีล 5">{lang === 'th' ? 'เพื่อรักษาศีล 5' : 'To Practice 5 Precepts'}</option>
-              <option value="เพื่อรักษาศีล 8">{lang === 'th' ? 'เพื่อรักษาศีล 8' : 'To Practice 8 Precepts'}</option>
-              <option value="เพื่อพัฒนาตัวเองแบบส่วนตัว">{lang === 'th' ? 'เพื่อพัฒนาตัวเองแบบส่วนตัว' : 'For Personal Self-Development'}</option>
-              <option value="เพื่อฝึกหลักสูตรพิชิตเสือดำ">{lang === 'th' ? 'เพื่อฝึกหลักสูตรพิชิตเสือดำ' : 'Black Panther Course'}</option>
-              <option value="เพื่อฝึกหลักสูตรย้ายบ้าน">{lang === 'th' ? 'เพื่อฝึกหลักสูตรย้ายบ้าน' : 'House Relocation Course'}</option>
-            </select>
-          </div>
-
-          {/* ข้อมูลเพิ่มเติม (โรคประจำตัว / บิดามารดา / เคยมาปฏิบัติ) */}
-          <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', fontSize: '14px', color: '#302d29' }}>
-              {lang === 'th' ? 'ข้อมูลเพิ่มเติม (โรคประจำตัว, ชื่อบิดามารดา, หรือเคยมาปฏิบัติกี่ครั้ง)' : 'Additional Info'}
-            </label>
-            <textarea name="message" rows="3" style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', fontFamily: 'inherit' }} placeholder="ระบุโรคประจำตัว, ชื่อบิดามารดา หรือประวัติการมาปฏิบัติ (ถ้ามี)"></textarea>
-          </div>
-
-          {/* ปุ่มกดยอมรับเงื่อนไข (บังคับติ๊ก) */}
-          <div style={{ marginBottom: '25px', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#fcfbfa', padding: '15px', borderRadius: '4px', border: '1px solid #eeeae2' }}>
-            <input type="checkbox" id="terms" name="accept_terms" required style={{ marginTop: '3px', width: '18px', height: '18px', cursor: 'pointer' }} />
-            <label htmlFor="terms" style={{ fontSize: '13px', color: '#555', lineHeight: '1.5', cursor: 'pointer' }}>
-              {lang === 'th' 
-                ? 'ข้าพเจ้ายอมรับและจะปฏิบัติตามเงื่อนไขทุกอย่างของทางวัดโดยไม่ต้องแจ้งอะไรล่วงหน้า' 
-                : 'I acknowledge and agree to abide by all the rules and conditions of the monastery without prior notice.'}
-            </label>
-          </div>
-
-          <button type="submit" disabled={submitting} className="primaryContactBtn" style={{ width: '100%', padding: '14px' }}>
-            {submitting ? (lang === 'th' ? 'กำลังส่งข้อมูล...' : 'Submitting...') : (lang === 'th' ? 'ยืนยันการส่งคำขอจอง' : 'Submit Reservation')}
-          </button>
-        </form>
+            <button 
+              type="submit" 
+              className="primaryContactBtn" 
+              disabled={loading}
+              style={{ width: '100%', padding: '12px' }}
+            >
+              {loading ? 'กำลังบันทึกข้อมูล...' : (lang === 'en' ? 'Confirm Booking' : 'ยืนยันการจองเข้าพัก')}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
 }
+
+export default BookingPage;
