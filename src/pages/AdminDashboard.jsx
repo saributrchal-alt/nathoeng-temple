@@ -1,34 +1,17 @@
-```jsx
-import React, {
-  useEffect,
-  useMemo,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-function AdminDashboard({
-  lang,
-  goToPage
-}) {
+function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
-
-  const [activeTab, setActiveTab] =
-    useState('bookings');
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState('');
-
-  const [processingId, setProcessingId] =
-    useState(null);
+  const [activeTab, setActiveTab] = useState('bookings');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [processingId, setProcessingId] = useState(null);
 
   const t = {
     en: {
       eyebrow: 'SECURE ADMIN DASHBOARD',
       title: 'Monastery Admin Panel',
-
       back: '← Back to Home',
 
       bookingTab: '📅 Stay Management',
@@ -37,12 +20,9 @@ function AdminDashboard({
       totalBookings: 'Total Stay Bookings',
       pendingBookings: 'Pending Approval',
       activeStays: 'Active Stays',
-
-      donorCount: 'Donation Entries',
       donationTotal: 'Total Donations',
 
       bookingTitle: 'Stay Journey Management',
-
       bookingHelp:
         'Manage each practitioner from booking approval through check-out and stay completion.',
 
@@ -55,14 +35,10 @@ function AdminDashboard({
       status: 'Status',
       action: 'Action',
 
-      noBookings:
-        'No stay bookings found.',
-
-      loading:
-        'Loading monastery data...',
-
+      noBookings: 'No stay bookings found.',
+      loading: 'Loading monastery data...',
       accessError:
-        'Unable to load the admin system. Please login with the administrator LINE account again.',
+        'Unable to load the admin system. Please login again with the administrator LINE account.',
 
       refresh: 'Refresh',
 
@@ -77,18 +53,10 @@ function AdminDashboard({
 
       accommodationPrompt:
         'Enter accommodation name, kuti, building, or room:',
-
-      notePrompt:
-        'Optional admin note:',
-
-      confirmAction:
-        'Confirm this stay status change?',
-
-      actionSuccess:
-        'Stay status updated successfully.',
-
-      actionError:
-        'Unable to update stay status.',
+      notePrompt: 'Optional admin note:',
+      confirmAction: 'Confirm this stay status change?',
+      actionSuccess: 'Stay status updated successfully.',
+      actionError: 'Unable to update stay status.',
 
       pending: 'Pending Approval',
       approved: 'Approved',
@@ -106,19 +74,17 @@ function AdminDashboard({
       donationPurpose: 'Purpose',
       receipt: 'Receipt',
       amount: 'Amount',
-      noDonations:
-        'No local donation records found.',
+      noDonations: 'No donation records found.',
       receiptYes: 'Requested',
       receiptNo: 'Not requested',
 
-      localDonationNotice:
-        'Donation records are still using the existing local system for now. They will be moved to the central database in a later step.'
+      donationNotice:
+        'Donation records are still using the existing local system for now.'
     },
 
     th: {
       eyebrow: 'ระบบจัดการหลังบ้าน (ผู้ดูแลระบบ)',
       title: 'แผงควบคุมข้อมูลวัดพุทธอุทยานนาเทิง',
-
       back: '← กลับสู่หน้าหลัก',
 
       bookingTab: '📅 จัดการการเข้าพัก',
@@ -127,12 +93,9 @@ function AdminDashboard({
       totalBookings: 'รายการจองเข้าพักทั้งหมด',
       pendingBookings: 'รออนุมัติ',
       activeStays: 'กำลังเข้าพัก / ปฏิบัติ',
-
-      donorCount: 'จำนวนรายการทำบุญ',
       donationTotal: 'ยอดทำบุญสะสม',
 
       bookingTitle: 'ระบบจัดการเส้นทางการเข้าพักปฏิบัติธรรม',
-
       bookingHelp:
         'จัดการผู้เข้าพักตั้งแต่ส่งคำขอ อนุมัติ เช็กอิน จัดที่พัก ปฏิบัติธรรม เช็กเอาต์ จนถึงปิดการเข้าพัก',
 
@@ -145,12 +108,8 @@ function AdminDashboard({
       status: 'สถานะ',
       action: 'ดำเนินการ',
 
-      noBookings:
-        'ยังไม่มีรายการจองเข้าพักในระบบ',
-
-      loading:
-        'กำลังโหลดข้อมูลระบบวัด...',
-
+      noBookings: 'ยังไม่มีรายการจองเข้าพักในระบบ',
+      loading: 'กำลังโหลดข้อมูลระบบวัด...',
       accessError:
         'ไม่สามารถเปิดระบบผู้ดูแลได้ กรุณาเข้าสู่ระบบใหม่ด้วยบัญชี LINE ของผู้ดูแล',
 
@@ -165,20 +124,11 @@ function AdminDashboard({
       complete: 'ปิดการเข้าพัก',
       cancel: 'ยกเลิก',
 
-      accommodationPrompt:
-        'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
-
-      notePrompt:
-        'หมายเหตุของผู้ดูแล (ถ้ามี):',
-
-      confirmAction:
-        'ยืนยันการเปลี่ยนสถานะรายการนี้หรือไม่?',
-
-      actionSuccess:
-        'เปลี่ยนสถานะการเข้าพักเรียบร้อยแล้ว',
-
-      actionError:
-        'ไม่สามารถเปลี่ยนสถานะการเข้าพักได้',
+      accommodationPrompt: 'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
+      notePrompt: 'หมายเหตุของผู้ดูแล (ถ้ามี):',
+      confirmAction: 'ยืนยันการเปลี่ยนสถานะรายการนี้หรือไม่?',
+      actionSuccess: 'เปลี่ยนสถานะการเข้าพักเรียบร้อยแล้ว',
+      actionError: 'ไม่สามารถเปลี่ยนสถานะการเข้าพักได้',
 
       pending: 'รออนุมัติ',
       approved: 'อนุมัติแล้ว',
@@ -196,13 +146,12 @@ function AdminDashboard({
       donationPurpose: 'วัตถุประสงค์',
       receipt: 'ใบอนุโมทนา',
       amount: 'ยอดเงิน',
-      noDonations:
-        'ยังไม่มีข้อมูลการทำบุญในเครื่องนี้',
+      noDonations: 'ยังไม่มีข้อมูลการทำบุญในเครื่องนี้',
       receiptYes: 'ต้องการ',
       receiptNo: 'ไม่ต้องการ',
 
-      localDonationNotice:
-        'ข้อมูลการทำบุญยังใช้ระบบเดิมในเครื่องอยู่ชั่วคราว และจะย้ายเข้าสู่ฐานข้อมูลกลางในขั้นถัดไป'
+      donationNotice:
+        'ข้อมูลการทำบุญยังใช้ระบบเดิมในเครื่องอยู่ชั่วคราว'
     }
   }[lang];
 
@@ -276,10 +225,7 @@ function AdminDashboard({
       };
     }
 
-    if (
-      status === 'rejected' ||
-      status === 'cancelled'
-    ) {
+    if (status === 'rejected' || status === 'cancelled') {
       return {
         ...common,
         background: '#ffebee',
@@ -299,23 +245,14 @@ function AdminDashboard({
     setError('');
 
     try {
-      const response = await fetch(
-        '/api/admin-bookings',
-        {
-          method: 'GET'
-        }
-      );
+      const response = await fetch('/api/admin-bookings', {
+        method: 'GET'
+      });
 
       const data = await response.json();
 
-      if (
-        !response.ok ||
-        !data.success
-      ) {
-        throw new Error(
-          data.message ||
-            'Unable to load bookings'
-        );
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to load bookings');
       }
 
       setBookings(
@@ -324,11 +261,7 @@ function AdminDashboard({
           : []
       );
     } catch (err) {
-      console.error(
-        'Admin dashboard load error:',
-        err
-      );
-
+      console.error('Admin dashboard load error:', err);
       setError(t.accessError);
       setBookings([]);
     } finally {
@@ -338,56 +271,41 @@ function AdminDashboard({
 
   useEffect(() => {
     const savedDonations = JSON.parse(
-      localStorage.getItem(
-        'nathoeng_donations'
-      ) || '[]'
+      localStorage.getItem('nathoeng_donations') || '[]'
     );
 
     setDonations(savedDonations);
-
     loadBookings();
   }, []);
 
-  const totalDonationAmount =
-    useMemo(() => {
-      return donations.reduce(
-        (sum, item) =>
-          sum +
-          (Number(item.amount) || 0),
-        0
-      );
-    }, [donations]);
+  const totalDonationAmount = useMemo(() => {
+    return donations.reduce(
+      (sum, item) =>
+        sum + (Number(item.amount) || 0),
+      0
+    );
+  }, [donations]);
 
-  const pendingCount =
-    bookings.filter(
-      (item) =>
-        item.status === 'pending'
-    ).length;
+  const pendingCount = bookings.filter(
+    (item) => item.status === 'pending'
+  ).length;
 
-  const activeCount =
-    bookings.filter(
-      (item) =>
-        item.status === 'checked_in' ||
-        item.status === 'accommodated' ||
-        item.status === 'in_retreat'
-    ).length;
+  const activeCount = bookings.filter(
+    (item) =>
+      item.status === 'checked_in' ||
+      item.status === 'accommodated' ||
+      item.status === 'in_retreat'
+  ).length;
 
-  const callStayAction = async (
-    booking,
-    action
-  ) => {
+  const callStayAction = async (booking, action) => {
     let accommodationName = '';
     let note = '';
 
-    if (
-      action ===
-      'assign_accommodation'
-    ) {
-      accommodationName =
-        window.prompt(
-          t.accommodationPrompt,
-          booking.accommodation_name || ''
-        );
+    if (action === 'assign_accommodation') {
+      accommodationName = window.prompt(
+        t.accommodationPrompt,
+        booking.accommodation_name || ''
+      );
 
       if (
         accommodationName === null ||
@@ -397,24 +315,19 @@ function AdminDashboard({
       }
     }
 
-    if (
-      action === 'reject' ||
-      action === 'cancel'
-    ) {
-      note =
-        window.prompt(
-          t.notePrompt,
-          ''
-        );
+    if (action === 'reject' || action === 'cancel') {
+      note = window.prompt(
+        t.notePrompt,
+        ''
+      );
 
       if (note === null) {
         return;
       }
     } else {
-      const confirmed =
-        window.confirm(
-          t.confirmAction
-        );
+      const confirmed = window.confirm(
+        t.confirmAction
+      );
 
       if (!confirmed) {
         return;
@@ -429,29 +342,22 @@ function AdminDashboard({
         {
           method: 'POST',
           headers: {
-            'Content-Type':
-              'application/json'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             bookingId: booking.id,
             action: action,
-            accommodationName:
-              accommodationName,
+            accommodationName: accommodationName,
             note: note
           })
         }
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
-      if (
-        !response.ok ||
-        !data.success
-      ) {
+      if (!response.ok || !data.success) {
         throw new Error(
-          data.message ||
-            t.actionError
+          data.message || t.actionError
         );
       }
 
@@ -459,14 +365,10 @@ function AdminDashboard({
 
       alert(t.actionSuccess);
     } catch (err) {
-      console.error(
-        'Stay action error:',
-        err
-      );
+      console.error('Stay action error:', err);
 
       alert(
-        err.message ||
-          t.actionError
+        err.message || t.actionError
       );
     } finally {
       setProcessingId(null);
@@ -599,10 +501,7 @@ function AdminDashboard({
       );
     }
 
-    if (
-      booking.status ===
-      'accommodated'
-    ) {
+    if (booking.status === 'accommodated') {
       return (
         <div
           style={{
@@ -648,10 +547,7 @@ function AdminDashboard({
       );
     }
 
-    if (
-      booking.status ===
-      'in_retreat'
-    ) {
+    if (booking.status === 'in_retreat') {
       return (
         <button
           disabled={busy}
@@ -672,10 +568,7 @@ function AdminDashboard({
       );
     }
 
-    if (
-      booking.status ===
-      'checked_out'
-    ) {
+    if (booking.status === 'checked_out') {
       return (
         <button
           disabled={busy}
@@ -833,8 +726,7 @@ function AdminDashboard({
             style={{
               background: '#f6f4ef',
               padding: '18px',
-              border:
-                '1px solid #dcd5c8',
+              border: '1px solid #dcd5c8',
               borderRadius: '6px'
             }}
           >
@@ -861,8 +753,7 @@ function AdminDashboard({
             style={{
               background: '#f6f4ef',
               padding: '18px',
-              border:
-                '1px solid #dcd5c8',
+              border: '1px solid #dcd5c8',
               borderRadius: '6px'
             }}
           >
@@ -890,8 +781,7 @@ function AdminDashboard({
             style={{
               background: '#f6f4ef',
               padding: '18px',
-              border:
-                '1px solid #dcd5c8',
+              border: '1px solid #dcd5c8',
               borderRadius: '6px'
             }}
           >
@@ -919,8 +809,7 @@ function AdminDashboard({
             style={{
               background: '#f6f4ef',
               padding: '18px',
-              border:
-                '1px solid #dcd5c8',
+              border: '1px solid #dcd5c8',
               borderRadius: '6px'
             }}
           >
@@ -950,8 +839,7 @@ function AdminDashboard({
             display: 'flex',
             gap: '10px',
             flexWrap: 'wrap',
-            borderBottom:
-              '1px solid #dcd5c8',
+            borderBottom: '1px solid #dcd5c8',
             paddingBottom: '12px',
             marginBottom: '25px'
           }}
@@ -967,13 +855,11 @@ function AdminDashboard({
               cursor: 'pointer',
               fontWeight: '600',
               background:
-                activeTab ===
-                'bookings'
+                activeTab === 'bookings'
                   ? '#9b7226'
                   : '#f5f5f5',
               color:
-                activeTab ===
-                'bookings'
+                activeTab === 'bookings'
                   ? '#fff'
                   : '#332f2a'
             }}
@@ -992,13 +878,11 @@ function AdminDashboard({
               cursor: 'pointer',
               fontWeight: '600',
               background:
-                activeTab ===
-                'donations'
+                activeTab === 'donations'
                   ? '#9b7226'
                   : '#f5f5f5',
               color:
-                activeTab ===
-                'donations'
+                activeTab === 'donations'
                   ? '#fff'
                   : '#332f2a'
             }}
@@ -1011,8 +895,7 @@ function AdminDashboard({
             style={{
               marginLeft: 'auto',
               padding: '9px 14px',
-              border:
-                '1px solid #dcd5c8',
+              border: '1px solid #dcd5c8',
               background: '#fff',
               borderRadius: '4px',
               cursor: 'pointer'
@@ -1046,8 +929,7 @@ function AdminDashboard({
                 style={{
                   width: '100%',
                   minWidth: '1100px',
-                  borderCollapse:
-                    'collapse',
+                  borderCollapse: 'collapse',
                   textAlign: 'left',
                   fontSize: '13px'
                 }}
@@ -1055,10 +937,8 @@ function AdminDashboard({
                 <thead>
                   <tr
                     style={{
-                      background:
-                        '#f6f4ef',
-                      borderBottom:
-                        '1px solid #dcd5c8'
+                      background: '#f6f4ef',
+                      borderBottom: '1px solid #dcd5c8'
                     }}
                   >
                     <th style={{ padding: '11px' }}>
@@ -1101,8 +981,7 @@ function AdminDashboard({
                       <td
                         colSpan="8"
                         style={{
-                          textAlign:
-                            'center',
+                          textAlign: 'center',
                           padding: '35px',
                           color: '#888'
                         }}
@@ -1111,100 +990,76 @@ function AdminDashboard({
                       </td>
                     </tr>
                   ) : (
-                    bookings.map(
-                      (booking) => (
-                        <tr
-                          key={booking.id}
+                    bookings.map((booking) => (
+                      <tr
+                        key={booking.id}
+                        style={{
+                          borderBottom: '1px solid #eeeae2'
+                        }}
+                      >
+                        <td
                           style={{
-                            borderBottom:
-                              '1px solid #eeeae2'
+                            padding: '11px',
+                            fontWeight: '600'
                           }}
                         >
-                          <td
-                            style={{
-                              padding: '11px',
-                              fontWeight:
-                                '600'
-                            }}
-                          >
-                            {booking.name}
-                          </td>
+                          {booking.name}
+                        </td>
 
-                          <td style={{ padding: '11px' }}>
-                            {booking.phone ||
-                              '-'}
-                          </td>
+                        <td style={{ padding: '11px' }}>
+                          {booking.phone || '-'}
+                        </td>
 
-                          <td style={{ padding: '11px' }}>
-                            {booking.start_date ||
-                              '-'}
-                          </td>
+                        <td style={{ padding: '11px' }}>
+                          {booking.start_date || '-'}
+                        </td>
 
-                          <td style={{ padding: '11px' }}>
-                            {booking.end_date ||
-                              '-'}
-                          </td>
+                        <td style={{ padding: '11px' }}>
+                          {booking.end_date || '-'}
+                        </td>
 
-                          <td
-                            style={{
-                              padding: '11px'
-                            }}
-                          >
-                            {booking.purpose ||
-                              '-'}
-                          </td>
+                        <td style={{ padding: '11px' }}>
+                          {booking.purpose || '-'}
+                        </td>
 
-                          <td
-                            style={{
-                              padding: '11px'
-                            }}
-                          >
-                            {booking.accommodation_name ||
-                              '-'}
-                          </td>
+                        <td style={{ padding: '11px' }}>
+                          {booking.accommodation_name || '-'}
+                        </td>
 
-                          <td
-                            style={{
-                              padding: '11px'
-                            }}
-                          >
-                            <span
-                              style={statusStyle(
-                                booking.status
-                              )}
-                            >
-                              {statusLabel(
-                                booking.status
-                              )}
-                            </span>
-                          </td>
-
-                          <td
-                            style={{
-                              padding: '11px',
-                              minWidth: '175px'
-                            }}
-                          >
-                            {processingId ===
-                            booking.id ? (
-                              <span
-                                style={{
-                                  color: '#777'
-                                }}
-                              >
-                                {lang === 'en'
-                                  ? 'Processing...'
-                                  : 'กำลังดำเนินการ...'}
-                              </span>
-                            ) : (
-                              renderActions(
-                                booking
-                              )
+                        <td style={{ padding: '11px' }}>
+                          <span
+                            style={statusStyle(
+                              booking.status
                             )}
-                          </td>
-                        </tr>
-                      )
-                    )
+                          >
+                            {statusLabel(
+                              booking.status
+                            )}
+                          </span>
+                        </td>
+
+                        <td
+                          style={{
+                            padding: '11px',
+                            minWidth: '175px'
+                          }}
+                        >
+                          {processingId === booking.id ? (
+                            <span
+                              style={{
+                                color: '#777'
+                              }}
+                            >
+                              {lang === 'en'
+                                ? 'Processing...'
+                                : 'กำลังดำเนินการ...'}
+                            </span>
+                          ) : (
+                            renderActions(booking)
+                          )}
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
@@ -1221,14 +1076,13 @@ function AdminDashboard({
                 padding: '12px 15px',
                 marginBottom: '15px',
                 background: '#fff8e1',
-                border:
-                  '1px solid #ffe0a3',
+                border: '1px solid #ffe0a3',
                 borderRadius: '4px',
                 color: '#725515',
                 fontSize: '13px'
               }}
             >
-              {t.localDonationNotice}
+              {t.donationNotice}
             </div>
 
             <div
@@ -1239,8 +1093,7 @@ function AdminDashboard({
               <table
                 style={{
                   width: '100%',
-                  borderCollapse:
-                    'collapse',
+                  borderCollapse: 'collapse',
                   textAlign: 'left',
                   fontSize: '14px'
                 }}
@@ -1248,10 +1101,8 @@ function AdminDashboard({
                 <thead>
                   <tr
                     style={{
-                      background:
-                        '#f6f4ef',
-                      borderBottom:
-                        '1px solid #dcd5c8'
+                      background: '#f6f4ef',
+                      borderBottom: '1px solid #dcd5c8'
                     }}
                   >
                     <th style={{ padding: '12px' }}>
@@ -1282,15 +1133,13 @@ function AdminDashboard({
                 </thead>
 
                 <tbody>
-                  {donations.length ===
-                  0 ? (
+                  {donations.length === 0 ? (
                     <tr>
                       <td
                         colSpan="5"
                         style={{
                           padding: '30px',
-                          textAlign:
-                            'center',
+                          textAlign: 'center',
                           color: '#888'
                         }}
                       >
@@ -1298,59 +1147,51 @@ function AdminDashboard({
                       </td>
                     </tr>
                   ) : (
-                    donations.map(
-                      (item, index) => (
-                        <tr
-                          key={index}
+                    donations.map((item, index) => (
+                      <tr
+                        key={index}
+                        style={{
+                          borderBottom: '1px solid #eeeae2'
+                        }}
+                      >
+                        <td style={{ padding: '12px' }}>
+                          {item.date}
+                        </td>
+
+                        <td
                           style={{
-                            borderBottom:
-                              '1px solid #eeeae2'
+                            padding: '12px',
+                            fontWeight: '500'
                           }}
                         >
-                          <td style={{ padding: '12px' }}>
-                            {item.date}
-                          </td>
+                          {item.name}
+                        </td>
 
-                          <td
-                            style={{
-                              padding: '12px',
-                              fontWeight:
-                                '500'
-                            }}
-                          >
-                            {item.name}
-                          </td>
+                        <td style={{ padding: '12px' }}>
+                          {item.purpose}
+                        </td>
 
-                          <td style={{ padding: '12px' }}>
-                            {item.purpose}
-                          </td>
+                        <td style={{ padding: '12px' }}>
+                          {item.receipt === 'yes'
+                            ? t.receiptYes
+                            : t.receiptNo}
+                        </td>
 
-                          <td style={{ padding: '12px' }}>
-                            {item.receipt ===
-                            'yes'
-                              ? t.receiptYes
-                              : t.receiptNo}
-                          </td>
-
-                          <td
-                            style={{
-                              padding: '12px',
-                              textAlign:
-                                'right',
-                              fontWeight:
-                                '600',
-                              color:
-                                '#9b7226'
-                            }}
-                          >
-                            {Number(
-                              item.amount
-                            ).toLocaleString()}{' '}
-                            ฿
-                          </td>
-                        </tr>
-                      )
-                    )
+                        <td
+                          style={{
+                            padding: '12px',
+                            textAlign: 'right',
+                            fontWeight: '600',
+                            color: '#9b7226'
+                          }}
+                        >
+                          {Number(
+                            item.amount
+                          ).toLocaleString()}{' '}
+                          ฿
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
@@ -1363,4 +1204,3 @@ function AdminDashboard({
 }
 
 export default AdminDashboard;
-```
