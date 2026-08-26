@@ -7,22 +7,29 @@ function AdminDashboard({ lang, goToPage }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // กำหนดรายชื่อ LINE ID หรือชื่อแอดมินของพระอาจารย์ที่ได้รับสิทธิ์
-  // (สามารถเปลี่ยนหรือเพิ่ม LINE UID จริงของพระอาจารย์ตรงนี้ได้เลยครับ)
-  const ADMIN_USERS = ['ผู้ใช้งาน LINE (สมาชิกวัด)', 'Chaloempol', 'พระอาจารย์'];
+  // รายชื่อ LINE UID หรือชื่อแอดมินที่ได้รับสิทธิ์เข้าใช้งาน
+  const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
 
   useEffect(() => {
     const savedUser = localStorage.getItem('line_user');
     if (savedUser) {
-      const user = JSON.parse(savedUser);
-      // ตรวจสอบว่าชื่อหรือสิทธิ์ตรงกับรายชื่อ Admin หรือไม่
-      if (user && (ADMIN_USERS.includes(user.name) || user.isAdmin)) {
-        setIsAdmin(true);
+      try {
+        const user = JSON.parse(savedUser);
+        // ตรวจสอบสิทธิ์: เช็กจาก LINE UID หรือชื่อผู้ใช้ (Chaloempol) หรือสถานะ isAdmin
+        if (user && (
+          (user.lineUid && ADMIN_LINE_UIDS.includes(user.lineUid)) ||
+          user.name === 'Chaloempol' ||
+          user.isAdmin === true
+        )) {
+          setIsAdmin(true);
+        }
+      } catch (err) {
+        console.error("Error parsing user session", err);
       }
     }
     setChecking(false);
 
-    // ดึงข้อมูล
+    // ดึงข้อมูลการจองและบริจาค
     const savedBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
     const savedDonations = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]');
     setBookings(savedBookings);
@@ -41,10 +48,10 @@ function AdminDashboard({ lang, goToPage }) {
   };
 
   if (checking) {
-    return <div className="guidePage" style={{ textAlign: 'center', padding: '100px' }}>กำลังตรวจสอบสิทธิ์...</div>;
+    return <div className="guidePage" style={{ textAlign: 'center', padding: '100px' }}>กำลังตรวจสอบสิทธิ์ความปลอดภัย...</div>;
   }
 
-  // ถ้าไม่ใช่ Admin ให้แสดงหน้าแจ้งเตือนห้ามเข้า
+  // หน้าจอเมื่อไม่ใช่ Admin
   if (!isAdmin) {
     return (
       <div className="guidePage">
@@ -55,12 +62,12 @@ function AdminDashboard({ lang, goToPage }) {
           </h2>
           <p style={{ color: '#625d55', marginBottom: '25px', lineHeight: '1.7' }}>
             {lang === 'en' 
-              ? 'You do not have administrator permissions to view this page. Please login with an authorized Admin LINE account.' 
-              : 'บัญชีของท่านไม่มีสิทธิ์ในการเข้าถึงแผงควบคุมหลังบ้าน กรุณาเข้าสู่ระบบด้วยบัญชี LINE ของผู้ดูแลระบบวัด'}
+              ? 'Your account is not authorized as an administrator. Please login with an official temple admin account.' 
+              : 'บัญชีของท่านไม่ได้รับสิทธิ์เป็นผู้ดูแลระบบ กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลของทางวัด'}
           </p>
           <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
             <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
-              {lang === 'en' ? 'Login with Admin Account' : 'เข้าสู่ระบบบัญชีผู้ดูแล'}
+              {lang === 'en' ? 'Login with LINE' : 'เข้าสู่ระบบด้วย LINE'}
             </button>
             <button onClick={() => goToPage('home')} className="primaryContactBtn">
               {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
@@ -80,7 +87,7 @@ function AdminDashboard({ lang, goToPage }) {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
           <div>
-            <span className="eyebrow">{lang === 'en' ? 'ADMIN DASHBOARD' : 'ระบบจัดการหลังบ้าน (ผู้ดูแลระบบ)'}</span>
+            <span className="eyebrow">{lang === 'en' ? 'SECURE ADMIN DASHBOARD' : 'ระบบจัดการหลังบ้าน (ผู้ดูแลระบบ)'}</span>
             <h1 style={{ margin: 0 }}>{lang === 'en' ? 'Monastery Admin Panel' : 'แผงควบคุมข้อมูลวัดพุทธอุทยานนาเทิง'}</h1>
           </div>
           <button 
