@@ -21,7 +21,7 @@ function BookingPage({ lang, goToPage }) {
     const formData = new FormData(event.target);
     
     // ใส่ Access Key ของ Web3Forms เดิม
-    formData.append("access_key", "YOUR_WEB3FORMS_ACCESS_KEY_HERE"); 
+    formData.append("access_key", "d80a991c-5b9f-4273-a730-8de806f45da3"); 
     formData.append("line_user_name", user.name);
 
     try {
