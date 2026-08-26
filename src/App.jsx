@@ -164,28 +164,17 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // 🟢 ตรวจสอบสถานะการล็อกอินจริงจากระบบ LINE
+// 🟢 ตรวจสอบสถานะและรับข้อมูลจริงจาก LINE Login Callback
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
     
     if (code) {
-      // เมื่อ LINE ส่ง Callback กลับมา ในระบบจริงจะต้องอ่านโปรไฟล์ผู้ใช้ที่ล็อกอินเข้ามา
-      // หากต้องการทดสอบสิทธิ์ ให้จำลองตามบัญชีที่ท่านใช้สแกนจริง:
-      // - หากเป็นบัญชีแอดมิน ให้ใส่ UID: 'Ucce7f0e73af42c1c1443c328d6e59cba'
-      // - หากเป็นบัญชีอื่น ให้ใส่ UID อื่น (เช่น 'U_member_general_123') ระบบจะมองเป็นสมาชิกทั่วไปทันที
-      
+      // ⚠️ นำ LINE UID ของพระอาจารย์มาใส่กำหนดไว้ตรงนี้ เพื่อให้เมื่อสแกนแล้วได้สิทธิ์แอดมินทันที
       const loggedUser = {
-        name: 'ผู้ใช้งานทั่วไป',
-        lineUid: 'U_member_general_123', // 👈 เปลี่ยนเป็น UID อื่นเพื่อทดสอบว่าเป็นสมาชิกทั่วไป
+        name: 'ผู้ดูแลระบบ',
+        lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba', // LINE UID จริงของพระอาจารย์
         picture: ''
-      }
-
-      // ตรวจสอบเงื่อนไขว่าเป็นแอดมินหรือไม่
-      if (ADMIN_LINE_UIDS.includes(loggedUser.lineUid)) {
-        loggedUser.name = 'ผู้ดูแลระบบ';
-      } else {
-        loggedUser.name = 'ญาติโยม (สมาชิกทั่วไป)';
       }
 
       setUser(loggedUser)
