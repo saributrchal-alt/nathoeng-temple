@@ -241,6 +241,7 @@ function App() {
     if (code) {
       const loggedUser = {
         name: 'ผู้ใช้งาน LINE (สมาชิกวัด)',
+        lineUid: '',
         picture: ''
       }
       setUser(loggedUser)
@@ -249,7 +250,11 @@ function App() {
     } else {
       const savedUser = localStorage.getItem('line_user')
       if (savedUser) {
-        setUser(JSON.parse(savedUser))
+        try {
+          setUser(JSON.parse(savedUser))
+        } catch (e) {
+          console.error("Error parsing saved user", e)
+        }
       }
     }
   }, [])

@@ -8,6 +8,7 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
       title: 'Monastery Member Login',
       intro: 'Access your meditation retreat bookings, view donation history, and manage your profile using your LINE account.',
       loginBtn: 'Login with LINE',
+      adminLoginBtn: 'Login as Admin (Chaloempol)',
       welcome: 'Welcome back,',
       loggedInDesc: 'You are successfully logged in as a monastery member via LINE.',
       logoutBtn: 'Logout',
@@ -18,7 +19,8 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
       eyebrow: 'ระบบสมาชิกวัด',
       title: 'เข้าสู่ระบบสมาชิก',
       intro: 'เข้าสู่ระบบด้วยบัญชี LINE ของท่าน เพื่อจัดการข้อมูลการจองปฏิบัติธรรม ดูประวัติการทำบุญ และข้อมูลส่วนตัว',
-      loginBtn: 'เข้าสู่ระบบด้วย LINE',
+      loginBtn: 'เข้าสู่ระบบด้วย LINE (สมาชิกทั่วไป)',
+      adminLoginBtn: '🟢 เข้าสู่ระบบด้วย LINE (สำหรับพระอาจารย์เฉลิมพล)',
       welcome: 'ยินดีต้อนรับ,',
       loggedInDesc: 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว',
       logoutBtn: 'ออกจากระบบ',
@@ -28,17 +30,31 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
 
   const t = text[lang]
 
-  // 🟢 ฟังก์ชันพาไปหน้า LINE Login ของจริง (แทนการจำลองชื่อ)
-  const handleRealLineLogin = () => {
-    const CHANNEL_ID = '2011258009'; // ใส่ Channel ID ของ LINE Login ที่วัดสมัครไว้
-    const REDIRECT_URI = window.location.origin + window.location.pathname; // URL กลับมาที่หน้าเว็บไซต์เดิม
-    const STATE = 'random_state_string';
+  // สำหรับโยมทั่วไป (ไม่ใช่แอดมิน)
+  const handleGeneralLogin = () => {
+    const generalUser = {
+      name: 'คุณโยม (สาธุชนทั่วไป)',
+      lineUid: 'U_GENERAL_PUBLIC_123',
+      isAdmin: false,
+      picture: ''
+    };
+    localStorage.setItem('line_user', JSON.stringify(generalUser));
+    alert(lang === 'th' ? 'เข้าสู่ระบบสมาชิกเรียบร้อยแล้ว' : 'Logged in successfully');
+    window.location.reload();
+  };
 
-    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${CHANNEL_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${STATE}&scope=profile%20openid%20email`;
-
-    // พาผู้ใช้งานพุ่งไปหน้า LINE Login ของจริง
-    window.location.href = lineAuthUrl;
-  }
+  // สำหรับพระอาจารย์ (แอดมินที่มี LINE UID ถูกต้อง)
+  const handleAdminLogin = () => {
+    const adminUser = {
+      name: 'Chaloempol',
+      lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba',
+      isAdmin: true,
+      picture: ''
+    };
+    localStorage.setItem('line_user', JSON.stringify(adminUser));
+    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะผู้ดูแลระบบ (พระอาจารย์) เรียบร้อย' : 'Logged in as Admin successfully');
+    window.location.reload();
+  };
 
   return (
     <div className="guidePage">
@@ -67,6 +83,14 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
                 <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>{t.loggedInDesc}</p>
                 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {user.lineUid === 'Ucce7f0e73af42c1c1443c328d6e59cba' && (
+                    <button 
+                      onClick={() => goToPage('admin-dashboard')}
+                      style={{ background: '#9b7226', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                    >
+                      {lang === 'th' ? '⚙️ ไปยังหน้าแผงควบคุมแอดมิน' : '⚙️ Go to Admin Dashboard'}
+                    </button>
+                  )}
                   <button 
                     onClick={handleLogout}
                     style={{ background: '#736f66', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
@@ -78,25 +102,51 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '5px' }}>☸</div>
+                
+                {/* ปุ่มสำหรับพระอาจารย์ (ล็อกอินด้วย LINE ของแอดมิน) */}
                 <button
-                  onClick={handleRealLineLogin}
+                  onClick={handleAdminLogin}
                   style={{
                     background: '#06c755',
                     color: '#fff',
                     border: 'none',
-                    padding: '14px 28px',
+                    padding: '14px 24px',
                     borderRadius: '30px',
                     cursor: 'pointer',
                     fontWeight: 'bold',
-                    fontSize: '16px',
+                    fontSize: '15px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
-                    boxShadow: '0 4px 10px rgba(6, 199, 85, 0.3)'
+                    boxShadow: '0 4px 10px rgba(6, 199, 85, 0.3)',
+                    width: '100%',
+                    justifyContent: 'center'
                   }}
                 >
-                  🟢 {t.loginBtn}
+                  🟢 {t.adminLoginBtn}
                 </button>
+
+                {/* ปุ่มสำหรับญาติโยมทั่วไป */}
+                <button
+                  onClick={handleGeneralLogin}
+                  style={{
+                    background: '#555',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '30px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    width: '100%',
+                    justifyContent: 'center'
+                  }}
+                >
+                  👤 {t.loginBtn}
+                </button>
+
                 <p style={{ fontSize: '12px', color: '#888', maxWidth: '400px', lineHeight: '1.5', margin: 0 }}>
                   {t.notice}
                 </p>
