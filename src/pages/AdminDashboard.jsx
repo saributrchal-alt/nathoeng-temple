@@ -7,7 +7,7 @@ function AdminDashboard({ lang, goToPage }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // 🛡️ บันทึก LINE UID ของพระอาจารย์ไว้ในระบบอย่างเป็นทางการ ปลอดภัย 100%
+  // 🛡️ ล็อกเฉพาะ LINE UID ของพระอาจารย์เท่านั้น (ตัดเงื่อนไขชื่ออื่นออกทั้งหมดเพื่อความปลอดภัยสูงสุด)
   const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
 
   useEffect(() => {
@@ -15,12 +15,8 @@ function AdminDashboard({ lang, goToPage }) {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        // ตรวจสอบว่า LINE UID หรือชื่อตรงกับที่กำหนดไว้หรือไม่
-        if (user && (
-          (user.lineUid && ADMIN_LINE_UIDS.includes(user.lineUid)) ||
-          user.name === 'Chaloempol' ||
-          user.isAdmin === true
-        )) {
+        // ตรวจสอบเฉพาะ lineUid ที่ตรงกับอาร์เรย์ ADMIN_LINE_UIDS เท่านั้น
+        if (user && user.lineUid && ADMIN_LINE_UIDS.includes(user.lineUid)) {
           setIsAdmin(true);
         }
       } catch (err) {
@@ -51,7 +47,7 @@ function AdminDashboard({ lang, goToPage }) {
     return <div className="guidePage" style={{ textAlign: 'center', padding: '100px' }}>กำลังตรวจสอบสิทธิ์ความปลอดภัย...</div>;
   }
 
-  // หน้าจอเมื่อไม่ใช่ Admin
+  // หน้าจอเมื่อไม่ใช่ Admin (บล็อกทุกคนที่ไม่มี LINE UID ตรงกัน)
   if (!isAdmin) {
     return (
       <div className="guidePage">
@@ -62,8 +58,8 @@ function AdminDashboard({ lang, goToPage }) {
           </h2>
           <p style={{ color: '#625d55', marginBottom: '25px', lineHeight: '1.7' }}>
             {lang === 'en' 
-              ? 'Your account is not authorized as an administrator. Please login with an official temple admin account.' 
-              : 'บัญชีของท่านไม่ได้รับสิทธิ์เป็นผู้ดูแลระบบ กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลของทางวัด'}
+              ? 'Your LINE account is not authorized. Only the designated temple administrator can access this page.' 
+              : 'บัญชี LINE ของท่านไม่ได้รับสิทธิ์เข้าถึง เฉพาะ LINE ID ของผู้ดูแลระบบที่ลงทะเบียนไว้เท่านั้นจึงจะเข้าได้'}
           </p>
           <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
