@@ -7,7 +7,7 @@ function AdminDashboard({ lang, goToPage }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // 🛡️ บันทึก LINE UID ของพระอาจารย์อย่างแม่นยำ ปลอดภัยสูงสุด
+  // 🛡️ ล็อกรหัส LINE UID ของพระอาจารย์อย่างเข้มงวดที่สุด (ห้ามคนอื่นเข้าเด็ดขาด)
   const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
 
   useEffect(() => {
@@ -15,16 +15,22 @@ function AdminDashboard({ lang, goToPage }) {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        // ตรวจสอบเฉพาะ LINE UID เท่านั้น
+        // ตรวจสอบเงื่อนไข: ต้องมี lineUid และอยู่ในรายชื่อแอดมินเท่านั้น!
         if (user && user.lineUid && ADMIN_LINE_UIDS.includes(user.lineUid)) {
           setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
         }
       } catch (err) {
         console.error("Error parsing user session", err);
+        setIsAdmin(false);
       }
+    } else {
+      setIsAdmin(false);
     }
     setChecking(false);
 
+    // ดึงข้อมูลการจองและบริจาค
     const savedBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
     const savedDonations = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]');
     setBookings(savedBookings);
@@ -46,7 +52,7 @@ function AdminDashboard({ lang, goToPage }) {
     return <div className="guidePage" style={{ textAlign: 'center', padding: '100px' }}>กำลังตรวจสอบสิทธิ์ความปลอดภัย...</div>;
   }
 
-  // หน้าจอเมื่อไม่ใช่แอดมิน
+  // หน้าจอเมื่อไม่ใช่ Admin (บล็อกทันที)
   if (!isAdmin) {
     return (
       <div className="guidePage">
