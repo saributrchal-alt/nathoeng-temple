@@ -3,17 +3,32 @@ import React, { useState, useEffect } from 'react';
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
-  const [activeTab, setActiveTab] = useState('donations'); // 'donations' หรือ 'bookings'
+  const [activeTab, setActiveTab] = useState('donations');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // กำหนดรายชื่อ LINE ID หรือชื่อแอดมินของพระอาจารย์ที่ได้รับสิทธิ์
+  // (สามารถเปลี่ยนหรือเพิ่ม LINE UID จริงของพระอาจารย์ตรงนี้ได้เลยครับ)
+  const ADMIN_USERS = ['ผู้ใช้งาน LINE (สมาชิกวัด)', 'Chaloempol', 'พระอาจารย์'];
 
   useEffect(() => {
-    // ดึงข้อมูลจาก localStorage มาแสดงผล
+    const savedUser = localStorage.getItem('line_user');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      // ตรวจสอบว่าชื่อหรือสิทธิ์ตรงกับรายชื่อ Admin หรือไม่
+      if (user && (ADMIN_USERS.includes(user.name) || user.isAdmin)) {
+        setIsAdmin(true);
+      }
+    }
+    setChecking(false);
+
+    // ดึงข้อมูล
     const savedBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
     const savedDonations = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]');
     setBookings(savedBookings);
     setDonations(savedDonations);
   }, []);
 
-  // คำนวณยอดบริจาครวมทั้งหมด
   const totalDonationAmount = donations.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
   const handleClearData = () => {
@@ -24,6 +39,37 @@ function AdminDashboard({ lang, goToPage }) {
       setDonations([]);
     }
   };
+
+  if (checking) {
+    return <div className="guidePage" style={{ textAlign: 'center', padding: '100px' }}>กำลังตรวจสอบสิทธิ์...</div>;
+  }
+
+  // ถ้าไม่ใช่ Admin ให้แสดงหน้าแจ้งเตือนห้ามเข้า
+  if (!isAdmin) {
+    return (
+      <div className="guidePage">
+        <div className="guideContainer" style={{ maxWidth: '600px', textAlign: 'center', padding: '50px 20px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '15px' }}>🔒</div>
+          <h2 style={{ color: '#d32f2f', marginBottom: '15px' }}>
+            {lang === 'en' ? 'Access Denied (Admin Only)' : 'ขออภัย! พื้นที่นี้สำหรับผู้ดูแลระบบเท่านั้น'}
+          </h2>
+          <p style={{ color: '#625d55', marginBottom: '25px', lineHeight: '1.7' }}>
+            {lang === 'en' 
+              ? 'You do not have administrator permissions to view this page. Please login with an authorized Admin LINE account.' 
+              : 'บัญชีของท่านไม่มีสิทธิ์ในการเข้าถึงแผงควบคุมหลังบ้าน กรุณาเข้าสู่ระบบด้วยบัญชี LINE ของผู้ดูแลระบบวัด'}
+          </p>
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
+              {lang === 'en' ? 'Login with Admin Account' : 'เข้าสู่ระบบบัญชีผู้ดูแล'}
+            </button>
+            <button onClick={() => goToPage('home')} className="primaryContactBtn">
+              {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="guidePage">
@@ -45,7 +91,7 @@ function AdminDashboard({ lang, goToPage }) {
           </button>
         </div>
 
-        {/* สรุปตัวเลขภาพรวม (Summary Cards) */}
+        {/* สรุปตัวเลขภาพรวม */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
           <div style={{ background: '#f6f4ef', padding: '20px', borderRadius: '6px', border: '1px solid #dcd5c8' }}>
             <p style={{ margin: '0 0 5px 0', fontSize: '13px', color: '#777' }}>{lang === 'en' ? 'Total Donations' : 'ยอดทำบุญสะสมทั้งหมด'}</p>
@@ -61,7 +107,7 @@ function AdminDashboard({ lang, goToPage }) {
           </div>
         </div>
 
-        {/* ปุ่มสลับ Tab (เลือกระหว่างข้อมูลทำบุญ กับ ข้อมูลจองห้องพัก) */}
+        {/* ปุ่มสลับ Tab */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #dcd5c8', paddingBottom: '10px' }}>
           <button 
             onClick={() => setActiveTab('donations')} 
@@ -93,7 +139,7 @@ function AdminDashboard({ lang, goToPage }) {
           </button>
         </div>
 
-        {/* แสดงผลตารางตาม Tab ที่เลือก */}
+        {/* แสดงผลตาราง */}
         {activeTab === 'donations' ? (
           <div>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{lang === 'en' ? 'Recent Donations' : 'ประวัติการบริจาคปัจจัยทั้งหมด'}</h3>
