@@ -7,7 +7,7 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
       eyebrow: 'MEMBER SYSTEM',
       title: 'Monastery Member Login',
       intro: 'Access your meditation retreat bookings, view donation history, and manage your profile using your LINE account.',
-      loginBtn: 'Login with LINE (Admin Access)',
+      loginBtn: 'Login with LINE',
       welcome: 'Welcome back,',
       loggedInDesc: 'You are successfully logged in as a monastery member via LINE.',
       logoutBtn: 'Logout',
@@ -18,7 +18,7 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
       eyebrow: 'ระบบสมาชิกวัด',
       title: 'เข้าสู่ระบบสมาชิก',
       intro: 'เข้าสู่ระบบด้วยบัญชี LINE ของท่าน เพื่อจัดการข้อมูลการจองปฏิบัติธรรม ดูประวัติการทำบุญ และข้อมูลส่วนตัว',
-      loginBtn: 'เข้าสู่ระบบด้วย LINE (สำหรับผู้ดูแลระบบ)',
+      loginBtn: 'เข้าสู่ระบบด้วย LINE',
       welcome: 'ยินดีต้อนรับ,',
       loggedInDesc: 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว',
       logoutBtn: 'ออกจากระบบ',
@@ -28,17 +28,17 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
 
   const t = text[lang]
 
-  // ฟังก์ชันจำลองการล็อกอินให้เป็น Admin ทันทีเมื่อกดปุ่ม
-  const handleLineLogin = () => {
-    const adminUser = {
-      name: 'Chaloempol',
-      lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba',
-      isAdmin: true,
+  // 🟢 ฟังก์ชันเข้าสู่ระบบสำหรับญาติโยมทั่วไป (กำหนด UID และชื่อทั่วไป ไม่ใช่แอดมิน)
+  const handleGeneralLineLogin = () => {
+    const generalUser = {
+      name: 'คุณโยม (สาธุชนทั่วไป)',
+      lineUid: 'U_GENERAL_MEMBER_PUBLIC_999', // LINE UID จำลองของบุคคลทั่วไป (ไม่ใช่ของแอดมิน)
+      isAdmin: false,
       picture: ''
     };
-    localStorage.setItem('line_user', JSON.stringify(adminUser));
-    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะผู้ดูแลระบบเรียบร้อย' : 'Logged in as Admin successfully');
-    window.location.reload(); // รีเฟรชหน้าเว็บเพื่อให้สถานะอัปเดตทันที
+    localStorage.setItem('line_user', JSON.stringify(generalUser));
+    alert(lang === 'th' ? 'เข้าสู่ระบบสมาชิกเรียบร้อยแล้ว' : 'Logged in successfully');
+    window.location.reload();
   }
 
   return (
@@ -69,12 +69,6 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
                 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <button 
-                    onClick={() => goToPage('admin-dashboard')}
-                    style={{ background: '#9b7226', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-                  >
-                    {lang === 'th' ? '⚙️ ไปยังหน้าแผงควบคุมแอดมิน' : '⚙️ Go to Admin Dashboard'}
-                  </button>
-                  <button 
                     onClick={handleLogout}
                     style={{ background: '#736f66', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
                   >
@@ -86,7 +80,7 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '5px' }}>☸</div>
                 <button
-                  onClick={handleLineLogin}
+                  onClick={handleGeneralLineLogin}
                   style={{
                     background: '#06c755',
                     color: '#fff',
