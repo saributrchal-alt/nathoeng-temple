@@ -1,74 +1,783 @@
-import React, { useState, useEffect } from 'react';
+```jsx
+import React, {
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 
-function AdminDashboard({ lang, goToPage }) {
+function AdminDashboard({
+  lang,
+  goToPage
+}) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
-  const [activeTab, setActiveTab] = useState('donations');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
 
-  // 🛡️ ล็อกรหัส LINE UID ของผู้ดูแลระบบอย่างเข้มงวดที่สุด
-  const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
+  const [activeTab, setActiveTab] =
+    useState('bookings');
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('line_user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        if (user && user.lineUid && ADMIN_LINE_UIDS.includes(user.lineUid)) {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
-        }
-      } catch (err) {
-        console.error("Error parsing user session", err);
-        setIsAdmin(false);
-      }
-    } else {
-      setIsAdmin(false);
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState('');
+
+  const [processingId, setProcessingId] =
+    useState(null);
+
+  const t = {
+    en: {
+      eyebrow: 'SECURE ADMIN DASHBOARD',
+      title: 'Monastery Admin Panel',
+
+      back: '← Back to Home',
+
+      bookingTab: '📅 Stay Management',
+      donationTab: '💰 Donations',
+
+      totalBookings: 'Total Stay Bookings',
+      pendingBookings: 'Pending Approval',
+      activeStays: 'Active Stays',
+
+      donorCount: 'Donation Entries',
+      donationTotal: 'Total Donations',
+
+      bookingTitle: 'Stay Journey Management',
+
+      bookingHelp:
+        'Manage each practitioner from booking approval through check-out and stay completion.',
+
+      name: 'Guest / Group',
+      phone: 'Phone',
+      checkinDate: 'Arrival',
+      checkoutDate: 'Departure',
+      purpose: 'Purpose',
+      accommodation: 'Accommodation',
+      status: 'Status',
+      action: 'Action',
+
+      noBookings:
+        'No stay bookings found.',
+
+      loading:
+        'Loading monastery data...',
+
+      accessError:
+        'Unable to load the admin system. Please login with the administrator LINE account again.',
+
+      refresh: 'Refresh',
+
+      approve: 'Approve',
+      reject: 'Reject',
+      checkIn: 'Check In',
+      assignAccommodation: 'Assign Accommodation',
+      startRetreat: 'Start Retreat',
+      checkOut: 'Check Out',
+      complete: 'Complete Stay',
+      cancel: 'Cancel',
+
+      accommodationPrompt:
+        'Enter accommodation name, kuti, building, or room:',
+
+      notePrompt:
+        'Optional admin note:',
+
+      confirmAction:
+        'Confirm this stay status change?',
+
+      actionSuccess:
+        'Stay status updated successfully.',
+
+      actionError:
+        'Unable to update stay status.',
+
+      pending: 'Pending Approval',
+      approved: 'Approved',
+      checked_in: 'Checked In',
+      accommodated: 'Accommodation Assigned',
+      in_retreat: 'In Retreat',
+      checked_out: 'Checked Out',
+      completed: 'Stay Completed',
+      rejected: 'Rejected',
+      cancelled: 'Cancelled',
+
+      donationTitle: 'Donation Records',
+      donationDate: 'Date / Time',
+      donorName: 'Donor Name',
+      donationPurpose: 'Purpose',
+      receipt: 'Receipt',
+      amount: 'Amount',
+      noDonations:
+        'No local donation records found.',
+      receiptYes: 'Requested',
+      receiptNo: 'Not requested',
+
+      localDonationNotice:
+        'Donation records are still using the existing local system for now. They will be moved to the central database in a later step.'
+    },
+
+    th: {
+      eyebrow: 'ระบบจัดการหลังบ้าน (ผู้ดูแลระบบ)',
+      title: 'แผงควบคุมข้อมูลวัดพุทธอุทยานนาเทิง',
+
+      back: '← กลับสู่หน้าหลัก',
+
+      bookingTab: '📅 จัดการการเข้าพัก',
+      donationTab: '💰 รายการทำบุญ',
+
+      totalBookings: 'รายการจองเข้าพักทั้งหมด',
+      pendingBookings: 'รออนุมัติ',
+      activeStays: 'กำลังเข้าพัก / ปฏิบัติ',
+
+      donorCount: 'จำนวนรายการทำบุญ',
+      donationTotal: 'ยอดทำบุญสะสม',
+
+      bookingTitle: 'ระบบจัดการเส้นทางการเข้าพักปฏิบัติธรรม',
+
+      bookingHelp:
+        'จัดการผู้เข้าพักตั้งแต่ส่งคำขอ อนุมัติ เช็กอิน จัดที่พัก ปฏิบัติธรรม เช็กเอาต์ จนถึงปิดการเข้าพัก',
+
+      name: 'ผู้จอง / คณะ',
+      phone: 'เบอร์โทรศัพท์',
+      checkinDate: 'วันที่เข้าพัก',
+      checkoutDate: 'วันสิ้นสุด',
+      purpose: 'จุดประสงค์',
+      accommodation: 'ที่พัก',
+      status: 'สถานะ',
+      action: 'ดำเนินการ',
+
+      noBookings:
+        'ยังไม่มีรายการจองเข้าพักในระบบ',
+
+      loading:
+        'กำลังโหลดข้อมูลระบบวัด...',
+
+      accessError:
+        'ไม่สามารถเปิดระบบผู้ดูแลได้ กรุณาเข้าสู่ระบบใหม่ด้วยบัญชี LINE ของผู้ดูแล',
+
+      refresh: 'โหลดใหม่',
+
+      approve: 'อนุมัติ',
+      reject: 'ไม่อนุมัติ',
+      checkIn: 'เช็กอิน',
+      assignAccommodation: 'จัดเข้าที่พัก',
+      startRetreat: 'เริ่มปฏิบัติธรรม',
+      checkOut: 'เช็กเอาต์',
+      complete: 'ปิดการเข้าพัก',
+      cancel: 'ยกเลิก',
+
+      accommodationPrompt:
+        'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
+
+      notePrompt:
+        'หมายเหตุของผู้ดูแล (ถ้ามี):',
+
+      confirmAction:
+        'ยืนยันการเปลี่ยนสถานะรายการนี้หรือไม่?',
+
+      actionSuccess:
+        'เปลี่ยนสถานะการเข้าพักเรียบร้อยแล้ว',
+
+      actionError:
+        'ไม่สามารถเปลี่ยนสถานะการเข้าพักได้',
+
+      pending: 'รออนุมัติ',
+      approved: 'อนุมัติแล้ว',
+      checked_in: 'เช็กอินแล้ว',
+      accommodated: 'เข้าที่พักเรียบร้อย',
+      in_retreat: 'อยู่ระหว่างปฏิบัติธรรม',
+      checked_out: 'เช็กเอาต์แล้ว',
+      completed: 'การเข้าพักเสร็จสิ้น',
+      rejected: 'ไม่อนุมัติ',
+      cancelled: 'ยกเลิก',
+
+      donationTitle: 'ประวัติการทำบุญ',
+      donationDate: 'วันเวลา',
+      donorName: 'ชื่อ - สกุล',
+      donationPurpose: 'วัตถุประสงค์',
+      receipt: 'ใบอนุโมทนา',
+      amount: 'ยอดเงิน',
+      noDonations:
+        'ยังไม่มีข้อมูลการทำบุญในเครื่องนี้',
+      receiptYes: 'ต้องการ',
+      receiptNo: 'ไม่ต้องการ',
+
+      localDonationNotice:
+        'ข้อมูลการทำบุญยังใช้ระบบเดิมในเครื่องอยู่ชั่วคราว และจะย้ายเข้าสู่ฐานข้อมูลกลางในขั้นถัดไป'
     }
-    setChecking(false);
+  }[lang];
 
-    const savedBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
-    const savedDonations = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]');
-    setBookings(savedBookings);
-    setDonations(savedDonations);
-  }, []);
+  const statusLabel = (status) => {
+    return t[status] || status || '-';
+  };
 
-  const totalDonationAmount = donations.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const statusStyle = (status) => {
+    const common = {
+      display: 'inline-block',
+      padding: '5px 9px',
+      borderRadius: '20px',
+      fontSize: '12px',
+      fontWeight: '600',
+      whiteSpace: 'nowrap'
+    };
 
-  const handleClearData = () => {
-    if (window.confirm(lang === 'th' ? 'คุณต้องการล้างข้อมูลทั้งหมดในเครื่องนี้ใช่หรือไม่?' : 'Are you sure you want to clear all local data?')) {
-      localStorage.removeItem('temple_bookings');
-      localStorage.removeItem('nathoeng_donations');
+    if (status === 'pending') {
+      return {
+        ...common,
+        background: '#fff3cd',
+        color: '#7a5b00'
+      };
+    }
+
+    if (status === 'approved') {
+      return {
+        ...common,
+        background: '#e8f5e9',
+        color: '#2e7d32'
+      };
+    }
+
+    if (status === 'checked_in') {
+      return {
+        ...common,
+        background: '#e3f2fd',
+        color: '#1565c0'
+      };
+    }
+
+    if (status === 'accommodated') {
+      return {
+        ...common,
+        background: '#ede7f6',
+        color: '#5e35b1'
+      };
+    }
+
+    if (status === 'in_retreat') {
+      return {
+        ...common,
+        background: '#f3e5f5',
+        color: '#7b1fa2'
+      };
+    }
+
+    if (status === 'checked_out') {
+      return {
+        ...common,
+        background: '#eceff1',
+        color: '#455a64'
+      };
+    }
+
+    if (status === 'completed') {
+      return {
+        ...common,
+        background: '#e0f2f1',
+        color: '#00695c'
+      };
+    }
+
+    if (
+      status === 'rejected' ||
+      status === 'cancelled'
+    ) {
+      return {
+        ...common,
+        background: '#ffebee',
+        color: '#c62828'
+      };
+    }
+
+    return {
+      ...common,
+      background: '#f5f5f5',
+      color: '#555'
+    };
+  };
+
+  const loadBookings = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(
+        '/api/admin-bookings',
+        {
+          method: 'GET'
+        }
+      );
+
+      const data = await response.json();
+
+      if (
+        !response.ok ||
+        !data.success
+      ) {
+        throw new Error(
+          data.message ||
+            'Unable to load bookings'
+        );
+      }
+
+      setBookings(
+        Array.isArray(data.bookings)
+          ? data.bookings
+          : []
+      );
+    } catch (err) {
+      console.error(
+        'Admin dashboard load error:',
+        err
+      );
+
+      setError(t.accessError);
       setBookings([]);
-      setDonations([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (checking) {
-    return <div className="guidePage" style={{ textAlign: 'center', padding: '100px' }}>กำลังตรวจสอบสิทธิ์ความปลอดภัย...</div>;
+  useEffect(() => {
+    const savedDonations = JSON.parse(
+      localStorage.getItem(
+        'nathoeng_donations'
+      ) || '[]'
+    );
+
+    setDonations(savedDonations);
+
+    loadBookings();
+  }, []);
+
+  const totalDonationAmount =
+    useMemo(() => {
+      return donations.reduce(
+        (sum, item) =>
+          sum +
+          (Number(item.amount) || 0),
+        0
+      );
+    }, [donations]);
+
+  const pendingCount =
+    bookings.filter(
+      (item) =>
+        item.status === 'pending'
+    ).length;
+
+  const activeCount =
+    bookings.filter(
+      (item) =>
+        item.status === 'checked_in' ||
+        item.status === 'accommodated' ||
+        item.status === 'in_retreat'
+    ).length;
+
+  const callStayAction = async (
+    booking,
+    action
+  ) => {
+    let accommodationName = '';
+    let note = '';
+
+    if (
+      action ===
+      'assign_accommodation'
+    ) {
+      accommodationName =
+        window.prompt(
+          t.accommodationPrompt,
+          booking.accommodation_name || ''
+        );
+
+      if (
+        accommodationName === null ||
+        !accommodationName.trim()
+      ) {
+        return;
+      }
+    }
+
+    if (
+      action === 'reject' ||
+      action === 'cancel'
+    ) {
+      note =
+        window.prompt(
+          t.notePrompt,
+          ''
+        );
+
+      if (note === null) {
+        return;
+      }
+    } else {
+      const confirmed =
+        window.confirm(
+          t.confirmAction
+        );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setProcessingId(booking.id);
+
+    try {
+      const response = await fetch(
+        '/api/update-stay-status',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: booking.id,
+            action: action,
+            accommodationName:
+              accommodationName,
+            note: note
+          })
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !data.success
+      ) {
+        throw new Error(
+          data.message ||
+            t.actionError
+        );
+      }
+
+      await loadBookings();
+
+      alert(t.actionSuccess);
+    } catch (err) {
+      console.error(
+        'Stay action error:',
+        err
+      );
+
+      alert(
+        err.message ||
+          t.actionError
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const actionButtonStyle = {
+    border: 'none',
+    padding: '7px 10px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: '600'
+  };
+
+  const renderActions = (booking) => {
+    const busy =
+      processingId === booking.id;
+
+    if (booking.status === 'pending') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'approve'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#2e7d32',
+              color: '#fff'
+            }}
+          >
+            {t.approve}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'reject'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#c62828',
+              color: '#fff'
+            }}
+          >
+            {t.reject}
+          </button>
+        </div>
+      );
+    }
+
+    if (booking.status === 'approved') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'check_in'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#1565c0',
+              color: '#fff'
+            }}
+          >
+            {t.checkIn}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'cancel'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#736f66',
+              color: '#fff'
+            }}
+          >
+            {t.cancel}
+          </button>
+        </div>
+      );
+    }
+
+    if (booking.status === 'checked_in') {
+      return (
+        <button
+          disabled={busy}
+          onClick={() =>
+            callStayAction(
+              booking,
+              'assign_accommodation'
+            )
+          }
+          style={{
+            ...actionButtonStyle,
+            background: '#7e57c2',
+            color: '#fff'
+          }}
+        >
+          {t.assignAccommodation}
+        </button>
+      );
+    }
+
+    if (
+      booking.status ===
+      'accommodated'
+    ) {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'start_retreat'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#8e24aa',
+              color: '#fff'
+            }}
+          >
+            {t.startRetreat}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'check_out'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#546e7a',
+              color: '#fff'
+            }}
+          >
+            {t.checkOut}
+          </button>
+        </div>
+      );
+    }
+
+    if (
+      booking.status ===
+      'in_retreat'
+    ) {
+      return (
+        <button
+          disabled={busy}
+          onClick={() =>
+            callStayAction(
+              booking,
+              'check_out'
+            )
+          }
+          style={{
+            ...actionButtonStyle,
+            background: '#546e7a',
+            color: '#fff'
+          }}
+        >
+          {t.checkOut}
+        </button>
+      );
+    }
+
+    if (
+      booking.status ===
+      'checked_out'
+    ) {
+      return (
+        <button
+          disabled={busy}
+          onClick={() =>
+            callStayAction(
+              booking,
+              'complete'
+            )
+          }
+          style={{
+            ...actionButtonStyle,
+            background: '#00695c',
+            color: '#fff'
+          }}
+        >
+          {t.complete}
+        </button>
+      );
+    }
+
+    return (
+      <span
+        style={{
+          fontSize: '12px',
+          color: '#888'
+        }}
+      >
+        —
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="guidePage"
+        style={{
+          textAlign: 'center',
+          padding: '100px 20px'
+        }}
+      >
+        {t.loading}
+      </div>
+    );
   }
 
-  if (!isAdmin) {
+  if (error) {
     return (
       <div className="guidePage">
-        <div className="guideContainer" style={{ maxWidth: '600px', textAlign: 'center', padding: '50px 20px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '15px' }}>🔒</div>
-          <h2 style={{ color: '#d32f2f', marginBottom: '15px' }}>
-            {lang === 'en' ? 'Access Denied (Admin Only)' : 'ขออภัย! พื้นที่นี้สำหรับผู้ดูแลระบบเท่านั้น'}
+        <div
+          className="guideContainer"
+          style={{
+            maxWidth: '650px',
+            textAlign: 'center',
+            padding: '60px 20px'
+          }}
+        >
+          <div
+            style={{
+              fontSize: '48px',
+              marginBottom: '15px'
+            }}
+          >
+            🔒
+          </div>
+
+          <h2
+            style={{
+              color: '#c62828'
+            }}
+          >
+            {t.accessError}
           </h2>
-          <p style={{ color: '#625d55', marginBottom: '25px', lineHeight: '1.7' }}>
-            {lang === 'en' 
-              ? 'Your LINE account is not authorized. Only the designated administrator can access this page.' 
-              : 'บัญชี LINE ของท่านไม่ได้รับสิทธิ์เข้าถึง เฉพาะ LINE ID ของผู้ดูแลระบบที่ลงทะเบียนไว้เท่านั้นจึงจะเข้าได้'}
-          </p>
-          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
-              {lang === 'en' ? 'Login with LINE' : 'เข้าสู่ระบบด้วย LINE'}
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '10px',
+              flexWrap: 'wrap',
+              marginTop: '25px'
+            }}
+          >
+            <button
+              onClick={() =>
+                goToPage('login-page')
+              }
+              className="primaryContactBtn"
+            >
+              {lang === 'en'
+                ? 'Go to Login'
+                : 'ไปหน้าเข้าสู่ระบบ'}
             </button>
-            <button onClick={() => goToPage('home')} className="primaryContactBtn" style={{ background: '#736f66' }}>
-              {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+
+            <button
+              onClick={loadBookings}
+              className="primaryContactBtn"
+              style={{
+                background: '#736f66'
+              }}
+            >
+              {t.refresh}
             </button>
           </div>
         </div>
@@ -78,108 +787,424 @@ function AdminDashboard({ lang, goToPage }) {
 
   return (
     <div className="guidePage">
-      <div className="guideContainer" style={{ maxWidth: '1000px' }}>
-        <button className="backButton" onClick={() => goToPage('home')}>
-          {lang === 'en' ? '← Back to Home' : '← กลับสู่หน้าหลัก'}
+      <div
+        className="guideContainer"
+        style={{
+          maxWidth: '1200px'
+        }}
+      >
+        <button
+          className="backButton"
+          onClick={() =>
+            goToPage('home')
+          }
+        >
+          {t.back}
         </button>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
-          <div>
-            <span className="eyebrow">{lang === 'en' ? 'SECURE ADMIN DASHBOARD' : 'ระบบจัดการหลังบ้าน (ผู้ดูแลระบบ)'}</span>
-            <h1 style={{ margin: 0 }}>{lang === 'en' ? 'Monastery Admin Panel' : 'แผงควบคุมข้อมูลวัดพุทธอุทยานนาเทิง'}</h1>
-          </div>
-          <button 
-            onClick={handleClearData} 
-            style={{ background: '#d32f2f', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
-          >
-            {lang === 'en' ? '🗑️ Clear Local Data' : '🗑️ ล้างข้อมูลจำลองทั้งหมด'}
-          </button>
-        </div>
+        <div
+          style={{
+            marginBottom: '25px'
+          }}
+        >
+          <span className="eyebrow">
+            {t.eyebrow}
+          </span>
 
-        {/* สรุปตัวเลขภาพรวม */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ background: '#f6f4ef', padding: '20px', borderRadius: '6px', border: '1px solid #dcd5c8' }}>
-            <p style={{ margin: '0 0 5px 0', fontSize: '13px', color: '#777' }}>{lang === 'en' ? 'Total Donations' : 'ยอดทำบุญสะสมทั้งหมด'}</p>
-            <h2 style={{ margin: 0, color: '#9b7226', fontSize: '1.8rem' }}>{totalDonationAmount.toLocaleString()} ฿</h2>
-          </div>
-          <div style={{ background: '#f6f4ef', padding: '20px', borderRadius: '6px', border: '1px solid #dcd5c8' }}>
-            <p style={{ margin: '0 0 5px 0', fontSize: '13px', color: '#777' }}>{lang === 'en' ? 'Total Donors' : 'จำนวนรายการทำบุญ'}</p>
-            <h2 style={{ margin: 0, color: '#302d29', fontSize: '1.8rem' }}>{donations.length} {lang === 'en' ? 'entries' : 'รายการ'}</h2>
-          </div>
-          <div style={{ background: '#f6f4ef', padding: '20px', borderRadius: '6px', border: '1px solid #dcd5c8' }}>
-            <p style={{ margin: '0 0 5px 0', fontSize: '13px', color: '#777' }}>{lang === 'en' ? 'Stay Bookings' : 'รายการจองเข้าพัก'}</p>
-            <h2 style={{ margin: 0, color: '#302d29', fontSize: '1.8rem' }}>{bookings.length} {lang === 'en' ? 'bookings' : 'รายการ'}</h2>
-          </div>
-        </div>
-
-        {/* ปุ่มสลับ Tab */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid #dcd5c8', paddingBottom: '10px' }}>
-          <button 
-            onClick={() => setActiveTab('donations')} 
-            style={{ 
-              padding: '10px 20px', 
-              background: activeTab === 'donations' ? '#9b7226' : '#f5f5f5', 
-              color: activeTab === 'donations' ? '#fff' : '#332f2a', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer',
-              fontWeight: '500'
+          <h1
+            style={{
+              marginBottom: '5px'
             }}
           >
-            {lang === 'en' ? '💰 Donations List' : '💰 รายชื่อผู้บริจาคปัจจัย'}
-          </button>
-          <button 
-            onClick={() => setActiveTab('bookings')} 
-            style={{ 
-              padding: '10px 20px', 
-              background: activeTab === 'bookings' ? '#9b7226' : '#f5f5f5', 
-              color: activeTab === 'bookings' ? '#fff' : '#332f2a', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer',
-              fontWeight: '500'
+            {t.title}
+          </h1>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: '15px',
+            marginBottom: '30px'
+          }}
+        >
+          <div
+            style={{
+              background: '#f6f4ef',
+              padding: '18px',
+              border:
+                '1px solid #dcd5c8',
+              borderRadius: '6px'
             }}
           >
-            {lang === 'en' ? '📅 Stay Bookings List' : '📅 รายการจองห้องพักปฏิบัติธรรม'}
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#777'
+              }}
+            >
+              {t.totalBookings}
+            </div>
+
+            <div
+              style={{
+                fontSize: '28px',
+                marginTop: '5px'
+              }}
+            >
+              {bookings.length}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: '#f6f4ef',
+              padding: '18px',
+              border:
+                '1px solid #dcd5c8',
+              borderRadius: '6px'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#777'
+              }}
+            >
+              {t.pendingBookings}
+            </div>
+
+            <div
+              style={{
+                fontSize: '28px',
+                marginTop: '5px',
+                color: '#9b7226'
+              }}
+            >
+              {pendingCount}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: '#f6f4ef',
+              padding: '18px',
+              border:
+                '1px solid #dcd5c8',
+              borderRadius: '6px'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#777'
+              }}
+            >
+              {t.activeStays}
+            </div>
+
+            <div
+              style={{
+                fontSize: '28px',
+                marginTop: '5px',
+                color: '#2e7d32'
+              }}
+            >
+              {activeCount}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: '#f6f4ef',
+              padding: '18px',
+              border:
+                '1px solid #dcd5c8',
+              borderRadius: '6px'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#777'
+              }}
+            >
+              {t.donationTotal}
+            </div>
+
+            <div
+              style={{
+                fontSize: '28px',
+                marginTop: '5px',
+                color: '#9b7226'
+              }}
+            >
+              {totalDonationAmount.toLocaleString()} ฿
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '10px',
+            flexWrap: 'wrap',
+            borderBottom:
+              '1px solid #dcd5c8',
+            paddingBottom: '12px',
+            marginBottom: '25px'
+          }}
+        >
+          <button
+            onClick={() =>
+              setActiveTab('bookings')
+            }
+            style={{
+              padding: '10px 18px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              background:
+                activeTab ===
+                'bookings'
+                  ? '#9b7226'
+                  : '#f5f5f5',
+              color:
+                activeTab ===
+                'bookings'
+                  ? '#fff'
+                  : '#332f2a'
+            }}
+          >
+            {t.bookingTab}
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab('donations')
+            }
+            style={{
+              padding: '10px 18px',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              background:
+                activeTab ===
+                'donations'
+                  ? '#9b7226'
+                  : '#f5f5f5',
+              color:
+                activeTab ===
+                'donations'
+                  ? '#fff'
+                  : '#332f2a'
+            }}
+          >
+            {t.donationTab}
+          </button>
+
+          <button
+            onClick={loadBookings}
+            style={{
+              marginLeft: 'auto',
+              padding: '9px 14px',
+              border:
+                '1px solid #dcd5c8',
+              background: '#fff',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            ↻ {t.refresh}
           </button>
         </div>
 
-        {/* แสดงผลตาราง */}
-        {activeTab === 'donations' ? (
+        {activeTab === 'bookings' ? (
           <div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{lang === 'en' ? 'Recent Donations' : 'ประวัติการบริจาคปัจจัยทั้งหมด'}</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+            <h3>
+              {t.bookingTitle}
+            </h3>
+
+            <p
+              style={{
+                color: '#625d55',
+                marginBottom: '20px'
+              }}
+            >
+              {t.bookingHelp}
+            </p>
+
+            <div
+              style={{
+                overflowX: 'auto'
+              }}
+            >
+              <table
+                style={{
+                  width: '100%',
+                  minWidth: '1100px',
+                  borderCollapse:
+                    'collapse',
+                  textAlign: 'left',
+                  fontSize: '13px'
+                }}
+              >
                 <thead>
-                  <tr style={{ background: '#f6f4ef', borderBottom: '1px solid #dcd5c8' }}>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Date/Time' : 'วันเวลา'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Donor Name' : 'ชื่อ - สกุล'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Purpose' : 'วัตถุประสงค์'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Receipt' : 'ใบอนุโมทนา'}</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>{lang === 'en' ? 'Amount' : 'ยอดเงิน (บาท)'}</th>
+                  <tr
+                    style={{
+                      background:
+                        '#f6f4ef',
+                      borderBottom:
+                        '1px solid #dcd5c8'
+                    }}
+                  >
+                    <th style={{ padding: '11px' }}>
+                      {t.name}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.phone}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.checkinDate}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.checkoutDate}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.purpose}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.accommodation}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.status}
+                    </th>
+
+                    <th style={{ padding: '11px' }}>
+                      {t.action}
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {donations.length === 0 ? (
+                  {bookings.length === 0 ? (
                     <tr>
-                      <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
-                        {lang === 'en' ? 'No donation records found.' : 'ยังไม่มีประวัติการบริจาคในระบบ'}
+                      <td
+                        colSpan="8"
+                        style={{
+                          textAlign:
+                            'center',
+                          padding: '35px',
+                          color: '#888'
+                        }}
+                      >
+                        {t.noBookings}
                       </td>
                     </tr>
                   ) : (
-                    donations.map((item, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #eeeae2' }}>
-                        <td style={{ padding: '12px', color: '#666', fontSize: '13px' }}>{item.date}</td>
-                        <td style={{ padding: '12px', fontWeight: '500' }}>{item.name}</td>
-                        <td style={{ padding: '12px' }}>{item.purpose}</td>
-                        <td style={{ padding: '12px' }}>
-                          {item.receipt === 'yes' ? <span style={{ color: '#2e7d32' }}>✓ ต้องการ</span> : <span style={{ color: '#888' }}>ไม่ต้องการ</span>}
-                        </td>
-                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: '600', color: '#9b7226' }}>
-                          {Number(item.amount).toLocaleString()} ฿
-                        </td>
-                      </tr>
-                    ))
+                    bookings.map(
+                      (booking) => (
+                        <tr
+                          key={booking.id}
+                          style={{
+                            borderBottom:
+                              '1px solid #eeeae2'
+                          }}
+                        >
+                          <td
+                            style={{
+                              padding: '11px',
+                              fontWeight:
+                                '600'
+                            }}
+                          >
+                            {booking.name}
+                          </td>
+
+                          <td style={{ padding: '11px' }}>
+                            {booking.phone ||
+                              '-'}
+                          </td>
+
+                          <td style={{ padding: '11px' }}>
+                            {booking.start_date ||
+                              '-'}
+                          </td>
+
+                          <td style={{ padding: '11px' }}>
+                            {booking.end_date ||
+                              '-'}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: '11px'
+                            }}
+                          >
+                            {booking.purpose ||
+                              '-'}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: '11px'
+                            }}
+                          >
+                            {booking.accommodation_name ||
+                              '-'}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: '11px'
+                            }}
+                          >
+                            <span
+                              style={statusStyle(
+                                booking.status
+                              )}
+                            >
+                              {statusLabel(
+                                booking.status
+                              )}
+                            </span>
+                          </td>
+
+                          <td
+                            style={{
+                              padding: '11px',
+                              minWidth: '175px'
+                            }}
+                          >
+                            {processingId ===
+                            booking.id ? (
+                              <span
+                                style={{
+                                  color: '#777'
+                                }}
+                              >
+                                {lang === 'en'
+                                  ? 'Processing...'
+                                  : 'กำลังดำเนินการ...'}
+                              </span>
+                            ) : (
+                              renderActions(
+                                booking
+                              )
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    )
                   )}
                 </tbody>
               </table>
@@ -187,45 +1212,155 @@ function AdminDashboard({ lang, goToPage }) {
           </div>
         ) : (
           <div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>{lang === 'en' ? 'Stay Bookings' : 'รายการจองเข้าพักปฏิบัติธรรม'}</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+            <h3>
+              {t.donationTitle}
+            </h3>
+
+            <div
+              style={{
+                padding: '12px 15px',
+                marginBottom: '15px',
+                background: '#fff8e1',
+                border:
+                  '1px solid #ffe0a3',
+                borderRadius: '4px',
+                color: '#725515',
+                fontSize: '13px'
+              }}
+            >
+              {t.localDonationNotice}
+            </div>
+
+            <div
+              style={{
+                overflowX: 'auto'
+              }}
+            >
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse:
+                    'collapse',
+                  textAlign: 'left',
+                  fontSize: '14px'
+                }}
+              >
                 <thead>
-                  <tr style={{ background: '#f6f4ef', borderBottom: '1px solid #dcd5c8' }}>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Name / Group' : 'ผู้จอง / คณะ'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Phone' : 'เบอร์โทรศัพท์'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Check-in' : 'วันที่เข้าพัก'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Check-out' : 'วันสิ้นสุด'}</th>
-                    <th style={{ padding: '12px' }}>{lang === 'en' ? 'Note' : 'หมายเหตุ'}</th>
+                  <tr
+                    style={{
+                      background:
+                        '#f6f4ef',
+                      borderBottom:
+                        '1px solid #dcd5c8'
+                    }}
+                  >
+                    <th style={{ padding: '12px' }}>
+                      {t.donationDate}
+                    </th>
+
+                    <th style={{ padding: '12px' }}>
+                      {t.donorName}
+                    </th>
+
+                    <th style={{ padding: '12px' }}>
+                      {t.donationPurpose}
+                    </th>
+
+                    <th style={{ padding: '12px' }}>
+                      {t.receipt}
+                    </th>
+
+                    <th
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right'
+                      }}
+                    >
+                      {t.amount}
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {bookings.length === 0 ? (
+                  {donations.length ===
+                  0 ? (
                     <tr>
-                      <td colSpan="5" style={{ padding: '30px', textAlign: 'center', color: '#888' }}>
-                        {lang === 'en' ? 'No booking records found.' : 'ยังไม่มีรายการจองเข้าพักในระบบ'}
+                      <td
+                        colSpan="5"
+                        style={{
+                          padding: '30px',
+                          textAlign:
+                            'center',
+                          color: '#888'
+                        }}
+                      >
+                        {t.noDonations}
                       </td>
                     </tr>
                   ) : (
-                    bookings.map((b, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #eeeae2' }}>
-                        <td style={{ padding: '12px', fontWeight: '500' }}>{b.name}</td>
-                        <td style={{ padding: '12px' }}>{b.phone || '-'}</td>
-                        <td style={{ padding: '12px' }}>{b.startDate}</td>
-                        <td style={{ padding: '12px' }}>{b.endDate}</td>
-                        <td style={{ padding: '12px', color: '#625d55' }}>{b.purpose}</td>
-                      </tr>
-                    ))
+                    donations.map(
+                      (item, index) => (
+                        <tr
+                          key={index}
+                          style={{
+                            borderBottom:
+                              '1px solid #eeeae2'
+                          }}
+                        >
+                          <td style={{ padding: '12px' }}>
+                            {item.date}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: '12px',
+                              fontWeight:
+                                '500'
+                            }}
+                          >
+                            {item.name}
+                          </td>
+
+                          <td style={{ padding: '12px' }}>
+                            {item.purpose}
+                          </td>
+
+                          <td style={{ padding: '12px' }}>
+                            {item.receipt ===
+                            'yes'
+                              ? t.receiptYes
+                              : t.receiptNo}
+                          </td>
+
+                          <td
+                            style={{
+                              padding: '12px',
+                              textAlign:
+                                'right',
+                              fontWeight:
+                                '600',
+                              color:
+                                '#9b7226'
+                            }}
+                          >
+                            {Number(
+                              item.amount
+                            ).toLocaleString()}{' '}
+                            ฿
+                          </td>
+                        </tr>
+                      )
+                    )
                   )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
 }
 
 export default AdminDashboard;
+```
