@@ -9,6 +9,7 @@ import TermsPage from './pages/TermsPage'
 import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/AdminDashboard'
 import MyStaysPage from './pages/MyStaysPage'
+import CheckinPage from './pages/CheckinPage'
 
 const content = {
   en: {
@@ -224,7 +225,8 @@ function App() {
         hash === 'privacy-policy' ||
         hash === 'terms-page' ||
         hash === 'login-page' ||
-        hash === 'my-stays'
+        hash === 'my-stays' ||
+        hash === 'checkin-page'
       ) {
         setCurrentPage(hash)
       } else {
@@ -336,13 +338,18 @@ useEffect(() => {
 
       setUser(lineUser);
 
+      const afterLoginPage =
+        sessionStorage.getItem('after_login_page') || 'home';
+
+      sessionStorage.removeItem('after_login_page');
+
       window.history.replaceState(
         {},
         document.title,
-        window.location.pathname + '#home'
+        window.location.pathname + '#' + afterLoginPage
       );
 
-      setCurrentPage('home');
+      setCurrentPage(afterLoginPage);
     } catch (error) {
       console.error('LINE callback error:', error);
 
@@ -776,6 +783,14 @@ const handleLineLogin = () => {
         ) : currentPage === 'my-stays' ? (
           /* ================= PAGE: MY STAYS ================= */
           <MyStaysPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'checkin-page' ? (
+          /* ================= PAGE: QR CHECK-IN ================= */
+          <CheckinPage
+            lang={lang}
+            goToPage={goToPage}
+            user={user}
+            handleLineLogin={handleLineLogin}
+          />
         ) : currentPage === 'admin-dashboard' ? (
           /* ================= PAGE: ADMIN DASHBOARD ================= */
           user && user.isAdmin ? (
