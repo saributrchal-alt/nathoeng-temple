@@ -8,6 +8,7 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
 import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/AdminDashboard'
+import MyStaysPage from './pages/MyStaysPage'
 
 const content = {
   en: {
@@ -222,7 +223,8 @@ function App() {
         hash === 'admin-dashboard' ||
         hash === 'privacy-policy' ||
         hash === 'terms-page' ||
-        hash === 'login-page'
+        hash === 'login-page' ||
+        hash === 'my-stays'
       ) {
         setCurrentPage(hash)
       } else {
@@ -317,9 +319,11 @@ useEffect(() => {
       }
 
       const lineUser = {
+        memberId: data.user.memberId,
         name: data.user.name,
         lineUid: data.user.lineUid,
         picture: data.user.picture || '',
+        role: data.user.role || (data.user.isAdmin ? 'admin' : 'member'),
         isAdmin: data.user.isAdmin === true
       };
 
@@ -439,8 +443,28 @@ const handleLineLogin = () => {
           {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
               <span style={{ fontWeight: '500', color: '#06c755' }}>
-               {user.isAdmin ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป'} 
+                {lang === 'en'
+                  ? (user.isAdmin ? 'Administrator' : 'Member')
+                  : (user.isAdmin ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป')}
               </span>
+
+              {!user.isAdmin && (
+                <button
+                  onClick={() => goToPage('my-stays')}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #c5a880',
+                    color: '#8f6a27',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '11px'
+                  }}
+                >
+                  {lang === 'en' ? 'My Stays' : 'การเข้าพักของฉัน'}
+                </button>
+              )}
+
               <button 
                 onClick={handleLogout}
                 style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
@@ -749,8 +773,11 @@ const handleLineLogin = () => {
         ) : currentPage === 'donation-list' ? (
           /* ================= PAGE: DONATION LIST ================= */
           <DonationListPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'my-stays' ? (
+          /* ================= PAGE: MY STAYS ================= */
+          <MyStaysPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'admin-dashboard' ? (
-          /* ================= PAGE: ADuser && AMIN DASHBOARD (ตรวจสอบสิทธิ์ UID แอดมิน) ================= */
+          /* ================= PAGE: ADMIN DASHBOARD ================= */
           user && user.isAdmin ? (
             <AdminDashboard lang={lang} goToPage={goToPage} />
           ) : (
