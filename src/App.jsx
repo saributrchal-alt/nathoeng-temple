@@ -270,7 +270,7 @@ useEffect(() => {
       window.history.replaceState(
         {},
         document.title,
-        window.location.pathname + '#login-page'
+        '/#login-page'
       );
 
       return;
@@ -280,17 +280,20 @@ useEffect(() => {
       return;
     }
 
-    const savedState = sessionStorage.getItem('line_oauth_state');
+    const savedState =
+      sessionStorage.getItem('line_oauth_state') ||
+      localStorage.getItem('line_oauth_state');
 
     if (!savedState || savedState !== returnedState) {
       console.error('Invalid LINE OAuth state');
 
       sessionStorage.removeItem('line_oauth_state');
+      localStorage.removeItem('line_oauth_state');
 
       window.history.replaceState(
         {},
         document.title,
-        window.location.pathname + '#login-page'
+        '/#login-page'
       );
 
       alert(
@@ -310,7 +313,7 @@ useEffect(() => {
         },
         body: JSON.stringify({
           code: code,
-          redirectUri: 'https://watt.nathoeng.com/'
+          redirectUri: 'https://watt.nathoeng.com/line-callback'
         })
       });
 
@@ -335,30 +338,46 @@ useEffect(() => {
       );
 
       sessionStorage.removeItem('line_oauth_state');
+      localStorage.removeItem('line_oauth_state');
 
       setUser(lineUser);
 
       const afterLoginPage =
-        sessionStorage.getItem('after_login_page') || 'home';
+        sessionStorage.getItem('after_login_page') ||
+        localStorage.getItem('after_login_page') ||
+        'home';
 
       sessionStorage.removeItem('after_login_page');
+      localStorage.removeItem('after_login_page');
 
       window.history.replaceState(
         {},
         document.title,
-        window.location.pathname + '#' + afterLoginPage
+        '/#' + afterLoginPage
       );
+
+      const savedPendingCheckinToken =
+        sessionStorage.getItem('pending_checkin_token') ||
+        localStorage.getItem('pending_checkin_token');
+
+      if (savedPendingCheckinToken) {
+        sessionStorage.setItem(
+          'pending_checkin_token',
+          savedPendingCheckinToken
+        );
+      }
 
       setCurrentPage(afterLoginPage);
     } catch (error) {
       console.error('LINE callback error:', error);
 
       sessionStorage.removeItem('line_oauth_state');
+      localStorage.removeItem('line_oauth_state');
 
       window.history.replaceState(
         {},
         document.title,
-        window.location.pathname + '#login-page'
+        '/#login-page'
       );
 
       alert(
@@ -374,7 +393,7 @@ useEffect(() => {
 
 const handleLineLogin = () => {
   const channelId = '2011258009';
-  const redirectUri = 'https://watt.nathoeng.com/';
+  const redirectUri = 'https://watt.nathoeng.com/line-callback';
 
   const state = crypto.randomUUID();
 
@@ -382,6 +401,33 @@ const handleLineLogin = () => {
     'line_oauth_state',
     state
   );
+
+  localStorage.setItem(
+    'line_oauth_state',
+    state
+  );
+
+  // Mobile browsers can lose sessionStorage when LINE opens and returns.
+  // Mirror the continuation data to localStorage before leaving the site.
+  const afterLoginPage =
+    sessionStorage.getItem('after_login_page');
+
+  const pendingCheckinToken =
+    sessionStorage.getItem('pending_checkin_token');
+
+  if (afterLoginPage) {
+    localStorage.setItem(
+      'after_login_page',
+      afterLoginPage
+    );
+  }
+
+  if (pendingCheckinToken) {
+    localStorage.setItem(
+      'pending_checkin_token',
+      pendingCheckinToken
+    );
+  }
 
   const lineAuthUrl =
     'https://access.line.me/oauth2/v2.1/authorize' +
