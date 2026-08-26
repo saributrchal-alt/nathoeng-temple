@@ -33,7 +33,7 @@ function BookingPage({ lang, goToPage }) {
     localStorage.setItem('temple_bookings', JSON.stringify([newBooking, ...existingBookings]));
 
     // ส่งข้อมูลเข้า Web3Forms ของเดิม
-    formData.append("access_key", "YOUR_WEB3FORMS_ACCESS_KEY_HERE"); 
+    formData.append("access_key", "d80a991c-5b9f-4273-a730-8de806f45da3"); 
     formData.append("line_user_name", user.name);
 
     try {
