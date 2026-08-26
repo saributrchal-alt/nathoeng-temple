@@ -7,6 +7,7 @@ import DonationListPage from './pages/DonationListPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
 import LoginPage from './pages/LoginPage'
+import AdminDashboard from './pages/AdminDashboard'
 
 const content = {
   en: {
@@ -18,6 +19,7 @@ const content = {
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Support', href: '#support' },
       { label: 'Contact', href: '#contact' },
+      { label: 'Admin', href: '#admin-dashboard' },
       { label: 'Login', href: '#login-page' }
     ],
 
@@ -111,6 +113,7 @@ const content = {
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
       { label: 'ติดต่อ', href: '#contact' },
+      { label: 'ระบบผู้ดูแล', href: '#admin-dashboard' },
       { label: 'เข้าสู่ระบบ', href: '#login-page' }
     ],
 
@@ -216,6 +219,7 @@ function App() {
         hash === 'calendar-page' ||
         hash === 'donation-page' ||
         hash === 'donation-list' ||
+        hash === 'admin-dashboard' ||
         hash === 'privacy-policy' ||
         hash === 'terms-page' ||
         hash === 'login-page'
@@ -231,7 +235,6 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // ตรวจสอบ Callback จาก LINE Login และจัดการดึงโปรไฟล์ผู้ใช้
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
@@ -250,14 +253,6 @@ function App() {
       }
     }
   }, [])
-
-  const handleLineLogin = () => {
-    const channelId = "2011258009" // Channel ID ของท่าน
-    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#home")
-    const state = "random_state_123"
-    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
-    window.location.href = lineAuthUrl
-  }
 
   const handleLogout = () => {
     setUser(null)
@@ -294,7 +289,6 @@ function App() {
           </div>
         </div>
 
-        {/* ส่วนจัดการภาษา และแสดงสถานะผู้ใช้ถ้าล็อกอินแล้ว */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div className="language">
             <button
@@ -325,7 +319,6 @@ function App() {
           )}
         </div>
 
-        {/* Hamburger Menu Button */}
         <button 
           className="menuToggleBtn" 
           onClick={() => setMenuOpen(!menuOpen)}
@@ -334,7 +327,6 @@ function App() {
           {menuOpen ? '✕' : '☰'}
         </button>
 
-        {/* Navigation */}
         <nav className={menuOpen ? 'navOpen' : ''}>
           {t.nav.map((item) => (
             <a 
@@ -351,6 +343,8 @@ function App() {
                   goToPage('event-kathina')
                 } else if (item.href === '#visit') {
                   goToPage('visit-guide')
+                } else if (item.href === '#admin-dashboard') {
+                  goToPage('admin-dashboard')
                 } else if (item.href === '#login-page') {
                   goToPage('login-page')
                 } else {
@@ -373,10 +367,8 @@ function App() {
       <main>
         {currentPage === 'home' ? (
           <>
-            {/* HERO */}
             <section id="home" className="hero"></section>
 
-            {/* ABOUT */}
             <section id="about" className="aboutSection">
               <div className="aboutImage">
                 <img
@@ -407,7 +399,6 @@ function App() {
               </div>
             </section>
 
-            {/* MAIN FEATURES */}
             <section className="featureSection">
               <div className="sectionHeading">
                 <p className="eyebrow">{lang === 'en' ? 'EXPLORE' : 'เรียนรู้และเยี่ยมชม'}</p>
@@ -415,7 +406,6 @@ function App() {
               </div>
 
               <div className="cards">
-                {/* DHAMMA */}
                 <article id="teachings" className="imageCard">
                   <div className="cardImage">
                     <img src="/images/486526184_680593961012974_4699356998246297917_n.jpg" alt="Dhamma" />
@@ -430,7 +420,6 @@ function App() {
                   </div>
                 </article>
 
-                {/* EVENTS */}
                 <article id="events" className="imageCard">
                   <div className="cardImage">
                     <img src="/images/487812128_689539323451771_1128859791552978185_n.jpg" alt="Events" />
@@ -445,7 +434,6 @@ function App() {
                   </div>
                 </article>
 
-                {/* VISIT */}
                 <article id="visit" className="imageCard">
                   <div className="cardImage">
                     <img src="/images/99425106_2619520384959784_4372406926441447424_n.jpg" alt="Visit" />
@@ -462,7 +450,6 @@ function App() {
               </div>
             </section>
 
-            {/* RETREATS */}
             <section id="retreats" className="quietSection">
               <div className="quietImage">
                 <img src="/images/c8549361-f40f-49cc-ba0d-e3d70810a1bb.jpg" alt="Retreats" />
@@ -482,7 +469,6 @@ function App() {
               </div>
             </section>
 
-            {/* SUPPORT */}
             <section id="support" className="support">
               <div>
                 <p className="eyebrow">{lang === 'en' ? 'GENEROSITY' : 'การให้'}</p>
@@ -494,7 +480,6 @@ function App() {
               </div>
             </section>
 
-            {/* CONTACT */}
             <section id="contact" className="contactSection">
               <p className="eyebrow">{lang === 'en' ? 'CONTACT' : 'ติดต่อ'}</p>
               <h2>{t.contact}</h2>
@@ -508,7 +493,6 @@ function App() {
             </section>
           </>
         ) : currentPage === 'teachings-page' ? (
-          /* ================= PAGE: TEACHINGS (หลวงปู่มั่น) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
@@ -549,7 +533,6 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'visit-guide' ? (
-          /* ================= PAGE: VISIT & STAY GUIDE ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
@@ -610,28 +593,22 @@ function App() {
             </div>
           </div>
         ) : currentPage === 'booking-page' ? (
-          /* ================= PAGE: BOOKING FORM ================= */
           <BookingPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'calendar-page' ? (
-          /* ================= PAGE: CALENDAR SCHEDULE ================= */
           <CalendarPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'donation-page' ? (
-          /* ================= PAGE: DONATION FORM ================= */
           <DonationPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'donation-list' ? (
-          /* ================= PAGE: DONATION LIST (ADMIN) ================= */
           <DonationListPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'admin-dashboard' ? (
+          <AdminDashboard lang={lang} goToPage={goToPage} />
         ) : currentPage === 'privacy-policy' ? (
-          /* ================= PAGE: PRIVACY POLICY ================= */
           <PrivacyPolicyPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'terms-page' ? (
-          /* ================= PAGE: TERMS & CONDITIONS ================= */
           <TermsPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'login-page' ? (
-          /* ================= PAGE: LOGIN PAGE ================= */
-          <LoginPage lang={lang} goToPage={goToPage} user={user} handleLineLogin={handleLineLogin} handleLogout={handleLogout} />
+          <LoginPage lang={lang} goToPage={goToPage} user={user} handleLineLogin={() => {}} handleLogout={handleLogout} />
         ) : currentPage === 'event-kathina' ? (
-          /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
@@ -641,7 +618,6 @@ function App() {
               <h1>{t.kathinaTitle}</h1>
               <p className="guideIntro">{t.kathinaIntro}</p>
 
-              {/* SHARE SECTION */}
               <div className="shareSectionBox" style={{ background: '#fcfbfa', padding: '15px 20px', borderRadius: '4px', marginBottom: '25px', border: '1px solid #eeeae2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                 <span style={{ fontSize: '0.95rem', fontWeight: '500', color: '#555' }}>{t.shareTitle}</span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -671,7 +647,6 @@ function App() {
                 {copied && <div style={{ width: '100%', color: '#2e7d32', fontSize: '0.85rem', textAlign: 'center', marginTop: '5px' }}>{t.copiedText}</div>}
               </div>
 
-              {/* ประธานกฐิน */}
               <div className="guideSectionBox" style={{ background: '#fcfbfa', padding: '20px 25px', borderRadius: '4px', marginBottom: '30px', border: '1px solid #eeeae2', textAlign: 'center' }}>
                 <h3 style={{ color: '#9b7226', marginBottom: '8px', fontSize: '1.2rem' }}>
                   {t.chairpersonTitle}
@@ -681,7 +656,6 @@ function App() {
                 </p>
               </div>
 
-              {/* กำหนดการอย่างละเอียด */}
               <div className="guideSectionBox" style={{ background: '#f6f4ef', padding: '25px 30px', borderRadius: '4px', marginBottom: '40px', border: '1px solid #eeeae2' }}>
                 <h3 style={{ borderBottom: '1px solid #dcd5c8', paddingBottom: '10px', marginTop: 0, color: '#302d29' }}>
                   {t.scheduleTitle}
@@ -708,7 +682,6 @@ function App() {
                 </div>
               </div>
 
-              {/* ภาพประกอบในงาน */}
               <div className="guideContentBlock">
                 <h3>1. {t.imgCaption1}</h3>
                 <div className="guideImageFrame">
@@ -752,7 +725,6 @@ function App() {
             </div>
           </div>
         ) : (
-          /* ================= PAGE: CONTACT & MAP (Bilingual) ================= */
           <div className="guidePage">
             <div className="guideContainer">
               <button className="backButton" onClick={() => goToPage('home')}>
@@ -785,7 +757,6 @@ function App() {
         )}
       </main>
 
-      {/* FOOTER */}
       <footer style={{ background: '#1c1a17', color: '#fff', padding: '40px 20px', textAlign: 'center', borderTop: '1px solid #332f2a' }}>
         <div className="footer-content" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="dharma" style={{ fontSize: '24px', marginBottom: '10px', color: '#c5a880' }}>☸</div>
