@@ -28,17 +28,16 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
 
   const t = text[lang]
 
-  // 🟢 ฟังก์ชันเข้าสู่ระบบสำหรับญาติโยมทั่วไป (กำหนด UID และชื่อทั่วไป ไม่ใช่แอดมิน)
-  const handleGeneralLineLogin = () => {
-    const generalUser = {
-      name: 'คุณโยม (สาธุชนทั่วไป)',
-      lineUid: 'U_GENERAL_MEMBER_PUBLIC_999', // LINE UID จำลองของบุคคลทั่วไป (ไม่ใช่ของแอดมิน)
-      isAdmin: false,
-      picture: ''
-    };
-    localStorage.setItem('line_user', JSON.stringify(generalUser));
-    alert(lang === 'th' ? 'เข้าสู่ระบบสมาชิกเรียบร้อยแล้ว' : 'Logged in successfully');
-    window.location.reload();
+  // 🟢 ฟังก์ชันพาไปหน้า LINE Login ของจริง (แทนการจำลองชื่อ)
+  const handleRealLineLogin = () => {
+    const CHANNEL_ID = '2011258009'; // ใส่ Channel ID ของ LINE Login ที่วัดสมัครไว้
+    const REDIRECT_URI = window.location.origin + window.location.pathname; // URL กลับมาที่หน้าเว็บไซต์เดิม
+    const STATE = 'random_state_string';
+
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${CHANNEL_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${STATE}&scope=profile%20openid%20email`;
+
+    // พาผู้ใช้งานพุ่งไปหน้า LINE Login ของจริง
+    window.location.href = lineAuthUrl;
   }
 
   return (
@@ -80,7 +79,7 @@ export default function LoginPage({ lang, goToPage, user, handleLogout }) {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
                 <div style={{ fontSize: '48px', marginBottom: '5px' }}>☸</div>
                 <button
-                  onClick={handleGeneralLineLogin}
+                  onClick={handleRealLineLogin}
                   style={{
                     background: '#06c755',
                     color: '#fff',
