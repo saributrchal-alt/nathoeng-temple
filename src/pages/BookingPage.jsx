@@ -61,7 +61,7 @@ function BookingPage({ lang, goToPage }) {
             <p style={{ marginBottom: '15px', color: '#625d55', fontSize: '15px' }}>
               {lang === 'en' 
                 ? 'Security Check: Please login with your LINE account to proceed with your booking.' 
-                : 'เพื่อความปลอดภัยและป้องกันข้อความขยะ (Spam) กรุณาเข้าสู่ระบบด้วยบัญชี LINE ของท่านก่อนทำการจอง'}
+                : 'ทางวัดขอสงวนสิทธิ์ในการเข้าระบบต้องยืนยันตัวตนก่อน โดยการเข้าสู่ระบบด้วยบัญชี LINE ของท่านก่อนทำการจอง'}
             </p>
             <button 
               onClick={() => goToPage('login-page')} 
