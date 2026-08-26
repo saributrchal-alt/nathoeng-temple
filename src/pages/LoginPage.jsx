@@ -1,94 +1,195 @@
 import React from 'react';
 
-function LoginPage({ lang, goToPage, user, handleLogout }) {
-  
-  // 🔐 1. ฟังก์ชันจำลองการเข้าสู่ระบบสำหรับ "ผู้ดูแลระบบ" (ใช้ LINE UID จริงของพระอาจารย์)
-  const handleMockAdminLogin = () => {
-    const adminUser = {
-      name: 'ผู้ดูแลระบบ',
-      lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba', // LINE UID แอดมินจริง
-      picture: ''
-    };
-    localStorage.setItem('line_user', JSON.stringify(adminUser));
-    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะผู้ดูแลระบบเรียบร้อย' : 'Logged in as Admin successfully');
-    window.location.reload();
-  };
-
-  // 👤 2. ฟังก์ชันจำลองการเข้าสู่ระบบสำหรับ "สมาชิกทั่วไป" (ใช้ LINE UID ปลอม)
-  const handleMockMemberLogin = () => {
-    const memberUser = {
-      name: 'ญาติโยม (สมาชิกทั่วไป)',
-      lineUid: 'U_other_line_id_999999999', // LINE UID ของคนอื่น (จะเข้าหน้าแอดมินไม่ได้)
-      picture: ''
-    };
-    localStorage.setItem('line_user', JSON.stringify(memberUser));
-    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะสมาชิกทั่วไปเรียบร้อย' : 'Logged in as Member successfully');
-    window.location.reload();
-  };
+function LoginPage({
+  lang,
+  goToPage,
+  user,
+  handleLineLogin,
+  handleLogout
+}) {
+  const ADMIN_LINE_UID = 'Ucce7f0e73af42c1c1443c328d6e59cba';
+  const isAdmin = user && user.lineUid === ADMIN_LINE_UID;
 
   return (
     <div className="guidePage">
-      <div className="guideContainer" style={{ maxWidth: '600px' }}>
-        <button className="backButton" onClick={() => goToPage('home')}>
+      <div
+        className="guideContainer"
+        style={{ maxWidth: '600px' }}
+      >
+        <button
+          className="backButton"
+          onClick={() => goToPage('home')}
+        >
           {lang === 'en' ? '← Back to Home' : '← กลับสู่หน้าหลัก'}
         </button>
 
-        <span className="eyebrow">{lang === 'en' ? 'MEMBER SYSTEM' : 'ระบบสมาชิกวัด'}</span>
-        <h1>{lang === 'en' ? 'Member Login' : 'เข้าสู่ระบบสมาชิก'}</h1>
+        <span className="eyebrow">
+          {lang === 'en' ? 'MEMBER SYSTEM' : 'ระบบสมาชิกวัด'}
+        </span>
+
+        <h1>
+          {lang === 'en' ? 'Member Login' : 'เข้าสู่ระบบสมาชิก'}
+        </h1>
+
         <p className="guideIntro">
           {lang === 'en'
             ? 'Login with your LINE account to manage your retreat bookings, donation history, and personal profile.'
             : 'เข้าสู่ระบบด้วยบัญชี LINE ของท่าน เพื่อจัดการข้อมูลการจองปฏิบัติธรรม ดูประวัติการทำบุญ และข้อมูลส่วนตัว'}
         </p>
 
-        <div className="guideSectionBox" style={{ background: '#fcfbfa', padding: '30px', borderRadius: '8px', textAlign: 'center', border: '1px solid #eeeae2' }}>
-          <div style={{ fontSize: '36px', marginBottom: '15px' }}>☸</div>
+        <div
+          className="guideSectionBox"
+          style={{
+            background: '#fcfbfa',
+            padding: '30px',
+            borderRadius: '8px',
+            textAlign: 'center',
+            border: '1px solid #eeeae2'
+          }}
+        >
+          <div
+            style={{
+              fontSize: '36px',
+              marginBottom: '15px'
+            }}
+          >
+            ☸
+          </div>
 
           {user ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#302d29' }}>
-                {lang === 'en' ? `Welcome, ${user.name}` : `ยินดีต้อนรับ, ${user.name}`}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '15px',
+                alignItems: 'center'
+              }}
+            >
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name || 'LINE User'}
+                  style={{
+                    width: '72px',
+                    height: '72px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid #eeeae2'
+                  }}
+                />
+              ) : null}
+
+              <h3
+                style={{
+                  margin: 0,
+                  color: '#302d29'
+                }}
+              >
+                {lang === 'en'
+                  ? 'Welcome, ' + (user.name || 'Member')
+                  : 'ยินดีต้อนรับ, ' + (user.name || 'สมาชิก')}
               </h3>
-              <p style={{ margin: 0, color: '#625d55', fontSize: '14px' }}>
-                {lang === 'en' ? 'You are successfully logged in via LINE.' : 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'}
+
+              <p
+                style={{
+                  margin: 0,
+                  color: '#625d55',
+                  fontSize: '14px'
+                }}
+              >
+                {lang === 'en'
+                  ? 'You are successfully logged in with LINE.'
+                  : 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'}
               </p>
 
-              {/* ตรวจสอบ UID เพื่อแยกสิทธิ์การแสดงผลปุ่มหลังบ้าน */}
-              {user.lineUid === 'Ucce7f0e73af42c1c1443c328d6e59cba' ? (
-                <button 
-                  onClick={() => goToPage('admin-dashboard')} 
-                  className="primaryContactBtn" 
-                  style={{ background: '#9b7226', border: 'none', padding: '12px 24px', cursor: 'pointer', borderRadius: '4px', color: '#fff', fontSize: '14px' }}
-                >
-                  {lang === 'en' ? '⚙️ Go to Admin Dashboard' : '⚙️ ไปยังหน้าแผงควบคุมผู้ดูแลระบบ'}
-                </button>
+              {isAdmin ? (
+                <>
+                  <div
+                    style={{
+                      padding: '10px 14px',
+                      background: '#f6f4ef',
+                      color: '#9b7226',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {lang === 'en'
+                      ? 'Administrator Account'
+                      : 'บัญชีผู้ดูแลระบบ'}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => goToPage('admin-dashboard')}
+                    className="primaryContactBtn"
+                    style={{
+                      background: '#9b7226',
+                      border: 'none',
+                      padding: '12px 24px',
+                      cursor: 'pointer',
+                      borderRadius: '4px',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {lang === 'en'
+                      ? '⚙ Go to Admin Dashboard'
+                      : '⚙ ไปยังหน้าแผงควบคุมผู้ดูแลระบบ'}
+                  </button>
+                </>
               ) : (
-                <p style={{ color: '#d32f2f', fontSize: '13px', margin: 0 }}>
-                  {lang === 'en' ? '(Standard Member Account - No Admin Access)' : '(บัญชีสมาชิกทั่วไป - ไม่มีสิทธิ์เข้าถึงระบบผู้ดูแล)'}
-                </p>
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    background: '#f6f4ef',
+                    color: '#625d55',
+                    borderRadius: '4px',
+                    fontSize: '13px'
+                  }}
+                >
+                  {lang === 'en'
+                    ? 'Standard Member Account'
+                    : 'บัญชีสมาชิกทั่วไป'}
+                </div>
               )}
 
-              <button 
-                onClick={handleLogout} 
-                style={{ background: '#736f66', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  background: '#736f66',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
               >
                 {lang === 'en' ? 'Logout' : 'ออกจากระบบ'}
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-              
-              {/* ปุ่มที่ 1: เข้าสู่ระบบด้วย LINE (ในฐานะแอดมิน / พระอาจารย์) */}
-              <button 
-                onClick={handleMockAdminLogin}
-                style={{ 
-                  background: '#06c755', 
-                  color: '#fff', 
-                  border: 'none', 
-                  padding: '12px 24px', 
-                  borderRadius: '25px', 
-                  fontSize: '15px', 
-                  fontWeight: '500', 
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '15px',
+                alignItems: 'center'
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleLineLogin}
+                style={{
+                  background: '#06c755',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '14px 24px',
+                  borderRadius: '25px',
+                  fontSize: '15px',
+                  fontWeight: '600',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -98,37 +199,41 @@ function LoginPage({ lang, goToPage, user, handleLogout }) {
                   justifyContent: 'center'
                 }}
               >
-                🟢 {lang === 'en' ? 'Login as Admin (Abbot)' : 'เข้าสู่ระบบด้วย LINE (สำหรับผู้ดูแลระบบ)'}
+                <span>●</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Login with LINE'
+                    : 'เข้าสู่ระบบด้วย LINE'}
+                </span>
               </button>
 
-              {/* ปุ่มที่ 2: เข้าสู่ระบบด้วย LINE (ในฐานะคนอื่น / สมาชิกทั่วไป) */}
-              <button 
-                onClick={handleMockMemberLogin}
-                style={{ 
-                  background: '#555', 
-                  color: '#fff', 
-                  border: 'none', 
-                  padding: '12px 24px', 
-                  borderRadius: '25px', 
-                  fontSize: '15px', 
-                  fontWeight: '500', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  justifyContent: 'center'
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: '#625d55',
+                  margin: 0,
+                  lineHeight: '1.6'
                 }}
               >
-                👤 {lang === 'en' ? 'Login as General Member (Other LINE ID)' : 'เข้าสู่ระบบด้วย LINE (สำหรับสมาชิกทั่วไป / ID อื่น)'}
-              </button>
+                {lang === 'en'
+                  ? 'LINE is used to verify your identity before booking a monastery stay or accessing member services.'
+                  : 'ระบบจะใช้บัญชี LINE เพื่อยืนยันตัวตนก่อนทำรายการจองเข้าพักและใช้บริการสมาชิกของวัด'}
+              </p>
 
-              <p style={{ fontSize: '12px', color: '#888', marginTop: '10px' }}>
-                {lang === 'en' ? 'By logging in, you accept our privacy policy and terms.' : 'การเข้าสู่ระบบถือว่าท่านยอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งานของทางวัด'}
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: '#888',
+                  marginTop: '5px',
+                  lineHeight: '1.6'
+                }}
+              >
+                {lang === 'en'
+                  ? 'By logging in, you accept our privacy policy and terms.'
+                  : 'การเข้าสู่ระบบถือว่าท่านยอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งานของทางวัด'}
               </p>
             </div>
           )}
-
         </div>
       </div>
     </div>
