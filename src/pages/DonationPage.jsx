@@ -1,6 +1,10 @@
 import { useState } from 'react'
 
 export default function DonationPage({ lang, goToPage }) {
+  // ดึงข้อมูลผู้ใช้ที่ล็อกอินผ่าน LINE จาก localStorage
+  const savedUser = localStorage.getItem('line_user')
+  const user = savedUser ? JSON.parse(savedUser) : null
+
   const text = {
     en: {
       back: '← Back to Home',
@@ -65,7 +69,7 @@ export default function DonationPage({ lang, goToPage }) {
   const t = text[lang]
 
   const [formData, setFormData] = useState({
-    fullName: '',
+    fullName: user ? user.name : '',
     idNumber: '',
     amount: '',
     purpose: 'general',
@@ -83,6 +87,13 @@ export default function DonationPage({ lang, goToPage }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // บังคับตรวจเช็ก LINE Login ป้องกัน Spam
+    if (!user) {
+      alert(lang === 'th' ? 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำการบริจาค' : 'Please login with LINE before making a donation.')
+      goToPage('login-page')
+      return
+    }
 
     if (!formData.fullName || !formData.idNumber || !formData.amount || !formData.taxReceipt) {
       alert(lang === 'th' ? 'กรุณากรอกข้อมูลและเลือกรายการให้ครบถ้วน' : 'Please fill in all required fields and select receipt option.')
@@ -107,13 +118,13 @@ export default function DonationPage({ lang, goToPage }) {
     const newEntry = {
       date: formattedDate,
       name: formData.fullName,
-      idNumber: formData.idNumber, // เก็บไว้ในระบบเบื้องหลัง
+      idNumber: formData.idNumber,
       purpose: selectedPurposeText,
       receipt: formData.taxReceipt,
-      amount: Number(formData.amount)
+      amount: Number(formData.amount),
+      lineUser: user.name
     }
 
-    // บันทึกลง localStorage สะสมไว้ให้หน้าตรวจสอบดึงไปแสดง
     try {
       const existing = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]')
       localStorage.setItem('nathoeng_donations', JSON.stringify([newEntry, ...existing]))
@@ -129,21 +140,22 @@ export default function DonationPage({ lang, goToPage }) {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          access_key: "56740213-dd22-4925-948b-66e1bf47d993", // ใส่ Access Key ของคุณที่นี่
+          access_key: "56740213-dd22-4925-948b-66e1bf47d993", 
           subject: `New Donation from ${formData.fullName}`,
           from_name: "Buddhist Park Monastery Website",
           "Full Name": formData.fullName,
+          "LINE User": user.name,
           "ID / Tax ID": formData.idNumber,
           "Amount (THB)": formData.amount,
           "Purpose": selectedPurposeText,
           "Needs Tax Receipt": formData.taxReceipt === 'yes' ? 'Yes (ต้องการ)' : 'No (ไม่ต้องการ)'
         }),
-      });
+      })
 
       setIsSubmitted(true)
     } catch (error) {
       console.error(error)
-      setIsSubmitted(true) // ให้ผ่านไปหน้าสำเร็จแม้เน็ตมีปัญหาเล็กน้อย แต่ข้อมูลบันทึกลงเครื่องแล้ว
+      setIsSubmitted(true) 
     } finally {
       setLoading(false)
     }
@@ -151,7 +163,7 @@ export default function DonationPage({ lang, goToPage }) {
 
   const handleResetAndGoHome = () => {
     setIsSubmitted(false)
-    setFormData({ fullName: '', idNumber: '', amount: '', purpose: 'general', customPurpose: '', taxReceipt: '' })
+    setFormData({ fullName: user ? user.name : '', idNumber: '', amount: '', purpose: 'general', customPurpose: '', taxReceipt: '' })
     goToPage('home')
   }
 
@@ -170,8 +182,27 @@ export default function DonationPage({ lang, goToPage }) {
           </button>
         </div>
 
-        {!isSubmitted ? (
+        {!user ? (
+          <div style={{ padding: '40px 20px', background: '#f6f4ef', borderRadius: '6px', textAlign: 'center', margin: '20px 0' }}>
+            <p style={{ marginBottom: '20px', color: '#625d55', fontSize: '15px', lineHeight: '1.7' }}>
+              {lang === 'th' 
+                ? 'เพื่อความโปร่งใส ป้องกันสแปม และบันทึกข้อมูลการบริจาคอย่างปลอดภัย กรุณาเข้าสู่ระบบด้วยบัญชี LINE ก่อนทำรายการ' 
+                : 'Security Check: Please login with your LINE account to proceed with your donation.'}
+            </p>
+            <button 
+              onClick={() => goToPage('login-page')} 
+              className="primaryContactBtn"
+              style={{ background: '#06c755', padding: '12px 24px', fontSize: '15px', cursor: 'pointer' }}
+            >
+              {lang === 'th' ? '🟢 เข้าสู่ระบบด้วย LINE เพื่อร่วมทำบุญ' : 'Login with LINE to Donate'}
+            </button>
+          </div>
+        ) : !isSubmitted ? (
           <>
+            <div style={{ marginBottom: '15px', padding: '12px', background: '#e8f5e9', borderRadius: '4px', fontSize: '14px', color: '#2e7d32' }}>
+              🟢 เข้าสู่ระบบแล้วในนาม: <strong>{user.name}</strong> (ยืนยันตัวตนผ่าน LINE เรียบร้อย)
+            </div>
+
             <span className="eyebrow">{t.eyebrow}</span>
             <h1>{t.title}</h1>
             <p className="guideIntro">{t.intro}</p>
