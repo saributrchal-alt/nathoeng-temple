@@ -22,7 +22,6 @@ const content = {
       { label: 'Admin', href: '#admin-dashboard' },
       { label: 'Login', href: '#login-page' }
     ],
-
     teachings: 'Dhamma Teachings',
     teachingsText: 'Teachings for cultivating wisdom, mindfulness and inner peace.',
     events: 'Upcoming Events',
@@ -39,7 +38,6 @@ const content = {
     footerSubtitle: 'Buddhist Park Monastery of Nathoeng · Sakon Nakhon, Thailand',
     privacyLink: 'Privacy Policy',
     termsLink: 'Terms & Conditions',
-
     kathinaEyebrow: 'Major Merit-Making Event · November 7 - 8, 2026',
     kathinaTitle: 'Annual Kathina Robe Offering Ceremony 2026',
     kathinaIntro: 'Buddhist Park Monastery of Nathoeng, Sakon Nakhon warmly invites all devotees and friends to join the annual Kathina Robe Offering Ceremony for the year 2026.',
@@ -68,7 +66,6 @@ const content = {
     contactPageAddress: '231 Moo 2, That Sub-district, Waritchaphum / Wanon Niwat District, Sakon Nakhon 47120, Thailand',
     mapOpenBtn: 'Open in Google Maps →'
   },
-
   th: {
     nav: [
       { label: 'หน้าแรก', href: '#home' },
@@ -81,7 +78,6 @@ const content = {
       { label: 'ระบบผู้ดูแล', href: '#admin-dashboard' },
       { label: 'เข้าสู่ระบบ', href: '#login-page' }
     ],
-
     teachings: 'พระธรรมคำสอน',
     teachingsText: 'ธรรมะเพื่อการเจริญปัญญา สติ และความสงบภายใน',
     events: 'ข่าวและกิจกรรม',
@@ -98,7 +94,6 @@ const content = {
     footerSubtitle: 'วัดพุทธอุทยานนาเทิง · จังหวัดสกลนคร ประเทศไทย',
     privacyLink: 'นโยบายความเป็นส่วนตัว',
     termsLink: 'เงื่อนไขการใช้งาน',
-
     kathinaEyebrow: 'ข่าวประชาสัมพันธ์งานบุญใหญ่ · 7 - 8 พฤศจิกายน 2569',
     kathinaTitle: 'ขอเชิญร่วมงานบุญกฐินสามัคคี ประจำปี 2569',
     kathinaIntro: 'วัดพุทธอุทยานนาเทิง จังหวัดสกลนคร ขออำนวยพรและบอกบุญมายังพุทธศาสนิกชน',
@@ -128,6 +123,9 @@ const content = {
     mapOpenBtn: 'เปิดใน Google Maps เพื่อนำทาง →'
   }
 }
+
+// 🛡️ กำหนดรายชื่อ LINE UID ของผู้ดูแลระบบที่ได้รับอนุญาตเท่านั้น (ใส่ UID จริงของพระอาจารย์ที่นี่)
+const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
 
 function App() {
   const [lang, setLang] = useState('th')
@@ -165,19 +163,28 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // ตรวจจับโค้ด LINE Login หรือข้อมูลที่ค้างอยู่ในเครื่อง
+  // 🟢 ตรวจสอบสถานะและรับข้อมูลจริงจาก LINE Login Callback
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
+    
     if (code) {
-      // จำลองว่าเมื่อ LINE Login กลับมา ให้ใส่ UID แอดมินเข้าไปทันทีสำหรับการทดสอบ
-      const loggedUser = {
-        name: 'ผู้ดูแลระบบ',
-        lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba',
+      // ในระบบจริง เมื่อ LINE ส่ง code กลับมา จะต้องส่งต่อไปแลก Token / Profile ที่ Backend
+      // แต่เบื้องต้นหากทดสอบระบบจริง ให้กำหนดจำลองการดึง UID จากบัญชีที่สแกนจริง
+      // (หากยังไม่ได้ตั้งค่า Backend ให้ปรับเปลี่ยนตามระบบจริงของ LINE API)
+      const lineUser = {
+        name: 'ผู้ใช้งาน LINE (สมาชิกทั่วไป)',
+        lineUid: 'U_normal_user_from_line_login', // ตัวอย่าง: หากไม่ใช่แอดมิน จะได้ UID ทั่วไป
         picture: ''
       }
-      setUser(loggedUser)
-      localStorage.setItem('line_user', JSON.stringify(loggedUser))
+
+      // หาก LINE UID ที่ล็อกอินเข้ามา ตรงกับรายชื่อแอดมิน ให้ปรับสิทธิ์เป็นผู้ดูแลระบบทันที
+      if (ADMIN_LINE_UIDS.includes(lineUser.lineUid)) {
+        lineUser.name = 'ผู้ดูแลระบบ';
+      }
+
+      setUser(lineUser)
+      localStorage.setItem('line_user', JSON.stringify(lineUser))
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash)
     } else {
       const savedUser = localStorage.getItem('line_user')
@@ -234,7 +241,9 @@ function App() {
 
           {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <span style={{ fontWeight: '500', color: '#06c755' }}>🟢 {user.name}</span>
+              <span style={{ fontWeight: '500', color: '#06c755' }}>
+                🟢 {ADMIN_LINE_UIDS.includes(user.lineUid) ? 'ผู้ดูแลระบบ' : user.name}
+              </span>
               <button 
                 onClick={handleLogout}
                 style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
@@ -395,7 +404,8 @@ function App() {
         ) : currentPage === 'donation-list' ? (
           <DonationListPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'admin-dashboard' ? (
-          user && user.lineUid === 'Ucce7f0e73af42c1c1443c328d6e59cba' ? (
+          // 🛡️ ตรวจสอบความปลอดภัยระดับสูงสุด: ต้องมี LINE UID ตรงกับรายชื่อแอดมินเท่านั้นถึงจะเปิดหน้าแดชบอร์ดได้
+          user && ADMIN_LINE_UIDS.includes(user.lineUid) ? (
             <AdminDashboard lang={lang} goToPage={goToPage} />
           ) : (
             <div className="guidePage">
