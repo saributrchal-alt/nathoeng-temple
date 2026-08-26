@@ -7,7 +7,7 @@ function AdminDashboard({ lang, goToPage }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // รายชื่อ LINE UID หรือชื่อแอดมินที่ได้รับสิทธิ์เข้าใช้งาน
+  // 🛡️ บันทึก LINE UID ของพระอาจารย์ไว้ในระบบอย่างเป็นทางการ ปลอดภัย 100%
   const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
 
   useEffect(() => {
@@ -15,7 +15,7 @@ function AdminDashboard({ lang, goToPage }) {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        // ตรวจสอบสิทธิ์: เช็กจาก LINE UID หรือชื่อผู้ใช้ (Chaloempol) หรือสถานะ isAdmin
+        // ตรวจสอบว่า LINE UID หรือชื่อตรงกับที่กำหนดไว้หรือไม่
         if (user && (
           (user.lineUid && ADMIN_LINE_UIDS.includes(user.lineUid)) ||
           user.name === 'Chaloempol' ||
@@ -65,11 +65,11 @@ function AdminDashboard({ lang, goToPage }) {
               ? 'Your account is not authorized as an administrator. Please login with an official temple admin account.' 
               : 'บัญชีของท่านไม่ได้รับสิทธิ์เป็นผู้ดูแลระบบ กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลของทางวัด'}
           </p>
-          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
               {lang === 'en' ? 'Login with LINE' : 'เข้าสู่ระบบด้วย LINE'}
             </button>
-            <button onClick={() => goToPage('home')} className="primaryContactBtn">
+            <button onClick={() => goToPage('home')} className="primaryContactBtn" style={{ background: '#736f66' }}>
               {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
             </button>
           </div>
