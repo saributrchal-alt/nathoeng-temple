@@ -4,7 +4,7 @@ function LoginPage({ lang, goToPage, user, handleLogout }) {
   
   // 🟢 ฟังก์ชันเชื่อมต่อ LINE Login ของจริง (ใช้งานจริงบนเว็บหลัก)
   const handleRealLineLogin = () => {
-    const CHANNEL_ID = 'YOUR_LINE_CHANNEL_ID'; // ใส่ Channel ID ของ LINE Login ที่ทางวัดสมัครไว้
+    const CHANNEL_ID = '2011258009'; // ใส่ Channel ID ของ LINE Login ที่ทางวัดสมัครไว้
     const REDIRECT_URI = window.location.origin + window.location.pathname;
     const STATE = 'security_state_string';
 
