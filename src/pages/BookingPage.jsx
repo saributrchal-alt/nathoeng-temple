@@ -5,22 +5,12 @@ function BookingPage({ lang, goToPage }) {
   const savedUser = localStorage.getItem('line_user');
   const user = savedUser ? JSON.parse(savedUser) : null;
 
-  const [formData, setFormData] = useState({
-    name: user ? user.name : '',
-    phone: '',
-    startDate: '',
-    endDate: '',
-    note: ''
-  });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ฟังก์ชันส่งข้อมูลผ่าน Web3Forms ของเดิม
+  const onSubmit = async (event) => {
+    event.preventDefault();
     if (!user) {
       alert(lang === 'en' ? 'Please login with LINE first.' : 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำการจอง');
       goToPage('login-page');
@@ -28,30 +18,29 @@ function BookingPage({ lang, goToPage }) {
     }
 
     setLoading(true);
-
-    // จำลองการส่งข้อมูลเข้า Google Sheets (ผ่าน Google Apps Script Web App URL)
-    // ตรง URL นี้ เดี๋ยวเราจะเอาลิงก์จาก Google Apps Script มาใส่แทนที่ช่องว่างครับ
-    const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_URL_HERE'; 
-
-    const payload = {
-      lineUid: user.uid || 'LINE_USER',
-      name: formData.name,
-      phone: formData.phone,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      note: formData.note,
-      timestamp: new Date().toISOString()
-    };
+    const formData = new FormData(event.target);
+    
+    // ใส่ Access Key ของ Web3Forms เดิม
+    formData.append("access_key", "YOUR_WEB3FORMS_ACCESS_KEY_HERE"); 
+    formData.append("line_user_name", user.name);
 
     try {
-      // ถ้ายังไม่ได้ใส่ Script URL จะให้บันทึกผ่านจำลอง หรือยิงจริงก็ได้ครับ
-      console.log('Booking Data:', payload);
-      // await fetch(scriptURL, { method: 'POST', body: JSON.stringify(payload) });
-      
-      setSubmitted(true);
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitted(true);
+      } else {
+        console.error("Error", data);
+        alert(data.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+      }
     } catch (error) {
-      console.error('Error submitting booking:', error);
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+      console.error("Network error", error);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
     } finally {
       setLoading(false);
     }
@@ -85,7 +74,7 @@ function BookingPage({ lang, goToPage }) {
         ) : submitted ? (
           <div style={{ padding: '40px', background: '#f6f4ef', borderRadius: '4px', textAlign: 'center' }}>
             <h3 style={{ color: '#2e7d32', marginBottom: '10px' }}>
-              {lang === 'en' ? 'Booking Submitted Successfully!' : 'บันทึกข้อมูลการจองเรียบร้อยแล้ว'}
+              {lang === 'en' ? 'Booking Submitted Successfully!' : 'ส่งข้อมูลการจองเรียบร้อยแล้ว'}
             </h3>
             <p style={{ color: '#625d55', marginBottom: '20px' }}>
               {lang === 'en' 
@@ -97,7 +86,7 @@ function BookingPage({ lang, goToPage }) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
+          <form onSubmit={onSubmit} style={{ marginTop: '20px' }}>
             <div style={{ marginBottom: '15px', padding: '12px', background: '#e8f5e9', borderRadius: '4px', fontSize: '14px', color: '#2e7d32' }}>
               🟢 เข้าสู่ระบบแล้วในนาม: <strong>{user.name}</strong> (ยืนยันตัวตนผ่าน LINE เรียบร้อย)
             </div>
@@ -109,8 +98,7 @@ function BookingPage({ lang, goToPage }) {
               <input 
                 type="text" 
                 name="name" 
-                value={formData.name} 
-                onChange={handleChange} 
+                defaultValue={user.name}
                 required 
                 style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
               />
@@ -123,8 +111,6 @@ function BookingPage({ lang, goToPage }) {
               <input 
                 type="tel" 
                 name="phone" 
-                value={formData.phone} 
-                onChange={handleChange} 
                 required 
                 placeholder="08xxxxxxxx"
                 style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
@@ -138,9 +124,7 @@ function BookingPage({ lang, goToPage }) {
                 </label>
                 <input 
                   type="date" 
-                  name="startDate" 
-                  value={formData.startDate} 
-                  onChange={handleChange} 
+                  name="start_date" 
                   required 
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
                 />
@@ -151,9 +135,7 @@ function BookingPage({ lang, goToPage }) {
                 </label>
                 <input 
                   type="date" 
-                  name="endDate" 
-                  value={formData.endDate} 
-                  onChange={handleChange} 
+                  name="end_date" 
                   required 
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
                 />
@@ -165,10 +147,8 @@ function BookingPage({ lang, goToPage }) {
                 {lang === 'en' ? 'Additional Notes / Purpose' : 'หมายเหตุ / จุดประสงค์การปฏิบัติธรรม'}
               </label>
               <textarea 
-                name="note" 
+                name="message" 
                 rows="3" 
-                value={formData.note} 
-                onChange={handleChange} 
                 placeholder="เช่น ปฏิบัติธรรมส่วนตัว หรือมาเป็นคณะ..."
                 style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
               ></textarea>
@@ -180,7 +160,7 @@ function BookingPage({ lang, goToPage }) {
               disabled={loading}
               style={{ width: '100%', padding: '12px' }}
             >
-              {loading ? 'กำลังบันทึกข้อมูล...' : (lang === 'en' ? 'Confirm Booking' : 'ยืนยันการจองเข้าพัก')}
+              {loading ? 'กำลังส่งข้อมูล...' : (lang === 'en' ? 'Confirm Booking' : 'ยืนยันการจองเข้าพัก')}
             </button>
           </form>
         )}
