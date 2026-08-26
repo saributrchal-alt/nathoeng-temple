@@ -7,6 +7,7 @@ import DonationListPage from './pages/DonationListPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsPage from './pages/TermsPage'
 import LoginPage from './pages/LoginPage'
+import AdminDashboard from './pages/AdminDashboard'
 
 const content = {
   en: {
@@ -18,6 +19,7 @@ const content = {
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Support', href: '#support' },
       { label: 'Contact', href: '#contact' },
+      { label: 'Admin', href: '#admin-dashboard' },
       { label: 'Login', href: '#login-page' }
     ],
 
@@ -111,6 +113,7 @@ const content = {
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
       { label: 'ติดต่อ', href: '#contact' },
+      { label: 'ระบบผู้ดูแล', href: '#admin-dashboard' },
       { label: 'เข้าสู่ระบบ', href: '#login-page' }
     ],
 
@@ -196,6 +199,9 @@ const content = {
   }
 }
 
+// 🛡️ กำหนดรายชื่อ LINE UID ของผู้ดูแลระบบ (เฉพาะ LINE UID นี้เท่านั้นที่จะเข้าหน้าแอดมินได้)
+const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
+
 function App() {
   const [lang, setLang] = useState('th')
   const [currentPage, setCurrentPage] = useState('home')
@@ -216,6 +222,7 @@ function App() {
         hash === 'calendar-page' ||
         hash === 'donation-page' ||
         hash === 'donation-list' ||
+        hash === 'admin-dashboard' ||
         hash === 'privacy-policy' ||
         hash === 'terms-page' ||
         hash === 'login-page'
@@ -231,13 +238,15 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // ตรวจสอบ Callback จาก LINE Login และจัดการดึงโปรไฟล์ผู้ใช้
+  // ตรวจสอบ Callback จาก LINE Login และจัดการดึงโปรไฟล์ผู้ใช้ พร้อมเชื่อมโยงสิทธิ์แอดมิน
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
     if (code) {
+      // 🟢 เมื่อกลับมาจาก LINE Login จริง ให้กำหนด UID ของพระอาจารย์เพื่อทดสอบสิทธิ์แอดมิน
       const loggedUser = {
-        name: 'ผู้ใช้งาน LINE (สมาชิกวัด)',
+        name: 'ผู้ดูแลระบบ',
+        lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba',
         picture: ''
       }
       setUser(loggedUser)
@@ -246,7 +255,11 @@ function App() {
     } else {
       const savedUser = localStorage.getItem('line_user')
       if (savedUser) {
-        setUser(JSON.parse(savedUser))
+        try {
+          setUser(JSON.parse(savedUser))
+        } catch (e) {
+          console.error("Error parsing saved user", e)
+        }
       }
     }
   }, [])
@@ -314,7 +327,9 @@ function App() {
 
           {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <span style={{ fontWeight: '500', color: '#06c755' }}>🟢 {user.name}</span>
+              <span style={{ fontWeight: '500', color: '#06c755' }}>
+                🟢 {ADMIN_LINE_UIDS.includes(user.lineUid) ? 'ผู้ดูแลระบบ' : user.name}
+              </span>
               <button 
                 onClick={handleLogout}
                 style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
@@ -351,6 +366,8 @@ function App() {
                   goToPage('event-kathina')
                 } else if (item.href === '#visit') {
                   goToPage('visit-guide')
+                } else if (item.href === '#admin-dashboard') {
+                  goToPage('admin-dashboard')
                 } else if (item.href === '#login-page') {
                   goToPage('login-page')
                 } else {
@@ -619,8 +636,24 @@ function App() {
           /* ================= PAGE: DONATION FORM ================= */
           <DonationPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'donation-list' ? (
-          /* ================= PAGE: DONATION LIST (ADMIN) ================= */
+          /* ================= PAGE: DONATION LIST ================= */
           <DonationListPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'admin-dashboard' ? (
+          /* ================= PAGE: ADMIN DASHBOARD (ตรวจสอบสิทธิ์ UID แอดมิน) ================= */
+          user && ADMIN_LINE_UIDS.includes(user.lineUid) ? (
+            <AdminDashboard lang={lang} goToPage={goToPage} />
+          ) : (
+            <div className="guidePage">
+              <div className="guideContainer" style={{ maxWidth: '600px', textAlign: 'center', padding: '50px 20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '15px' }}>🔒</div>
+                <h2 style={{ color: '#d32f2f', marginBottom: '15px' }}>ขออภัย! พื้นที่นี้สำหรับผู้ดูแลระบบเท่านั้น</h2>
+                <p style={{ color: '#625d55', marginBottom: '25px' }}>เฉพาะ LINE ID ของผู้ดูแลระบบที่ลงทะเบียนไว้เท่านั้นจึงจะเข้าได้</p>
+                <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
+                  ไปที่หน้าเข้าสู่ระบบ
+                </button>
+              </div>
+            </div>
+          )
         ) : currentPage === 'privacy-policy' ? (
           /* ================= PAGE: PRIVACY POLICY ================= */
           <PrivacyPolicyPage lang={lang} goToPage={goToPage} />
