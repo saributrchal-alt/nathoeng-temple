@@ -113,13 +113,13 @@ export function verifySessionToken(token) {
 
     return payload;
   } catch (error) {
+    console.error('Invalid session payload:', error);
     return null;
   }
 }
 
 export function getSessionFromRequest(req) {
-  const cookieHeader =
-    req.headers.cookie || '';
+  const cookieHeader = req.headers.cookie || '';
 
   const cookies = cookieHeader
     .split(';')
@@ -162,8 +162,7 @@ export function clearSessionCookie(res) {
 }
 
 export function requireAdmin(req, res) {
-  const session =
-    getSessionFromRequest(req);
+  const session = getSessionFromRequest(req);
 
   if (
     !session ||
