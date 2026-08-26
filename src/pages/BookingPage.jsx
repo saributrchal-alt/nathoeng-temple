@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 
 function BookingPage({ lang, goToPage }) {
-  // ดึงข้อมูลผู้ใช้ที่ล็อกอินผ่าน LINE จาก localStorage
   const savedUser = localStorage.getItem('line_user');
   const user = savedUser ? JSON.parse(savedUser) : null;
 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ฟังก์ชันส่งข้อมูลผ่าน Web3Forms ของเดิม
   const onSubmit = async (event) => {
     event.preventDefault();
     if (!user) {
@@ -20,8 +18,22 @@ function BookingPage({ lang, goToPage }) {
     setLoading(true);
     const formData = new FormData(event.target);
     
-    // ใส่ Access Key ของ Web3Forms เดิม
-    formData.append("access_key", "d80a991c-5b9f-4273-a730-8de806f45da3"); 
+    // ดึงค่าจากฟอร์มมาเตรียมบันทึกเก็บไว้ดูในตาราง
+    const newBooking = {
+      name: formData.get('name'),
+      phone: formData.get('phone'),
+      startDate: formData.get('start_date'),
+      endDate: formData.get('end_date'),
+      purpose: formData.get('message') || (lang === 'en' ? 'General Stay' : 'ปฏิบัติธรรมทั่วไป'),
+      timestamp: new Date().toLocaleDateString()
+    };
+
+    // บันทึกเก็บไว้ใน localStorage ของบราวเซอร์
+    const existingBookings = JSON.parse(localStorage.getItem('temple_bookings') || '[]');
+    localStorage.setItem('temple_bookings', JSON.stringify([newBooking, ...existingBookings]));
+
+    // ส่งข้อมูลเข้า Web3Forms ของเดิม
+    formData.append("access_key", "YOUR_WEB3FORMS_ACCESS_KEY_HERE"); 
     formData.append("line_user_name", user.name);
 
     try {
@@ -61,7 +73,7 @@ function BookingPage({ lang, goToPage }) {
             <p style={{ marginBottom: '15px', color: '#625d55', fontSize: '15px' }}>
               {lang === 'en' 
                 ? 'Security Check: Please login with your LINE account to proceed with your booking.' 
-                : 'ทางวัดขอสงวนสิทธิ์ในการเข้าระบบต้องยืนยันตัวตนก่อน โดยการเข้าสู่ระบบด้วยบัญชี LINE ของท่านก่อนทำการจอง'}
+                : 'เพื่อความปลอดภัยและป้องกันข้อความขยะ (Spam) กรุณาเข้าสู่ระบบด้วยบัญชี LINE ของท่านก่อนทำการจอง'}
             </p>
             <button 
               onClick={() => goToPage('login-page')} 
@@ -81,9 +93,14 @@ function BookingPage({ lang, goToPage }) {
                 ? 'Thank you. The monastery team has received your booking details.' 
                 : 'ทางวัดได้รับข้อมูลการจองของท่านเรียบร้อยแล้ว อนุโมทนาบุญด้วยครับ'}
             </p>
-            <button onClick={() => goToPage('home')} className="primaryContactBtn">
-              {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
-            </button>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={() => goToPage('calendar-page')} className="primaryContactBtn" style={{ background: '#9b7226' }}>
+                {lang === 'en' ? 'View Booking Schedule' : 'ดูตารางการจอง'}
+              </button>
+              <button onClick={() => goToPage('home')} className="primaryContactBtn">
+                {lang === 'en' ? 'Back to Home' : 'กลับสู่หน้าหลัก'}
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={onSubmit} style={{ marginTop: '20px' }}>
