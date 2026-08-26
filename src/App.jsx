@@ -606,7 +606,26 @@ function App() {
         ) : currentPage === 'donation-list' ? (
           <DonationListPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'admin-dashboard' ? (
-          <AdminDashboard lang={lang} goToPage={goToPage} />
+          user && user.lineUid === 'Ucce7f0e73af42c1c1443c328d6e59cba' ? (
+            <AdminDashboard lang={lang} goToPage={goToPage} />
+          ) : (
+            <div className="guidePage">
+              <div className="guideContainer" style={{ maxWidth: '600px', textAlign: 'center', padding: '50px 20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '15px' }}>🔒</div>
+                <h2 style={{ color: '#d32f2f', marginBottom: '15px' }}>
+                  {lang === 'en' ? 'Access Denied (Admin Only)' : 'ขออภัย! พื้นที่นี้สำหรับผู้ดูแลระบบเท่านั้น'}
+                </h2>
+                <p style={{ color: '#625d55', marginBottom: '25px', lineHeight: '1.7' }}>
+                  {lang === 'en' 
+                    ? 'Your LINE account is not authorized.' 
+                    : 'เฉพาะ LINE ID ของผู้ดูแลระบบที่ลงทะเบียนไว้เท่านั้นจึงจะเข้าได้'}
+                </p>
+                <button onClick={() => goToPage('login-page')} className="primaryContactBtn" style={{ background: '#06c755' }}>
+                  {lang === 'en' ? 'Login with LINE' : 'เข้าสู่ระบบด้วย LINE'}
+                </button>
+              </div>
+            </div>
+          )
         ) : currentPage === 'privacy-policy' ? (
           <PrivacyPolicyPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'terms-page' ? (
