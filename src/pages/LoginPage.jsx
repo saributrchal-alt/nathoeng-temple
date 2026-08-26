@@ -2,28 +2,16 @@ import React from 'react';
 
 function LoginPage({ lang, goToPage, user, handleLogout }) {
   
-  // 🔐 ฟังก์ชันจำลองการเข้าสู่ระบบสำหรับผู้ดูแลระบบ (ฝัง LINE UID จริงของพระอาจารย์)
-  const handleMockAdminLogin = () => {
-    const adminUser = {
-      name: 'ผู้ดูแลระบบ (Admin)',
-      lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba', // LINE UID จริงของพระอาจารย์
-      picture: ''
-    };
-    localStorage.setItem('line_user', JSON.stringify(adminUser));
-    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะผู้ดูแลระบบเรียบร้อย' : 'Logged in as Admin successfully');
-    window.location.reload();
-  };
+  // 🟢 ฟังก์ชันเชื่อมต่อ LINE Login ของจริง (ใช้งานจริงบนเว็บหลัก)
+  const handleRealLineLogin = () => {
+    const CHANNEL_ID = 'YOUR_LINE_CHANNEL_ID'; // ใส่ Channel ID ของ LINE Login ที่ทางวัดสมัครไว้
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
+    const STATE = 'security_state_string';
 
-  // 👤 ฟังก์ชันจำลองการเข้าสู่ระบบสำหรับสมาชิกทั่วไป
-  const handleMockMemberLogin = () => {
-    const memberUser = {
-      name: 'ญาติโยม (สมาชิกทั่วไป)',
-      lineUid: 'U_normal_user_123456789', // UID ทั่วไป (ไม่มีสิทธิ์เข้าหน้าแอดมิน)
-      picture: ''
-    };
-    localStorage.setItem('line_user', JSON.stringify(memberUser));
-    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะสมาชิกทั่วไปเรียบร้อย' : 'Logged in as Member successfully');
-    window.location.reload();
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${CHANNEL_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${STATE}&scope=profile%20openid%20email`;
+
+    // พาเบราว์เซอร์พุ่งไปหน้าสแกน LINE Login ของจริงทันที
+    window.location.href = lineAuthUrl;
   };
 
   return (
@@ -46,6 +34,13 @@ function LoginPage({ lang, goToPage, user, handleLogout }) {
 
           {user ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+              {user.picture && (
+                <img 
+                  src={user.picture} 
+                  alt="Profile" 
+                  style={{ width: '70px', height: '70px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #06c755' }} 
+                />
+              )}
               <h3 style={{ margin: 0, color: '#302d29' }}>
                 {lang === 'en' ? `Welcome, ${user.name}` : `ยินดีต้อนรับ, ${user.name}`}
               </h3>
@@ -53,7 +48,7 @@ function LoginPage({ lang, goToPage, user, handleLogout }) {
                 {lang === 'en' ? 'You are successfully logged in via LINE.' : 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'}
               </p>
 
-              {/* เงื่อนไขแสดงปุ่มไปหน้าแอดมินเฉพาะ LINE UID ที่ถูกต้องเท่านั้น */}
+              {/* ปุ่มเปิดหน้าแอดมิน (จะแสดงก็ต่อเมื่อ LINE UID ตรงกับของพระอาจารย์เป๊ะๆ เท่านั้น) */}
               {user.lineUid === 'Ucce7f0e73af42c1c1443c328d6e59cba' ? (
                 <button 
                   onClick={() => goToPage('admin-dashboard')} 
@@ -63,8 +58,8 @@ function LoginPage({ lang, goToPage, user, handleLogout }) {
                   {lang === 'en' ? '⚙️ Go to Admin Dashboard' : '⚙️ ไปยังหน้าแผงควบคุมผู้ดูแลระบบ'}
                 </button>
               ) : (
-                <p style={{ color: '#d32f2f', fontSize: '13px', margin: 0 }}>
-                  {lang === 'en' ? '(Standard Member Account - No Admin Access)' : '(บัญชีสมาชิกทั่วไป - ไม่มีสิทธิ์เข้าถึงระบบผู้ดูแล)'}
+                <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>
+                  {lang === 'en' ? '(Standard Member Account)' : '(บัญชีสมาชิกทั่วไป)'}
                 </p>
               )}
 
@@ -78,47 +73,28 @@ function LoginPage({ lang, goToPage, user, handleLogout }) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
               
-              {/* ปุ่มสำหรับผู้ดูแลระบบ */}
+              {/* ปุ่มเข้าสู่ระบบด้วย LINE ของจริง */}
               <button 
-                onClick={handleMockAdminLogin}
+                onClick={handleRealLineLogin}
                 style={{ 
                   background: '#06c755', 
                   color: '#fff', 
                   border: 'none', 
-                  padding: '12px 24px', 
-                  borderRadius: '25px', 
-                  fontSize: '15px', 
-                  fontWeight: '500', 
+                  padding: '14px 28px', 
+                  borderRadius: '30px', 
+                  fontSize: '16px', 
+                  fontWeight: 'bold', 
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 10px rgba(6, 199, 85, 0.2)'
+                  gap: '10px',
+                  boxShadow: '0 4px 10px rgba(6, 199, 85, 0.3)'
                 }}
               >
-                🟢 {lang === 'en' ? 'Login as Admin' : 'เข้าสู่ระบบด้วย LINE (สำหรับผู้ดูแลระบบ)'}
+                🟢 {lang === 'en' ? 'Login with LINE' : 'เข้าสู่ระบบด้วย LINE'}
               </button>
 
-              {/* ปุ่มสำหรับสมาชิกทั่วไป */}
-              <button 
-                onClick={handleMockMemberLogin}
-                style={{ 
-                  background: '#555', 
-                  color: '#fff', 
-                  border: 'none', 
-                  padding: '10px 20px', 
-                  borderRadius: '25px', 
-                  fontSize: '14px', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                👤 {lang === 'en' ? 'Login as General Member' : 'เข้าสู่ระบบด้วย LINE (สมาชิกทั่วไป)'}
-              </button>
-
-              <p style={{ fontSize: '12px', color: '#888', marginTop: '10px' }}>
+              <p style={{ fontSize: '12px', color: '#888', marginTop: '10px', maxWidth: '400px', lineHeight: '1.5' }}>
                 {lang === 'en' ? 'By logging in, you accept our privacy policy and terms.' : 'การเข้าสู่ระบบถือว่าท่านยอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งานของทางวัด'}
               </p>
             </div>
