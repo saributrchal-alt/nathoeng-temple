@@ -199,9 +199,6 @@ const content = {
   }
 }
 
-// 🛡️ กำหนดรายชื่อ LINE UID ของผู้ดูแลระบบ (เฉพาะ LINE UID นี้เท่านั้นที่จะเข้าหน้าแอดมินได้)
-const ADMIN_LINE_UIDS = ['Ucce7f0e73af42c1c1443c328d6e59cba'];
-
 function App() {
   const [lang, setLang] = useState('th')
   const [currentPage, setCurrentPage] = useState('home')
@@ -239,31 +236,152 @@ function App() {
   }, [])
 
   // ตรวจสอบและดึงข้อมูลผู้ใช้จาก LocalStorage พร้อมตรวจสอบ LINE UID อย่างเข้มงวด
-  useEffect(() => {
-    const savedUser = localStorage.getItem('line_user')
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser)
-        if (parsedUser && parsedUser.lineUid && ADMIN_LINE_UIDS.includes(parsedUser.lineUid)) {
-          parsedUser.name = 'ผู้ดูแลระบบ';
-        } else {
-          parsedUser.name = 'ญาติโยม (สมาชิกทั่วไป)';
-        }
-        setUser(parsedUser)
-      } catch (e) {
-        console.error("Error parsing saved user", e)
-        setUser(null)
-      }
-    }
-  }, [])
+useEffect(() => {
+  const savedUser = localStorage.getItem('line_user');
 
-  const handleLineLogin = () => {
-    const channelId = "2011258009" 
-    const redirectUri = encodeURIComponent("https://watt.nathoeng.com/#home")
-    const state = "random_state_123"
-    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${channelId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`
-    window.location.href = lineAuthUrl
+  if (!savedUser) {
+    return;
   }
+
+  try {
+    const parsedUser = JSON.parse(savedUser);
+    setUser(parsedUser);
+  } catch (error) {
+    console.error('Error parsing saved LINE user:', error);
+    localStorage.removeItem('line_user');
+    setUser(null);
+  }
+}, []);
+useEffect(() => {
+  const handleLineCallback = async () => {
+    const params = new URLSearchParams(window.location.search);
+
+    const code = params.get('code');
+    const returnedState = params.get('state');
+    const error = params.get('error');
+
+    if (error) {
+      console.error('LINE Login error:', error);
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + '#login-page'
+      );
+
+      return;
+    }
+
+    if (!code) {
+      return;
+    }
+
+    const savedState = sessionStorage.getItem('line_oauth_state');
+
+    if (!savedState || savedState !== returnedState) {
+      console.error('Invalid LINE OAuth state');
+
+      sessionStorage.removeItem('line_oauth_state');
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + '#login-page'
+      );
+
+      alert(
+        lang === 'en'
+          ? 'LINE login could not be verified. Please try again.'
+          : 'ไม่สามารถตรวจสอบการเข้าสู่ระบบ LINE ได้ กรุณาลองใหม่อีกครั้ง'
+      );
+
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/line-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code: code,
+          redirectUri: 'https://watt.nathoeng.com/'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'LINE login failed');
+      }
+
+      const lineUser = {
+        name: data.user.name,
+        lineUid: data.user.lineUid,
+        picture: data.user.picture || '',
+        isAdmin: data.user.isAdmin === true
+      };
+
+      localStorage.setItem(
+        'line_user',
+        JSON.stringify(lineUser)
+      );
+
+      sessionStorage.removeItem('line_oauth_state');
+
+      setUser(lineUser);
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + '#home'
+      );
+
+      setCurrentPage('home');
+    } catch (error) {
+      console.error('LINE callback error:', error);
+
+      sessionStorage.removeItem('line_oauth_state');
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + '#login-page'
+      );
+
+      alert(
+        lang === 'en'
+          ? 'LINE login failed. Please try again.'
+          : 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+      );
+    }
+  };
+
+  handleLineCallback();
+}, []);
+
+const handleLineLogin = () => {
+  const channelId = '2011258009';
+  const redirectUri = 'https://watt.nathoeng.com/';
+
+  const state = crypto.randomUUID();
+
+  sessionStorage.setItem(
+    'line_oauth_state',
+    state
+  );
+
+  const lineAuthUrl =
+    'https://access.line.me/oauth2/v2.1/authorize' +
+    '?response_type=code' +
+    '&client_id=' + encodeURIComponent(channelId) +
+    '&redirect_uri=' + encodeURIComponent(redirectUri) +
+    '&state=' + encodeURIComponent(state) +
+    '&scope=' + encodeURIComponent('profile openid email');
+
+  window.location.href = lineAuthUrl;
+};
 
   const handleLogout = () => {
     setUser(null)
@@ -321,7 +439,7 @@ function App() {
           {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
               <span style={{ fontWeight: '500', color: '#06c755' }}>
-                🟢 {ADMIN_LINE_UIDS.includes(user.lineUid) ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป'}
+               {user.isAdmin ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป'} 
               </span>
               <button 
                 onClick={handleLogout}
@@ -632,8 +750,8 @@ function App() {
           /* ================= PAGE: DONATION LIST ================= */
           <DonationListPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'admin-dashboard' ? (
-          /* ================= PAGE: ADMIN DASHBOARD (ตรวจสอบสิทธิ์ UID แอดมิน) ================= */
-          user && ADMIN_LINE_UIDS.includes(user.lineUid) ? (
+          /* ================= PAGE: ADuser && AMIN DASHBOARD (ตรวจสอบสิทธิ์ UID แอดมิน) ================= */
+          user && user.isAdmin ? (
             <AdminDashboard lang={lang} goToPage={goToPage} />
           ) : (
             <div className="guidePage">

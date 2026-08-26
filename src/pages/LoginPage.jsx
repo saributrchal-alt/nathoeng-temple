@@ -7,8 +7,8 @@ function LoginPage({
   handleLineLogin,
   handleLogout
 }) {
-  const ADMIN_LINE_UID = 'Ucce7f0e73af42c1c1443c328d6e59cba';
-  const isAdmin = user && user.lineUid === ADMIN_LINE_UID;
+const isAdmin =
+  user && user.isAdmin === true;
 
   return (
     <div className="guidePage">
