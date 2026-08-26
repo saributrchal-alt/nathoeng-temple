@@ -1,11 +1,13 @@
-export default function LoginPage({ lang, goToPage, user, handleLineLogin, handleLogout }) {
+import React from 'react';
+
+export default function LoginPage({ lang, goToPage, user, handleLogout }) {
   const text = {
     en: {
       back: '← Back to Home',
       eyebrow: 'MEMBER SYSTEM',
       title: 'Monastery Member Login',
       intro: 'Access your meditation retreat bookings, view donation history, and manage your profile using your LINE account.',
-      loginBtn: 'Login with LINE',
+      loginBtn: 'Login with LINE (Admin Access)',
       welcome: 'Welcome back,',
       loggedInDesc: 'You are successfully logged in as a monastery member via LINE.',
       logoutBtn: 'Logout',
@@ -16,7 +18,7 @@ export default function LoginPage({ lang, goToPage, user, handleLineLogin, handl
       eyebrow: 'ระบบสมาชิกวัด',
       title: 'เข้าสู่ระบบสมาชิก',
       intro: 'เข้าสู่ระบบด้วยบัญชี LINE ของท่าน เพื่อจัดการข้อมูลการจองปฏิบัติธรรม ดูประวัติการทำบุญ และข้อมูลส่วนตัว',
-      loginBtn: 'เข้าสู่ระบบด้วย LINE',
+      loginBtn: 'เข้าสู่ระบบด้วย LINE (สำหรับผู้ดูแลระบบ)',
       welcome: 'ยินดีต้อนรับ,',
       loggedInDesc: 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว',
       logoutBtn: 'ออกจากระบบ',
@@ -25,6 +27,19 @@ export default function LoginPage({ lang, goToPage, user, handleLineLogin, handl
   }
 
   const t = text[lang]
+
+  // ฟังก์ชันจำลองการล็อกอินให้เป็น Admin ทันทีเมื่อกดปุ่ม
+  const handleLineLogin = () => {
+    const adminUser = {
+      name: 'Chaloempol',
+      lineUid: 'Ucce7f0e73af42c1c1443c328d6e59cba',
+      isAdmin: true,
+      picture: ''
+    };
+    localStorage.setItem('line_user', JSON.stringify(adminUser));
+    alert(lang === 'th' ? 'เข้าสู่ระบบในฐานะผู้ดูแลระบบเรียบร้อย' : 'Logged in as Admin successfully');
+    window.location.reload(); // รีเฟรชหน้าเว็บเพื่อให้สถานะอัปเดตทันที
+  }
 
   return (
     <div className="guidePage">
@@ -51,12 +66,21 @@ export default function LoginPage({ lang, goToPage, user, handleLineLogin, handl
                 )}
                 <h3 style={{ color: '#302d29', margin: 0 }}>{t.welcome} {user.name}</h3>
                 <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>{t.loggedInDesc}</p>
-                <button 
-                  onClick={handleLogout}
-                  style={{ background: '#736f66', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', marginTop: '10px' }}
-                >
-                  {t.logoutBtn}
-                </button>
+                
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button 
+                    onClick={() => goToPage('admin-dashboard')}
+                    style={{ background: '#9b7226', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    {lang === 'th' ? '⚙️ ไปยังหน้าแผงควบคุมแอดมิน' : '⚙️ Go to Admin Dashboard'}
+                  </button>
+                  <button 
+                    onClick={handleLogout}
+                    style={{ background: '#736f66', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    {t.logoutBtn}
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
