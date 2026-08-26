@@ -1,3 +1,7 @@
+import {
+  createSessionToken,
+  setSessionCookie
+} from './_auth.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -152,7 +156,16 @@ export default async function handler(req, res) {
         message: 'Member record was not returned'
       });
     }
+const sessionToken = createSessionToken({
+  memberId: savedMember.id,
+  lineUid: savedMember.line_uid,
+  role: savedMember.role
+});
 
+setSessionCookie(
+  res,
+  sessionToken
+);
     // 6. ส่งข้อมูล Member กลับไปที่ React
     return res.status(200).json({
       success: true,

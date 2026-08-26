@@ -1,3 +1,7 @@
+import {
+  requireAdmin
+} from './_auth.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -8,13 +12,12 @@ export default async function handler(req, res) {
 
   const {
     bookingId,
-    adminLineUid,
     action,
     accommodationName,
     note
   } = req.body || {};
 
-  if (!bookingId || !adminLineUid || !action) {
+  if (!bookingId || !action) {
     return res.status(400).json({
       success: false,
       message: 'Missing required information'
@@ -31,35 +34,59 @@ export default async function handler(req, res) {
     });
   }
 
+  // ตรวจ Admin จาก signed HttpOnly session cookie
+  const session = requireAdmin(req, res);
+
+  if (!session) {
+    return;
+  }
+
+  const admin = {
+    id: session.memberId,
+    line_uid: session.lineUid,
+    role: session.role
+  };
+
   const allowedActions = {
     approve: {
       from: ['pending'],
       to: 'approved'
     },
+
     check_in: {
       from: ['approved'],
       to: 'checked_in'
     },
+
     assign_accommodation: {
       from: ['checked_in'],
       to: 'accommodated'
     },
+
     start_retreat: {
       from: ['accommodated'],
       to: 'in_retreat'
     },
+
     check_out: {
-      from: ['in_retreat', 'accommodated', 'checked_in'],
+      from: [
+        'in_retreat',
+        'accommodated',
+        'checked_in'
+      ],
       to: 'checked_out'
     },
+
     complete: {
       from: ['checked_out'],
       to: 'completed'
     },
+
     reject: {
       from: ['pending'],
       to: 'rejected'
     },
+
     cancel: {
       from: [
         'pending',
@@ -82,37 +109,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Verify Admin from members table
-    const adminResponse = await fetch(
-      supabaseUrl +
-        '/rest/v1/members?line_uid=eq.' +
-        encodeURIComponent(adminLineUid) +
-        '&role=eq.admin&select=id,line_uid,role',
-      {
-        method: 'GET',
-        headers: {
-          apikey: supabaseSecretKey,
-          Authorization: 'Bearer ' + supabaseSecretKey
-        }
-      }
-    );
-
-    const admins = await adminResponse.json();
-
-    if (
-      !adminResponse.ok ||
-      !Array.isArray(admins) ||
-      admins.length === 0
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: 'Admin permission required'
-      });
-    }
-
-    const admin = admins[0];
-
-    // 2. Load current booking
+    // ----------------------------------------------------
+    // 1. Load current booking
+    // ----------------------------------------------------
     const bookingResponse = await fetch(
       supabaseUrl +
         '/rest/v1/bookings?id=eq.' +
@@ -142,6 +141,9 @@ export default async function handler(req, res) {
 
     const booking = bookings[0];
 
+    // ----------------------------------------------------
+    // 2. Validate current status
+    // ----------------------------------------------------
     if (!transition.from.includes(booking.status)) {
       return res.status(409).json({
         success: false,
@@ -151,7 +153,9 @@ export default async function handler(req, res) {
       });
     }
 
+    // ----------------------------------------------------
     // 3. Build booking update
+    // ----------------------------------------------------
     const now = new Date().toISOString();
 
     const updateData = {
@@ -159,61 +163,77 @@ export default async function handler(req, res) {
       updated_at: now
     };
 
+    // APPROVE
     if (action === 'approve') {
       updateData.approved_at = now;
       updateData.approved_by = admin.id;
     }
 
+    // ADMIN CHECK-IN
     if (action === 'check_in') {
       updateData.checked_in_at = now;
       updateData.checkin_method = 'admin';
       updateData.checked_in_by = admin.id;
     }
 
+    // ASSIGN ACCOMMODATION
     if (action === 'assign_accommodation') {
-      if (!accommodationName || !accommodationName.trim()) {
+      if (
+        !accommodationName ||
+        !accommodationName.trim()
+      ) {
         return res.status(400).json({
           success: false,
           message: 'Accommodation name is required'
         });
       }
 
-      updateData.accommodation_name = accommodationName.trim();
+      updateData.accommodation_name =
+        accommodationName.trim();
+
       updateData.accommodated_at = now;
       updateData.accommodated_by = admin.id;
     }
 
+    // START RETREAT
     if (action === 'start_retreat') {
       updateData.retreat_started_at = now;
       updateData.retreat_started_by = admin.id;
     }
 
+    // ADMIN CHECK-OUT
     if (action === 'check_out') {
       updateData.checked_out_at = now;
       updateData.checkout_method = 'admin';
       updateData.checked_out_by = admin.id;
     }
 
+    // COMPLETE STAY
     if (action === 'complete') {
       updateData.completed_at = now;
       updateData.completed_by = admin.id;
     }
 
+    // REJECT BOOKING
     if (action === 'reject') {
       updateData.rejected_at = now;
       updateData.rejected_by = admin.id;
     }
 
+    // CANCEL STAY
     if (action === 'cancel') {
       updateData.cancelled_at = now;
       updateData.cancelled_by = admin.id;
     }
 
+    // OPTIONAL ADMIN NOTE
     if (note && note.trim()) {
       updateData.admin_note = note.trim();
     }
 
+    // ----------------------------------------------------
     // 4. Update booking
+    // ----------------------------------------------------
     const updateResponse = await fetch(
       supabaseUrl +
         '/rest/v1/bookings?id=eq.' +
@@ -230,7 +250,8 @@ export default async function handler(req, res) {
       }
     );
 
-    const updatedBookings = await updateResponse.json();
+    const updatedBookings =
+      await updateResponse.json();
 
     if (
       !updateResponse.ok ||
@@ -250,18 +271,24 @@ export default async function handler(req, res) {
 
     const updatedBooking = updatedBookings[0];
 
-    // 5. Save status history
+    // ----------------------------------------------------
+    // 5. Save stay status history
+    // ----------------------------------------------------
     const historyData = {
       booking_id: booking.id,
       from_status: booking.status,
       to_status: transition.to,
       trigger_method: 'admin',
       triggered_by_member_id: admin.id,
-      note: note && note.trim() ? note.trim() : null
+      note:
+        note && note.trim()
+          ? note.trim()
+          : null
     };
 
     const historyResponse = await fetch(
-      supabaseUrl + '/rest/v1/stay_status_history',
+      supabaseUrl +
+        '/rest/v1/stay_status_history',
       {
         method: 'POST',
         headers: {
@@ -275,7 +302,8 @@ export default async function handler(req, res) {
     );
 
     if (!historyResponse.ok) {
-      const historyError = await historyResponse.text();
+      const historyError =
+        await historyResponse.text();
 
       console.error(
         'Stay status history insert failed:',
@@ -289,9 +317,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // ----------------------------------------------------
+    // 6. Success
+    // ----------------------------------------------------
     return res.status(200).json({
       success: true,
+
       booking: updatedBooking,
+
       transition: {
         from: booking.status,
         to: transition.to,
