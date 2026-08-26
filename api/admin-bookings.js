@@ -1,4 +1,3 @@
-```javascript
 import {
   requireAdmin
 } from './_auth.js';
@@ -21,6 +20,10 @@ export default async function handler(req, res) {
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !supabaseSecretKey) {
+    console.error(
+      'Missing Supabase environment variables'
+    );
+
     return res.status(500).json({
       success: false,
       message: 'Database configuration is missing'
@@ -37,30 +40,56 @@ export default async function handler(req, res) {
         method: 'GET',
         headers: {
           apikey: supabaseSecretKey,
-          Authorization: 'Bearer ' + supabaseSecretKey
+          Authorization: 'Bearer ' + supabaseSecretKey,
+          Accept: 'application/json'
         }
       }
     );
 
-    const bookings = await bookingResponse.json();
+    const responseText =
+      await bookingResponse.text();
+
+    let bookings = [];
+
+    try {
+      bookings = responseText
+        ? JSON.parse(responseText)
+        : [];
+    } catch (error) {
+      console.error(
+        'Unable to parse bookings response:',
+        responseText
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: 'Invalid database response'
+      });
+    }
 
     if (!bookingResponse.ok) {
       console.error(
-        'Admin bookings fetch failed:',
+        'Supabase admin bookings fetch failed:',
         bookings
       );
 
       return res.status(500).json({
         success: false,
-        message: 'Unable to load bookings'
+        message: 'Unable to load bookings',
+        databaseError: bookings
       });
     }
 
     return res.status(200).json({
       success: true,
-      bookings: Array.isArray(bookings)
-        ? bookings
-        : []
+      admin: {
+        memberId: session.memberId,
+        role: session.role
+      },
+      bookings:
+        Array.isArray(bookings)
+          ? bookings
+          : []
     });
   } catch (error) {
     console.error(
@@ -74,4 +103,3 @@ export default async function handler(req, res) {
     });
   }
 }
-```
