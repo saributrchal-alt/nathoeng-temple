@@ -153,7 +153,7 @@ function MyStaysPage({
 
               <button
                 onClick={() =>
-                  goToPage('booking')
+                  goToPage('booking-page')
                 }
                 style={{
                   marginTop: '15px',
