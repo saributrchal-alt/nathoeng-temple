@@ -959,6 +959,33 @@ function MyStaysPage({
     </div>
   );
 }
+<button
+  onClick={() =>
+    goToPage('checkin-page')
+  }
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '9px',
+    background: '#fff',
+    color: '#8f6a27',
+    border: '1px solid #c5a880',
+    padding: '11px 18px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    whiteSpace: 'nowrap',
+    marginTop: '18px'
+  }}
+>
+  <span style={{ fontSize: '20px' }}>
+    ▦
+  </span>
 
+  {th
+    ? 'สแกน QR Code'
+    : 'SCAN QR CODE'}
+</button>
 
 export default MyStaysPage;
