@@ -151,8 +151,8 @@ function MyStaysPage({
       : 'Currently in retreat',
 
     checked_out: th
-      ? 'สิ้นสุดการเข้าพักแล้ว'
-      : 'Stay ended',
+      ? 'การเข้าพักปฏิบัติครบกำหนดแล้ว'
+      : 'Retreat stay period completed',
 
     completed: th
       ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์'
@@ -195,10 +195,10 @@ function MyStaysPage({
       en: 'Retreat stay approved',
 
       descriptionTh:
-        'คำขอได้รับการพิจารณาและอนุมัติแล้ว',
+        'คำขอได้รับการอนุมัติแล้ว กรุณาศึกษาระเบียบของวัดและติดต่อเจ้าหน้าที่ลงทะเบียนเมื่อเดินทางมาถึง',
 
       descriptionEn:
-        'Your request has been reviewed and approved.'
+        'Your request has been approved. Please review the monastery guidelines and contact registration staff when you arrive.'
     },
 
     {
@@ -209,10 +209,10 @@ function MyStaysPage({
       en: 'Stay registration completed',
 
       descriptionTh:
-        'คุณได้ลงทะเบียนและยืนยันการเข้าพักแล้ว',
+        'คุณได้ลงทะเบียน รับกุญแจและอุปกรณ์ที่จำเป็นเรียบร้อยแล้ว',
 
       descriptionEn:
-        'Your arrival and stay registration have been confirmed.'
+        'Your registration is complete and you have received the key and necessary equipment.'
     },
 
     {
@@ -223,10 +223,10 @@ function MyStaysPage({
       en: 'Accommodation assigned',
 
       descriptionTh:
-        'เจ้าหน้าที่ได้จัดเตรียมสถานที่พักให้คุณแล้ว',
+        'คุณได้ยืนยันการเข้าถึงสถานที่พักที่ได้รับการจัดสรรแล้ว',
 
       descriptionEn:
-        'Monastery staff have prepared your accommodation.'
+        'You have confirmed arrival at your assigned accommodation.'
     },
 
     {
@@ -247,14 +247,14 @@ function MyStaysPage({
       key: 'checked_out',
       icon: 'checkout',
 
-      th: 'สิ้นสุดการเข้าพักแล้ว',
-      en: 'Stay ended',
+      th: 'การเข้าพักปฏิบัติครบกำหนดแล้ว',
+      en: 'Retreat stay period completed',
 
       descriptionTh:
-        'คุณได้ออกจากสถานที่พักและสิ้นสุดการเข้าพักแล้ว',
+        'คุณได้มาถึงวันครบการฝึกฝนปฏิบัติที่วัดในรอบนี้แล้ว ขั้นตอนต่อไป กรุณาเตรียมเคลียร์อุปกรณ์การเข้าพักกับทางวัด',
 
       descriptionEn:
-        'You have departed and your stay has ended.'
+        'You have reached the end of this retreat stay period. Please prepare to return your accommodation key and monastery equipment.'
     },
 
     {
@@ -265,10 +265,10 @@ function MyStaysPage({
       en: 'Retreat stay completed',
 
       descriptionTh:
-        'การเข้าพักปฏิบัติธรรมของคุณเสร็จสมบูรณ์แล้ว',
+        'คุณได้คืนกุญแจและอุปกรณ์เรียบร้อยแล้ว การเข้าพักปฏิบัติธรรมของคุณเสร็จสมบูรณ์',
 
       descriptionEn:
-        'Your retreat stay has been completed.'
+        'Your key and equipment have been returned and your retreat stay is now complete.'
     }
   ];
 
@@ -521,6 +521,8 @@ function MyStaysPage({
 
                           justifyContent: 'center',
 
+                          position: 'relative',
+
                           background:
                             reached
                               ? '#eef6ed'
@@ -538,6 +540,35 @@ function MyStaysPage({
                           active={current}
                           completed={completed}
                         />
+
+                        {reached && (
+                          <div
+                            aria-label={
+                              th
+                                ? 'ผ่านขั้นตอนแล้ว'
+                                : 'Step completed'
+                            }
+                            style={{
+                              position: 'absolute',
+                              right: '-2px',
+                              bottom: '-2px',
+                              width: '20px',
+                              height: '20px',
+                              borderRadius: '50%',
+                              background: '#2e7d32',
+                              color: '#fff',
+                              border: '2px solid #fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              lineHeight: 1
+                            }}
+                          >
+                            ✓
+                          </div>
+                        )}
 
                       </div>
 
@@ -614,7 +645,7 @@ function MyStaysPage({
                       </div>
 
 
-                      {step.key === 'approved' &&
+                      {step.key === 'checked_in' &&
                         booking.status === 'approved' && (
 
                           <button
@@ -626,11 +657,11 @@ function MyStaysPage({
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '9px',
-                              background: '#a87518',
+                              background: '#2e7d32',
                               color: '#fff',
-                              border: '1px solid #a87518',
-                              padding: '10px 16px',
-                              borderRadius: '6px',
+                              border: '1px solid #2e7d32',
+                              padding: '11px 24px',
+                              borderRadius: '999px',
                               cursor: 'pointer',
                               fontSize: '14px',
                               fontWeight: '600',
@@ -648,9 +679,7 @@ function MyStaysPage({
                               ▦
                             </span>
 
-                            {th
-                              ? 'ลงทะเบียนเข้าพัก / สแกน QR'
-                              : 'CHECK IN / SCAN QR'}
+                            Scan QR Code
                           </button>
 
                         )}
@@ -979,8 +1008,8 @@ function MyStaysPage({
                   }}
                 >
                   {th
-                    ? '✓ ลงทะเบียนเข้าพักเรียบร้อยแล้ว กรุณารอเจ้าหน้าที่จัดสถานที่พัก'
-                    : '✓ Stay registration completed. Please wait for monastery staff to assign your accommodation.'}
+                    ? '✓ ลงทะเบียนเข้าพักเรียบร้อยแล้ว กรุณาเดินทางไปยังสถานที่พักที่ได้รับการจัดสรร และยืนยันการเข้าที่พักตามขั้นตอนของวัด'
+                    : '✓ Stay registration completed. Please proceed to your assigned accommodation and confirm your arrival as instructed by the monastery.'}
                 </div>
 
               )}
@@ -999,8 +1028,8 @@ function MyStaysPage({
                   }}
                 >
                   {th
-                    ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว'
-                    : '✓ Your retreat stay has been completed.'}
+                    ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว ขออนุโมทนาในการปฏิบัติ และขอให้เดินทางกลับโดยสวัสดิภาพ ยินดีต้อนรับกลับมาปฏิบัติธรรมอีกครั้ง'
+                    : '✓ Your retreat stay is complete. We rejoice in your practice, wish you a safe journey home, and warmly welcome you to return for future practice.'}
                 </div>
 
               )}
