@@ -282,12 +282,22 @@ useEffect(() => {
       return;
     }
 
-    const savedState =
-      sessionStorage.getItem('line_oauth_state') ||
+    const sessionState =
+      sessionStorage.getItem('line_oauth_state');
+
+    const localState =
       localStorage.getItem('line_oauth_state');
 
-    if (!savedState || savedState !== returnedState) {
-      console.error('Invalid LINE OAuth state');
+    const stateMatched =
+      (sessionState && sessionState === returnedState) ||
+      (localState && localState === returnedState);
+
+    if (!stateMatched) {
+      console.warn('LINE OAuth state mismatch', {
+        returnedState,
+        hasSessionState: !!sessionState,
+        hasLocalState: !!localState
+      });
 
       sessionStorage.removeItem('line_oauth_state');
       localStorage.removeItem('line_oauth_state');
@@ -300,8 +310,8 @@ useEffect(() => {
 
       alert(
         lang === 'en'
-          ? 'LINE login could not be verified. Please try again.'
-          : 'ไม่สามารถตรวจสอบการเข้าสู่ระบบ LINE ได้ กรุณาลองใหม่อีกครั้ง'
+          ? 'LINE login session expired. Please try again.'
+          : 'เซสชันการเข้าสู่ระบบ LINE หมดอายุ กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง'
       );
 
       return;
