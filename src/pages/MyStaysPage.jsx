@@ -5,7 +5,7 @@ import React, {
 
 
 /* =========================================================
-   ICONS FOR RETREAT STAY TRACKING
+   TRACKING ICONS
    ========================================================= */
 
 function StepIcon({
@@ -311,7 +311,7 @@ function MyStaysPage({
       if (!response.ok || !data.success) {
         throw new Error(
           data.message ||
-            'Unable to load bookings'
+          'Unable to load bookings'
         );
       }
 
@@ -423,9 +423,7 @@ function MyStaysPage({
                     }}
                   >
 
-                    {/* =============================================
-                        LEFT TIMELINE DOT + LINE
-                        ============================================= */}
+                    {/* LEFT TIMELINE */}
 
                     <div
                       style={{
@@ -496,9 +494,7 @@ function MyStaysPage({
                     </div>
 
 
-                    {/* =============================================
-                        ICON
-                        ============================================= */}
+                    {/* ICON */}
 
                     <div
                       style={{
@@ -506,6 +502,7 @@ function MyStaysPage({
                         flexShrink: 0
                       }}
                     >
+
                       <div
                         style={{
                           width: current
@@ -532,9 +529,7 @@ function MyStaysPage({
                           border:
                             current
                               ? '2px solid #d8c49a'
-                              : '1px solid transparent',
-
-                          transition: 'all 0.2s ease'
+                              : '1px solid transparent'
                         }}
                       >
 
@@ -545,12 +540,11 @@ function MyStaysPage({
                         />
 
                       </div>
+
                     </div>
 
 
-                    {/* =============================================
-                        STEP TEXT
-                        ============================================= */}
+                    {/* STEP TEXT */}
 
                     <div
                       style={{
@@ -660,50 +654,120 @@ function MyStaysPage({
         </button>
 
 
-        {/* =============================================
-            PAGE HEADER
-            ============================================= */}
+        {/* =====================================================
+            PAGE HEADER + QR BUTTON
+            ===================================================== */}
 
         <div
           style={{
             marginTop: '30px',
-            marginBottom: '30px'
+            marginBottom: '30px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '25px',
+            flexWrap: 'wrap'
           }}
         >
 
           <div
             style={{
-              color: '#a87518',
-              fontSize: '13px',
-              letterSpacing: '2px',
-              marginBottom: '12px'
+              flex: '1 1 520px'
             }}
           >
-            {th
-              ? 'ข้อมูลสมาชิก'
-              : 'MEMBER AREA'}
+
+            <div
+              style={{
+                color: '#a87518',
+                fontSize: '13px',
+                letterSpacing: '2px',
+                marginBottom: '12px'
+              }}
+            >
+              {th
+                ? 'ข้อมูลสมาชิก'
+                : 'MEMBER AREA'}
+            </div>
+
+
+            <h1
+              style={{
+                marginBottom: '12px'
+              }}
+            >
+              {th
+                ? 'การเข้าพักปฏิบัติธรรมของฉัน'
+                : 'My Retreat Stays'}
+            </h1>
+
+
+            <p
+              style={{
+                marginBottom: 0
+              }}
+            >
+              {th
+                ? 'ตรวจสอบสถานะและความคืบหน้าการเข้าพักปฏิบัติธรรมของคุณ'
+                : 'View the status and progress of your retreat stays.'}
+            </p>
+
           </div>
 
 
-          <h1>
-            {th
-              ? 'การเข้าพักปฏิบัติธรรมของฉัน'
-              : 'My Retreat Stays'}
-          </h1>
+          {/* QR SCAN BUTTON */}
 
+          <div
+            style={{
+              flexShrink: 0,
+              paddingTop: '20px'
+            }}
+          >
 
-          <p>
-            {th
-              ? 'ตรวจสอบสถานะและความคืบหน้าการเข้าพักปฏิบัติธรรมของคุณ'
-              : 'View the status and progress of your retreat stays.'}
-          </p>
+            <button
+              onClick={() =>
+                goToPage('checkin-page')
+              }
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: '#fff',
+                color: '#8f6a27',
+                border: '1px solid #c5a880',
+                padding: '11px 18px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                boxShadow:
+                  '0 2px 6px rgba(0,0,0,0.04)'
+              }}
+            >
+
+              <span
+                style={{
+                  fontSize: '21px',
+                  lineHeight: 1
+                }}
+              >
+                ▦
+              </span>
+
+              {th
+                ? 'สแกน QR Code'
+                : 'SCAN QR CODE'}
+
+            </button>
+
+          </div>
 
         </div>
 
 
-        {/* =============================================
+        {/* =====================================================
             LOADING
-            ============================================= */}
+            ===================================================== */}
 
         {loading && (
           <p>
@@ -714,9 +778,9 @@ function MyStaysPage({
         )}
 
 
-        {/* =============================================
+        {/* =====================================================
             ERROR
-            ============================================= */}
+            ===================================================== */}
 
         {error && (
           <div
@@ -731,9 +795,9 @@ function MyStaysPage({
         )}
 
 
-        {/* =============================================
+        {/* =====================================================
             EMPTY
-            ============================================= */}
+            ===================================================== */}
 
         {!loading &&
           !error &&
@@ -773,9 +837,9 @@ function MyStaysPage({
           )}
 
 
-        {/* =============================================
+        {/* =====================================================
             BOOKING CARDS
-            ============================================= */}
+            ===================================================== */}
 
         {!loading &&
           bookings.map((booking) => (
@@ -806,6 +870,7 @@ function MyStaysPage({
                   <strong>
                     {booking.name}
                   </strong>
+
 
                   <div
                     style={{
@@ -959,33 +1024,6 @@ function MyStaysPage({
     </div>
   );
 }
-<button
-  onClick={() =>
-    goToPage('checkin-page')
-  }
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '9px',
-    background: '#fff',
-    color: '#8f6a27',
-    border: '1px solid #c5a880',
-    padding: '11px 18px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '600',
-    whiteSpace: 'nowrap',
-    marginTop: '18px'
-  }}
->
-  <span style={{ fontSize: '20px' }}>
-    ▦
-  </span>
 
-  {th
-    ? 'สแกน QR Code'
-    : 'SCAN QR CODE'}
-</button>
 
 export default MyStaysPage;
