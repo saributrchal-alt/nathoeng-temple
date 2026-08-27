@@ -1,3 +1,4 @@
+```jsx
 import React, {
   useEffect,
   useState
@@ -14,15 +15,89 @@ function MyStaysPage({
   const th = lang === 'th';
 
   const statusText = {
-    pending: th ? 'รอการอนุมัติ' : 'Pending approval',
-    approved: th ? 'อนุมัติแล้ว' : 'Approved',
-    checked_in: th ? 'เช็กอินแล้ว' : 'Checked in',
-    accommodated: th ? 'เข้าที่พักแล้ว' : 'Accommodation assigned',
-    in_retreat: th ? 'อยู่ระหว่างปฏิบัติธรรม' : 'In retreat',
-    checked_out: th ? 'เช็กเอาต์แล้ว' : 'Checked out',
-    completed: th ? 'การเข้าพักเสร็จสิ้น' : 'Stay completed',
-    rejected: th ? 'ไม่อนุมัติ' : 'Rejected',
-    cancelled: th ? 'ยกเลิกแล้ว' : 'Cancelled'
+    pending: th
+      ? 'รอพิจารณาคำขอ'
+      : 'Awaiting approval',
+
+    approved: th
+      ? 'อนุมัติการเข้าพักปฏิบัติธรรมแล้ว'
+      : 'Retreat stay approved',
+
+    checked_in: th
+      ? 'ลงทะเบียนเข้าพักแล้ว'
+      : 'Stay registration completed',
+
+    accommodated: th
+      ? 'จัดสถานที่พักแล้ว'
+      : 'Accommodation assigned',
+
+    in_retreat: th
+      ? 'อยู่ระหว่างการเข้าพักปฏิบัติธรรม'
+      : 'Currently in retreat',
+
+    checked_out: th
+      ? 'สิ้นสุดการเข้าพักแล้ว'
+      : 'Stay ended',
+
+    completed: th
+      ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์'
+      : 'Retreat stay completed',
+
+    rejected: th
+      ? 'ไม่อนุมัติคำขอ'
+      : 'Request not approved',
+
+    cancelled: th
+      ? 'ยกเลิกคำขอแล้ว'
+      : 'Request cancelled'
+  };
+
+  const trackingSteps = [
+    {
+      key: 'pending',
+      th: 'ส่งคำขอเข้าพักปฏิบัติธรรมแล้ว',
+      en: 'Retreat stay request submitted'
+    },
+    {
+      key: 'approved',
+      th: 'อนุมัติการเข้าพักปฏิบัติธรรมแล้ว',
+      en: 'Retreat stay approved'
+    },
+    {
+      key: 'checked_in',
+      th: 'ลงทะเบียนเข้าพักแล้ว',
+      en: 'Stay registration completed'
+    },
+    {
+      key: 'accommodated',
+      th: 'จัดสถานที่พักเรียบร้อยแล้ว',
+      en: 'Accommodation assigned'
+    },
+    {
+      key: 'in_retreat',
+      th: 'อยู่ระหว่างการเข้าพักปฏิบัติธรรม',
+      en: 'Currently staying for Dhamma practice'
+    },
+    {
+      key: 'checked_out',
+      th: 'สิ้นสุดการเข้าพักแล้ว',
+      en: 'Stay ended'
+    },
+    {
+      key: 'completed',
+      th: 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์',
+      en: 'Retreat stay completed'
+    }
+  ];
+
+  const statusOrder = {
+    pending: 0,
+    approved: 1,
+    checked_in: 2,
+    accommodated: 3,
+    in_retreat: 4,
+    checked_out: 5,
+    completed: 6
   };
 
   useEffect(() => {
@@ -60,12 +135,175 @@ function MyStaysPage({
 
       setError(
         th
-          ? 'ไม่สามารถโหลดข้อมูลการเข้าพักได้'
-          : 'Unable to load your stays'
+          ? 'ไม่สามารถโหลดข้อมูลการเข้าพักปฏิบัติธรรมได้'
+          : 'Unable to load your retreat stays'
       );
     } finally {
       setLoading(false);
     }
+  }
+
+  function StayTracking({ booking }) {
+    const currentIndex =
+      statusOrder[booking.status] ?? 0;
+
+    const stopped =
+      booking.status === 'rejected' ||
+      booking.status === 'cancelled';
+
+    return (
+      <div
+        style={{
+          marginTop: '28px',
+          paddingTop: '24px',
+          borderTop: '1px solid #eee'
+        }}
+      >
+        <div
+          style={{
+            color: '#a87518',
+            fontSize: '13px',
+            letterSpacing: '1.5px',
+            marginBottom: '22px'
+          }}
+        >
+          {th
+            ? 'ความคืบหน้าการเข้าพักปฏิบัติธรรม'
+            : 'RETREAT STAY PROGRESS'}
+        </div>
+
+        {stopped ? (
+          <div
+            style={{
+              padding: '15px 18px',
+              background: '#faf1ef',
+              borderLeft: '3px solid #a24a3a'
+            }}
+          >
+            <strong>
+              {statusText[booking.status]}
+            </strong>
+          </div>
+        ) : (
+          <div>
+            {trackingSteps.map(
+              (step, index) => {
+                const completed =
+                  index <= currentIndex;
+
+                const current =
+                  index === currentIndex;
+
+                const last =
+                  index ===
+                  trackingSteps.length - 1;
+
+                return (
+                  <div
+                    key={step.key}
+                    style={{
+                      display: 'flex',
+                      position: 'relative',
+                      minHeight: last
+                        ? '46px'
+                        : '78px'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '34px',
+                        position: 'relative',
+                        flexShrink: 0
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: current
+                            ? '18px'
+                            : '14px',
+                          height: current
+                            ? '18px'
+                            : '14px',
+                          borderRadius: '50%',
+                          background:
+                            completed
+                              ? '#8f6a27'
+                              : '#fff',
+                          border:
+                            completed
+                              ? '2px solid #8f6a27'
+                              : '2px solid #d8d1c7',
+                          position: 'absolute',
+                          top: '2px',
+                          left: current
+                            ? '4px'
+                            : '6px',
+                          zIndex: 2
+                        }}
+                      />
+
+                      {!last && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '18px',
+                            left: '12px',
+                            width: '2px',
+                            height: '64px',
+                            background:
+                              index < currentIndex
+                                ? '#b89a61'
+                                : '#e5e0d8'
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        paddingBottom: '20px'
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontWeight:
+                            current
+                              ? '600'
+                              : '500',
+                          color:
+                            completed
+                              ? '#302d29'
+                              : '#999',
+                          fontSize: '15px'
+                        }}
+                      >
+                        {th
+                          ? step.th
+                          : step.en}
+                      </div>
+
+                      {current && (
+                        <div
+                          style={{
+                            marginTop: '6px',
+                            fontSize: '13px',
+                            color: '#8f6a27'
+                          }}
+                        >
+                          {th
+                            ? 'สถานะปัจจุบัน'
+                            : 'Current status'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -104,14 +342,14 @@ function MyStaysPage({
 
           <h1>
             {th
-              ? 'การเข้าพักของฉัน'
-              : 'My Stays'}
+              ? 'การเข้าพักปฏิบัติธรรมของฉัน'
+              : 'My Retreat Stays'}
           </h1>
 
           <p>
             {th
-              ? 'ตรวจสอบสถานะการจองและการเข้าพักปฏิบัติธรรมของคุณ'
-              : 'View the status of your retreat bookings and stays.'}
+              ? 'ตรวจสอบสถานะและความคืบหน้าการเข้าพักปฏิบัติธรรมของคุณ'
+              : 'View the status and progress of your retreat stays.'}
           </p>
         </div>
 
@@ -147,8 +385,8 @@ function MyStaysPage({
             >
               <p>
                 {th
-                  ? 'ยังไม่มีรายการจองเข้าพัก'
-                  : 'You do not have any stay bookings yet.'}
+                  ? 'ยังไม่มีรายการขอเข้าพักปฏิบัติธรรม'
+                  : 'You do not have any retreat stay requests yet.'}
               </p>
 
               <button
@@ -162,8 +400,8 @@ function MyStaysPage({
                 }}
               >
                 {th
-                  ? 'จองเข้าพักปฏิบัติธรรม'
-                  : 'Book a Retreat Stay'}
+                  ? 'ขอเข้าพักปฏิบัติธรรม'
+                  : 'Request a Retreat Stay'}
               </button>
             </div>
           )}
@@ -175,7 +413,7 @@ function MyStaysPage({
               style={{
                 border: '1px solid #e3ddd3',
                 padding: '24px',
-                marginBottom: '20px',
+                marginBottom: '24px',
                 background: '#fff'
               }}
             >
@@ -207,7 +445,11 @@ function MyStaysPage({
                 <div
                   style={{
                     padding: '7px 13px',
-                    background: '#eef6ed',
+                    background:
+                      booking.status === 'rejected' ||
+                      booking.status === 'cancelled'
+                        ? '#faf1ef'
+                        : '#eef6ed',
                     borderRadius: '20px',
                     height: 'fit-content'
                   }}
@@ -239,7 +481,7 @@ function MyStaysPage({
                 <p>
                   <strong>
                     {th
-                      ? 'ที่พัก: '
+                      ? 'สถานที่พัก: '
                       : 'Accommodation: '}
                   </strong>
 
@@ -247,7 +489,8 @@ function MyStaysPage({
                 </p>
               )}
 
-              {booking.status === 'approved' && (
+              {booking.status ===
+                'approved' && (
                 <div
                   style={{
                     marginTop: '20px',
@@ -256,12 +499,13 @@ function MyStaysPage({
                   }}
                 >
                   {th
-                    ? '✓ การจองได้รับอนุมัติแล้ว เมื่อเดินทางถึงวัด กรุณาลงทะเบียนเช็กอินกับเจ้าหน้าที่'
-                    : '✓ Your booking has been approved. Please check in with monastery staff when you arrive.'}
+                    ? '✓ คำขอเข้าพักปฏิบัติธรรมได้รับอนุมัติแล้ว เมื่อเดินทางถึงวัด กรุณาลงทะเบียนเข้าพักกับเจ้าหน้าที่'
+                    : '✓ Your retreat stay has been approved. Please register with monastery staff when you arrive.'}
                 </div>
               )}
 
-              {booking.status === 'checked_in' && (
+              {booking.status ===
+                'checked_in' && (
                 <div
                   style={{
                     marginTop: '20px',
@@ -270,12 +514,13 @@ function MyStaysPage({
                   }}
                 >
                   {th
-                    ? '✓ เช็กอินเรียบร้อยแล้ว กรุณารอเจ้าหน้าที่จัดที่พัก'
-                    : '✓ Check-in completed. Please wait for accommodation assignment.'}
+                    ? '✓ ลงทะเบียนเข้าพักเรียบร้อยแล้ว กรุณารอเจ้าหน้าที่จัดสถานที่พัก'
+                    : '✓ Stay registration completed. Please wait for monastery staff to assign your accommodation.'}
                 </div>
               )}
 
-              {booking.status === 'completed' && (
+              {booking.status ===
+                'completed' && (
                 <div
                   style={{
                     marginTop: '20px',
@@ -284,10 +529,14 @@ function MyStaysPage({
                   }}
                 >
                   {th
-                    ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสิ้นแล้ว'
+                    ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว'
                     : '✓ Your retreat stay has been completed.'}
                 </div>
               )}
+
+              <StayTracking
+                booking={booking}
+              />
             </div>
           ))}
       </div>
@@ -296,3 +545,4 @@ function MyStaysPage({
 }
 
 export default MyStaysPage;
+```
