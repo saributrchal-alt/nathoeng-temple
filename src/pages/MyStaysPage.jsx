@@ -613,6 +613,48 @@ function MyStaysPage({
                           : step.descriptionEn}
                       </div>
 
+
+                      {step.key === 'approved' &&
+                        booking.status === 'approved' && (
+
+                          <button
+                            onClick={() =>
+                              goToPage('checkin-page')
+                            }
+                            style={{
+                              marginTop: '14px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '9px',
+                              background: '#a87518',
+                              color: '#fff',
+                              border: '1px solid #a87518',
+                              padding: '10px 16px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              lineHeight: '1.3',
+                              boxShadow:
+                                '0 2px 6px rgba(0,0,0,0.05)'
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '18px',
+                                lineHeight: 1
+                              }}
+                            >
+                              ▦
+                            </span>
+
+                            {th
+                              ? 'ลงทะเบียนเข้าพัก / สแกน QR'
+                              : 'CHECK IN / SCAN QR'}
+                          </button>
+
+                        )}
+
                     </div>
 
                   </div>
@@ -714,53 +756,6 @@ function MyStaysPage({
           </div>
 
 
-          {/* QR SCAN BUTTON */}
-
-          <div
-            style={{
-              flexShrink: 0,
-              paddingTop: '20px'
-            }}
-          >
-
-            <button
-              onClick={() =>
-                goToPage('checkin-page')
-              }
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: '#fff',
-                color: '#8f6a27',
-                border: '1px solid #c5a880',
-                padding: '11px 18px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                whiteSpace: 'nowrap',
-                boxShadow:
-                  '0 2px 6px rgba(0,0,0,0.04)'
-              }}
-            >
-
-              <span
-                style={{
-                  fontSize: '21px',
-                  lineHeight: 1
-                }}
-              >
-                ▦
-              </span>
-
-              {th
-                ? 'สแกน QR Code'
-                : 'SCAN QR CODE'}
-
-            </button>
-
-          </div>
 
         </div>
 
