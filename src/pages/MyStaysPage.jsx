@@ -1,4 +1,3 @@
-```jsx
 import React, {
   useEffect,
   useState
@@ -489,8 +488,7 @@ function MyStaysPage({
                 </p>
               )}
 
-              {booking.status ===
-                'approved' && (
+              {booking.status === 'approved' && (
                 <div
                   style={{
                     marginTop: '20px',
@@ -504,8 +502,7 @@ function MyStaysPage({
                 </div>
               )}
 
-              {booking.status ===
-                'checked_in' && (
+              {booking.status === 'checked_in' && (
                 <div
                   style={{
                     marginTop: '20px',
@@ -519,8 +516,7 @@ function MyStaysPage({
                 </div>
               )}
 
-              {booking.status ===
-                'completed' && (
+              {booking.status === 'completed' && (
                 <div
                   style={{
                     marginTop: '20px',
@@ -545,4 +541,3 @@ function MyStaysPage({
 }
 
 export default MyStaysPage;
-```
