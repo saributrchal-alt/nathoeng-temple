@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/AdminDashboard'
 import MyStaysPage from './pages/MyStaysPage'
 import CheckinPage from './pages/CheckinPage'
+import MyDashboard from './pages/MyDashboard'
 
 const content = {
   en: {
@@ -225,6 +226,7 @@ function App() {
         hash === 'privacy-policy' ||
         hash === 'terms-page' ||
         hash === 'login-page' ||
+        hash === 'my-dashboard' ||
         hash === 'my-stays' ||
         hash === 'checkin-page'
       ) {
@@ -497,13 +499,13 @@ const handleLineLogin = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
               <span style={{ fontWeight: '500', color: '#06c755' }}>
                 {lang === 'en'
-                  ? (user.isAdmin ? 'Administrator' : 'Member')
-                  : (user.isAdmin ? 'ผู้ดูแลระบบ' : 'สมาชิกทั่วไป')}
+                  ? (user.isAdmin ? 'Administrator' : 'Practitioner')
+                  : (user.isAdmin ? 'ผู้ดูแลระบบ' : 'โยมปฏิบัติ')}
               </span>
 
               {!user.isAdmin && (
                 <button
-                  onClick={() => goToPage('my-stays')}
+                  onClick={() => goToPage('my-dashboard')}
                   style={{
                     background: 'transparent',
                     border: '1px solid #c5a880',
@@ -514,7 +516,7 @@ const handleLineLogin = () => {
                     fontSize: '11px'
                   }}
                 >
-                  {lang === 'en' ? 'My Stays' : 'การเข้าพักของฉัน'}
+                  {lang === 'en' ? 'My Account' : 'บัญชีของฉัน'}
                 </button>
               )}
 
@@ -539,37 +541,53 @@ const handleLineLogin = () => {
 
         {/* Navigation */}
         <nav className={menuOpen ? 'navOpen' : ''}>
-          {t.nav.map((item) => (
-            <a 
-              href={item.href} 
-              key={item.href}
-              onClick={(e) => {
-                setMenuOpen(false)
-                e.preventDefault()
-                if (item.href === '#contact') {
-                  goToPage('contact-page')
-                } else if (item.href === '#teachings') {
-                  goToPage('teachings-page')
-                } else if (item.href === '#events') {
-                  goToPage('event-kathina')
-                } else if (item.href === '#visit') {
-                  goToPage('visit-guide')
-                } else if (item.href === '#admin-dashboard') {
-                  goToPage('admin-dashboard')
-                } else if (item.href === '#login-page') {
-                  goToPage('login-page')
-                } else {
-                  goToPage('home')
-                  setTimeout(() => {
-                    const el = document.querySelector(item.href)
-                    if (el) el.scrollIntoView({ behavior: 'smooth' })
-                  }, 100)
-                }
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
+          {t.nav.map((item) => {
+            const navItem =
+              item.href === '#login-page' && user
+                ? {
+                    ...item,
+                    label:
+                      lang === 'th'
+                        ? 'บัญชีของฉัน'
+                        : 'My Dashboard',
+                    href: '#my-dashboard'
+                  }
+                : item;
+
+            return (
+              <a 
+                href={navItem.href} 
+                key={navItem.href}
+                onClick={(e) => {
+                  setMenuOpen(false)
+                  e.preventDefault()
+                  if (navItem.href === '#contact') {
+                    goToPage('contact-page')
+                  } else if (navItem.href === '#teachings') {
+                    goToPage('teachings-page')
+                  } else if (navItem.href === '#events') {
+                    goToPage('event-kathina')
+                  } else if (navItem.href === '#visit') {
+                    goToPage('visit-guide')
+                  } else if (navItem.href === '#admin-dashboard') {
+                    goToPage('admin-dashboard')
+                  } else if (navItem.href === '#login-page') {
+                    goToPage('login-page')
+                  } else if (navItem.href === '#my-dashboard') {
+                    goToPage('my-dashboard')
+                  } else {
+                    goToPage('home')
+                    setTimeout(() => {
+                      const el = document.querySelector(navItem.href)
+                      if (el) el.scrollIntoView({ behavior: 'smooth' })
+                    }, 100)
+                  }
+                }}
+              >
+                {navItem.label}
+              </a>
+            );
+          })}
         </nav>
 
       </header>
@@ -826,6 +844,24 @@ const handleLineLogin = () => {
         ) : currentPage === 'donation-list' ? (
           /* ================= PAGE: DONATION LIST ================= */
           <DonationListPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'my-dashboard' ? (
+          /* ================= PAGE: MY DASHBOARD ================= */
+          user ? (
+            <MyDashboard
+              lang={lang}
+              goToPage={goToPage}
+              user={user}
+              handleLogout={handleLogout}
+            />
+          ) : (
+            <LoginPage
+              lang={lang}
+              goToPage={goToPage}
+              user={user}
+              handleLineLogin={handleLineLogin}
+              handleLogout={handleLogout}
+            />
+          )
         ) : currentPage === 'my-stays' ? (
           /* ================= PAGE: MY STAYS ================= */
           <MyStaysPage lang={lang} goToPage={goToPage} />
