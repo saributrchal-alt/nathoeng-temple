@@ -1083,9 +1083,11 @@ img {
 
 @media (max-width: 768px) {
   .hero {
-    height: 62vh;
-    min-height: 380px;
-    background-position: 58% center;
+    height: 340px;
+    min-height: 0;
+    background-size: cover;
+    background-position: center 42%;
+    background-repeat: no-repeat;
   }
 
   .aboutSectionClean {
