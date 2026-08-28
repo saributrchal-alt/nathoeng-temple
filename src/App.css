@@ -2731,3 +2731,36 @@ img {
   }
 }
 
+
+/* =========================================
+   PROFILE IMAGE + DONATION TITLE ALIGNMENT
+   ========================================= */
+
+.dashboardProfileAvatar {
+  overflow: hidden;
+}
+
+.dashboardProfileAvatar .dashboardProfileImage {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.dashboardProfileAvatar .dashboardProfileFallback {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.donationHero h1 {
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .donationHero h1 {
+    text-align: center;
+  }
+}
+

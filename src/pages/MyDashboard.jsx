@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function MyDashboard({
   lang,
@@ -7,6 +7,7 @@ function MyDashboard({
   handleLogout
 }) {
   const th = lang === 'th';
+  const [profileImageError, setProfileImageError] = useState(false);
 
   const actions = [
     {
@@ -100,11 +101,22 @@ function MyDashboard({
 
         <div className="dashboardProfileCard">
           <div className="dashboardProfileAvatar">
-            <img
-              src="/icons/meditation.svg"
-              alt=""
-              aria-hidden="true"
-            />
+            {user?.picture && !profileImageError ? (
+              <img
+                src={user.picture}
+                alt={user?.name || ''}
+                referrerPolicy="no-referrer"
+                onError={() => setProfileImageError(true)}
+                className="dashboardProfileImage"
+              />
+            ) : (
+              <img
+                src="/icons/meditation.svg"
+                alt=""
+                aria-hidden="true"
+                className="dashboardProfileFallback"
+              />
+            )}
           </div>
 
           <div className="dashboardProfileText">
