@@ -1,1361 +1,1138 @@
-import React from 'react';
+import React, {
+  useEffect,
+  useState
+} from 'react';
 
-function MyRetreatStay({
-  lang = 'th',
-  application,
-  goToPage,
+
+/* =========================================================
+   TRACKING ICONS
+   ========================================================= */
+
+function StepIcon({
+  type,
+  active = false,
+  completed = false
 }) {
+  const color =
+    active || completed
+      ? '#9b7226'
+      : '#a8a8a8';
+
+  const commonProps = {
+    width: 28,
+    height: 28,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: color,
+    strokeWidth: 1.8,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round'
+  };
+
+  if (type === 'request') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6 2h9l4 4v16H6z" />
+        <path d="M14 2v5h5" />
+        <path d="M9 11h6" />
+        <path d="M9 15h4" />
+        <path d="M15.5 17.5l3-3 2 2-3 3-3 .8z" />
+      </svg>
+    );
+  }
+
+  if (type === 'approved') {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" />
+        <path d="M8.5 12l2.2 2.2 4.8-5" />
+      </svg>
+    );
+  }
+
+  if (type === 'register') {
+    return (
+      <svg {...commonProps}>
+        <circle cx="10" cy="7" r="3" />
+        <path d="M4 19c0-4 2.5-6 6-6 1.2 0 2.3.2 3.2.7" />
+        <path d="M15 15l5 5" />
+        <path d="M18 14l2 2" />
+        <path d="M14 20l2.5-.5L20 16" />
+      </svg>
+    );
+  }
+
+  if (type === 'accommodation') {
+    return (
+      <svg {...commonProps}>
+        <path d="M3 11l9-8 9 8" />
+        <path d="M5 10v11h14V10" />
+        <path d="M9 21v-6h6v6" />
+      </svg>
+    );
+  }
+
+  if (type === 'practice') {
+    return (
+      <svg {...commonProps}>
+        <circle cx="12" cy="5" r="2.3" />
+        <path d="M12 8v4" />
+        <path d="M8 11l4 2 4-2" />
+        <path d="M9 13l-4 5" />
+        <path d="M15 13l4 5" />
+        <path d="M5 18c2 2 4.5 3 7 3s5-1 7-3" />
+      </svg>
+    );
+  }
+
+  if (type === 'checkout') {
+    return (
+      <svg {...commonProps}>
+        <path d="M10 4H5v16h5" />
+        <path d="M14 8l4 4-4 4" />
+        <path d="M8 12h10" />
+      </svg>
+    );
+  }
+
+  if (type === 'complete') {
+    return (
+      <svg {...commonProps}>
+        <path d="M12 21c-4-2-7-5-7-9 3 0 5 1 7 4 2-3 4-4 7-4 0 4-3 7-7 9z" />
+        <path d="M12 16c-2-4-2-7 0-11 2 4 2 7 0 11z" />
+        <path d="M5 12c-2-1-3-3-3-5 3 0 6 2 8 6" />
+        <path d="M19 12c2-1 3-3 3-5-3 0-6 2-8 6" />
+      </svg>
+    );
+  }
+
+  return null;
+}
+
+
+/* =========================================================
+   MAIN PAGE
+   ========================================================= */
+
+function MyStaysPage({
+  lang = 'th',
+  goToPage
+}) {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const th = lang === 'th';
 
-  /*
-    RETREAT STATUS
 
-    pending
-    approved
-    checked_in
-    accommodated
-    in_retreat
-    checked_out
-    completed
-  */
+  /* =========================================================
+     STATUS TEXT
+     ========================================================= */
 
-  const status =
-    application?.status || 'approved';
+  const statusText = {
+    pending: th
+      ? 'รอพิจารณาคำขอ'
+      : 'Awaiting approval',
 
-  const steps = [
+    approved: th
+      ? 'อนุมัติการเข้าพักปฏิบัติธรรมแล้ว'
+      : 'Retreat stay approved',
+
+    checked_in: th
+      ? 'ลงทะเบียนเข้าพักแล้ว'
+      : 'Stay registration completed',
+
+    accommodated: th
+      ? 'จัดสถานที่พักแล้ว'
+      : 'Accommodation assigned',
+
+    in_retreat: th
+      ? 'อยู่ระหว่างการเข้าพักปฏิบัติธรรม'
+      : 'Currently in retreat',
+
+    checked_out: th
+      ? 'สิ้นสุดการเข้าพักแล้ว'
+      : 'Stay ended',
+
+    completed: th
+      ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์'
+      : 'Retreat stay completed',
+
+    rejected: th
+      ? 'ไม่อนุมัติคำขอ'
+      : 'Request not approved',
+
+    cancelled: th
+      ? 'ยกเลิกคำขอแล้ว'
+      : 'Request cancelled'
+  };
+
+
+  /* =========================================================
+     TRACKING STEPS
+     ========================================================= */
+
+  const trackingSteps = [
     {
       key: 'pending',
+      icon: 'request',
 
-      titleTh:
-        'คำขอเข้าพักปฏิบัติธรรม',
+      th: 'ส่งคำขอเข้าพักปฏิบัติธรรมแล้ว',
+      en: 'Retreat stay request submitted',
 
-      titleEn:
-        'Retreat stay application',
+      descriptionTh:
+        'คำขอของคุณถูกส่งเข้าสู่ระบบแล้ว',
 
-      descTh:
-        'ระบบได้รับคำขอของท่านแล้ว',
-
-      descEn:
-        'Your application has been received.',
+      descriptionEn:
+        'Your retreat stay request has been submitted.'
     },
 
     {
       key: 'approved',
+      icon: 'approved',
 
-      titleTh:
-        'อนุมัติการเข้าพักปฏิบัติธรรม',
+      th: 'อนุมัติการเข้าพักปฏิบัติธรรมแล้ว',
+      en: 'Retreat stay approved',
 
-      titleEn:
-        'Retreat stay approved',
+      descriptionTh:
+        'คำขอได้รับการพิจารณาและอนุมัติแล้ว',
 
-      descTh:
-        'เจ้าหน้าที่ได้อนุมัติคำขอของท่านแล้ว',
-
-      descEn:
-        'Your retreat stay has been approved.',
+      descriptionEn:
+        'Your request has been reviewed and approved.'
     },
 
     {
       key: 'checked_in',
+      icon: 'register',
 
-      titleTh:
-        'ลงทะเบียน / เช็กอินที่จุดลงทะเบียน',
+      th: 'ลงทะเบียนเข้าพักแล้ว',
+      en: 'Stay registration completed',
 
-      titleEn:
-        'Registration / Check-in',
+      descriptionTh:
+        'คุณได้ลงทะเบียนและยืนยันการเข้าพักแล้ว',
 
-      descTh:
-        'สแกน QR Code ที่จุดลงทะเบียนเมื่อมาถึงวัด',
-
-      descEn:
-        'Scan the QR Code at the registration desk when you arrive.',
+      descriptionEn:
+        'Your arrival and stay registration have been confirmed.'
     },
 
     {
       key: 'accommodated',
+      icon: 'accommodation',
 
-      titleTh:
-        'เข้าพักที่พักที่ได้รับมอบหมาย',
+      th: 'จัดสถานที่พักเรียบร้อยแล้ว',
+      en: 'Accommodation assigned',
 
-      titleEn:
-        'Enter assigned accommodation',
+      descriptionTh:
+        'เจ้าหน้าที่ได้จัดเตรียมสถานที่พักให้คุณแล้ว',
 
-      descTh:
-        'สแกน QR Code ที่ที่พักของท่าน',
-
-      descEn:
-        'Scan the QR Code inside your assigned accommodation.',
+      descriptionEn:
+        'Monastery staff have prepared your accommodation.'
     },
 
     {
       key: 'in_retreat',
+      icon: 'practice',
 
-      titleTh:
-        'ปฏิบัติธรรม',
+      th: 'อยู่ระหว่างการเข้าพักปฏิบัติธรรม',
+      en: 'Currently staying for Dhamma practice',
 
-      titleEn:
-        'Retreat practice',
+      descriptionTh:
+        'ขอให้การปฏิบัติธรรมของคุณเจริญงอกงาม',
 
-      descTh:
-        'เจ้าหน้าที่จะเปลี่ยนสถานะเมื่อท่านพร้อมปฏิบัติธรรม',
-
-      descEn:
-        'Staff will update this status when you are ready for retreat practice.',
+      descriptionEn:
+        'May your Dhamma practice be peaceful and fruitful.'
     },
 
     {
       key: 'checked_out',
+      icon: 'checkout',
 
-      titleTh:
-        'การเข้าพักปฏิบัติธรรมครบกำหนดแล้ว',
+      th: 'สิ้นสุดการเข้าพักแล้ว',
+      en: 'Stay ended',
 
-      titleEn:
-        'Retreat stay period completed',
+      descriptionTh:
+        'คุณได้ออกจากสถานที่พักและสิ้นสุดการเข้าพักแล้ว',
 
-      descTh:
-        'เจ้าหน้าที่จะเปลี่ยนสถานะเมื่อครบกำหนดการเข้าพัก',
-
-      descEn:
-        'Staff will update this status when your retreat stay period ends.',
+      descriptionEn:
+        'You have departed and your stay has ended.'
     },
 
     {
       key: 'completed',
+      icon: 'complete',
 
-      titleTh:
-        'คืนกุญแจ / อุปกรณ์และเช็กเอาท์',
+      th: 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์',
+      en: 'Retreat stay completed',
 
-      titleEn:
-        'Return keys / equipment and check out',
+      descriptionTh:
+        'การเข้าพักปฏิบัติธรรมของคุณเสร็จสมบูรณ์แล้ว',
 
-      descTh:
-        'สแกน QR Code ที่จุดคืนกุญแจและอุปกรณ์',
-
-      descEn:
-        'Scan the QR Code at the key and equipment return desk.',
-    },
+      descriptionEn:
+        'Your retreat stay has been completed.'
+    }
   ];
 
-  /*
-    QR BUTTON
 
-    approved
-      -> step 3
-
-    checked_in
-      -> step 4
-
-    checked_out
-      -> step 7
-  */
-
-  const canScanAtStep = (index) => {
-    if (
-      index === 2 &&
-      status === 'approved'
-    ) {
-      return true;
-    }
-
-    if (
-      index === 3 &&
-      status === 'checked_in'
-    ) {
-      return true;
-    }
-
-    if (
-      index === 6 &&
-      status === 'checked_out'
-    ) {
-      return true;
-    }
-
-    return false;
+  const statusOrder = {
+    pending: 0,
+    approved: 1,
+    checked_in: 2,
+    accommodated: 3,
+    in_retreat: 4,
+    checked_out: 5,
+    completed: 6
   };
 
-  const handleScanQr = (stepIndex) => {
-    sessionStorage.setItem(
-      'retreat_qr_target_step',
-      String(stepIndex + 1)
+  function getRequestCode(booking) {
+    const raw =
+      booking?.request_code ||
+      booking?.booking_code ||
+      booking?.id ||
+      '';
+
+    if (!raw) {
+      return th
+        ? 'ไม่พบรหัสคำขอ'
+        : 'Request code unavailable';
+    }
+
+    return String(raw);
+  }
+
+
+  /* =========================================================
+     LOAD BOOKINGS
+     ========================================================= */
+
+  useEffect(() => {
+    loadBookings();
+
+    const handleFocus = () => {
+      loadBookings(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadBookings(false);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
     );
 
-    if (goToPage) {
-      goToPage('checkin-page');
-      return;
+    return () => {
+      window.removeEventListener(
+        'focus',
+        handleFocus
+      );
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      );
+    };
+  }, []);
+
+
+  async function loadBookings(showLoading = true) {
+    if (showLoading) {
+      setLoading(true);
     }
 
-    window.location.href =
-      '/checkin';
-  };
-
-  /*
-    DATE
-  */
-
-  const formatDate = (value) => {
-    if (!value) {
-      return '-';
-    }
+    setError('');
 
     try {
-      return new Intl.DateTimeFormat(
-        th ? 'th-TH' : 'en-GB',
+      const response = await fetch(
+        '/api/my-bookings?ts=' + Date.now(),
         {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
         }
-      ).format(
-        new Date(
-          `${value}T00:00:00`
-        )
       );
-    } catch {
-      return value;
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+          'Unable to load bookings'
+        );
+      }
+
+      setBookings(
+        Array.isArray(data.bookings)
+          ? data.bookings
+          : []
+      );
+
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        th
+          ? 'ไม่สามารถโหลดข้อมูลการเข้าพักปฏิบัติธรรมได้'
+          : 'Unable to load your retreat stays'
+      );
+
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const startDate =
-    application?.check_in_date ||
-    application?.start_date;
-
-  const endDate =
-    application?.check_out_date ||
-    application?.end_date;
-
-  const requestCode =
-    application?.application_code ||
-    application?.reference_code ||
-    application?.id ||
-    '-';
-
-  /*
-    TIMELINE STATE
-  */
-
-  const resolvedStepState = (
-    index
-  ) => {
-    /*
-      pending
-    */
-
-    if (status === 'pending') {
-      if (index === 0) {
-        return 'current';
-      }
-
-      return 'pending';
-    }
-
-    /*
-      approved
-      1 + 2 completed
-      3 current
-    */
-
-    if (status === 'approved') {
-      if (index <= 1) {
-        return 'completed';
-      }
-
-      if (index === 2) {
-        return 'current';
-      }
-
-      return 'pending';
-    }
-
-    /*
-      checked_in
-      1-3 completed
-      4 current
-    */
-
-    if (
-      status === 'checked_in'
-    ) {
-      if (index <= 2) {
-        return 'completed';
-      }
-
-      if (index === 3) {
-        return 'current';
-      }
-
-      return 'pending';
-    }
-
-    /*
-      accommodated
-      1-4 completed
-      5 current
-    */
-
-    if (
-      status === 'accommodated'
-    ) {
-      if (index <= 3) {
-        return 'completed';
-      }
-
-      if (index === 4) {
-        return 'current';
-      }
-
-      return 'pending';
-    }
-
-    /*
-      in_retreat
-      1-5 completed
-      6 current
-    */
-
-    if (
-      status === 'in_retreat'
-    ) {
-      if (index <= 4) {
-        return 'completed';
-      }
-
-      if (index === 5) {
-        return 'current';
-      }
-
-      return 'pending';
-    }
-
-    /*
-      checked_out
-      1-6 completed
-      7 current
-    */
-
-    if (
-      status === 'checked_out'
-    ) {
-      if (index <= 5) {
-        return 'completed';
-      }
-
-      if (index === 6) {
-        return 'current';
-      }
-
-      return 'pending';
-    }
-
-    /*
-      completed
-      all completed
-    */
-
-    if (
-      status === 'completed'
-    ) {
-      return 'completed';
-    }
-
-    return 'pending';
-  };
-
-  const approved =
-    status !== 'pending';
-
-  return (
-    <>
-      <style>{`
-
-        /*
-          IMPORTANT
-
-          ไม่มี font-family ตรงนี้
-          เพื่อให้รับ Font หลัก
-          จากเว็บไซต์โดยอัตโนมัติ
-        */
-
-        .retreatPage {
-          width: 100%;
-          background: #fbfaf7;
-          color: #2d2925;
-        }
-
-        .retreatContainer {
-          max-width: 1180px;
-          margin: 0 auto;
-          padding:
-            48px
-            22px
-            60px;
-        }
-
-        /*
-          PAGE HEADER
-        */
-
-        .retreatPageHeader {
-          text-align: center;
-          margin-bottom: 30px;
-        }
-
-        .retreatPageTitle {
-          margin:
-            0
-            0
-            8px;
-
-          font-size: 34px;
-          line-height: 1.3;
-          font-weight: 600;
-
-          color: #30251a;
-        }
-
-        .retreatPageSubtitle {
-          margin: 0;
-
-          color: #74685d;
-
-          font-size: 15px;
-
-          line-height: 1.7;
-        }
-
-        /*
-          CARD
-        */
-
-        .retreatCard {
-          background: #ffffff;
-
-          border:
-            1px solid
-            #e6e0d8;
-
-          border-radius: 14px;
-
-          box-shadow:
-            0
-            5px
-            18px
-            rgba(
-              69,
-              51,
-              30,
-              0.05
-            );
-
-          overflow: hidden;
-        }
-
-        /*
-          APPLICATION
-        */
-
-        .retreatRequestCard {
-          margin-bottom: 22px;
-        }
-
-        .retreatCardHeading {
-          padding:
-            16px
-            22px;
-
-          font-size: 17px;
-
-          font-weight: 600;
-
-          color: #68491f;
-
-          border-bottom:
-            1px solid
-            #ece5dc;
-
-          text-align: center;
-        }
-
-        .retreatRequestBody {
-          display: grid;
-
-          grid-template-columns:
-            70px
-            1fr
-            auto;
-
-          gap: 20px;
-
-          align-items: center;
-
-          padding:
-            26px
-            24px;
-        }
-
-        .retreatRequestIcon {
-          width: 58px;
-          height: 58px;
-
-          border-radius: 50%;
-
-          background:
-            #f5f0e8;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          font-size: 26px;
-
-          color: #815a23;
-        }
-
-        .retreatRequestInfo {
-          min-width: 0;
-
-          text-align: center;
-        }
-
-        .retreatRequestTitle {
-          font-size: 18px;
-
-          font-weight: 600;
-
-          color: #30291f;
-
-          margin-bottom: 7px;
-        }
-
-        .retreatRequestDate {
-          color: #6e665e;
-
-          font-size: 14px;
-
-          margin-bottom: 7px;
-        }
-
-        .retreatRequestCode {
-          color: #82786e;
-
-          font-size: 13px;
-        }
-
-        .retreatApprovedBadge {
-          display:
-            inline-flex;
-
-          align-items:
-            center;
-
-          gap: 6px;
-
-          padding:
-            8px
-            13px;
-
-          border-radius:
-            999px;
-
-          background:
-            #e5f4e2;
-
-          color:
-            #25833b;
-
-          font-size:
-            13px;
-
-          font-weight:
-            600;
-
-          white-space:
-            nowrap;
-        }
-
-        /*
-          TRACKING
-        */
-
-        .retreatTrackingCard {
-          padding:
-            26px
-            22px
-            22px;
-        }
-
-        .retreatTrackingTitle {
-          margin:
-            0
-            0
-            28px;
-
-          text-align:
-            center;
-
-          font-size:
-            20px;
-
-          font-weight:
-            600;
-
-          color:
-            #30291f;
-        }
-
-        .retreatTimeline {
-          position:
-            relative;
-
-          max-width:
-            980px;
-
-          margin:
-            0 auto;
-        }
-
-        /*
-          ROW
-        */
-
-        .retreatTimelineRow {
-          position:
-            relative;
-
-          display:
-            grid;
-
-          grid-template-columns:
-            54px
-            minmax(
-              0,
-              1fr
-            )
-            220px;
-
-          column-gap:
-            18px;
-
-          min-height:
-            86px;
-        }
-
-        /*
-          LINE
-        */
-
-        .retreatTimelineLine {
-          position:
-            absolute;
-
-          width:
-            2px;
-
-          left:
-            20px;
-
-          top:
-            32px;
-
-          bottom:
-            -10px;
-
-          z-index:
-            0;
-
-          background:
-            #dfdfdf;
-        }
-
-        .retreatTimelineLine.complete {
-          background:
-            #8fc895;
-        }
-
-        /*
-          CIRCLE
-        */
-
-        .retreatStepCircle {
-          position:
-            relative;
-
-          z-index:
-            2;
-
-          margin-left:
-            5px;
-
-          width:
-            32px;
-
-          height:
-            32px;
-
-          border-radius:
-            50%;
-
-          display:
-            flex;
-
-          align-items:
-            center;
-
-          justify-content:
-            center;
-
-          font-size:
-            14px;
-
-          font-weight:
-            600;
-        }
-
-        .retreatStepCircle.completed {
-          background:
-            #20963b;
-
-          color:
-            #ffffff;
-        }
-
-        .retreatStepCircle.current {
-          background:
-            #be8317;
-
-          color:
-            #ffffff;
-        }
-
-        .retreatStepCircle.pending {
-          background:
-            #e6e6e6;
-
-          color:
-            #777777;
-        }
-
-        /*
-          STEP CONTENT
-        */
-
-        .retreatStepMain {
-          padding:
-            3px
-            0
-            23px;
-
-          text-align:
-            center;
-        }
-
-        .retreatStepTitle {
-          font-size:
-            17px;
-
-          font-weight:
-            600;
-
-          color:
-            #302b26;
-
-          margin-bottom:
-            6px;
-        }
-
-        .retreatStepDescription {
-          font-size:
-            14px;
-
-          color:
-            #746c64;
-
-          line-height:
-            1.7;
-        }
-
-        /*
-          RIGHT STATUS
-        */
-
-        .retreatStepRight {
-          display:
-            flex;
-
-          flex-direction:
-            column;
-
-          align-items:
-            flex-start;
-
-          gap:
-            8px;
-
-          padding-top:
-            2px;
-        }
-
-        .retreatStatusBadge {
-          display:
-            inline-flex;
-
-          align-items:
-            center;
-
-          gap:
-            5px;
-
-          padding:
-            7px
-            11px;
-
-          border-radius:
-            999px;
-
-          font-size:
-            12px;
-
-          font-weight:
-            600;
-
-          white-space:
-            nowrap;
-        }
-
-        .retreatStatusBadge.completed {
-          background:
-            #e4f5e5;
-
-          color:
-            #25893c;
-        }
-
-        .retreatStatusBadge.current {
-          background:
-            #fff0cf;
-
-          color:
-            #a66d07;
-        }
-
-        .retreatStatusBadge.pending {
-          background:
-            #efefef;
-
-          color:
-            #858585;
-        }
-
-        /*
-          QR BUTTON
-        */
-
-        .retreatScanButton {
-          width:
-            220px;
-
-          min-height:
-            42px;
-
-          border:
-            0;
-
-          border-radius:
-            7px;
-
-          padding:
-            11px
-            18px;
-
-          cursor:
-            pointer;
-
-          background:
-            #b77a0d;
-
-          color:
-            #ffffff;
-
-          font: inherit;
-
-          font-size:
-            14px;
-
-          font-weight:
-            600;
-
-          transition:
-            transform
-            0.15s ease,
-            opacity
-            0.15s ease;
-        }
-
-        .retreatScanButton:hover {
-          opacity:
-            0.92;
-
-          transform:
-            translateY(
-              -1px
-            );
-        }
-
-        /*
-          HELP
-        */
-
-        .retreatHelpBox {
-          max-width:
-            1000px;
-
-          margin:
-            12px
-            auto
-            0;
-
-          padding:
-            15px
-            18px;
-
-          border-radius:
-            8px;
-
-          background:
-            #faf7f1;
-
-          border:
-            1px solid
-            #e7ddce;
-
-          color:
-            #755434;
-
-          font-size:
-            14px;
-
-          text-align:
-            center;
-
-          line-height:
-            1.7;
-        }
-
-        /*
-          TABLET + MOBILE
-        */
-
-        @media (
-          max-width: 760px
-        ) {
-
-          .retreatContainer {
-            padding:
-              34px
-              14px
-              42px;
-          }
-
-          .retreatPageTitle {
-            font-size:
-              27px;
-          }
-
-          .retreatPageSubtitle {
-            font-size:
-              14px;
-          }
-
-          .retreatRequestBody {
-            grid-template-columns:
-              58px
-              1fr;
-
-            gap:
-              12px;
-
-            padding:
-              20px
-              16px;
-          }
-
-          .retreatRequestIcon {
-            width:
-              50px;
-
-            height:
-              50px;
-
-            font-size:
-              23px;
-          }
-
-          .retreatRequestInfo {
-            text-align:
-              left;
-          }
-
-          .retreatApprovedBadge {
-            grid-column:
-              2;
-
-            justify-self:
-              start;
-          }
-
-          .retreatTrackingCard {
-            padding:
-              22px
-              14px
-              18px;
-          }
-
-          .retreatTrackingTitle {
-            text-align:
-              left;
-
-            font-size:
-              19px;
-          }
-
-          .retreatTimelineRow {
-            grid-template-columns:
-              44px
-              minmax(
-                0,
-                1fr
-              );
-
-            column-gap:
-              8px;
-
-            min-height:
-              106px;
-          }
-
-          .retreatTimelineLine {
-            left:
-              20px;
-          }
-
-          .retreatStepMain {
-            text-align:
-              left;
-
-            padding-bottom:
-              10px;
-          }
-
-          .retreatStepRight {
-            grid-column:
-              2;
-
-            padding:
-              0
-              0
-              22px;
-
-            margin-top:
-              -4px;
-          }
-
-          .retreatScanButton {
-            width:
-              100%;
-          }
-
-          .retreatHelpBox {
-            text-align:
-              left;
-
-            margin-top:
-              8px;
-          }
-        }
-
-      `}</style>
-
-      <div className="retreatPage">
-
-        <main className="retreatContainer">
-
-          {/* PAGE TITLE */}
-
-          <header className="retreatPageHeader">
-
-            <h1 className="retreatPageTitle">
-              {th
-                ? 'การเข้าพักปฏิบัติธรรมของฉัน'
-                : 'My Retreat Stay'}
-            </h1>
-
-            <p className="retreatPageSubtitle">
-              {th
-                ? 'ติดตามสถานะการเข้าพักปฏิบัติธรรมของท่านแบบเรียลไทม์'
-                : 'Track the status of your retreat stay in real time.'}
-            </p>
-
-          </header>
-
-          {/* APPLICATION CARD */}
-
-          <section
-            className="
-              retreatCard
-              retreatRequestCard
-            "
+  }
+
+
+  /* =========================================================
+     TRACKING TIMELINE
+     ========================================================= */
+
+  function StayTracking({ booking }) {
+    const currentIndex =
+      statusOrder[booking.status] ?? 0;
+
+    const stopped =
+      booking.status === 'rejected' ||
+      booking.status === 'cancelled';
+
+
+    return (
+      <div
+        style={{
+          marginTop: '28px',
+          paddingTop: '24px',
+          borderTop: '1px solid #eee'
+        }}
+      >
+
+        <div
+          style={{
+            color: '#a87518',
+            fontSize: '13px',
+            letterSpacing: '1.5px',
+            marginBottom: '28px'
+          }}
+        >
+          {th
+            ? 'ความคืบหน้าการเข้าพักปฏิบัติธรรม'
+            : 'RETREAT STAY PROGRESS'}
+        </div>
+
+
+        {stopped ? (
+
+          <div
+            style={{
+              padding: '16px 18px',
+              background: '#faf1ef',
+              borderLeft: '3px solid #a24a3a'
+            }}
+          >
+            <strong>
+              {statusText[booking.status]}
+            </strong>
+          </div>
+
+        ) : (
+
+          <div
+            style={{
+              position: 'relative'
+            }}
           >
 
-            <div className="retreatCardHeading">
-              {th
-                ? 'รายการคำขอของฉัน'
-                : 'My application'}
-            </div>
+            {trackingSteps.map(
+              (step, index) => {
 
-            <div className="retreatRequestBody">
+                const completed =
+                  index < currentIndex ||
+                  (
+                    booking.status === 'completed' &&
+                    index === currentIndex
+                  );
 
-              <div className="retreatRequestIcon">
-                🗓
-              </div>
+                const current =
+                  index === currentIndex;
 
-              <div className="retreatRequestInfo">
+                const reached =
+                  index <= currentIndex;
 
-                <div className="retreatRequestTitle">
-                  {th
-                    ? 'เข้าพักปฏิบัติธรรม'
-                    : 'Retreat stay'}
-                </div>
+                const last =
+                  index ===
+                  trackingSteps.length - 1;
 
-                <div className="retreatRequestDate">
-                  {formatDate(
-                    startDate
-                  )}
-                  {' – '}
-                  {formatDate(
-                    endDate
-                  )}
-                </div>
 
-                <div className="retreatRequestCode">
-                  {th
-                    ? 'รหัสคำขอ: '
-                    : 'Application ID: '}
+                return (
+                  <div
+                    key={step.key}
+                    style={{
+                      display: 'flex',
+                      position: 'relative',
+                      minHeight: last
+                        ? '92px'
+                        : '116px'
+                    }}
+                  >
 
-                  {requestCode}
-                </div>
+                    {/* LEFT TIMELINE */}
 
-              </div>
-
-              {approved && (
-                <div className="retreatApprovedBadge">
-                  ✓{' '}
-                  {th
-                    ? 'อนุมัติแล้ว'
-                    : 'Approved'}
-                </div>
-              )}
-
-            </div>
-
-          </section>
-
-          {/* TRACKING */}
-
-          <section
-            className="
-              retreatCard
-              retreatTrackingCard
-            "
-          >
-
-            <h2 className="retreatTrackingTitle">
-              {th
-                ? 'สถานะการเข้าพักปฏิบัติธรรม'
-                : 'Retreat stay status'}
-            </h2>
-
-            <div className="retreatTimeline">
-
-              {steps.map(
-                (
-                  step,
-                  index
-                ) => {
-
-                  const state =
-                    resolvedStepState(
-                      index
-                    );
-
-                  const completed =
-                    state ===
-                    'completed';
-
-                  const current =
-                    state ===
-                    'current';
-
-                  const showScan =
-                    canScanAtStep(
-                      index
-                    );
-
-                  return (
                     <div
-                      className="retreatTimelineRow"
-                      key={
-                        step.key
-                      }
+                      style={{
+                        width: '28px',
+                        position: 'relative',
+                        flexShrink: 0
+                      }}
                     >
 
-                      {/* LEFT */}
+                      <div
+                        style={{
+                          width: current
+                            ? '15px'
+                            : '12px',
 
-                      <div>
+                          height: current
+                            ? '15px'
+                            : '12px',
 
-                        {index <
-                          steps.length -
-                            1 && (
-                          <div
-                            className={
-                              `retreatTimelineLine ${
-                                completed
-                                  ? 'complete'
-                                  : ''
-                              }`
-                            }
-                          />
-                        )}
+                          borderRadius: '50%',
 
+                          background:
+                            reached
+                              ? '#9b7226'
+                              : '#fff',
+
+                          border:
+                            reached
+                              ? '2px solid #9b7226'
+                              : '2px solid #d7d0c5',
+
+                          position: 'absolute',
+
+                          top: '27px',
+
+                          left: current
+                            ? '4px'
+                            : '5px',
+
+                          zIndex: 3
+                        }}
+                      />
+
+
+                      {!last && (
                         <div
-                          className={
-                            `retreatStepCircle ${state}`
-                          }
-                        >
-                          {completed
-                            ? '✓'
-                            : index +
-                              1}
-                        </div>
+                          style={{
+                            position: 'absolute',
 
-                      </div>
+                            top: '40px',
 
-                      {/* CENTER */}
+                            left: '11px',
 
-                      <div className="retreatStepMain">
+                            width: '2px',
 
-                        <div className="retreatStepTitle">
-                          {index +
-                            1}
-                          .{' '}
+                            bottom: '-4px',
 
-                          {th
-                            ? step.titleTh
-                            : step.titleEn}
-                        </div>
+                            background:
+                              index < currentIndex
+                                ? '#b89a61'
+                                : '#e2ddd4',
 
-                        <div className="retreatStepDescription">
-                          {th
-                            ? step.descTh
-                            : step.descEn}
-                        </div>
+                            zIndex: 1
+                          }}
+                        />
+                      )}
 
-                      </div>
+                    </div>
 
-                      {/* RIGHT */}
 
-                      <div className="retreatStepRight">
+                    {/* ICON */}
 
-                        <div
-                          className={
-                            `retreatStatusBadge ${state}`
-                          }
-                        >
+                    <div
+                      style={{
+                        width: '70px',
+                        flexShrink: 0
+                      }}
+                    >
 
-                          {completed && (
-                            <>
-                              ✓{' '}
-                              {th
-                                ? 'เสร็จสิ้น'
-                                : 'Completed'}
-                            </>
-                          )}
+                      <div
+                        style={{
+                          width: current
+                            ? '58px'
+                            : '54px',
 
-                          {current && (
-                            <>
-                              ⊙{' '}
-                              {th
-                                ? 'รอการดำเนินการ'
-                                : 'Action required'}
-                            </>
-                          )}
+                          height: current
+                            ? '58px'
+                            : '54px',
 
-                          {state ===
-                            'pending' && (
-                            <>
-                              •{' '}
-                              {th
-                                ? 'รอการดำเนินการ'
-                                : 'Pending'}
-                            </>
-                          )}
+                          borderRadius: '50%',
 
-                        </div>
+                          display: 'flex',
 
-                        {showScan && (
+                          alignItems: 'center',
 
-                          <button
-                            type="button"
-                            className="retreatScanButton"
-                            onClick={() =>
-                              handleScanQr(
-                                index
-                              )
-                            }
-                          >
-                            ▦{' '}
-                            {th
-                              ? 'สแกน QR Code'
-                              : 'Scan QR Code'}
-                          </button>
+                          justifyContent: 'center',
 
-                        )}
+                          background:
+                            reached
+                              ? '#eef6ed'
+                              : '#f5f5f3',
+
+                          border:
+                            current
+                              ? '2px solid #d8c49a'
+                              : '1px solid transparent'
+                        }}
+                      >
+
+                        <StepIcon
+                          type={step.icon}
+                          active={current}
+                          completed={completed}
+                        />
 
                       </div>
 
                     </div>
-                  );
-                }
-              )}
 
-            </div>
 
-            {/* HELP */}
+                    {/* STEP TEXT */}
 
-            <div className="retreatHelpBox">
-              ⓘ{' '}
-              {th
-                ? 'หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่ หรือไลน์วัดพุทธอุทยานนาเทิง'
-                : 'If you need assistance, please contact monastery staff or Nathoeng LINE.'}
-            </div>
+                    <div
+                      style={{
+                        paddingTop: '5px',
+                        paddingBottom: '25px'
+                      }}
+                    >
 
-          </section>
+                      <div
+                        style={{
+                          fontWeight:
+                            current
+                              ? '700'
+                              : reached
+                              ? '600'
+                              : '500',
 
-        </main>
+                          color:
+                            reached
+                              ? '#302d29'
+                              : '#999',
 
-        {/*
-          IMPORTANT
+                          fontSize: '15px',
 
-          ไม่มี Footer ตรงนี้แล้ว
+                          lineHeight: '1.5'
+                        }}
+                      >
+                        {th
+                          ? step.th
+                          : step.en}
+                      </div>
 
-          เพราะเว็บไซต์มี Footer หลัก
-          อยู่ใน App.jsx / Layout อยู่แล้ว
-        */}
+
+                      {current && (
+                        <div
+                          style={{
+                            color: '#9b7226',
+                            fontSize: '13px',
+                            marginTop: '4px',
+                            fontWeight: '500'
+                          }}
+                        >
+                          {th
+                            ? 'สถานะปัจจุบัน'
+                            : 'Current status'}
+                        </div>
+                      )}
+
+
+                      <div
+                        style={{
+                          fontSize: '13px',
+
+                          color:
+                            reached
+                              ? '#777'
+                              : '#aaa',
+
+                          marginTop: '6px',
+
+                          lineHeight: '1.5'
+                        }}
+                      >
+                        {th
+                          ? step.descriptionTh
+                          : step.descriptionEn}
+                      </div>
+
+
+                      {step.key === 'approved' &&
+                        booking.status === 'approved' && (
+
+                          <button
+                            onClick={() =>
+                              goToPage('checkin-page')
+                            }
+                            style={{
+                              marginTop: '14px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '9px',
+                              background: '#a87518',
+                              color: '#fff',
+                              border: '1px solid #a87518',
+                              padding: '10px 16px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              lineHeight: '1.3',
+                              boxShadow:
+                                '0 2px 6px rgba(0,0,0,0.05)'
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '18px',
+                                lineHeight: 1
+                              }}
+                            >
+                              ▦
+                            </span>
+
+                            {th
+                              ? 'ลงทะเบียนเข้าพัก / สแกน QR'
+                              : 'CHECK IN / SCAN QR'}
+                          </button>
+
+                        )}
+
+                    </div>
+
+                  </div>
+                );
+              }
+            )}
+
+          </div>
+        )}
 
       </div>
-    </>
+    );
+  }
+
+
+  /* =========================================================
+     PAGE
+     ========================================================= */
+
+  return (
+    <div className="guidePage">
+
+      <div
+        className="guideContainer"
+        style={{
+          maxWidth: '1000px'
+        }}
+      >
+
+        <button
+          className="backButton"
+          onClick={() =>
+            goToPage('home')
+          }
+        >
+          {th
+            ? '← กลับสู่หน้าหลัก'
+            : '← Back to Home'}
+        </button>
+
+
+        {/* =====================================================
+            PAGE HEADER + QR BUTTON
+            ===================================================== */}
+
+        <div
+          style={{
+            marginTop: '30px',
+            marginBottom: '30px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '25px',
+            flexWrap: 'wrap'
+          }}
+        >
+
+          <div
+            style={{
+              flex: '1 1 520px'
+            }}
+          >
+
+            <div
+              style={{
+                color: '#a87518',
+                fontSize: '13px',
+                letterSpacing: '2px',
+                marginBottom: '12px'
+              }}
+            >
+              {th
+                ? 'ข้อมูลสมาชิก'
+                : 'MEMBER AREA'}
+            </div>
+
+
+            <h1
+              style={{
+                marginBottom: '12px'
+              }}
+            >
+              {th
+                ? 'การเข้าพักปฏิบัติธรรมของฉัน'
+                : 'My Retreat Stays'}
+            </h1>
+
+
+            <p
+              style={{
+                marginBottom: 0
+              }}
+            >
+              {th
+                ? 'ตรวจสอบสถานะและความคืบหน้าการเข้าพักปฏิบัติธรรมของคุณ'
+                : 'View the status and progress of your retreat stays.'}
+            </p>
+
+          </div>
+
+          <div
+            style={{
+              flexShrink: 0,
+              paddingTop: '20px'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => loadBookings()}
+              disabled={loading}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#fff',
+                color: '#8f6a27',
+                border: '1px solid #d8c49a',
+                padding: '10px 15px',
+                borderRadius: '999px',
+                cursor: loading ? 'wait' : 'pointer',
+                fontSize: '13px',
+                fontWeight: '600'
+              }}
+            >
+              <span aria-hidden="true">↻</span>
+              {th
+                ? 'อัปเดตสถานะ'
+                : 'Refresh status'}
+            </button>
+          </div>
+
+        </div>
+
+
+        {/* =====================================================
+            LOADING
+            ===================================================== */}
+
+        {loading && (
+          <p>
+            {th
+              ? 'กำลังโหลดข้อมูล...'
+              : 'Loading...'}
+          </p>
+        )}
+
+
+        {/* =====================================================
+            ERROR
+            ===================================================== */}
+
+        {error && (
+          <div
+            style={{
+              padding: '16px',
+              border: '1px solid #ddd',
+              marginBottom: '20px'
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+
+        {/* =====================================================
+            EMPTY
+            ===================================================== */}
+
+        {!loading &&
+          !error &&
+          bookings.length === 0 && (
+
+            <div
+              style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                border: '1px solid #e5e0d8'
+              }}
+            >
+
+              <p>
+                {th
+                  ? 'ยังไม่มีรายการขอเข้าพักปฏิบัติธรรม'
+                  : 'You do not have any retreat stay requests yet.'}
+              </p>
+
+
+              <button
+                onClick={() =>
+                  goToPage('booking-page')
+                }
+                style={{
+                  marginTop: '15px',
+                  padding: '12px 20px',
+                  cursor: 'pointer'
+                }}
+              >
+                {th
+                  ? 'ขอเข้าพักปฏิบัติธรรม'
+                  : 'Request a Retreat Stay'}
+              </button>
+
+            </div>
+          )}
+
+
+        {/* =====================================================
+            BOOKING CARDS
+            ===================================================== */}
+
+        {!loading &&
+          bookings.map((booking) => (
+
+            <div
+              key={booking.id}
+              style={{
+                border: '1px solid #e3ddd3',
+                padding: '24px',
+                marginBottom: '24px',
+                background: '#fff'
+              }}
+            >
+
+              {/* TOP */}
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '20px',
+                  flexWrap: 'wrap'
+                }}
+              >
+
+                <div>
+
+                  <strong>
+                    {booking.name}
+                  </strong>
+
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      color: '#9b7226',
+                      fontSize: '12px',
+                      lineHeight: '1.5',
+                      wordBreak: 'break-all'
+                    }}
+                    title={getRequestCode(booking)}
+                  >
+                    {th
+                      ? 'รหัสคำขอ: '
+                      : 'Request ID: '}
+                    <span
+                      style={{
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+                      }}
+                    >
+                      {getRequestCode(booking)}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: '8px',
+                      color: '#666'
+                    }}
+                  >
+                    {booking.start_date ||
+                      (th
+                        ? 'ยังไม่ระบุวันเข้าพัก'
+                        : 'Start date not set')}
+                    {' → '}
+                    {booking.end_date ||
+                      (th
+                        ? 'ยังไม่ระบุวันสิ้นสุด'
+                        : 'End date not set')}
+                  </div>
+
+                </div>
+
+
+                {/* STATUS BADGE */}
+
+                <div
+                  style={{
+                    padding: '7px 13px',
+
+                    background:
+                      booking.status === 'rejected' ||
+                      booking.status === 'cancelled'
+                        ? '#faf1ef'
+                        : '#eef6ed',
+
+                    borderRadius: '20px',
+
+                    height: 'fit-content',
+
+                    fontWeight: '500'
+                  }}
+                >
+                  {statusText[booking.status] ||
+                    booking.status}
+                </div>
+
+              </div>
+
+
+              <hr
+                style={{
+                  border: 0,
+                  borderTop: '1px solid #eee',
+                  margin: '20px 0'
+                }}
+              />
+
+
+              {/* PURPOSE */}
+
+              <p>
+                <strong>
+                  {th
+                    ? 'จุดประสงค์: '
+                    : 'Purpose: '}
+                </strong>
+
+                {booking.purpose ||
+                  (th
+                    ? 'ไม่ได้ระบุ'
+                    : 'Not specified')}
+              </p>
+
+
+              {/* ACCOMMODATION */}
+
+              {booking.accommodation_name && (
+
+                <p>
+                  <strong>
+                    {th
+                      ? 'สถานที่พัก: '
+                      : 'Accommodation: '}
+                  </strong>
+
+                  {booking.accommodation_name}
+                </p>
+
+              )}
+
+
+              {/* APPROVED MESSAGE */}
+
+              {booking.status ===
+                'approved' && (
+
+                <div
+                  style={{
+                    marginTop: '20px',
+                    padding: '15px',
+                    background: '#faf7ef'
+                  }}
+                >
+                  {th
+                    ? '✓ คำขอเข้าพักปฏิบัติธรรมได้รับอนุมัติแล้ว เมื่อเดินทางถึงวัด กรุณาลงทะเบียนเข้าพักกับเจ้าหน้าที่'
+                    : '✓ Your retreat stay has been approved. Please register with monastery staff when you arrive.'}
+                </div>
+
+              )}
+
+
+              {/* CHECKED IN MESSAGE */}
+
+              {booking.status ===
+                'checked_in' && (
+
+                <div
+                  style={{
+                    marginTop: '20px',
+                    padding: '15px',
+                    background: '#eef6ed'
+                  }}
+                >
+                  {th
+                    ? '✓ ลงทะเบียนเข้าพักเรียบร้อยแล้ว กรุณารอเจ้าหน้าที่จัดสถานที่พัก'
+                    : '✓ Stay registration completed. Please wait for monastery staff to assign your accommodation.'}
+                </div>
+
+              )}
+
+
+              {/* COMPLETED MESSAGE */}
+
+              {booking.status ===
+                'completed' && (
+
+                <div
+                  style={{
+                    marginTop: '20px',
+                    padding: '15px',
+                    background: '#eef6ed'
+                  }}
+                >
+                  {th
+                    ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว'
+                    : '✓ Your retreat stay has been completed.'}
+                </div>
+
+              )}
+
+
+              {/* TRACKING */}
+
+              <StayTracking
+                booking={booking}
+              />
+
+            </div>
+          ))}
+
+      </div>
+    </div>
   );
 }
 
-export default MyRetreatStay;
+
+export default MyStaysPage;
