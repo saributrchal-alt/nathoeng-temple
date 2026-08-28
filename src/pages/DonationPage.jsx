@@ -134,6 +134,12 @@ export default function DonationPage({ lang, goToPage }) {
   const [loading, setLoading] =
     useState(false)
 
+  const [purposeOpen, setPurposeOpen] =
+    useState(false)
+
+  const [profileImageError, setProfileImageError] =
+    useState(false)
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -142,6 +148,21 @@ export default function DonationPage({ lang, goToPage }) {
       [name]: value
     }))
   }
+
+  const handlePurposeSelect = (value) => {
+    setFormData((prev) => ({
+      ...prev,
+      purpose: value
+    }))
+
+    setPurposeOpen(false)
+  }
+
+  const selectedPurposeOption =
+    t.purposeOptions.find(
+      (opt) =>
+        opt.value === formData.purpose
+    ) || t.purposeOptions[0]
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -391,11 +412,28 @@ export default function DonationPage({ lang, goToPage }) {
             </div>
 
             <div className="donationUserBadge">
-              <span className="donationStatusDot">
-                ✓
-              </span>
+              <div className="donationProfileAvatar">
+                {user.picture &&
+                !profileImageError ? (
+                  <img
+                    src={user.picture}
+                    alt={user.name || ''}
+                    referrerPolicy="no-referrer"
+                    onError={() =>
+                      setProfileImageError(true)
+                    }
+                  />
+                ) : (
+                  <img
+                    src="/icons/meditation.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="donationProfileFallback"
+                  />
+                )}
+              </div>
 
-              <div>
+              <div className="donationUserIdentity">
                 <small>
                   {lang === 'th'
                     ? 'เข้าสู่ระบบแล้ว'
@@ -412,6 +450,10 @@ export default function DonationPage({ lang, goToPage }) {
                     : 'Identity verified with LINE'}
                 </span>
               </div>
+
+              <span className="donationLineVerified">
+                ✓ LINE
+              </span>
             </div>
 
             <form
@@ -506,31 +548,79 @@ export default function DonationPage({ lang, goToPage }) {
                     {t.purposeLabel}
                   </label>
 
-                  <select
-                    id="donation-purpose"
-                    name="purpose"
-                    value={
-                      formData.purpose
-                    }
-                    onChange={
-                      handleChange
-                    }
-                  >
-                    {t.purposeOptions.map(
-                      (opt) => (
-                        <option
-                          key={
-                            opt.value
-                          }
-                          value={
-                            opt.value
-                          }
-                        >
-                          {opt.label}
-                        </option>
-                      )
+                  <div className="donationPurposeDropdown">
+                    <button
+                      id="donation-purpose"
+                      type="button"
+                      className="donationPurposeTrigger"
+                      onClick={() =>
+                        setPurposeOpen(
+                          (open) => !open
+                        )
+                      }
+                      aria-haspopup="listbox"
+                      aria-expanded={purposeOpen}
+                    >
+                      <span>
+                        {selectedPurposeOption.label}
+                      </span>
+
+                      <span
+                        className={
+                          purposeOpen
+                            ? 'donationPurposeChevron isOpen'
+                            : 'donationPurposeChevron'
+                        }
+                        aria-hidden="true"
+                      >
+                       ⌄
+                      </span>
+                    </button>
+
+                    {purposeOpen && (
+                      <div
+                        className="donationPurposeMenu"
+                        role="listbox"
+                        aria-labelledby="donation-purpose"
+                      >
+                        {t.purposeOptions.map(
+                          (opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              role="option"
+                              aria-selected={
+                                formData.purpose ===
+                                opt.value
+                              }
+                              className={
+                                formData.purpose ===
+                                opt.value
+                                  ? 'donationPurposeOption isSelected'
+                                  : 'donationPurposeOption'
+                              }
+                              onClick={() =>
+                                handlePurposeSelect(
+                                  opt.value
+                                )
+                              }
+                            >
+                              <span className="donationPurposeCheck">
+                                {formData.purpose ===
+                                opt.value
+                                  ? '✓'
+                                  : ''}
+                              </span>
+
+                              <span>
+                                {opt.label}
+                              </span>
+                            </button>
+                          )
+                        )}
+                      </div>
                     )}
-                  </select>
+                  </div>
                 </div>
               </div>
 
