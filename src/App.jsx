@@ -743,9 +743,6 @@ const handleLineLogin = () => {
                     <button onClick={() => goToPage('visit-guide')} className="textLinkButton">
                       {lang === 'en' ? 'Read guidelines & book stay →' : 'อ่านระเบียบการและจองเข้าพัก →'}
                     </button>
-                    <button onClick={() => goToPage('calendar-page')} className="textLinkButton">
-                      {lang === 'en' ? 'View Schedule →' : 'ดูตารางการจองเข้าพัก →'}
-                    </button>
                   </div>
                 </div>
               </div>
