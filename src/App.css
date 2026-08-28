@@ -99,6 +99,16 @@ img {
   white-space: nowrap;
 }
 
+/* English monastery title: smaller on desktop so it does not overlap navigation */
+.brandText strong.brandTitleEn {
+  font-size: 16px;
+}
+
+/* Thai monastery title keeps the original size */
+.brandText strong.brandTitleTh {
+  font-size: clamp(1rem, 1.2vw, 1.22rem);
+}
+
 .brandText > span {
   margin-top: 4px;
   color: #8a6848;
@@ -968,6 +978,11 @@ img {
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 14px;
+  }
+
+  .brandText strong.brandTitleEn,
+  .brandText strong.brandTitleTh {
     font-size: 14px;
   }
 
