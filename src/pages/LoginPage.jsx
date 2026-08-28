@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function LoginPage({
   lang,
@@ -7,232 +7,563 @@ function LoginPage({
   handleLineLogin,
   handleLogout
 }) {
-const isAdmin =
-  user && user.isAdmin === true;
+  const th = lang === 'th';
+
+  const isAdmin =
+    user && user.isAdmin === true;
+
+  const [profileImageError, setProfileImageError] =
+    useState(false);
 
   return (
-    <div className="guidePage">
+    <div className="guidePage loginPage">
+      <style>{`
+        .loginPage {
+          padding: 48px 18px 72px;
+          background:
+            radial-gradient(
+              circle at 50% 0%,
+              rgba(169, 121, 41, .05),
+              transparent 34%
+            ),
+            #faf8f3;
+        }
+
+        .loginContainer {
+          max-width: 760px !important;
+          padding: 42px 46px 48px !important;
+          border: 1px solid #e8dece;
+          border-radius: 10px;
+          background: #fffefb;
+          box-shadow:
+            0 14px 40px rgba(70, 48, 26, .045);
+        }
+
+        .loginHero {
+          max-width: 640px;
+          margin: 22px auto 30px;
+          text-align: center;
+        }
+
+        .loginHeroIcon {
+          width: 40px;
+          height: 40px;
+          margin: 0 auto 12px;
+          display: block;
+        }
+
+        .loginHero .eyebrow {
+          display: block;
+          margin-bottom: 12px;
+          text-align: center;
+        }
+
+        .loginHero h1 {
+          margin: 0 0 13px;
+          color: #3d3025;
+          font-size: clamp(2rem, 4.3vw, 2.85rem);
+          font-weight: 500;
+          line-height: 1.16;
+          letter-spacing: -.02em;
+          text-align: center;
+        }
+
+        .loginHeroOrnament {
+          margin: 16px auto 15px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 11px;
+        }
+
+        .loginHeroOrnament span {
+          width: 48px;
+          height: 1px;
+          background: #dcc49d;
+        }
+
+        .loginHeroOrnament img {
+          width: 22px;
+          height: 22px;
+        }
+
+        .loginHero p {
+          max-width: 600px;
+          margin: 0 auto;
+          color: #766b61;
+          font-size: 14px;
+          line-height: 1.85;
+          text-align: center;
+        }
+
+        .loginPanel {
+          max-width: 620px;
+          margin: 0 auto;
+          padding: 30px;
+          border: 1px solid #e7dccd;
+          border-radius: 10px;
+          background:
+            linear-gradient(
+              180deg,
+              #fffdfa 0%,
+              #faf7f0 100%
+            );
+          text-align: center;
+        }
+
+        .loginPanelIcon {
+          width: 46px;
+          height: 46px;
+          margin: 0 auto 18px;
+          padding: 9px;
+          display: grid;
+          place-items: center;
+          border: 1px solid #dfcfb4;
+          border-radius: 50%;
+          background: #fff8ec;
+        }
+
+        .loginPanelIcon img {
+          width: 27px;
+          height: 27px;
+        }
+
+        .lineLoginBtn {
+          width: 100%;
+          min-height: 52px;
+          padding: 13px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          border: 0;
+          border-radius: 999px;
+          background: #06c755;
+          color: #fff;
+          font-family: inherit;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow:
+            0 8px 18px rgba(6, 199, 85, .18);
+        }
+
+        .lineLoginDot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #fff;
+        }
+
+        .loginHelpText {
+          max-width: 510px;
+          margin: 18px auto 0;
+          color: #6f655c;
+          font-size: 12.5px;
+          line-height: 1.75;
+        }
+
+        .loginPrivacyText {
+          max-width: 500px;
+          margin: 16px auto 0;
+          padding-top: 15px;
+          border-top: 1px solid #ebe2d6;
+          color: #948b82;
+          font-size: 11px;
+          line-height: 1.7;
+        }
+
+        .loginUserCard {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .loginAvatar {
+          width: 82px;
+          height: 82px;
+          margin-bottom: 15px;
+          overflow: hidden;
+          display: grid;
+          place-items: center;
+          border: 1px solid #dfd4c4;
+          border-radius: 50%;
+          background: #f2eadc;
+        }
+
+        .loginAvatar img:not(.loginAvatarFallback) {
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+        }
+
+        .loginAvatarFallback {
+          width: 34px;
+          height: 34px;
+        }
+
+        .loginWelcome {
+          margin: 0;
+          color: #3e332b;
+          font-size: 21px;
+          font-weight: 500;
+        }
+
+        .loginSuccessText {
+          max-width: 500px;
+          margin: 8px auto 0;
+          color: #6e645c;
+          font-size: 13px;
+          line-height: 1.7;
+        }
+
+        .loginRoleBadge {
+          margin-top: 16px;
+          padding: 7px 12px;
+          border: 1px solid #dfcfb4;
+          border-radius: 999px;
+          background: #fff8ec;
+          color: #8d6626;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .loginRoleBadge.member {
+          border-color: #dce6d8;
+          background: #f4f8f2;
+          color: #5b7655;
+        }
+
+        .loginActions {
+          width: 100%;
+          margin-top: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .loginAdminBtn {
+          min-height: 44px;
+          padding: 11px 18px;
+          border: 0;
+          border-radius: 6px;
+          background: #9b7226;
+          color: #fff;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .loginLogoutBtn {
+          min-height: 44px;
+          padding: 11px 18px;
+          border: 1px solid #d6cabc;
+          border-radius: 6px;
+          background: #fff;
+          color: #756a60;
+          font-family: inherit;
+          font-size: 13px;
+          cursor: pointer;
+        }
+
+        .loginMemberShortcut {
+          width: 100%;
+          margin-top: 20px;
+          padding-top: 18px;
+          border-top: 1px solid #ebe2d6;
+        }
+
+        .loginMemberShortcut button {
+          min-height: 44px;
+          padding: 10px 18px;
+          border: 1px solid #d8c49a;
+          border-radius: 999px;
+          background: #fff;
+          color: #8d6626;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        @media (max-width: 680px) {
+          .loginPage {
+            padding: 24px 10px 44px;
+          }
+
+          .loginContainer {
+            width: 100%;
+            padding: 26px 18px 32px !important;
+            border-radius: 8px;
+          }
+
+          .loginHero {
+            margin-top: 20px;
+            margin-bottom: 24px;
+          }
+
+          .loginHeroIcon {
+            width: 34px;
+            height: 34px;
+          }
+
+          .loginHero h1 {
+            font-size:
+              clamp(1.9rem, 8.8vw, 2.35rem);
+          }
+
+          .loginHero p {
+            font-size: 13px;
+            line-height: 1.75;
+            text-align: left;
+          }
+
+          .loginPanel {
+            padding: 24px 18px;
+          }
+
+          .loginPanelIcon {
+            width: 42px;
+            height: 42px;
+            margin-bottom: 16px;
+          }
+
+          .lineLoginBtn {
+            min-height: 50px;
+            font-size: 15px;
+          }
+
+          .loginHelpText {
+            font-size: 12px;
+          }
+
+          .loginPrivacyText {
+            font-size: 10.5px;
+          }
+
+          .loginAvatar {
+            width: 72px;
+            height: 72px;
+          }
+
+          .loginWelcome {
+            font-size: 19px;
+          }
+
+          .loginActions {
+            flex-direction: column;
+          }
+
+          .loginActions > button {
+            width: 100%;
+          }
+
+          .loginMemberShortcut button {
+            width: 100%;
+          }
+        }
+      `}</style>
+
       <div
-        className="guideContainer"
-        style={{ maxWidth: '600px' }}
+        className="guideContainer loginContainer"
       >
         <button
           className="backButton"
-          onClick={() => goToPage('home')}
+          onClick={() =>
+            goToPage('home')
+          }
         >
-          {lang === 'en' ? '← Back to Home' : '← กลับสู่หน้าหลัก'}
+          {th
+            ? '← กลับสู่หน้าหลัก'
+            : '← Back to Home'}
         </button>
 
-        <span className="eyebrow">
-          {lang === 'en' ? 'MEMBER SYSTEM' : 'ระบบสมาชิกวัด'}
-        </span>
+        <div className="loginHero">
+          <img
+            src="/icons/dhamma-wheel.svg"
+            alt=""
+            className="loginHeroIcon"
+            aria-hidden="true"
+          />
 
-        <h1>
-          {lang === 'en' ? 'Member Login' : 'เข้าสู่ระบบสมาชิก'}
-        </h1>
+          <span className="eyebrow">
+            NATHOENG CONNECT
+          </span>
 
-        <p className="guideIntro">
-          {lang === 'en'
-            ? 'Login with your LINE account to manage your retreat bookings, donation history, and personal profile.'
-            : 'เข้าสู่ระบบด้วยบัญชี LINE ของท่าน เพื่อจัดการข้อมูลการจองปฏิบัติธรรม ดูประวัติการทำบุญ และข้อมูลส่วนตัว'}
-        </p>
+          <h1>
+            {th
+              ? 'เข้าสู่ระบบสมาชิก'
+              : 'Member Login'}
+          </h1>
 
-        <div
-          className="guideSectionBox"
-          style={{
-            background: '#fcfbfa',
-            padding: '30px',
-            borderRadius: '8px',
-            textAlign: 'center',
-            border: '1px solid #eeeae2'
-          }}
-        >
           <div
-            style={{
-              fontSize: '36px',
-              marginBottom: '15px'
-            }}
+            className="loginHeroOrnament"
+            aria-hidden="true"
           >
-            ☸
+            <span></span>
+            <img
+              src="/icons/lotus.svg"
+              alt=""
+            />
+            <span></span>
+          </div>
+
+          <p>
+            {th
+              ? 'เข้าสู่ระบบด้วยบัญชี LINE เพื่อจัดการข้อมูลการเข้าพักปฏิบัติธรรม ดูประวัติการทำบุญ และใช้บริการสมาชิกของวัด'
+              : 'Sign in with your LINE account to manage retreat stays, view donation history and access monastery member services.'}
+          </p>
+        </div>
+
+        <div className="loginPanel">
+          <div className="loginPanelIcon">
+            <img
+              src={
+                user
+                  ? '/icons/contact.svg'
+                  : '/icons/dhamma-wheel.svg'
+              }
+              alt=""
+              aria-hidden="true"
+            />
           </div>
 
           {user ? (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '15px',
-                alignItems: 'center'
-              }}
-            >
-              {user.picture ? (
-                <img
-                  src={user.picture}
-                  alt={user.name || 'LINE User'}
-                  style={{
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '2px solid #eeeae2'
-                  }}
-                />
-              ) : null}
+            <div className="loginUserCard">
+              <div className="loginAvatar">
+                {user.picture &&
+                !profileImageError ? (
+                  <img
+                    src={user.picture}
+                    alt={
+                      user.name ||
+                      'LINE User'
+                    }
+                    referrerPolicy="no-referrer"
+                    onError={() =>
+                      setProfileImageError(
+                        true
+                      )
+                    }
+                  />
+                ) : (
+                  <img
+                    src="/icons/meditation.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="loginAvatarFallback"
+                  />
+                )}
+              </div>
 
-              <h3
-                style={{
-                  margin: 0,
-                  color: '#302d29'
-                }}
-              >
-                {lang === 'en'
-                  ? 'Welcome, ' + (user.name || 'Member')
-                  : 'ยินดีต้อนรับ, ' + (user.name || 'สมาชิก')}
+              <h3 className="loginWelcome">
+                {th
+                  ? `ยินดีต้อนรับ ${user.name || 'สมาชิก'}`
+                  : `Welcome, ${user.name || 'Member'}`}
               </h3>
 
-              <p
-                style={{
-                  margin: 0,
-                  color: '#625d55',
-                  fontSize: '14px'
-                }}
-              >
-                {lang === 'en'
-                  ? 'You are successfully logged in with LINE.'
-                  : 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'}
+              <p className="loginSuccessText">
+                {th
+                  ? 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'
+                  : 'You are successfully signed in to the monastery member system with LINE.'}
               </p>
 
-              {isAdmin ? (
-                <>
-                  <div
-                    style={{
-                      padding: '10px 14px',
-                      background: '#f6f4ef',
-                      color: '#9b7226',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    {lang === 'en'
-                      ? 'Administrator Account'
-                      : 'บัญชีผู้ดูแลระบบ'}
-                  </div>
+              <div
+                className={
+                  isAdmin
+                    ? 'loginRoleBadge'
+                    : 'loginRoleBadge member'
+                }
+              >
+                {isAdmin
+                  ? th
+                    ? 'บัญชีผู้ดูแลระบบ'
+                    : 'Administrator Account'
+                  : th
+                  ? 'บัญชีสมาชิกทั่วไป'
+                  : 'Standard Member Account'}
+              </div>
 
+              <div className="loginActions">
+                {isAdmin && (
                   <button
                     type="button"
-                    onClick={() => goToPage('admin-dashboard')}
-                    className="primaryContactBtn"
-                    style={{
-                      background: '#9b7226',
-                      border: 'none',
-                      padding: '12px 24px',
-                      cursor: 'pointer',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      fontSize: '14px'
-                    }}
+                    onClick={() =>
+                      goToPage(
+                        'admin-dashboard'
+                      )
+                    }
+                    className="loginAdminBtn"
                   >
-                    {lang === 'en'
-                      ? '⚙ Go to Admin Dashboard'
-                      : '⚙ ไปยังหน้าแผงควบคุมผู้ดูแลระบบ'}
+                    {th
+                      ? '⚙ ไปยังแผงควบคุมผู้ดูแลระบบ'
+                      : '⚙ Go to Admin Dashboard'}
                   </button>
-                </>
-              ) : (
-                <div
-                  style={{
-                    padding: '10px 14px',
-                    background: '#f6f4ef',
-                    color: '#625d55',
-                    borderRadius: '4px',
-                    fontSize: '13px'
-                  }}
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="loginLogoutBtn"
                 >
-                  {lang === 'en'
-                    ? 'Standard Member Account'
-                    : 'บัญชีสมาชิกทั่วไป'}
+                  {th
+                    ? 'ออกจากระบบ'
+                    : 'Logout'}
+                </button>
+              </div>
+
+              {!isAdmin && (
+                <div className="loginMemberShortcut">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      goToPage(
+                        'my-dashboard'
+                      )
+                    }
+                  >
+                    {th
+                      ? 'ไปยังบัญชีของฉัน →'
+                      : 'Go to My Account →'}
+                  </button>
                 </div>
               )}
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                style={{
-                  background: '#736f66',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '10px 20px',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                {lang === 'en' ? 'Logout' : 'ออกจากระบบ'}
-              </button>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '15px',
-                alignItems: 'center'
-              }}
-            >
+            <>
               <button
                 type="button"
                 onClick={handleLineLogin}
-                style={{
-                  background: '#06c755',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '14px 24px',
-                  borderRadius: '25px',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 10px rgba(6, 199, 85, 0.2)',
-                  width: '100%',
-                  justifyContent: 'center'
-                }}
+                className="lineLoginBtn"
               >
-                <span>●</span>
+                <span
+                  className="lineLoginDot"
+                  aria-hidden="true"
+                ></span>
+
                 <span>
-                  {lang === 'en'
-                    ? 'Login with LINE'
-                    : 'เข้าสู่ระบบด้วย LINE'}
+                  {th
+                    ? 'เข้าสู่ระบบด้วย LINE'
+                    : 'Login with LINE'}
                 </span>
               </button>
 
-              <p
-                style={{
-                  fontSize: '13px',
-                  color: '#625d55',
-                  margin: 0,
-                  lineHeight: '1.6'
-                }}
-              >
-                {lang === 'en'
-                  ? 'LINE is used to verify your identity before booking a monastery stay or accessing member services.'
-                  : 'ระบบจะใช้บัญชี LINE เพื่อยืนยันตัวตนก่อนทำรายการจองเข้าพักและใช้บริการสมาชิกของวัด'}
+              <p className="loginHelpText">
+                {th
+                  ? 'ระบบจะใช้บัญชี LINE เพื่อยืนยันตัวตนก่อนทำรายการจองเข้าพักและใช้บริการสมาชิกของวัด'
+                  : 'LINE is used to verify your identity before booking a monastery stay or accessing member services.'}
               </p>
 
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: '#888',
-                  marginTop: '5px',
-                  lineHeight: '1.6'
-                }}
-              >
-                {lang === 'en'
-                  ? 'By logging in, you accept our privacy policy and terms.'
-                  : 'การเข้าสู่ระบบถือว่าท่านยอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งานของทางวัด'}
+              <p className="loginPrivacyText">
+                {th
+                  ? 'การเข้าสู่ระบบถือว่าท่านยอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งานของทางวัด'
+                  : 'By logging in, you accept the monastery privacy policy and terms of use.'}
               </p>
-            </div>
+            </>
           )}
         </div>
       </div>
