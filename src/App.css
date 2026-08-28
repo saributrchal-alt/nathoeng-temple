@@ -982,8 +982,6 @@ img {
   }
 
   .languageIcon,
-  .languageSlash,
-  .language button:not(.active),
   .headerAdminBtn,
   .headerLogoutBtn,
   .headerAccountBtn span:not(.accountIcon) {
@@ -991,14 +989,22 @@ img {
   }
 
   .language {
-    gap: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
-  .language button.active {
+  .language button {
     display: inline-block;
-    padding: 5px 4px;
+    padding: 5px 2px;
     border: 0;
+    background: transparent;
     font-size: 11px;
+  }
+
+  .languageSlash {
+    display: inline-block;
+    font-size: 10px;
   }
 
   .headerAccountBtn {
