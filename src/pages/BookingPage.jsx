@@ -6,6 +6,9 @@ function BookingPage({ lang, goToPage }) {
 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [profileImageError, setProfileImageError] = useState(false);
+
+  const th = lang === 'th';
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -47,11 +50,11 @@ function BookingPage({ lang, goToPage }) {
           },
           body: JSON.stringify({
             lineUid: user.lineUid,
-            name: name,
-            phone: phone,
-            startDate: startDate,
-            endDate: endDate,
-            purpose: purpose
+            name,
+            phone,
+            startDate,
+            endDate,
+            purpose
           })
         }
       );
@@ -114,8 +117,11 @@ function BookingPage({ lang, goToPage }) {
         );
       }
 
-      // 3. แสดงหน้าสำเร็จ
       setSubmitted(true);
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     } catch (error) {
       console.error(
         'Booking error:',
@@ -135,349 +141,332 @@ function BookingPage({ lang, goToPage }) {
   };
 
   return (
-    <div className="guidePage">
-      <div className="guideContainer">
+    <div className="guidePage bookingPage">
+      <div className="guideContainer bookingContainer">
+
         <button
-          className="backButton"
+          className="backButton bookingBackButton"
           onClick={() => goToPage('home')}
         >
-          {lang === 'en'
-            ? '← Back to Home'
-            : '← กลับสู่หน้าหลัก'}
+          {th
+            ? '← กลับสู่หน้าหลัก'
+            : '← Back to Home'}
         </button>
 
-        <span className="eyebrow">
-          {lang === 'en'
-            ? 'MONASTERY STAY BOOKING'
-            : 'ระบบจองเข้าปฏิบัติธรรม'}
-        </span>
+        <div className="bookingHero">
+          <img
+            src="/icons/lotus.svg"
+            alt=""
+            className="bookingHeroIcon"
+            aria-hidden="true"
+          />
 
-        <h1>
-          {lang === 'en'
-            ? 'Book Your Stay'
-            : 'จองวันเข้าพักปฏิบัติธรรม'}
-        </h1>
+          <span className="eyebrow">
+            {th
+              ? 'ระบบจองเข้าปฏิบัติธรรม'
+              : 'MONASTERY STAY BOOKING'}
+          </span>
+
+          <h1>
+            {th
+              ? 'จองวันเข้าพักปฏิบัติธรรม'
+              : 'Book Your Retreat Stay'}
+          </h1>
+
+          <div
+            className="bookingHeroOrnament"
+            aria-hidden="true"
+          >
+            <span></span>
+            <img src="/icons/lotus.svg" alt="" />
+            <span></span>
+          </div>
+
+          <p>
+            {th
+              ? 'กรุณากรอกข้อมูลเพื่อส่งคำขอเข้าพักปฏิบัติธรรม ทางวัดจะตรวจสอบรายละเอียดและแจ้งผลการอนุมัติผ่านระบบ Nathoeng Connect'
+              : 'Please complete the form to request a retreat stay. The monastery will review your request and update you through Nathoeng Connect.'}
+          </p>
+        </div>
 
         {!user ? (
-          <div
-            style={{
-              padding: '30px',
-              background: '#f6f4ef',
-              borderRadius: '4px',
-              textAlign: 'center',
-              margin: '20px 0'
-            }}
-          >
-            <p
-              style={{
-                marginBottom: '15px',
-                color: '#625d55',
-                fontSize: '15px'
-              }}
-            >
-              {lang === 'en'
-                ? 'Security Check: Please login with your LINE account to proceed with your booking.'
-                : 'เพื่อความปลอดภัยและป้องกันข้อความขยะ (Spam) กรุณาเข้าสู่ระบบด้วยบัญชี LINE ของท่านก่อนทำการจอง'}
+          <div className="bookingLoginBox">
+            <img
+              src="/icons/contact.svg"
+              alt=""
+              className="bookingLoginIcon"
+              aria-hidden="true"
+            />
+
+            <h3>
+              {th
+                ? 'กรุณาเข้าสู่ระบบก่อนทำรายการ'
+                : 'Please sign in before booking'}
+            </h3>
+
+            <p>
+              {th
+                ? 'เพื่อยืนยันตัวตน ป้องกันข้อความขยะ และใช้สำหรับติดตามสถานะคำขอ กรุณาเข้าสู่ระบบด้วยบัญชี LINE'
+                : 'Please sign in with LINE so your identity can be verified and your retreat request can be tracked.'}
             </p>
 
             <button
               onClick={() =>
                 goToPage('login-page')
               }
-              className="primaryContactBtn"
-              style={{
-                background: '#06c755'
-              }}
+              className="primaryContactBtn bookingLineBtn"
             >
-              {lang === 'en'
-                ? 'Login with LINE to Book'
-                : 'เข้าสู่ระบบด้วย LINE เพื่อทำการจอง'}
+              {th
+                ? 'เข้าสู่ระบบด้วย LINE เพื่อทำการจอง'
+                : 'Login with LINE to Book'}
             </button>
           </div>
         ) : submitted ? (
-          <div
-            style={{
-              padding: '40px',
-              background: '#f6f4ef',
-              borderRadius: '4px',
-              textAlign: 'center'
-            }}
-          >
-            <h3
-              style={{
-                color: '#2e7d32',
-                marginBottom: '10px'
-              }}
-            >
-              {lang === 'en'
-                ? 'Booking Submitted Successfully!'
-                : 'ส่งข้อมูลการจองเรียบร้อยแล้ว'}
-            </h3>
+          <div className="bookingSuccessBox">
+            <img
+              src="/icons/lotus.svg"
+              alt=""
+              className="bookingSuccessIcon"
+              aria-hidden="true"
+            />
 
-            <p
-              style={{
-                color: '#625d55',
-                marginBottom: '20px'
-              }}
-            >
-              {lang === 'en'
-                ? 'Thank you. The monastery team has received your booking details.'
-                : 'ทางวัดได้รับข้อมูลการจองของท่านเรียบร้อยแล้ว อนุโมทนาบุญด้วยครับ'}
+            <h2>
+              {th
+                ? 'ส่งคำขอเข้าพักเรียบร้อยแล้ว'
+                : 'Retreat Request Submitted'}
+            </h2>
+
+            <p>
+              {th
+                ? 'ทางวัดได้รับคำขอของท่านแล้ว สามารถติดตามสถานะการพิจารณาและขั้นตอนการเข้าพักได้ที่ “การเข้าพักของฉัน”'
+                : 'The monastery has received your request. You can follow its review and stay progress in “My Retreat Stays.”'}
             </p>
 
-            <div
-              style={{
-                display: 'flex',
-                gap: '10px',
-                justifyContent: 'center',
-                flexWrap: 'wrap'
-              }}
-            >
+            <div className="bookingSuccessActions">
               <button
                 onClick={() =>
-                  goToPage('calendar-page')
+                  goToPage('my-stays')
                 }
                 className="primaryContactBtn"
-                style={{
-                  background: '#9b7226'
-                }}
               >
-                {lang === 'en'
-                  ? 'View Booking Schedule'
-                  : 'ดูตารางการจอง'}
+                {th
+                  ? 'ดูการเข้าพักของฉัน →'
+                  : 'View My Retreat Stays →'}
               </button>
 
               <button
                 onClick={() =>
                   goToPage('home')
                 }
-                className="primaryContactBtn"
+                className="bookingSecondaryBtn"
               >
-                {lang === 'en'
-                  ? 'Back to Home'
-                  : 'กลับสู่หน้าหลัก'}
+                {th
+                  ? 'กลับสู่หน้าหลัก'
+                  : 'Back to Home'}
               </button>
             </div>
           </div>
         ) : (
-          <form
-            onSubmit={onSubmit}
-            style={{
-              marginTop: '20px'
-            }}
-          >
-            <div
-              style={{
-                marginBottom: '15px',
-                padding: '12px',
-                background: '#e8f5e9',
-                borderRadius: '4px',
-                fontSize: '14px',
-                color: '#2e7d32'
-              }}
-            >
-              🟢{' '}
-              {lang === 'en'
-                ? 'Logged in as: '
-                : 'เข้าสู่ระบบแล้วในนาม: '}
-
-              <strong>
-                {user.name}
-              </strong>
-
-              {lang === 'en'
-                ? ' (Verified by LINE)'
-                : ' (ยืนยันตัวตนผ่าน LINE เรียบร้อย)'}
-            </div>
-
-            <div
-              style={{
-                marginBottom: '15px'
-              }}
-            >
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                {lang === 'en'
-                  ? 'Full Name / Name of Group Leader'
-                  : 'ชื่อ - นามสกุล (หรือหัวหน้าคณะ)'}
-              </label>
-
-              <input
-                type="text"
-                name="name"
-                defaultValue={
-                  user.name || ''
-                }
-                required
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border:
-                    '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                marginBottom: '15px'
-              }}
-            >
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
-              >
-                {lang === 'en'
-                  ? 'Phone Number'
-                  : 'เบอร์โทรศัพท์ที่ติดต่อได้'}
-              </label>
-
-              <input
-                type="tel"
-                name="phone"
-                required
-                placeholder="08xxxxxxxx"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border:
-                    '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns:
-                  '1fr 1fr',
-                gap: '15px',
-                marginBottom: '15px'
-              }}
-            >
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '5px',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {lang === 'en'
-                    ? 'Start Date'
-                    : 'วันที่เข้าพัก'}
-                </label>
-
-                <input
-                  type="date"
-                  name="start_date"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border:
-                      '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
-                />
+          <>
+            <div className="bookingVerifiedCard">
+              <div className="bookingProfileAvatar">
+                {user.picture &&
+                !profileImageError ? (
+                  <img
+                    src={user.picture}
+                    alt={user.name || ''}
+                    referrerPolicy="no-referrer"
+                    onError={() =>
+                      setProfileImageError(true)
+                    }
+                  />
+                ) : (
+                  <img
+                    src="/icons/meditation.svg"
+                    alt=""
+                    className="bookingProfileFallback"
+                    aria-hidden="true"
+                  />
+                )}
               </div>
 
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    marginBottom: '5px',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {lang === 'en'
-                    ? 'End Date'
-                    : 'วันสิ้นสุดการพัก'}
-                </label>
+              <div className="bookingVerifiedText">
+                <small>
+                  {th
+                    ? 'เข้าสู่ระบบแล้ว'
+                    : 'SIGNED IN'}
+                </small>
 
-                <input
-                  type="date"
-                  name="end_date"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border:
-                      '1px solid #ddd',
-                    borderRadius: '4px'
-                  }}
-                />
+                <strong>
+                  {user.name}
+                </strong>
+
+                <span>
+                  {th
+                    ? 'ยืนยันตัวตนผ่าน LINE เรียบร้อย'
+                    : 'Identity verified with LINE'}
+                </span>
               </div>
+
+              <span className="bookingVerifiedBadge">
+                ✓ LINE
+              </span>
             </div>
 
-            <div
-              style={{
-                marginBottom: '20px'
-              }}
+            <form
+              onSubmit={onSubmit}
+              className="bookingForm"
             >
-              <label
-                style={{
-                  display: 'block',
-                  marginBottom: '5px',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}
+              <div className="bookingField bookingFieldFull">
+                <div className="bookingFieldIcon" aria-hidden="true">
+                  <img src="/icons/contact.svg" alt="" />
+                </div>
+
+                <div className="bookingFieldBody">
+                  <label htmlFor="booking-name">
+                    {th
+                      ? 'ชื่อ - นามสกุล (หรือหัวหน้าคณะ) *'
+                      : 'Full Name / Group Leader *'}
+                  </label>
+
+                  <input
+                    id="booking-name"
+                    type="text"
+                    name="name"
+                    defaultValue={
+                      user.name || ''
+                    }
+                    autoComplete="name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="bookingField bookingFieldFull">
+                <div className="bookingFieldIcon" aria-hidden="true">
+                  <img src="/icons/phone.svg" alt="" />
+                </div>
+
+                <div className="bookingFieldBody">
+                  <label htmlFor="booking-phone">
+                    {th
+                      ? 'เบอร์โทรศัพท์ที่ติดต่อได้ *'
+                      : 'Phone Number *'}
+                  </label>
+
+                  <input
+                    id="booking-phone"
+                    type="tel"
+                    name="phone"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    required
+                    placeholder="08xxxxxxxx"
+                  />
+                </div>
+              </div>
+
+              <div className="bookingDateGrid">
+                <div className="bookingField">
+                  <div className="bookingFieldIcon" aria-hidden="true">
+                    <img src="/icons/calendar.svg" alt="" />
+                  </div>
+
+                  <div className="bookingFieldBody">
+                    <label htmlFor="booking-start">
+                      {th
+                        ? 'วันที่เข้าพัก *'
+                        : 'Start Date *'}
+                    </label>
+
+                    <input
+                      id="booking-start"
+                      type="date"
+                      name="start_date"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="bookingField">
+                  <div className="bookingFieldIcon" aria-hidden="true">
+                    <img src="/icons/calendar.svg" alt="" />
+                  </div>
+
+                  <div className="bookingFieldBody">
+                    <label htmlFor="booking-end">
+                      {th
+                        ? 'วันสิ้นสุดการพัก *'
+                        : 'End Date *'}
+                    </label>
+
+                    <input
+                      id="booking-end"
+                      type="date"
+                      name="end_date"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bookingField bookingFieldFull bookingMessageField">
+                <div className="bookingFieldIcon" aria-hidden="true">
+                  <img src="/icons/dhamma-book.svg" alt="" />
+                </div>
+
+                <div className="bookingFieldBody">
+                  <label htmlFor="booking-message">
+                    {th
+                      ? 'หมายเหตุ / จุดประสงค์การปฏิบัติธรรม'
+                      : 'Additional Notes / Purpose'}
+                  </label>
+
+                  <textarea
+                    id="booking-message"
+                    name="message"
+                    rows="4"
+                    placeholder={
+                      th
+                        ? 'เช่น ปฏิบัติธรรมส่วนตัว หรือมาเป็นคณะ...'
+                        : 'For example: personal retreat or group visit...'
+                    }
+                  ></textarea>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="primaryContactBtn bookingSubmitBtn"
+                disabled={loading}
               >
-                {lang === 'en'
-                  ? 'Additional Notes / Purpose'
-                  : 'หมายเหตุ / จุดประสงค์การปฏิบัติธรรม'}
-              </label>
+                <img
+                  src="/icons/lotus.svg"
+                  alt=""
+                  aria-hidden="true"
+                />
 
-              <textarea
-                name="message"
-                rows="3"
-                placeholder={
-                  lang === 'en'
-                    ? 'For example: personal retreat or group visit...'
-                    : 'เช่น ปฏิบัติธรรมส่วนตัว หรือมาเป็นคณะ...'
-                }
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border:
-                    '1px solid #ddd',
-                  borderRadius: '4px'
-                }}
-              ></textarea>
-            </div>
+                <span>
+                  {loading
+                    ? th
+                      ? 'กำลังส่งข้อมูล...'
+                      : 'Submitting...'
+                    : th
+                      ? 'ยืนยันการจองเข้าพัก'
+                      : 'Confirm Retreat Request'}
+                </span>
+              </button>
 
-            <button
-              type="submit"
-              className="primaryContactBtn"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px'
-              }}
-            >
-              {loading
-                ? lang === 'en'
-                  ? 'Submitting...'
-                  : 'กำลังส่งข้อมูล...'
-                : lang === 'en'
-                  ? 'Confirm Booking'
-                  : 'ยืนยันการจองเข้าพัก'}
-            </button>
-          </form>
+              <div className="bookingPrivacyNote">
+                <span aria-hidden="true">🔒</span>
+                <span>
+                  {th
+                    ? 'ข้อมูลของท่านจะใช้เพื่อการพิจารณาคำขอและการติดต่อเกี่ยวกับการเข้าพักเท่านั้น'
+                    : 'Your information will only be used to review and manage your monastery stay request.'}
+                </span>
+              </div>
+            </form>
+          </>
         )}
       </div>
     </div>
