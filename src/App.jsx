@@ -477,129 +477,136 @@ const handleLineLogin = () => {
     <div className="site">
 
       {/* HEADER */}
-      <header>
-
-        <div className="brand" onClick={() => goToPage('home')} style={{ cursor: 'pointer' }}>
-          <div className="dharma">☸</div>
-          <div>
-            <strong>Buddhist Park Monastery</strong>
-            <span>Wat Phuttha Uthayan Na Thoeng</span>
-          </div>
-        </div>
-
-        {/* ส่วนจัดการภาษา และแสดงสถานะผู้ใช้ถ้าล็อกอินแล้ว */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div className="language">
-            <button
-              className={lang === 'en' ? 'active' : ''}
-              onClick={() => setLang('en')}
-            >
-              EN
-            </button>
-            <span>/</span>
-            <button
-              className={lang === 'th' ? 'active' : ''}
-              onClick={() => setLang('th')}
-            >
-              TH
-            </button>
-          </div>
-
-          {user && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <span style={{ fontWeight: '500', color: '#06c755' }}>
+      <header className="siteHeader">
+        <div className="headerInner">
+          <button
+            type="button"
+            className="brand brandButton"
+            onClick={() => goToPage('home')}
+            aria-label={lang === 'en' ? 'Go to home page' : 'ไปหน้าแรก'}
+          >
+            <img
+              src="/logo-brown.png"
+              alt="Wat Phuttha Uthayan Nathoeng"
+              className="headerLogo"
+            />
+            <span className="brandText">
+              <strong>
                 {lang === 'en'
-                  ? (user.isAdmin ? 'Administrator' : 'Practitioner')
-                  : (user.isAdmin ? 'ผู้ดูแลระบบ' : 'โยมปฏิบัติ')}
+                  ? 'Buddhist Park Monastery'
+                  : 'วัดพุทธอุทยานนาเทิง'}
+              </strong>
+              <span>
+                {lang === 'en'
+                  ? 'Wat Phuttha Uthayan Na Thoeng'
+                  : 'BUDDHIST PARK MONASTERY OF NATHOENG'}
               </span>
+            </span>
+          </button>
 
-              {!user.isAdmin && (
-                <button
-                  onClick={() => goToPage('my-dashboard')}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid #c5a880',
-                    color: '#8f6a27',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '11px'
+          {/* Hamburger Menu Button */}
+          <button
+            className="menuToggleBtn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle Menu"
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
+
+          {/* Navigation */}
+          <nav className={`siteNav ${menuOpen ? 'navOpen' : ''}`}>
+            {t.nav
+              .filter((item) => item.href !== '#login-page' && item.href !== '#admin-dashboard')
+              .map((item) => (
+                <a
+                  href={item.href}
+                  key={item.href}
+                  onClick={(e) => {
+                    setMenuOpen(false)
+                    e.preventDefault()
+
+                    if (item.href === '#contact') {
+                      goToPage('contact-page')
+                    } else if (item.href === '#teachings') {
+                      goToPage('teachings-page')
+                    } else if (item.href === '#events') {
+                      goToPage('event-kathina')
+                    } else if (item.href === '#visit') {
+                      goToPage('visit-guide')
+                    } else {
+                      goToPage('home')
+                      setTimeout(() => {
+                        const el = document.querySelector(item.href)
+                        if (el) el.scrollIntoView({ behavior: 'smooth' })
+                      }, 100)
+                    }
                   }}
                 >
-                  {lang === 'en' ? 'My Account' : 'บัญชีของฉัน'}
-                </button>
-              )}
+                  {item.label}
+                </a>
+              ))}
+          </nav>
 
-              <button 
-                onClick={handleLogout}
-                style={{ background: '#f5f5f5', border: '1px solid #ddd', padding: '3px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
+          <div className="headerActions">
+            <div className="language" aria-label={lang === 'en' ? 'Language' : 'ภาษา'}>
+              <span className="languageIcon" aria-hidden="true">◎</span>
+              <button
+                className={lang === 'en' ? 'active' : ''}
+                onClick={() => setLang('en')}
               >
-                {lang === 'en' ? 'Logout' : 'ออก'}
+                EN
+              </button>
+              <span className="languageSlash">/</span>
+              <button
+                className={lang === 'th' ? 'active' : ''}
+                onClick={() => setLang('th')}
+              >
+                TH
               </button>
             </div>
-          )}
-        </div>
 
-        {/* Hamburger Menu Button */}
-        <button 
-          className="menuToggleBtn" 
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle Menu"
-        >
-          {menuOpen ? '✕' : '☰'}
-        </button>
-
-        {/* Navigation */}
-        <nav className={menuOpen ? 'navOpen' : ''}>
-          {t.nav.map((item) => {
-            const navItem =
-              item.href === '#login-page' && user
-                ? {
-                    ...item,
-                    label:
-                      lang === 'th'
-                        ? 'บัญชีของฉัน'
-                        : 'My Dashboard',
-                    href: '#my-dashboard'
-                  }
-                : item;
-
-            return (
-              <a 
-                href={navItem.href} 
-                key={navItem.href}
-                onClick={(e) => {
-                  setMenuOpen(false)
-                  e.preventDefault()
-                  if (navItem.href === '#contact') {
-                    goToPage('contact-page')
-                  } else if (navItem.href === '#teachings') {
-                    goToPage('teachings-page')
-                  } else if (navItem.href === '#events') {
-                    goToPage('event-kathina')
-                  } else if (navItem.href === '#visit') {
-                    goToPage('visit-guide')
-                  } else if (navItem.href === '#admin-dashboard') {
-                    goToPage('admin-dashboard')
-                  } else if (navItem.href === '#login-page') {
-                    goToPage('login-page')
-                  } else if (navItem.href === '#my-dashboard') {
-                    goToPage('my-dashboard')
-                  } else {
-                    goToPage('home')
-                    setTimeout(() => {
-                      const el = document.querySelector(navItem.href)
-                      if (el) el.scrollIntoView({ behavior: 'smooth' })
-                    }, 100)
-                  }
-                }}
+            {user?.isAdmin && (
+              <button
+                type="button"
+                className="headerAdminBtn"
+                onClick={() => goToPage('admin-dashboard')}
               >
-                {navItem.label}
-              </a>
-            );
-          })}
-        </nav>
+                {lang === 'en' ? 'Admin' : 'ผู้ดูแล'}
+              </button>
+            )}
 
+            {user ? (
+              <>
+                <button
+                  type="button"
+                  className="headerAccountBtn"
+                  onClick={() => goToPage(user.isAdmin ? 'admin-dashboard' : 'my-dashboard')}
+                >
+                  <span className="accountIcon" aria-hidden="true">♙</span>
+                  <span>{lang === 'en' ? 'My Account' : 'บัญชีของฉัน'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="headerLogoutBtn"
+                  onClick={handleLogout}
+                >
+                  {lang === 'en' ? 'Logout' : 'ออก'}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="headerAccountBtn"
+                onClick={() => goToPage('login-page')}
+              >
+                <span className="accountIcon" aria-hidden="true">♙</span>
+                <span>{lang === 'en' ? 'Login' : 'เข้าสู่ระบบ'}</span>
+              </button>
+            )}
+          </div>
+        </div>
       </header>
 
 
@@ -1064,39 +1071,47 @@ const handleLineLogin = () => {
       </main>
 
       {/* FOOTER */}
-      <footer style={{ background: '#1c1a17', color: '#fff', padding: '40px 20px', textAlign: 'center', borderTop: '1px solid #332f2a' }}>
-        <div className="footer-content" style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div className="dharma" style={{ fontSize: '24px', marginBottom: '10px', color: '#c5a880' }}>☸</div>
-          <strong style={{ fontSize: '18px', display: 'block', marginBottom: '5px' }}>
-            {lang === 'en' ? 'Buddhist Park Monastery' : 'วัดพุทธอุทยานนาเทิง'}
-          </strong>
-          <p style={{ color: '#aaa', fontSize: '14px', marginBottom: '20px' }}>{t.footerSubtitle}</p>
-          
-          <div className="footer-bottom-info" style={{ color: '#888', fontSize: '12px', lineHeight: '2', marginTop: '15px' }}>
-            <div>Buddhist Park Monastery of Nathoeng</div>
-            <div>Copyright © 2026 All Rights Reserved</div>
-            <div>Powered by Nathoeng Community Tech Team</div>
-            
-            <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'center', gap: '15px', alignItems: 'center' }}>
-              <button 
-                onClick={() => goToPage('privacy-policy')}
-                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
-                onMouseOver={(e) => e.target.style.color = '#c5a880'}
-                onMouseOut={(e) => e.target.style.color = '#888'}
-              >
-                {t.privacyLink}
-              </button>
-              <span>·</span>
-              <button 
-                onClick={() => goToPage('terms-page')}
-                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', padding: 0 }}
-                onMouseOver={(e) => e.target.style.color = '#c5a880'}
-                onMouseOut={(e) => e.target.style.color = '#888'}
-              >
-                {t.termsLink}
-              </button>
+      <footer className="siteFooter">
+        <div className="footerMain">
+          <div className="footerIdentity">
+            <img
+              src="/logo-white.png"
+              alt="Wat Phuttha Uthayan Nathoeng"
+              className="footerLogo"
+            />
+
+            <div className="footerTempleDetails">
+              <strong>
+                {lang === 'en'
+                  ? 'Buddhist Park Monastery of Nathoeng'
+                  : 'วัดพุทธอุทยานนาเทิง'}
+              </strong>
+
+              <div className="footerAddress">
+                {lang === 'en'
+                  ? '231 Moo 2, That Sub-district, Wanon Niwat District, Sakon Nakhon 47120, Thailand'
+                  : '231 บ้านตาลเดี่ยว หมู่ 2 ตำบลธาตุ อำเภอวานรนิวาส จังหวัดสกลนคร 47120'}
+              </div>
+
+              <div className="footerLine">LINE @nathoeng</div>
             </div>
           </div>
+
+          <div className="footerCredits">
+            <strong>Buddhist Park Monastery of Nathoeng</strong>
+            <div>Copyright © 2026 All Rights Reserved</div>
+            <div>Powered by Nathoeng Community Tech Team</div>
+          </div>
+        </div>
+
+        <div className="footerLegal">
+          <button type="button" onClick={() => goToPage('privacy-policy')}>
+            {t.privacyLink}
+          </button>
+          <span>·</span>
+          <button type="button" onClick={() => goToPage('terms-page')}>
+            {t.termsLink}
+          </button>
         </div>
       </footer>
 
