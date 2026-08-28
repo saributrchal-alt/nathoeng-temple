@@ -780,103 +780,133 @@ const handleLineLogin = () => {
           </>
         ) : currentPage === 'teachings-page' ? (
           /* ================= PAGE: TEACHINGS (หลวงปู่มั่น) ================= */
-          <div className="guidePage">
-            <div className="guideContainer">
+          <div className="guidePage templeEditorialPage">
+            <div className="guideContainer templeEditorialContainer teachingsEditorial">
               <button className="backButton" onClick={() => goToPage('home')}>
                 {content[lang].backHome}
               </button>
-              <span className="eyebrow">{lang === 'en' ? 'DHAMMA TEACHINGS' : 'พระธรรมคำสอนทรงคุณค่า'}</span>
-              <h1>{lang === 'en' ? 'Teachings of Venerable Luang Pu Mun' : 'คำสอน...หลวงปู่มั่น ภูริทัตโต'}</h1>
-              <p className="guideIntro">
-                {lang === 'en'
-                  ? 'Essential Dhamma teachings and contemplation guidelines from Venerable Luang Pu Mun Phuritatto.'
-                  : 'รวบรวมคติธรรมและโอวาทธรรมคำสอนอันทรงคุณค่ายิ่งขององค์หลวงปู่มั่น ภูริทัตโต พระอริยสงฆ์สายวัดป่ากรรมฐาน'}
-              </p>
-              <div className="guideImageFrame">
-                <img src="/images/93b4f839-927c-4ce7-8ea1-b8fd15651182.jpg" alt="หลวงปู่มั่น ภูริทัตโต" />
-                <span className="imageCaption">{lang === 'en' ? 'Venerable Luang Pu Mun' : 'องค์พระอาจารย์มั่น ภูริทัตตเถระ'}</span>
-              </div>
-              <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '1. Self-Reflection & Non-Judgment' : '1. การไม่ติเตียนผู้อื่น และการมองตนเอง'}</h3>
-                <p>
+
+              <div className="editorialHero">
+                <img src="/icons/dhamma-wheel.svg" alt="" className="editorialHeroIcon" aria-hidden="true" />
+                <span className="eyebrow">{lang === 'en' ? 'DHAMMA TEACHINGS' : 'พระธรรมคำสอนทรงคุณค่า'}</span>
+                <h1>{lang === 'en' ? 'Teachings of Venerable Luang Pu Mun' : 'คำสอน...หลวงปู่มั่น ภูริทัตโต'}</h1>
+                <p className="guideIntro">
                   {lang === 'en'
-                    ? 'Even if others are truly at fault, focusing on their faults only brings agitation to one’s own mind.'
-                    : 'ถึงเขาจะผิดจริงก็อย่าไปติเตียนเขา การไปนึกถึงความผิดของผู้อื่น มีแต่จะทำให้ใจตนเองขุ่นมัวและกระวนกระวาย'}
+                    ? 'Essential Dhamma teachings and contemplation guidelines from Venerable Luang Pu Mun Phuritatto.'
+                    : 'รวบรวมคติธรรมและโอวาทธรรมคำสอนอันทรงคุณค่ายิ่งขององค์หลวงปู่มั่น ภูริทัตโต พระอริยสงฆ์สายวัดป่ากรรมฐาน'}
                 </p>
               </div>
-              <div className="guideSectionBox">
-                <h3>{lang === 'en' ? '2. Core Principles' : '2. คติพจน์ล้ำค่าของหลวงปู่มั่น'}</h3>
-                <ul>
-                  <li><strong>{lang === 'en' ? 'Highest Good:' : 'ดีใดไม่มีโทษ:'}</strong> {lang === 'en' ? 'That which brings no blame is supreme goodness.' : 'ดีนั้นชื่อว่าดีเลิศ'}</li>
-                  <li><strong>{lang === 'en' ? 'Self-Realization:' : 'การได้ตนเอง:'}</strong> {lang === 'en' ? 'Gaining all worldly treasures is not as valuable as gaining oneself.' : 'ได้สมบัติทั้งปวงไม่ประเสริฐเท่าได้ตน'}</li>
-                </ul>
+
+              <div className="editorialPortraitFrame">
+                <img src="/images/93b4f839-927c-4ce7-8ea1-b8fd15651182.jpg" alt="หลวงปู่มั่น ภูริทัตโต" />
+                <div className="editorialImageMark">
+                  <img src="/icons/lotus.svg" alt="" aria-hidden="true" />
+                </div>
+                <span className="imageCaption">{lang === 'en' ? 'Venerable Luang Pu Mun' : 'องค์พระอาจารย์มั่น ภูริทัตตเถระ'}</span>
               </div>
-              <div className="guideContactBox">
-                <h3>{lang === 'en' ? 'Experience Meditation' : 'สัมผัสวิถีแห่งการปฏิบัติธรรม'}</h3>
+
+              <div className="editorialTeachingBlock">
+                <div className="editorialSectionIcon">
+                  <img src="/icons/meditation.svg" alt="" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3>{lang === 'en' ? '1. Self-Reflection & Non-Judgment' : '1. การไม่ติเตียนผู้อื่น และการมองตนเอง'}</h3>
+                  <p>
+                    {lang === 'en'
+                      ? 'Even if others are truly at fault, focusing on their faults only brings agitation to one’s own mind.'
+                      : 'ถึงเขาจะผิดจริงก็อย่าไปติเตียนเขา การไปนึกถึงความผิดของผู้อื่น มีแต่จะทำให้ใจตนเองขุ่นมัวและกระวนกระวาย'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="editorialTeachingBlock">
+                <div className="editorialSectionIcon">
+                  <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3>{lang === 'en' ? '2. Core Principles' : '2. คติพจน์ล้ำค่าของหลวงปู่มั่น'}</h3>
+                  <ul>
+                    <li><strong>{lang === 'en' ? 'Highest Good:' : 'ดีใดไม่มีโทษ:'}</strong> {lang === 'en' ? 'That which brings no blame is supreme goodness.' : 'ดีนั้นชื่อว่าดีเลิศ'}</li>
+                    <li><strong>{lang === 'en' ? 'Self-Realization:' : 'การได้ตนเอง:'}</strong> {lang === 'en' ? 'Gaining all worldly treasures is not as valuable as gaining oneself.' : 'ได้สมบัติทั้งปวงไม่ประเสริฐเท่าได้ตน'}</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="editorialCtaBox">
+                <img src="/icons/lotus.svg" alt="" className="editorialCtaIcon" aria-hidden="true" />
+                <h3>{lang === 'en' ? 'Begin the path of practice' : 'เริ่มต้นเส้นทางการปฏิบัติธรรม'}</h3>
+                <p>{lang === 'en' ? 'Read the monastery stay and practice guidelines before your visit.' : 'อ่านระเบียบการเข้าพักและแนวปฏิบัติสำหรับผู้มาปฏิบัติธรรม'}</p>
                 <button onClick={() => goToPage('visit-guide')} className="primaryContactBtn">
-                  {lang === 'en' ? 'View Guidelines →' : 'ดูข้อมูลการเข้าพักปฏิบัติธรรม →'}
+                  {lang === 'en' ? 'View Practice Guidelines →' : 'ดูข้อมูลการเข้าพักและปฏิบัติธรรม →'}
                 </button>
               </div>
             </div>
           </div>
         ) : currentPage === 'visit-guide' ? (
           /* ================= PAGE: VISIT & STAY GUIDE ================= */
-          <div className="guidePage">
-            <div className="guideContainer">
+          <div className="guidePage templeEditorialPage">
+            <div className="guideContainer templeEditorialContainer visitEditorial">
               <button className="backButton" onClick={() => goToPage('home')}>
                 {content[lang].backHome}
               </button>
-              <span className="eyebrow">{lang === 'en' ? 'VISIT & STAY GUIDELINES' : 'ระเบียบการและสถานที่พัก'}</span>
-              <h1>{lang === 'en' ? 'Monastery Stay' : 'ระเบียบการเข้าพักและบรรยากาศการปฏิบัติธรรม'}</h1>
-              <p className="guideIntro">
-                {lang === 'en' 
-                  ? 'A peaceful and supportive environment for practitioners. Please read our guidelines before booking your stay.' 
-                  : 'วัดพุทธอุทยานนาเทิง จัดเตรียมพื้นที่อันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างสงบเย็น กรุณาอ่านระเบียบปฏิบัติและทำความเข้าใจก่อนทำการจองเข้าพัก'}
-              </p>
-              
-              <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '1. Accommodation' : '1. ระเบียบการเข้าพักและข้อปฏิบัติทั่วไป'}</h3>
+
+              <div className="editorialHero">
+                <img src="/icons/lotus.svg" alt="" className="editorialHeroIcon" aria-hidden="true" />
+                <span className="eyebrow">{lang === 'en' ? 'VISIT & STAY GUIDELINES' : 'การเข้าพักและปฏิบัติธรรม'}</span>
+                <h1>{lang === 'en' ? 'Monastery Stay & Practice' : 'ระเบียบการเข้าพักและบรรยากาศการปฏิบัติธรรม'}</h1>
+                <p className="guideIntro">
+                  {lang === 'en'
+                    ? 'A peaceful and supportive environment for practitioners. Please read the guidelines before booking your stay.'
+                    : 'วัดพุทธอุทยานนาเทิงจัดเตรียมพื้นที่อันสัปปายะ เพื่อให้ผู้ปฏิบัติธรรมได้ใช้ชีวิตอย่างสงบเย็น กรุณาอ่านระเบียบปฏิบัติและทำความเข้าใจก่อนทำการจองเข้าพัก'}
+                </p>
+              </div>
+
+              <div className="visitRuleBlock">
+                <div className="visitRuleHeading">
+                  <img src="/icons/stay.svg" alt="" aria-hidden="true" />
+                  <h3>{lang === 'en' ? '1. Accommodation & General Conduct' : '1. ระเบียบการเข้าพักและข้อปฏิบัติทั่วไป'}</h3>
+                </div>
                 <p>
-                  {lang === 'en' 
-                    ? 'Simple and quiet accommodations are provided. Practitioners are expected to maintain silence, observe precepts, and participate in monastery chores.' 
+                  {lang === 'en'
+                    ? 'Simple and quiet accommodations are provided. Practitioners are expected to maintain silence, observe precepts, and participate in monastery chores.'
                     : 'ทางวัดจัดเตรียมอาคารที่พักและกุฏิสำหรับผู้ปฏิบัติธรรม ผู้เข้าพักทุกท่านต้องรักษาศีล สำรวมระวังในกายวาจาใจ และช่วยเหลืองานภายในวัดตามความเหมาะสม'}
                 </p>
-                <div className="guideImageFrame">
+                <div className="editorialWideImage">
                   <img src="/images/8301.jpg" alt="Accommodation" />
-                  <span className="imageCaption">{lang === 'en' ? 'Peaceful area' : 'บรรยากาศอาคารที่พักและธรรมชาติภายในวัด'}</span>
+                </div>
+                <div className="practiceValues">
+                  <div><img src="/icons/precepts.svg" alt="" /><span>{lang === 'en' ? 'Observe precepts' : 'รักษาศีลและความสำรวม'}</span></div>
+                  <div><img src="/icons/meditation.svg" alt="" /><span>{lang === 'en' ? 'Quiet practice' : 'ภาวนาอย่างสงบ'}</span></div>
+                  <div><img src="/icons/forest-path.svg" alt="" /><span>{lang === 'en' ? 'Respect the environment' : 'เคารพสถานที่และสิ่งแวดล้อม'}</span></div>
                 </div>
               </div>
 
-              <div className="guideContentBlock">
-                <h3>{lang === 'en' ? '2. Practice Atmosphere' : '2. บรรยากาศการปฏิบัติภาวนา'}</h3>
+              <div className="visitRuleBlock">
+                <div className="visitRuleHeading">
+                  <img src="/icons/meditation.svg" alt="" aria-hidden="true" />
+                  <h3>{lang === 'en' ? '2. Practice Atmosphere' : '2. บรรยากาศการปฏิบัติภาวนา'}</h3>
+                </div>
                 <p>
-                  {lang === 'en' 
-                    ? 'Dedicated space for meditation, walking meditation, and listening to Dhamma teachings.' 
+                  {lang === 'en'
+                    ? 'Dedicated space for meditation, walking meditation, and listening to Dhamma teachings.'
                     : 'พื้นที่โดยรอบมีความสงบเงียบ เหมาะแก่การเดินจงกรม นั่งสมาธิภาวนา และฟังธรรมเพื่อขัดเกลาจิตใจ'}
                 </p>
-                <div className="guideImageFrame">
+                <div className="editorialWideImage">
                   <img src="/images/559063252_835057645566604_50190803944267715_n.jpg" alt="Practice" />
-                  <span className="imageCaption">{lang === 'en' ? 'Meditation' : 'การเจริญสติและภาวนาในบรรยากาศร่มรื่น'}</span>
                 </div>
               </div>
 
-              <div className="guideContactBox" style={{ marginTop: '40px', background: '#f6f4ef', padding: '30px', textAlign: 'center', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem' }}>
-                  {lang === 'en' ? 'Ready to join us?' : 'อ่านระเบียบการและเข้าใจเรียบร้อยแล้วใช่หรือไม่?'}
-                </h3>
-                <p style={{ margin: 0, color: '#625d55' }}>
-                  {lang === 'en' 
-                    ? 'You can check the schedule or proceed to book your stay.' 
-                    : 'ท่านสามารถตรวจสอบตารางเวลาว่าง หรือกดปุ่มด้านล่างเพื่อกรอกฟอร์มจองเข้าพักได้เลยครับ'}
+              <div className="editorialCtaBox">
+                <img src="/icons/lotus.svg" alt="" className="editorialCtaIcon" aria-hidden="true" />
+                <h3>{lang === 'en' ? 'Ready to stay and practice?' : 'อ่านระเบียบและเข้าใจเรียบร้อยแล้วใช่หรือไม่?'}</h3>
+                <p>
+                  {lang === 'en'
+                    ? 'You can proceed directly to the monastery stay application.'
+                    : 'หากอ่านและเข้าใจระเบียบแล้ว สามารถกรอกคำขอเข้าพักปฏิบัติธรรมได้เลย'}
                 </p>
-                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <button onClick={() => goToPage('calendar-page')} className="secondaryContactBtn" style={{ padding: '12px 24px', fontSize: '14px', background: '#fff', border: '1px solid #9b7226', color: '#9b7226', borderRadius: '4px', cursor: 'pointer' }}>
-                    {lang === 'en' ? '📅 View Schedule' : '📅 ดูตารางการจอง'}
-                  </button>
-                  <button onClick={() => goToPage('booking-page')} className="primaryContactBtn" style={{ padding: '12px 24px', fontSize: '14px' }}>
-                    {lang === 'en' ? 'Proceed to Book Stay →' : 'กรอกฟอร์มจองเข้าปฏิบัติธรรม →'}
-                  </button>
-                </div>
+                <button onClick={() => goToPage('booking-page')} className="primaryContactBtn">
+                  {lang === 'en' ? 'Apply for a Retreat Stay →' : 'กรอกฟอร์มจองเข้าปฏิบัติธรรม →'}
+                </button>
               </div>
             </div>
           </div>
@@ -948,17 +978,21 @@ const handleLineLogin = () => {
           <LoginPage lang={lang} goToPage={goToPage} user={user} handleLineLogin={handleLineLogin} handleLogout={handleLogout} />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
-          <div className="guidePage">
-            <div className="guideContainer">
+          <div className="guidePage templeEditorialPage">
+            <div className="guideContainer templeEditorialContainer eventEditorial">
               <button className="backButton" onClick={() => goToPage('home')}>
                 {content[lang].backHome}
               </button>
-              <span className="eyebrow">{t.kathinaEyebrow}</span>
-              <h1>{t.kathinaTitle}</h1>
-              <p className="guideIntro">{t.kathinaIntro}</p>
+
+              <div className="editorialHero">
+                <img src="/icons/calendar.svg" alt="" className="editorialHeroIcon" aria-hidden="true" />
+                <span className="eyebrow">{t.kathinaEyebrow}</span>
+                <h1>{t.kathinaTitle}</h1>
+                <p className="guideIntro">{t.kathinaIntro}</p>
+              </div>
 
               {/* SHARE SECTION */}
-              <div className="shareSectionBox" style={{ background: '#fcfbfa', padding: '15px 20px', borderRadius: '4px', marginBottom: '25px', border: '1px solid #eeeae2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+              <div className="shareSectionBox editorialShareBox" style={{ background: '#fcfbfa', padding: '15px 20px', borderRadius: '4px', marginBottom: '25px', border: '1px solid #eeeae2', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                 <span style={{ fontSize: '0.95rem', fontWeight: '500', color: '#555' }}>{t.shareTitle}</span>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <a 
@@ -988,7 +1022,7 @@ const handleLineLogin = () => {
               </div>
 
               {/* ประธานกฐิน */}
-              <div className="guideSectionBox" style={{ background: '#fcfbfa', padding: '20px 25px', borderRadius: '4px', marginBottom: '30px', border: '1px solid #eeeae2', textAlign: 'center' }}>
+              <div className="guideSectionBox editorialHighlightBox" style={{ background: '#fcfbfa', padding: '20px 25px', borderRadius: '4px', marginBottom: '30px', border: '1px solid #eeeae2', textAlign: 'center' }}>
                 <h3 style={{ color: '#9b7226', marginBottom: '8px', fontSize: '1.2rem' }}>
                   {t.chairpersonTitle}
                 </h3>
@@ -998,7 +1032,7 @@ const handleLineLogin = () => {
               </div>
 
               {/* กำหนดการอย่างละเอียด */}
-              <div className="guideSectionBox" style={{ background: '#f6f4ef', padding: '25px 30px', borderRadius: '4px', marginBottom: '40px', border: '1px solid #eeeae2' }}>
+              <div className="guideSectionBox editorialScheduleBox" style={{ background: '#f6f4ef', padding: '25px 30px', borderRadius: '4px', marginBottom: '40px', border: '1px solid #eeeae2' }}>
                 <h3 style={{ borderBottom: '1px solid #dcd5c8', paddingBottom: '10px', marginTop: 0, color: '#302d29' }}>
                   {t.scheduleTitle}
                 </h3>
@@ -1057,7 +1091,11 @@ const handleLineLogin = () => {
                 </div>
               </div>
 
-              <div className="guideContactBox">
+              <div className="editorialBottomOrnament" aria-hidden="true">
+                <span></span><img src="/icons/lotus.svg" alt="" /><span></span>
+              </div>
+
+              <div className="guideContactBox editorialCtaBox">
                 <h3>{t.contactSectionTitle}</h3>
                 <p>{t.contactSectionText}</p>
                 <button onClick={() => goToPage('contact-page')} className="primaryContactBtn">
@@ -1069,31 +1107,77 @@ const handleLineLogin = () => {
           </div>
         ) : (
           /* ================= PAGE: CONTACT & MAP (Bilingual) ================= */
-          <div className="guidePage">
-            <div className="guideContainer">
+          <div className="guidePage templeEditorialPage">
+            <div className="guideContainer templeEditorialContainer contactEditorial">
               <button className="backButton" onClick={() => goToPage('home')}>
                 {t.backHome}
               </button>
-              <span className="eyebrow">{t.contactPageEyebrow}</span>
-              <h1>{t.contactPageTitle}</h1>
-              <p className="guideIntro">{t.contactPageAddress}</p>
-              
-              <div className="guideContentBlock">
-                <div className="mapContainer" style={{ width: '100%', height: '350px', borderRadius: '4px', overflow: 'hidden' }}>
-                  <iframe 
+
+              <div className="editorialHero">
+                <img src="/icons/location.svg" alt="" className="editorialHeroIcon" aria-hidden="true" />
+                <span className="eyebrow">{t.contactPageEyebrow}</span>
+                <h1>{t.contactPageTitle}</h1>
+                <p className="guideIntro">{t.contactPageAddress}</p>
+              </div>
+
+              <div className="contactMapCard">
+                <div className="mapContainer">
+                  <iframe
                     title="Map"
-                    src="https://maps.google.com/maps?q=17.621679,103.653418&z=15&output=embed" 
-                    width="100%" 
-                    height="100%" 
-                    style={{ border: 0 }} 
-                    allowFullScreen="" 
+                    src="https://maps.google.com/maps?q=17.621679,103.653418&z=15&output=embed"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen=""
                     loading="lazy"
                   ></iframe>
                 </div>
-                <div style={{ textAlign: 'center', marginTop: '15px' }}>
-                  <a href="https://maps.google.com/?q=17.621679,103.653418" target="_blank" rel="noopener noreferrer" className="primaryContactBtn" style={{ display: 'inline-block', textDecoration: 'none' }}>
-                    {t.mapOpenBtn}
-                  </a>
+                <a href="https://maps.google.com/?q=17.621679,103.653418" target="_blank" rel="noopener noreferrer" className="primaryContactBtn mapPrimaryBtn">
+                  {t.mapOpenBtn}
+                </a>
+              </div>
+
+              <div className="contactSectionTitle">
+                <img src="/icons/forest-path.svg" alt="" aria-hidden="true" />
+                <h2>{lang === 'en' ? 'Getting Here' : 'การเดินทาง'}</h2>
+              </div>
+
+              <div className="travelCards">
+                <div className="travelCard">
+                  <img src="/icons/car.svg" alt="" />
+                  <h3>{lang === 'en' ? 'Private Car' : 'รถยนต์ส่วนตัว'}</h3>
+                  <p>{lang === 'en' ? 'Use the monastery pin in Google Maps for the current route.' : 'ใช้หมุดตำแหน่งของวัดใน Google Maps เพื่อดูเส้นทางปัจจุบัน'}</p>
+                </div>
+                <div className="travelCard">
+                  <img src="/icons/bus.svg" alt="" />
+                  <h3>{lang === 'en' ? 'Public Transport' : 'รถโดยสาร'}</h3>
+                  <p>{lang === 'en' ? 'Check the latest local transport connection before your journey.' : 'กรุณาตรวจสอบเส้นทางรถโดยสารและการเดินทางต่อในพื้นที่ก่อนออกเดินทาง'}</p>
+                </div>
+                <div className="travelCard">
+                  <img src="/icons/location.svg" alt="" />
+                  <h3>{lang === 'en' ? 'GPS / Map' : 'GPS / แผนที่'}</h3>
+                  <p>{lang === 'en' ? 'Open the monastery location directly in Google Maps.' : 'เปิดตำแหน่ง “วัดพุทธอุทยานนาเทิง” ใน Google Maps ได้โดยตรง'}</p>
+                </div>
+              </div>
+
+              <div className="contactInfoPanel">
+                <div className="contactSectionTitle">
+                  <img src="/icons/contact.svg" alt="" aria-hidden="true" />
+                  <h2>{lang === 'en' ? 'Contact the Monastery' : 'ติดต่อวัด'}</h2>
+                </div>
+                <div className="contactInfoRow">
+                  <img src="/icons/location.svg" alt="" />
+                  <div>
+                    <strong>{lang === 'en' ? 'Address' : 'ที่อยู่'}</strong>
+                    <span>{t.contactPageAddress}</span>
+                  </div>
+                </div>
+                <div className="contactInfoRow">
+                  <img src="/icons/contact.svg" alt="" />
+                  <div>
+                    <strong>LINE</strong>
+                    <span>@nathoeng</span>
+                  </div>
                 </div>
               </div>
             </div>
