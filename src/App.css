@@ -270,9 +270,9 @@ img {
 
 .hero {
   width: 100%;
-  height: min(55vw, 500px);
-  min-height: 320px;
-  background-image: url('/images/487812128_689539323451771_1128859791552978185_n.jpg');
+  height: min(55vw, 620px);
+  min-height: 420px;
+  background-image: url('/images/hero-temple.png');
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -930,6 +930,12 @@ img {
 }
 
 @media (max-width: 768px) {
+  .hero {
+    height: 62vh;
+    min-height: 380px;
+    background-position: 58% center;
+  }
+
   .headerInner {
     width: 92%;
     min-height: 76px;
