@@ -10,79 +10,137 @@ export default function DonationPage({ lang, goToPage }) {
       back: '← Back to Home',
       eyebrow: 'SUPPORT THE MONASTERY',
       title: 'Make a Donation',
-      intro: 'Your generosity helps sustain the monastery, Dhamma activities, and community service. Anyone can contribute using the form below.',
+      intro:
+        'Your generosity helps sustain the monastery, Dhamma activities, and community service. Anyone can contribute using the form below.',
       nameLabel: 'Full Name *',
       namePlaceholder: 'Enter your full name',
-      idLabel: '13-Digit National ID / Taxpayer Identification Number *',
+      idLabel:
+        '13-Digit National ID / Taxpayer Identification Number *',
       idPlaceholder: 'Enter 13-digit ID or Tax ID',
       amountLabel: 'Donation Amount (THB) *',
       amountPlaceholder: 'e.g. 500',
       purposeLabel: 'Donation Purpose *',
       purposeOptions: [
-        { value: 'general', label: 'General Donation (ตามอัธยาศัยทางคณะสงฆ์)' },
-        { value: 'utilities', label: 'Electricity & Water Bills (ค่าน้ำ ค่าไฟวัด)' },
-        { value: 'development', label: 'Monastery Development & Maintenance (พัฒนาทำนุบำรุงเสนาสนะ)' },
-        { value: 'custom', label: 'Other / Specific Purpose (ระบุเอง)' }
+        {
+          value: 'general',
+          label:
+            'General Donation (ตามอัธยาศัยทางคณะสงฆ์)'
+        },
+        {
+          value: 'utilities',
+          label:
+            'Electricity & Water Bills (ค่าน้ำ ค่าไฟวัด)'
+        },
+        {
+          value: 'development',
+          label:
+            'Monastery Development & Maintenance (พัฒนาทำนุบำรุงเสนาสนะ)'
+        },
+        {
+          value: 'custom',
+          label:
+            'Other / Specific Purpose (ระบุเอง)'
+        }
       ],
       customPurposeLabel: 'Specify Purpose *',
       customPlaceholder: 'Please specify details',
-      taxReceiptLabel: 'Do you require a donation receipt (ใบอนุโมทนาบัตร)? *',
+      taxReceiptLabel:
+        'Do you require a donation receipt (ใบอนุโมทนาบัตร)? *',
       taxReceiptYes: 'Yes, I require a receipt',
       taxReceiptNo: 'No, I do not require a receipt',
       submitBtn: 'Confirm Donation',
-      viewListBtn: '📋 View All Donations (Admin)',
-      successTitle: '🙏 Sadhu! อนุโมทนากุศลจิต',
-      successMsg: 'May the Triple Gem bless you and your family with peace, health, and prosperity. Your donation details have been securely sent to the monastery.',
+      viewListBtn:
+        'View All Donations (Admin)',
+      successTitle: 'Sadhu! อนุโมทนากุศลจิต',
+      successMsg:
+        'May the Triple Gem bless you and your family with peace, health, and prosperity. Your donation details have been securely sent to the monastery.',
       okBtn: 'OK (Back to Home)'
     },
+
     th: {
       back: '← กลับสู่หน้าหลัก',
       eyebrow: 'ร่วมสนับสนุนวัด',
       title: 'บันทึกข้อมูลการบริจาค',
-      intro: 'การให้ของท่านช่วยเกื้อกูลวัด กิจกรรมเผยแผ่ธรรมะ และงานเพื่อชุมชน ผู้มีจิตศรัทธาทุกท่านสามารถกรอกข้อมูลร่วมบุญได้ผ่านแบบฟอร์มด้านล่างนี้',
+      intro:
+        'การให้ของท่านช่วยเกื้อกูลวัด กิจกรรมเผยแผ่ธรรมะ และงานเพื่อชุมชน ผู้มีจิตศรัทธาทุกท่านสามารถกรอกข้อมูลร่วมบุญได้ผ่านแบบฟอร์มด้านล่างนี้',
       nameLabel: 'ชื่อ - สกุล *',
-      namePlaceholder: 'ระบุชื่อและนามสกุลของคุณ',
-      idLabel: 'เลขประจำตัวประชาชน หรือเลขประจำตัวผู้เสียภาษี 13 หลัก *',
-      idPlaceholder: 'ระบุเลข 13 หลัก หรือเลขผู้เสียภาษี',
+      namePlaceholder:
+        'ระบุชื่อและนามสกุลของคุณ',
+      idLabel:
+        'เลขประจำตัวประชาชน หรือเลขประจำตัวผู้เสียภาษี 13 หลัก *',
+      idPlaceholder:
+        'ระบุเลข 13 หลัก หรือเลขผู้เสียภาษี',
       amountLabel: 'ยอดบริจาค (บาท) *',
       amountPlaceholder: 'เช่น 500',
-      purposeLabel: 'วัตถุประสงค์ในการบริจาค *',
+      purposeLabel:
+        'วัตถุประสงค์ในการบริจาค *',
       purposeOptions: [
-        { value: 'general', label: 'ทำบุญตามอัธยาศัยทางคณะสงฆ์' },
-        { value: 'utilities', label: 'เพื่อค่าน้ำ - ค่าไฟวัด' },
-        { value: 'development', label: 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ' },
-        { value: 'custom', label: 'เพื่อวัตถุประสงค์เฉพาะ (โปรดระบุ)' }
+        {
+          value: 'general',
+          label:
+            'ทำบุญตามอัธยาศัยทางคณะสงฆ์'
+        },
+        {
+          value: 'utilities',
+          label: 'เพื่อค่าน้ำ - ค่าไฟวัด'
+        },
+        {
+          value: 'development',
+          label:
+            'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
+        },
+        {
+          value: 'custom',
+          label:
+            'เพื่อวัตถุประสงค์เฉพาะ (โปรดระบุ)'
+        }
       ],
-      customPurposeLabel: 'ระบุวัตถุประสงค์ *',
-      customPlaceholder: 'ระบุรายละเอียดเพิ่มเติม',
-      taxReceiptLabel: 'ความต้องการใบอนุโมทนาบัตร *',
-      taxReceiptYes: 'ต้องการรับใบอนุโมทนาบัตร',
-      taxReceiptNo: 'ไม่ต้องการรับใบอนุโมทนาบัตร',
+      customPurposeLabel:
+        'ระบุวัตถุประสงค์ *',
+      customPlaceholder:
+        'ระบุรายละเอียดเพิ่มเติม',
+      taxReceiptLabel:
+        'ความต้องการใบอนุโมทนาบัตร *',
+      taxReceiptYes:
+        'ต้องการรับใบอนุโมทนาบัตร',
+      taxReceiptNo:
+        'ไม่ต้องการรับใบอนุโมทนาบัตร',
       submitBtn: 'ยืนยันการบริจาค',
-      viewListBtn: '📋 ตรวจสอบรายชื่อผู้บริจาคทั้งหมด (สำหรับเจ้าหน้าที่)',
-      successTitle: '🙏 สาธุ อนุโมทนาบุญด้วยครับ',
-      successMsg: 'ขออานุภาพแห่งคุณพระศรีรัตนตรัย จงดลบันดาลให้ท่านและครอบครัวประสบแต่ความสุข ความเจริญ มีอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติทุกประการ ทางวัดได้ทำการบันทึกและส่งข้อมูลให้ทางวัดเรียบร้อยแล้ว',
+      viewListBtn:
+        'ตรวจสอบรายชื่อผู้บริจาคทั้งหมด (สำหรับเจ้าหน้าที่)',
+      successTitle:
+        'สาธุ อนุโมทนาบุญด้วยครับ',
+      successMsg:
+        'ขออานุภาพแห่งคุณพระศรีรัตนตรัย จงดลบันดาลให้ท่านและครอบครัวประสบแต่ความสุข ความเจริญ มีอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติทุกประการ ทางวัดได้ทำการบันทึกและส่งข้อมูลให้ทางวัดเรียบร้อยแล้ว',
       okBtn: 'ตกลง (กลับสู่หน้าหลัก)'
     }
   }
 
   const t = text[lang]
 
-  const [formData, setFormData] = useState({
-    fullName: user ? user.name : '',
-    idNumber: '',
-    amount: '',
-    purpose: 'general',
-    customPurpose: '',
-    taxReceipt: ''
-  })
+  const [formData, setFormData] =
+    useState({
+      fullName: user ? user.name : '',
+      idNumber: '',
+      amount: '',
+      purpose: 'general',
+      customPurpose: '',
+      taxReceipt: ''
+    })
 
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isSubmitted, setIsSubmitted] =
+    useState(false)
+
+  const [loading, setLoading] =
+    useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }))
   }
 
   const handleSubmit = async (e) => {
@@ -90,30 +148,73 @@ export default function DonationPage({ lang, goToPage }) {
 
     // บังคับตรวจเช็ก LINE Login ป้องกัน Spam
     if (!user) {
-      alert(lang === 'th' ? 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำการบริจาค' : 'Please login with LINE before making a donation.')
+      alert(
+        lang === 'th'
+          ? 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำการบริจาค'
+          : 'Please login with LINE before making a donation.'
+      )
+
       goToPage('login-page')
       return
     }
 
-    if (!formData.fullName || !formData.idNumber || !formData.amount || !formData.taxReceipt) {
-      alert(lang === 'th' ? 'กรุณากรอกข้อมูลและเลือกรายการให้ครบถ้วน' : 'Please fill in all required fields and select receipt option.')
+    if (
+      !formData.fullName ||
+      !formData.idNumber ||
+      !formData.amount ||
+      !formData.taxReceipt
+    ) {
+      alert(
+        lang === 'th'
+          ? 'กรุณากรอกข้อมูลและเลือกรายการให้ครบถ้วน'
+          : 'Please fill in all required fields and select receipt option.'
+      )
+
       return
     }
 
     let selectedPurposeText = ''
-    if (formData.purpose === 'custom') {
-      selectedPurposeText = formData.customPurpose || (lang === 'th' ? 'ระบุเอง' : 'Custom')
+
+    if (
+      formData.purpose === 'custom'
+    ) {
+      selectedPurposeText =
+        formData.customPurpose ||
+        (lang === 'th'
+          ? 'ระบุเอง'
+          : 'Custom')
     } else {
-      const found = t.purposeOptions.find((opt) => opt.value === formData.purpose)
-      selectedPurposeText = found ? found.label : formData.purpose
+      const found =
+        t.purposeOptions.find(
+          (opt) =>
+            opt.value ===
+            formData.purpose
+        )
+
+      selectedPurposeText =
+        found
+          ? found.label
+          : formData.purpose
     }
 
     setLoading(true)
 
     const now = new Date()
-    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-      now.getDate()
-    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+    const formattedDate =
+      `${now.getFullYear()}-` +
+      `${String(
+        now.getMonth() + 1
+      ).padStart(2, '0')}-` +
+      `${String(
+        now.getDate()
+      ).padStart(2, '0')} ` +
+      `${String(
+        now.getHours()
+      ).padStart(2, '0')}:` +
+      `${String(
+        now.getMinutes()
+      ).padStart(2, '0')}`
 
     const newEntry = {
       date: formattedDate,
@@ -121,233 +222,468 @@ export default function DonationPage({ lang, goToPage }) {
       idNumber: formData.idNumber,
       purpose: selectedPurposeText,
       receipt: formData.taxReceipt,
-      amount: Number(formData.amount),
+      amount: Number(
+        formData.amount
+      ),
       lineUser: user.name
     }
 
     try {
-      const existing = JSON.parse(localStorage.getItem('nathoeng_donations') || '[]')
-      localStorage.setItem('nathoeng_donations', JSON.stringify([newEntry, ...existing]))
+      const existing =
+        JSON.parse(
+          localStorage.getItem(
+            'nathoeng_donations'
+          ) || '[]'
+        )
+
+      localStorage.setItem(
+        'nathoeng_donations',
+        JSON.stringify([
+          newEntry,
+          ...existing
+        ])
+      )
     } catch (err) {
       console.error(err)
     }
 
     try {
-      await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          access_key: "56740213-dd22-4925-948b-66e1bf47d993", 
-          subject: `New Donation from ${formData.fullName}`,
-          from_name: "Buddhist Park Monastery Website",
-          "Full Name": formData.fullName,
-          "LINE User": user.name,
-          "ID / Tax ID": formData.idNumber,
-          "Amount (THB)": formData.amount,
-          "Purpose": selectedPurposeText,
-          "Needs Tax Receipt": formData.taxReceipt === 'yes' ? 'Yes (ต้องการ)' : 'No (ไม่ต้องการ)'
-        }),
-      })
+      await fetch(
+        'https://api.web3forms.com/submit',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Accept:
+              'application/json'
+          },
+          body: JSON.stringify({
+            access_key:
+              '56740213-dd22-4925-948b-66e1bf47d993',
+            subject:
+              `New Donation from ${formData.fullName}`,
+            from_name:
+              'Buddhist Park Monastery Website',
+            'Full Name':
+              formData.fullName,
+            'LINE User':
+              user.name,
+            'ID / Tax ID':
+              formData.idNumber,
+            'Amount (THB)':
+              formData.amount,
+            Purpose:
+              selectedPurposeText,
+            'Needs Tax Receipt':
+              formData.taxReceipt ===
+              'yes'
+                ? 'Yes (ต้องการ)'
+                : 'No (ไม่ต้องการ)'
+          })
+        }
+      )
 
       setIsSubmitted(true)
     } catch (error) {
       console.error(error)
-      setIsSubmitted(true) 
+
+      setIsSubmitted(true)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleResetAndGoHome = () => {
-    setIsSubmitted(false)
-    setFormData({ fullName: user ? user.name : '', idNumber: '', amount: '', purpose: 'general', customPurpose: '', taxReceipt: '' })
-    goToPage('home')
-  }
+  const handleResetAndGoHome =
+    () => {
+      setIsSubmitted(false)
+
+      setFormData({
+        fullName: user
+          ? user.name
+          : '',
+        idNumber: '',
+        amount: '',
+        purpose: 'general',
+        customPurpose: '',
+        taxReceipt: ''
+      })
+
+      goToPage('home')
+    }
 
   return (
-    <div className="guidePage">
-      <div className="guideContainer" style={{ maxWidth: '900px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <button className="backButton" onClick={() => goToPage('home')} style={{ margin: 0 }}>
+    <div className="guidePage donationPage">
+      <div className="guideContainer donationContainer">
+
+        <div className="donationTopBar">
+          <button
+            className="backButton"
+            onClick={() =>
+              goToPage('home')
+            }
+          >
             {t.back}
           </button>
-          <button 
-            onClick={() => goToPage('donation-list')} 
-            style={{ background: 'none', border: '1px solid #dcd5c8', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', color: '#625d55' }}
+
+          <button
+            type="button"
+            onClick={() =>
+              goToPage(
+                'donation-list'
+              )
+            }
+            className="donationAdminLink"
           >
             {t.viewListBtn}
           </button>
         </div>
 
         {!user ? (
-          <div style={{ padding: '40px 20px', background: '#f6f4ef', borderRadius: '6px', textAlign: 'center', margin: '20px 0' }}>
-            <p style={{ marginBottom: '20px', color: '#625d55', fontSize: '15px', lineHeight: '1.7' }}>
-              {lang === 'th' 
-                ? 'เพื่อความโปร่งใส ป้องกันสแปม และบันทึกข้อมูลการบริจาคอย่างปลอดภัย กรุณาเข้าสู่ระบบด้วยบัญชี LINE ก่อนทำรายการ' 
+          <div className="donationLoginBox">
+            <img
+              src="/icons/donation.svg"
+              alt=""
+              className="donationBoxIcon"
+              aria-hidden="true"
+            />
+
+            <p>
+              {lang === 'th'
+                ? 'เพื่อความโปร่งใส ป้องกันสแปม และบันทึกข้อมูลการบริจาคอย่างปลอดภัย กรุณาเข้าสู่ระบบด้วยบัญชี LINE ก่อนทำรายการ'
                 : 'Security Check: Please login with your LINE account to proceed with your donation.'}
             </p>
-            <button 
-              onClick={() => goToPage('login-page')} 
-              className="primaryContactBtn"
-              style={{ background: '#06c755', padding: '12px 24px', fontSize: '15px', cursor: 'pointer' }}
+
+            <button
+              onClick={() =>
+                goToPage(
+                  'login-page'
+                )
+              }
+              className="primaryContactBtn donationLineBtn"
             >
-              {lang === 'th' ? '🟢 เข้าสู่ระบบด้วย LINE เพื่อร่วมทำบุญ' : 'Login with LINE to Donate'}
+              {lang === 'th'
+                ? 'เข้าสู่ระบบด้วย LINE เพื่อร่วมทำบุญ'
+                : 'Login with LINE to Donate'}
             </button>
           </div>
         ) : !isSubmitted ? (
           <>
-            <div style={{ marginBottom: '15px', padding: '12px', background: '#e8f5e9', borderRadius: '4px', fontSize: '14px', color: '#2e7d32' }}>
-              🟢 เข้าสู่ระบบแล้วในนาม: <strong>{user.name}</strong> (ยืนยันตัวตนผ่าน LINE เรียบร้อย)
+            <div className="donationHero">
+              <img
+                src="/icons/donation.svg"
+                alt=""
+                className="donationHeroIcon"
+                aria-hidden="true"
+              />
+
+              <span className="eyebrow">
+                {t.eyebrow}
+              </span>
+
+              <h1>
+                {t.title}
+              </h1>
+
+              <p>
+                {t.intro}
+              </p>
             </div>
 
-            <span className="eyebrow">{t.eyebrow}</span>
-            <h1>{t.title}</h1>
-            <p className="guideIntro">{t.intro}</p>
+            <div className="donationUserBadge">
+              <span className="donationStatusDot">
+                ✓
+              </span>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
+              <div>
+                <small>
+                  {lang === 'th'
+                    ? 'เข้าสู่ระบบแล้ว'
+                    : 'SIGNED IN'}
+                </small>
+
+                <strong>
+                  {user.name}
+                </strong>
+
+                <span>
+                  {lang === 'th'
+                    ? 'ยืนยันตัวตนผ่าน LINE เรียบร้อย'
+                    : 'Identity verified with LINE'}
+                </span>
+              </div>
+            </div>
+
+            <form
+              onSubmit={
+                handleSubmit
+              }
+              className="donationForm"
+            >
+
+              <div className="donationFormGrid">
+                <div className="donationField">
+                  <label
+                    htmlFor="donation-full-name"
+                  >
                     {t.nameLabel}
                   </label>
+
                   <input
+                    id="donation-full-name"
                     type="text"
                     name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder={t.namePlaceholder}
+                    value={
+                      formData.fullName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder={
+                      t.namePlaceholder
+                    }
+                    autoComplete="name"
                     required
-                    style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px' }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
+
+                <div className="donationField">
+                  <label
+                    htmlFor="donation-id-number"
+                  >
                     {t.idLabel}
                   </label>
+
                   <input
+                    id="donation-id-number"
                     type="text"
                     name="idNumber"
+                    inputMode="numeric"
                     maxLength="13"
-                    value={formData.idNumber}
-                    onChange={handleChange}
-                    placeholder={t.idPlaceholder}
+                    value={
+                      formData.idNumber
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder={
+                      t.idPlaceholder
+                    }
                     required
-                    style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px' }}
                   />
                 </div>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
+                <div className="donationField">
+                  <label
+                    htmlFor="donation-amount"
+                  >
                     {t.amountLabel}
                   </label>
+
                   <input
+                    id="donation-amount"
                     type="number"
                     name="amount"
+                    inputMode="decimal"
                     min="1"
-                    value={formData.amount}
-                    onChange={handleChange}
-                    placeholder={t.amountPlaceholder}
+                    value={
+                      formData.amount
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder={
+                      t.amountPlaceholder
+                    }
                     required
-                    style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px' }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
+
+                <div className="donationField">
+                  <label
+                    htmlFor="donation-purpose"
+                  >
                     {t.purposeLabel}
                   </label>
+
                   <select
+                    id="donation-purpose"
                     name="purpose"
-                    value={formData.purpose}
-                    onChange={handleChange}
-                    style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px', background: '#fff' }}
+                    value={
+                      formData.purpose
+                    }
+                    onChange={
+                      handleChange
+                    }
                   >
-                    {t.purposeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
+                    {t.purposeOptions.map(
+                      (opt) => (
+                        <option
+                          key={
+                            opt.value
+                          }
+                          value={
+                            opt.value
+                          }
+                        >
+                          {opt.label}
+                        </option>
+                      )
+                    )}
                   </select>
                 </div>
               </div>
 
-              {formData.purpose === 'custom' && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#302d29' }}>
+              {formData.purpose ===
+                'custom' && (
+                <div className="donationField donationFieldFull">
+                  <label
+                    htmlFor="donation-custom-purpose"
+                  >
                     {t.customPurposeLabel}
                   </label>
+
                   <input
+                    id="donation-custom-purpose"
                     type="text"
                     name="customPurpose"
-                    value={formData.customPurpose}
-                    onChange={handleChange}
-                    placeholder={t.customPlaceholder}
+                    value={
+                      formData.customPurpose
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder={
+                      t.customPlaceholder
+                    }
                     required
-                    style={{ width: '100%', padding: '12px', border: '1px solid #dcd5c8', borderRadius: '4px', fontSize: '14px' }}
                   />
                 </div>
               )}
 
-              <div style={{ background: '#fcfbfa', padding: '15px 20px', borderRadius: '4px', border: '1px solid #eeeae2' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '10px', color: '#302d29' }}>
+              <fieldset className="donationReceiptBox">
+                <legend>
                   {t.taxReceiptLabel}
-                </label>
-                <div style={{ display: 'flex', gap: '30px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#625d55' }}>
+                </legend>
+
+                <div className="donationReceiptOptions">
+
+                  <label className="donationRadioOption">
                     <input
                       type="radio"
                       name="taxReceipt"
                       value="yes"
-                      checked={formData.taxReceipt === 'yes'}
-                      onChange={handleChange}
+                      checked={
+                        formData.taxReceipt ===
+                        'yes'
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
                     />
-                    {t.taxReceiptYes}
+
+                    <span className="donationRadioText">
+                      <strong>
+                        {t.taxReceiptYes}
+                      </strong>
+
+                      <small>
+                        {lang === 'th'
+                          ? 'ทางวัดจะใช้ข้อมูลที่กรอกเพื่อจัดทำใบอนุโมทนาบัตร'
+                          : 'Your submitted information will be used to prepare the receipt.'}
+                      </small>
+                    </span>
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#625d55' }}>
+
+                  <label className="donationRadioOption">
                     <input
                       type="radio"
                       name="taxReceipt"
                       value="no"
-                      checked={formData.taxReceipt === 'no'}
-                      onChange={handleChange}
+                      checked={
+                        formData.taxReceipt ===
+                        'no'
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
                     />
-                    {t.taxReceiptNo}
-                  </label>
-                </div>
-              </div>
 
-              <div>
-                <button type="submit" disabled={loading} className="primaryContactBtn" style={{ padding: '14px 28px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                  {loading ? (lang === 'th' ? 'กำลังส่งข้อมูล...' : 'Submitting...') : `${t.submitBtn} →`}
+                    <span className="donationRadioText">
+                      <strong>
+                        {t.taxReceiptNo}
+                      </strong>
+
+                      <small>
+                        {lang === 'th'
+                          ? 'บันทึกข้อมูลการร่วมบุญโดยไม่ขอรับใบอนุโมทนาบัตร'
+                          : 'Record the donation without requesting a receipt.'}
+                      </small>
+                    </span>
+                  </label>
+
+                </div>
+              </fieldset>
+
+              <div className="donationSubmitWrap">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="primaryContactBtn donationSubmitBtn"
+                >
+                  {loading
+                    ? lang === 'th'
+                      ? 'กำลังส่งข้อมูล...'
+                      : 'Submitting...'
+                    : `${t.submitBtn} →`}
                 </button>
               </div>
+
             </form>
           </>
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fcfbfa', borderRadius: '6px', border: '1px solid #eeeae2' }}>
-            <div style={{ fontSize: '48px', marginBottom: '15px' }}>🙏</div>
-            <h2 style={{ color: '#9b7226', fontSize: '1.8rem', marginBottom: '20px', fontWeight: '500' }}>
+          <div className="donationSuccessBox">
+            <img
+              src="/icons/lotus.svg"
+              alt=""
+              className="donationSuccessIcon"
+              aria-hidden="true"
+            />
+
+            <h2>
               {t.successTitle}
             </h2>
-            <p style={{ fontSize: '16px', lineHeight: '1.8', color: '#625d55', maxWidth: '650px', margin: '0 auto 30px' }}>
+
+            <p>
               {t.successMsg}
             </p>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button onClick={handleResetAndGoHome} className="primaryContactBtn" style={{ padding: '12px 25px', fontSize: '15px', cursor: 'pointer' }}>
+
+            <div className="donationSuccessActions">
+              <button
+                onClick={
+                  handleResetAndGoHome
+                }
+                className="primaryContactBtn"
+              >
                 {t.okBtn}
               </button>
-              <button onClick={() => goToPage('donation-list')} style={{ background: '#fff', border: '1px solid #9b7226', color: '#9b7226', padding: '12px 25px', borderRadius: '4px', cursor: 'pointer', fontSize: '15px' }}>
+
+              <button
+                onClick={() =>
+                  goToPage(
+                    'donation-list'
+                  )
+                }
+                className="donationSecondaryBtn"
+              >
                 {t.viewListBtn}
               </button>
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

@@ -2099,3 +2099,464 @@ img {
     margin-left: 64px;
   }
 }
+
+
+/* =========================================
+   DONATION PAGE — RESPONSIVE FORM
+   ========================================= */
+
+.donationPage {
+  padding-top: 56px;
+  padding-bottom: 72px;
+}
+
+.donationContainer {
+  max-width: 920px;
+  border-radius: 10px;
+}
+
+.donationTopBar {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.donationTopBar .backButton {
+  margin-bottom: 0;
+}
+
+.donationAdminLink {
+  max-width: 320px;
+  padding: 8px 13px;
+  border: 1px solid #dfd4c5;
+  border-radius: 999px;
+  background: #fff;
+  color: #776b60;
+  font-size: 11px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.donationAdminLink:hover {
+  border-color: #c4a978;
+  color: #895f1f;
+}
+
+.donationHero {
+  max-width: 690px;
+  margin: 8px auto 34px;
+  text-align: center;
+}
+
+.donationHeroIcon {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 13px;
+  display: block;
+}
+
+.donationHero .eyebrow {
+  display: block;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.donationHero h1 {
+  margin: 0 0 14px;
+  color: #3d3025;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  line-height: 1.17;
+  font-weight: 500;
+}
+
+.donationHero p {
+  max-width: 650px;
+  margin: 0 auto;
+  color: #756a60;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.donationUserBadge {
+  max-width: 760px;
+  margin: 0 auto 30px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #dce7d8;
+  border-radius: 8px;
+  background: #f6faf4;
+}
+
+.donationStatusDot {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e5f1e1;
+  color: #4e7b48;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.donationUserBadge small,
+.donationUserBadge strong,
+.donationUserBadge span {
+  display: block;
+}
+
+.donationUserBadge small {
+  margin-bottom: 2px;
+  color: #6f9368;
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.donationUserBadge strong {
+  color: #3f473d;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.donationUserBadge span {
+  margin-top: 2px;
+  color: #71806d;
+  font-size: 11px;
+}
+
+.donationForm {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.donationFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 22px;
+}
+
+.donationField {
+  min-width: 0;
+}
+
+.donationFieldFull {
+  margin-top: 24px;
+}
+
+.donationField label {
+  min-height: 44px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-end;
+  color: #3d342c;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.donationField input,
+.donationField select {
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  padding: 0 14px;
+  border: 1px solid #dcd3c7;
+  border-radius: 7px;
+  outline: none;
+  background: #fff;
+  color: #3f3934;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.donationField input::placeholder {
+  color: #aaa198;
+}
+
+.donationField input:focus,
+.donationField select:focus {
+  border-color: #b9955b;
+  box-shadow: 0 0 0 3px rgba(169, 121, 41, .08);
+}
+
+.donationReceiptBox {
+  margin: 30px 0 0;
+  padding: 22px;
+  border: 1px solid #e4d8c8;
+  border-radius: 9px;
+  background: #fcfaf6;
+}
+
+.donationReceiptBox legend {
+  max-width: calc(100% - 20px);
+  padding: 0 8px;
+  color: #40362e;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.donationReceiptOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.donationRadioOption {
+  min-height: 96px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px solid #e7ddd0;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.donationRadioOption:has(input:checked) {
+  border-color: #b9955b;
+  background: #fffaf1;
+  box-shadow: 0 0 0 2px rgba(169, 121, 41, .06);
+}
+
+.donationRadioOption input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 2px 0 0;
+  accent-color: #9b7226;
+}
+
+.donationRadioText {
+  min-width: 0;
+}
+
+.donationRadioText strong,
+.donationRadioText small {
+  display: block;
+}
+
+.donationRadioText strong {
+  color: #453a31;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.donationRadioText small {
+  margin-top: 5px;
+  color: #8a7e73;
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+.donationSubmitWrap {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.donationSubmitBtn {
+  min-width: 250px;
+  min-height: 50px;
+  padding: 13px 30px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.donationSubmitBtn:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
+.donationLoginBox,
+.donationSuccessBox {
+  max-width: 700px;
+  margin: 32px auto 0;
+  padding: 38px 30px;
+  border: 1px solid #e5d9c8;
+  border-radius: 9px;
+  background: #faf7f0;
+  text-align: center;
+}
+
+.donationBoxIcon,
+.donationSuccessIcon {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 14px;
+  display: block;
+}
+
+.donationLoginBox p,
+.donationSuccessBox p {
+  max-width: 620px;
+  margin: 0 auto 22px;
+  color: #6e645b;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.donationLineBtn {
+  background: #06c755;
+}
+
+.donationSuccessBox h2 {
+  margin: 0 0 15px;
+  color: #8f6823;
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+
+.donationSuccessActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.donationSecondaryBtn {
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 1px solid #b89151;
+  border-radius: 4px;
+  background: #fff;
+  color: #8e651f;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Mobile donation form */
+@media (max-width: 680px) {
+  .donationPage {
+    padding: 24px 10px 42px;
+  }
+
+  .donationContainer {
+    width: 100%;
+    padding: 24px 18px 30px;
+    border-radius: 7px;
+  }
+
+  .donationTopBar {
+    margin-bottom: 18px;
+    align-items: flex-start;
+  }
+
+  .donationAdminLink {
+    display: none;
+  }
+
+  .donationHero {
+    margin-top: 4px;
+    margin-bottom: 26px;
+  }
+
+  .donationHeroIcon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 10px;
+  }
+
+  .donationHero h1 {
+    margin-bottom: 12px;
+    font-size: clamp(1.75rem, 8.5vw, 2.25rem);
+  }
+
+  .donationHero p {
+    font-size: 13px;
+    line-height: 1.75;
+    text-align: left;
+  }
+
+  .donationUserBadge {
+    margin-bottom: 26px;
+    padding: 14px 15px;
+  }
+
+  .donationFormGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .donationFieldFull {
+    margin-top: 20px;
+  }
+
+  .donationField label {
+    min-height: 0;
+    margin-bottom: 7px;
+    display: block;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .donationField input,
+  .donationField select {
+    height: 50px;
+    padding: 0 13px;
+    font-size: 16px;
+  }
+
+  .donationReceiptBox {
+    margin-top: 24px;
+    padding: 18px 14px 14px;
+  }
+
+  .donationReceiptBox legend {
+    font-size: 13px;
+  }
+
+  .donationReceiptOptions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .donationRadioOption {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .donationRadioText strong {
+    font-size: 13px;
+  }
+
+  .donationRadioText small {
+    font-size: 10.5px;
+  }
+
+  .donationSubmitWrap {
+    margin-top: 24px;
+  }
+
+  .donationSubmitBtn {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    font-size: 15px;
+  }
+
+  .donationLoginBox,
+  .donationSuccessBox {
+    margin-top: 20px;
+    padding: 30px 18px;
+  }
+
+  .donationSuccessActions {
+    flex-direction: column;
+  }
+
+  .donationSuccessActions > * {
+    width: 100%;
+  }
+}
+
