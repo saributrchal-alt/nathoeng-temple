@@ -854,7 +854,7 @@ function MyRetreatStay({
             <div className="helpBox">
               ⓘ{' '}
               {th
-                ? 'หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่ หรือไลน์วัดนาเทิง'
+                ? 'หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่ หรือไลน์วัดพุทธอุทยานนาเทิง'
                 : 'If you need assistance, please contact monastery staff or Nathoeng LINE.'}
             </div>
 
@@ -882,7 +882,7 @@ function MyRetreatStay({
                 </div>
 
                 <div className="footerSmall">
-                  226 บ้านตันเดี่ยว หมู่ 2
+                  231 บ้านตาลเดี่ยว หมู่ 2
                   ตำบลธาตุ อำเภอวานรนิวาส
                   จังหวัดสกลนคร 47120
                 </div>
