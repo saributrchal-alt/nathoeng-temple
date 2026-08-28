@@ -57,7 +57,7 @@ img {
   min-height: 88px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 292px minmax(0, 1fr) auto;
+  grid-template-columns: 330px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
 }
@@ -113,7 +113,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(9px, 1.05vw, 16px);
+  gap: clamp(8px, 0.9vw, 14px);
   min-width: 0;
   padding-right: 8px;
 }
