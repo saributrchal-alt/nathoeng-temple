@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useMemo,
   useState
 } from 'react';
 
@@ -14,13 +15,15 @@ function StepIcon({
   completed = false
 }) {
   const color =
-    active || completed
-      ? '#9b7226'
-      : '#a8a8a8';
+    completed
+      ? '#ffffff'
+      : active
+      ? '#ffffff'
+      : '#9a9288';
 
   const commonProps = {
-    width: 28,
-    height: 28,
+    width: 25,
+    height: 25,
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: color,
@@ -36,7 +39,6 @@ function StepIcon({
         <path d="M14 2v5h5" />
         <path d="M9 11h6" />
         <path d="M9 15h4" />
-        <path d="M15.5 17.5l3-3 2 2-3 3-3 .8z" />
       </svg>
     );
   }
@@ -121,6 +123,7 @@ function MyStaysPage({
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [copiedId, setCopiedId] = useState('');
 
   const th = lang === 'th';
 
@@ -151,8 +154,8 @@ function MyStaysPage({
       : 'Currently in retreat',
 
     checked_out: th
-      ? 'สิ้นสุดการเข้าพักแล้ว'
-      : 'Stay ended',
+      ? 'การเข้าพักปฏิบัติธรรมครบกำหนดแล้ว'
+      : 'Retreat stay period completed',
 
     completed: th
       ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์'
@@ -176,99 +179,72 @@ function MyStaysPage({
     {
       key: 'pending',
       icon: 'request',
-
-      th: 'ส่งคำขอเข้าพักปฏิบัติธรรมแล้ว',
-      en: 'Retreat stay request submitted',
-
+      th: 'คำขอเข้าพักปฏิบัติธรรม',
+      en: 'Retreat stay request',
       descriptionTh:
-        'คำขอของคุณถูกส่งเข้าสู่ระบบแล้ว',
-
+        'ระบบได้รับคำขอของท่านแล้ว',
       descriptionEn:
-        'Your retreat stay request has been submitted.'
+        'Your retreat stay request has been received.'
     },
-
     {
       key: 'approved',
       icon: 'approved',
-
-      th: 'อนุมัติการเข้าพักปฏิบัติธรรมแล้ว',
+      th: 'อนุมัติการเข้าพักปฏิบัติธรรม',
       en: 'Retreat stay approved',
-
       descriptionTh:
-        'คำขอได้รับการพิจารณาและอนุมัติแล้ว',
-
+        'เจ้าหน้าที่ได้อนุมัติคำขอของท่านแล้ว',
       descriptionEn:
-        'Your request has been reviewed and approved.'
+        'Monastery staff have approved your request.'
     },
-
     {
       key: 'checked_in',
       icon: 'register',
-
-      th: 'ลงทะเบียนเข้าพักแล้ว',
-      en: 'Stay registration completed',
-
+      th: 'ลงทะเบียน / เช็กอินที่จุดลงทะเบียน',
+      en: 'Registration / check-in',
       descriptionTh:
-        'คุณได้ลงทะเบียนและยืนยันการเข้าพักแล้ว',
-
+        'ลงทะเบียนเมื่อเดินทางมาถึงวัด',
       descriptionEn:
-        'Your arrival and stay registration have been confirmed.'
+        'Register when you arrive at the monastery.'
     },
-
     {
       key: 'accommodated',
       icon: 'accommodation',
-
-      th: 'จัดสถานที่พักเรียบร้อยแล้ว',
-      en: 'Accommodation assigned',
-
+      th: 'เข้าพักที่พักที่ได้รับมอบหมาย',
+      en: 'Assigned accommodation',
       descriptionTh:
-        'เจ้าหน้าที่ได้จัดเตรียมสถานที่พักให้คุณแล้ว',
-
+        'เข้าพักตามสถานที่ที่เจ้าหน้าที่มอบหมาย',
       descriptionEn:
-        'Monastery staff have prepared your accommodation.'
+        'Stay in the accommodation assigned by monastery staff.'
     },
-
     {
       key: 'in_retreat',
       icon: 'practice',
-
-      th: 'อยู่ระหว่างการเข้าพักปฏิบัติธรรม',
-      en: 'Currently staying for Dhamma practice',
-
+      th: 'ปฏิบัติธรรม',
+      en: 'Dhamma practice',
       descriptionTh:
-        'ขอให้การปฏิบัติธรรมของคุณเจริญงอกงาม',
-
+        'อยู่ระหว่างการเข้าพักและปฏิบัติธรรม',
       descriptionEn:
-        'May your Dhamma practice be peaceful and fruitful.'
+        'Your retreat stay and Dhamma practice are in progress.'
     },
-
     {
       key: 'checked_out',
       icon: 'checkout',
-
-      th: 'สิ้นสุดการเข้าพักแล้ว',
-      en: 'Stay ended',
-
+      th: 'การเข้าพักปฏิบัติธรรมครบกำหนดแล้ว',
+      en: 'Retreat stay period completed',
       descriptionTh:
-        'คุณได้ออกจากสถานที่พักและสิ้นสุดการเข้าพักแล้ว',
-
+        'การเข้าพักตามกำหนดสิ้นสุดแล้ว',
       descriptionEn:
-        'You have departed and your stay has ended.'
+        'Your scheduled retreat stay has ended.'
     },
-
     {
       key: 'completed',
       icon: 'complete',
-
-      th: 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์',
-      en: 'Retreat stay completed',
-
+      th: 'คืนกุญแจ / อุปกรณ์และเช็กเอาท์',
+      en: 'Return items & complete check-out',
       descriptionTh:
-        'การเข้าพักปฏิบัติธรรมของคุณเสร็จสมบูรณ์แล้ว',
-
+        'คืนกุญแจและอุปกรณ์เรียบร้อย การเข้าพักเสร็จสมบูรณ์',
       descriptionEn:
-        'Your retreat stay has been completed.'
+        'Keys and equipment have been returned and the stay is complete.'
     }
   ];
 
@@ -283,25 +259,86 @@ function MyStaysPage({
     completed: 6
   };
 
+
+  /* =========================================================
+     HELPERS
+     ========================================================= */
+
   function getRequestCode(booking) {
-    const raw =
+    return String(
       booking?.request_code ||
       booking?.booking_code ||
       booking?.id ||
-      '';
+      ''
+    );
+  }
 
-    if (!raw) {
+  function shortRequestCode(booking) {
+    const code = getRequestCode(booking);
+
+    if (!code) {
       return th
         ? 'ไม่พบรหัสคำขอ'
         : 'Request code unavailable';
     }
 
-    return String(raw);
+    if (code.length <= 18) {
+      return code;
+    }
+
+    return `${code.slice(0, 8)}…${code.slice(-5)}`;
+  }
+
+  function formatDate(dateValue) {
+    if (!dateValue) {
+      return th
+        ? 'ยังไม่ระบุ'
+        : 'Not set';
+    }
+
+    const date = new Date(
+      `${dateValue}T00:00:00`
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return dateValue;
+    }
+
+    return new Intl.DateTimeFormat(
+      th ? 'th-TH' : 'en-GB',
+      {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }
+    ).format(date);
+  }
+
+  async function copyRequestCode(booking) {
+    const code = getRequestCode(booking);
+
+    if (!code) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedId(booking.id);
+
+      window.setTimeout(() => {
+        setCopiedId('');
+      }, 1600);
+    } catch (err) {
+      console.error(
+        'Unable to copy request code:',
+        err
+      );
+    }
   }
 
 
   /* =========================================================
-     LOAD BOOKINGS
+     LOAD BOOKINGS — ALWAYS FRESH
      ========================================================= */
 
   useEffect(() => {
@@ -312,12 +349,19 @@ function MyStaysPage({
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (
+        document.visibilityState ===
+        'visible'
+      ) {
         loadBookings(false);
       }
     };
 
-    window.addEventListener('focus', handleFocus);
+    window.addEventListener(
+      'focus',
+      handleFocus
+    );
+
     document.addEventListener(
       'visibilitychange',
       handleVisibilityChange
@@ -328,6 +372,7 @@ function MyStaysPage({
         'focus',
         handleFocus
       );
+
       document.removeEventListener(
         'visibilitychange',
         handleVisibilityChange
@@ -336,7 +381,9 @@ function MyStaysPage({
   }, []);
 
 
-  async function loadBookings(showLoading = true) {
+  async function loadBookings(
+    showLoading = true
+  ) {
     if (showLoading) {
       setLoading(true);
     }
@@ -345,20 +392,26 @@ function MyStaysPage({
 
     try {
       const response = await fetch(
-        '/api/my-bookings?ts=' + Date.now(),
+        '/api/my-bookings?ts=' +
+          Date.now(),
         {
           method: 'GET',
           credentials: 'include',
           cache: 'no-store',
           headers: {
-            'Cache-Control': 'no-cache'
+            'Cache-Control':
+              'no-cache'
           }
         }
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
-      if (!response.ok || !data.success) {
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         throw new Error(
           data.message ||
           'Unable to load bookings'
@@ -370,7 +423,6 @@ function MyStaysPage({
           ? data.bookings
           : []
       );
-
     } catch (err) {
       console.error(err);
 
@@ -379,7 +431,6 @@ function MyStaysPage({
           ? 'ไม่สามารถโหลดข้อมูลการเข้าพักปฏิบัติธรรมได้'
           : 'Unable to load your retreat stays'
       );
-
     } finally {
       setLoading(false);
     }
@@ -398,327 +449,183 @@ function MyStaysPage({
       booking.status === 'rejected' ||
       booking.status === 'cancelled';
 
+    if (stopped) {
+      return (
+        <div className="stayTracking">
+          <div className="stayTrackingTitle">
+            {th
+              ? 'สถานะการเข้าพักปฏิบัติธรรม'
+              : 'RETREAT STAY STATUS'}
+          </div>
+
+          <div className="stayStoppedBox">
+            {statusText[booking.status]}
+          </div>
+        </div>
+      );
+    }
 
     return (
-      <div
-        style={{
-          marginTop: '28px',
-          paddingTop: '24px',
-          borderTop: '1px solid #eee'
-        }}
-      >
-
-        <div
-          style={{
-            color: '#a87518',
-            fontSize: '13px',
-            letterSpacing: '1.5px',
-            marginBottom: '28px'
-          }}
-        >
+      <div className="stayTracking">
+        <div className="stayTrackingTitle">
           {th
-            ? 'ความคืบหน้าการเข้าพักปฏิบัติธรรม'
+            ? 'สถานะการเข้าพักปฏิบัติธรรม'
             : 'RETREAT STAY PROGRESS'}
         </div>
 
+        <div className="stayTimeline">
+          {trackingSteps.map(
+            (step, index) => {
+              const completed =
+                index < currentIndex ||
+                (
+                  booking.status ===
+                    'completed' &&
+                  index === currentIndex
+                );
 
-        {stopped ? (
+              const current =
+                index === currentIndex &&
+                booking.status !==
+                  'completed';
 
-          <div
-            style={{
-              padding: '16px 18px',
-              background: '#faf1ef',
-              borderLeft: '3px solid #a24a3a'
-            }}
-          >
-            <strong>
-              {statusText[booking.status]}
-            </strong>
-          </div>
+              const reached =
+                index <= currentIndex;
 
-        ) : (
+              const future =
+                index > currentIndex;
 
-          <div
-            style={{
-              position: 'relative'
-            }}
-          >
+              const last =
+                index ===
+                trackingSteps.length - 1;
 
-            {trackingSteps.map(
-              (step, index) => {
-
-                const completed =
-                  index < currentIndex ||
-                  (
-                    booking.status === 'completed' &&
-                    index === currentIndex
-                  );
-
-                const current =
-                  index === currentIndex;
-
-                const reached =
-                  index <= currentIndex;
-
-                const last =
-                  index ===
-                  trackingSteps.length - 1;
-
-
-                return (
-                  <div
-                    key={step.key}
-                    style={{
-                      display: 'flex',
-                      position: 'relative',
-                      minHeight: last
-                        ? '92px'
-                        : '116px'
-                    }}
-                  >
-
-                    {/* LEFT TIMELINE */}
-
-                    <div
-                      style={{
-                        width: '28px',
-                        position: 'relative',
-                        flexShrink: 0
-                      }}
-                    >
-
-                      <div
-                        style={{
-                          width: current
-                            ? '15px'
-                            : '12px',
-
-                          height: current
-                            ? '15px'
-                            : '12px',
-
-                          borderRadius: '50%',
-
-                          background:
-                            reached
-                              ? '#9b7226'
-                              : '#fff',
-
-                          border:
-                            reached
-                              ? '2px solid #9b7226'
-                              : '2px solid #d7d0c5',
-
-                          position: 'absolute',
-
-                          top: '27px',
-
-                          left: current
-                            ? '4px'
-                            : '5px',
-
-                          zIndex: 3
-                        }}
-                      />
-
-
-                      {!last && (
-                        <div
-                          style={{
-                            position: 'absolute',
-
-                            top: '40px',
-
-                            left: '11px',
-
-                            width: '2px',
-
-                            bottom: '-4px',
-
-                            background:
-                              index < currentIndex
-                                ? '#b89a61'
-                                : '#e2ddd4',
-
-                            zIndex: 1
-                          }}
-                        />
+              return (
+                <div
+                  key={step.key}
+                  className={[
+                    'stayStep',
+                    completed
+                      ? 'isCompleted'
+                      : '',
+                    current
+                      ? 'isCurrent'
+                      : '',
+                    future
+                      ? 'isFuture'
+                      : ''
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <div className="stayStepRail">
+                    <div className="stayStepCircle">
+                      {completed ? (
+                        <span className="stayCheck">
+                          ✓
+                        </span>
+                      ) : current ? (
+                        <span className="stayStepNumber">
+                          {index + 1}
+                        </span>
+                      ) : (
+                        <span className="stayStepNumber">
+                          {index + 1}
+                        </span>
                       )}
-
                     </div>
 
-
-                    {/* ICON */}
-
-                    <div
-                      style={{
-                        width: '70px',
-                        flexShrink: 0
-                      }}
-                    >
-
+                    {!last && (
                       <div
-                        style={{
-                          width: current
-                            ? '58px'
-                            : '54px',
+                        className={
+                          reached &&
+                          index <
+                            currentIndex
+                            ? 'stayStepLine reached'
+                            : 'stayStepLine'
+                        }
+                      />
+                    )}
+                  </div>
 
-                          height: current
-                            ? '58px'
-                            : '54px',
-
-                          borderRadius: '50%',
-
-                          display: 'flex',
-
-                          alignItems: 'center',
-
-                          justifyContent: 'center',
-
-                          background:
-                            reached
-                              ? '#eef6ed'
-                              : '#f5f5f3',
-
-                          border:
-                            current
-                              ? '2px solid #d8c49a'
-                              : '1px solid transparent'
-                        }}
-                      >
-
-                        <StepIcon
-                          type={step.icon}
-                          active={current}
-                          completed={completed}
-                        />
-
-                      </div>
-
+                  <div className="stayStepContent">
+                    <div className="stayStepIcon">
+                      <StepIcon
+                        type={step.icon}
+                        active={current}
+                        completed={completed}
+                      />
                     </div>
 
-
-                    {/* STEP TEXT */}
-
-                    <div
-                      style={{
-                        paddingTop: '5px',
-                        paddingBottom: '25px'
-                      }}
-                    >
-
-                      <div
-                        style={{
-                          fontWeight:
-                            current
-                              ? '700'
-                              : reached
-                              ? '600'
-                              : '500',
-
-                          color:
-                            reached
-                              ? '#302d29'
-                              : '#999',
-
-                          fontSize: '15px',
-
-                          lineHeight: '1.5'
-                        }}
-                      >
+                    <div className="stayStepText">
+                      <div className="stayStepHeading">
+                        <span className="stayStepIndexText">
+                          {index + 1}.
+                        </span>{' '}
                         {th
                           ? step.th
                           : step.en}
                       </div>
 
-
-                      {current && (
-                        <div
-                          style={{
-                            color: '#9b7226',
-                            fontSize: '13px',
-                            marginTop: '4px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {th
-                            ? 'สถานะปัจจุบัน'
-                            : 'Current status'}
-                        </div>
-                      )}
-
-
-                      <div
-                        style={{
-                          fontSize: '13px',
-
-                          color:
-                            reached
-                              ? '#777'
-                              : '#aaa',
-
-                          marginTop: '6px',
-
-                          lineHeight: '1.5'
-                        }}
-                      >
+                      <div className="stayStepDescription">
                         {th
                           ? step.descriptionTh
                           : step.descriptionEn}
                       </div>
 
+                      <div
+                        className={[
+                          'stayStepState',
+                          completed
+                            ? 'done'
+                            : current
+                            ? 'waiting'
+                            : 'future'
+                        ].join(' ')}
+                      >
+                        {completed
+                          ? th
+                            ? '✓ เสร็จสิ้น'
+                            : '✓ Completed'
+                          : current
+                          ? th
+                            ? '◉ รอดำเนินการ'
+                            : '◉ In progress'
+                          : th
+                          ? '• รอดำเนินการ'
+                          : '• Upcoming'}
+                      </div>
 
-                      {step.key === 'approved' &&
-                        booking.status === 'approved' && (
-
+                      {/* QR BUTTON — preserve existing flow:
+                          show only when the current booking status is approved */}
+                      {step.key ===
+                        'checked_in' &&
+                        booking.status ===
+                          'approved' && (
                           <button
+                            type="button"
                             onClick={() =>
-                              goToPage('checkin-page')
+                              goToPage(
+                                'checkin-page'
+                              )
                             }
-                            style={{
-                              marginTop: '14px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '9px',
-                              background: '#a87518',
-                              color: '#fff',
-                              border: '1px solid #a87518',
-                              padding: '10px 16px',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '14px',
-                              fontWeight: '600',
-                              lineHeight: '1.3',
-                              boxShadow:
-                                '0 2px 6px rgba(0,0,0,0.05)'
-                            }}
+                            className="stayQrButton"
                           >
-                            <span
-                              style={{
-                                fontSize: '18px',
-                                lineHeight: 1
-                              }}
-                            >
+                            <span aria-hidden="true">
                               ▦
                             </span>
 
                             {th
-                              ? 'ลงทะเบียนเข้าพัก / สแกน QR'
-                              : 'CHECK IN / SCAN QR'}
+                              ? 'สแกน QR Code'
+                              : 'SCAN QR CODE'}
                           </button>
-
                         )}
-
                     </div>
-
                   </div>
-                );
-              }
-            )}
-
-          </div>
-        )}
-
+                </div>
+              );
+            }
+          )}
+        </div>
       </div>
     );
   }
@@ -729,15 +636,523 @@ function MyStaysPage({
      ========================================================= */
 
   return (
-    <div className="guidePage">
+    <div className="guidePage myStaysPage">
+      <style>{`
+        .myStaysPage {
+          padding: 48px 18px 76px;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(169,121,41,.05), transparent 32%),
+            #faf8f3;
+        }
 
-      <div
-        className="guideContainer"
-        style={{
-          maxWidth: '1000px'
-        }}
-      >
+        .myStaysContainer {
+          max-width: 1040px !important;
+          padding: 42px 48px 52px !important;
+          border: 1px solid #e8dece;
+          border-radius: 10px;
+          background: #fffefb;
+          box-shadow: 0 14px 40px rgba(70,48,26,.045);
+        }
 
+        .myStaysHero {
+          margin: 24px auto 34px;
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 24px;
+          align-items: end;
+        }
+
+        .myStaysHeroIcon {
+          width: 38px;
+          height: 38px;
+          margin-bottom: 10px;
+        }
+
+        .myStaysEyebrow {
+          margin-bottom: 10px;
+          color: #a57929;
+          font-size: 11px;
+          letter-spacing: .18em;
+          text-transform: uppercase;
+        }
+
+        .myStaysHero h1 {
+          max-width: 700px;
+          margin: 0 0 10px;
+          color: #3f3126;
+          font-size: clamp(2rem, 4vw, 3rem);
+          line-height: 1.16;
+          font-weight: 500;
+          letter-spacing: -.02em;
+        }
+
+        .myStaysHero p {
+          max-width: 680px;
+          margin: 0;
+          color: #756a60;
+          font-size: 14px;
+          line-height: 1.8;
+        }
+
+        .stayRefreshBtn {
+          min-height: 42px;
+          padding: 10px 16px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          border: 1px solid #d8c49a;
+          border-radius: 999px;
+          background: #fff;
+          color: #8f6a27;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .stayRefreshBtn:disabled {
+          opacity: .6;
+          cursor: wait;
+        }
+
+        .stayEmpty,
+        .stayError {
+          padding: 34px 24px;
+          border: 1px solid #e6dccd;
+          border-radius: 9px;
+          background: #fffdfa;
+          text-align: center;
+        }
+
+        .stayError {
+          color: #9b4237;
+          background: #fff7f5;
+        }
+
+        .stayRequestCard {
+          margin-bottom: 26px;
+          padding: 26px;
+          overflow: hidden;
+          border: 1px solid #e4d8c6;
+          border-radius: 12px;
+          background:
+            linear-gradient(180deg, #fffefb 0%, #fffdfa 100%);
+          box-shadow: 0 10px 28px rgba(62,42,23,.045);
+        }
+
+        .stayCardTop {
+          display: grid;
+          grid-template-columns: minmax(0,1fr) auto;
+          gap: 18px;
+          align-items: start;
+        }
+
+        .stayName {
+          margin: 0 0 8px;
+          color: #332a23;
+          font-size: 20px;
+          font-weight: 600;
+        }
+
+        .stayRequestCodeRow {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          color: #98702b;
+          font-size: 12px;
+        }
+
+        .stayRequestCode {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          letter-spacing: .02em;
+        }
+
+        .stayCopyBtn {
+          padding: 3px 8px;
+          border: 1px solid #dfcfb4;
+          border-radius: 999px;
+          background: #fffaf0;
+          color: #8c6425;
+          font-family: inherit;
+          font-size: 10px;
+          cursor: pointer;
+        }
+
+        .stayDates {
+          margin-top: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #5f5851;
+          font-size: 14px;
+        }
+
+        .stayDates img {
+          width: 20px;
+          height: 20px;
+        }
+
+        .stayStatusBadge {
+          max-width: 290px;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: #eef7ed;
+          color: #32723b;
+          font-size: 12px;
+          font-weight: 600;
+          line-height: 1.45;
+          text-align: center;
+        }
+
+        .stayStatusBadge.stopped {
+          background: #fff0ee;
+          color: #af4037;
+        }
+
+        .stayMetaGrid {
+          margin-top: 22px;
+          padding-top: 20px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          border-top: 1px solid #eee5da;
+        }
+
+        .stayMetaItem {
+          min-width: 0;
+          padding: 16px;
+          display: grid;
+          grid-template-columns: 36px 1fr;
+          gap: 11px;
+          align-items: start;
+          border: 1px solid #ebe2d6;
+          border-radius: 9px;
+          background: #fffdf9;
+        }
+
+        .stayMetaIcon {
+          width: 34px;
+          height: 34px;
+          padding: 7px;
+          border: 1px solid #e2d3ba;
+          border-radius: 50%;
+          background: #fff8ec;
+        }
+
+        .stayMetaLabel {
+          display: block;
+          margin-bottom: 4px;
+          color: #a57929;
+          font-size: 9px;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+        }
+
+        .stayMetaValue {
+          color: #4a4037;
+          font-size: 13px;
+          line-height: 1.6;
+          word-break: break-word;
+        }
+
+        .stayCompletedMessage {
+          margin-top: 18px;
+          padding: 16px 18px;
+          border: 1px solid #d9e7d5;
+          border-radius: 9px;
+          background: #f3f9f1;
+          color: #39733f;
+          font-size: 13px;
+          line-height: 1.7;
+        }
+
+        .stayTracking {
+          margin-top: 26px;
+          padding-top: 22px;
+          border-top: 1px solid #eee5da;
+        }
+
+        .stayTrackingTitle {
+          margin-bottom: 22px;
+          color: #3f332a;
+          font-size: 17px;
+          font-weight: 600;
+        }
+
+        .stayTimeline {
+          position: relative;
+        }
+
+        .stayStep {
+          position: relative;
+          display: grid;
+          grid-template-columns: 38px minmax(0,1fr);
+          min-height: 104px;
+        }
+
+        .stayStepRail {
+          position: relative;
+        }
+
+        .stayStepCircle {
+          position: absolute;
+          z-index: 3;
+          top: 4px;
+          left: 0;
+          width: 34px;
+          height: 34px;
+          display: grid;
+          place-items: center;
+          border: 2px solid #d9d5ce;
+          border-radius: 50%;
+          background: #f3f2ef;
+          color: #8e8a84;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .stayStep.isCompleted .stayStepCircle {
+          border-color: #24a148;
+          background: #24a148;
+          color: #fff;
+        }
+
+        .stayStep.isCurrent .stayStepCircle {
+          border-color: #c88a15;
+          background: #c88a15;
+          color: #fff;
+        }
+
+        .stayStepLine {
+          position: absolute;
+          z-index: 1;
+          top: 38px;
+          left: 16px;
+          width: 2px;
+          bottom: 0;
+          background: #dfddd8;
+        }
+
+        .stayStepLine.reached {
+          background: #91c99f;
+        }
+
+        .stayStepContent {
+          padding: 0 0 22px 18px;
+          display: grid;
+          grid-template-columns: 44px minmax(0,1fr);
+          gap: 13px;
+        }
+
+        .stayStepIcon {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border: 1px solid #ded8cf;
+          border-radius: 50%;
+          background: #f4f2ef;
+        }
+
+        .stayStep.isCompleted .stayStepIcon {
+          border-color: #24a148;
+          background: #24a148;
+        }
+
+        .stayStep.isCurrent .stayStepIcon {
+          border-color: #c88a15;
+          background: #c88a15;
+        }
+
+        .stayStepHeading {
+          color: #342d27;
+          font-size: 15px;
+          font-weight: 600;
+          line-height: 1.5;
+        }
+
+        .stayStep.isFuture .stayStepHeading {
+          color: #8d8984;
+        }
+
+        .stayStepDescription {
+          margin-top: 4px;
+          color: #777069;
+          font-size: 12.5px;
+          line-height: 1.65;
+        }
+
+        .stayStepState {
+          width: fit-content;
+          margin-top: 9px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .stayStepState.done {
+          background: #e8f6e9;
+          color: #2f8a42;
+        }
+
+        .stayStepState.waiting {
+          background: #fff1cf;
+          color: #9a6812;
+        }
+
+        .stayStepState.future {
+          background: #f0efed;
+          color: #98938d;
+        }
+
+        .stayQrButton {
+          width: min(100%, 420px);
+          min-height: 48px;
+          margin-top: 12px;
+          padding: 12px 18px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          border: 1px solid #b4780b;
+          border-radius: 7px;
+          background: #b97a06;
+          color: #fff;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .stayStoppedBox {
+          padding: 16px 18px;
+          border-left: 3px solid #a24a3a;
+          border-radius: 6px;
+          background: #faf1ef;
+          color: #944238;
+          font-weight: 600;
+        }
+
+        @media (max-width: 720px) {
+          .myStaysPage {
+            padding: 22px 10px 44px;
+          }
+
+          .myStaysContainer {
+            width: 100%;
+            padding: 26px 16px 32px !important;
+            border-radius: 8px;
+          }
+
+          .myStaysHero {
+            margin-top: 20px;
+            grid-template-columns: 1fr;
+            gap: 18px;
+          }
+
+          .myStaysHeroIcon {
+            width: 34px;
+            height: 34px;
+          }
+
+          .myStaysHero h1 {
+            max-width: 100%;
+            font-size: clamp(1.95rem, 9vw, 2.55rem);
+          }
+
+          .myStaysHero p {
+            font-size: 13px;
+            line-height: 1.75;
+          }
+
+          .stayRefreshBtn {
+            width: fit-content;
+          }
+
+          .stayRequestCard {
+            padding: 20px 16px;
+            border-radius: 10px;
+          }
+
+          .stayCardTop {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+
+          .stayName {
+            font-size: 18px;
+          }
+
+          .stayStatusBadge {
+            max-width: none;
+            width: fit-content;
+            text-align: left;
+          }
+
+          .stayDates {
+            font-size: 13px;
+          }
+
+          .stayMetaGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .stayMetaItem {
+            padding: 14px;
+          }
+
+          .stayTrackingTitle {
+            font-size: 16px;
+          }
+
+          .stayStep {
+            grid-template-columns: 36px minmax(0,1fr);
+            min-height: 96px;
+          }
+
+          .stayStepCircle {
+            width: 32px;
+            height: 32px;
+          }
+
+          .stayStepLine {
+            left: 15px;
+            top: 36px;
+          }
+
+          .stayStepContent {
+            padding-left: 12px;
+            grid-template-columns: 38px minmax(0,1fr);
+            gap: 10px;
+          }
+
+          .stayStepIcon {
+            width: 38px;
+            height: 38px;
+          }
+
+          .stayStepHeading {
+            font-size: 14px;
+          }
+
+          .stayStepDescription {
+            font-size: 11.5px;
+          }
+
+          .stayStepState {
+            font-size: 10.5px;
+          }
+
+          .stayQrButton {
+            width: 100%;
+          }
+        }
+      `}</style>
+
+      <div className="guideContainer myStaysContainer">
         <button
           className="backButton"
           onClick={() =>
@@ -749,390 +1164,280 @@ function MyStaysPage({
             : '← Back to Home'}
         </button>
 
+        <div className="myStaysHero">
+          <div>
+            <img
+              src="/icons/stay.svg"
+              alt=""
+              className="myStaysHeroIcon"
+              aria-hidden="true"
+            />
 
-        {/* =====================================================
-            PAGE HEADER + QR BUTTON
-            ===================================================== */}
-
-        <div
-          style={{
-            marginTop: '30px',
-            marginBottom: '30px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: '25px',
-            flexWrap: 'wrap'
-          }}
-        >
-
-          <div
-            style={{
-              flex: '1 1 520px'
-            }}
-          >
-
-            <div
-              style={{
-                color: '#a87518',
-                fontSize: '13px',
-                letterSpacing: '2px',
-                marginBottom: '12px'
-              }}
-            >
+            <div className="myStaysEyebrow">
               {th
                 ? 'ข้อมูลสมาชิก'
                 : 'MEMBER AREA'}
             </div>
 
-
-            <h1
-              style={{
-                marginBottom: '12px'
-              }}
-            >
+            <h1>
               {th
                 ? 'การเข้าพักปฏิบัติธรรมของฉัน'
                 : 'My Retreat Stays'}
             </h1>
 
-
-            <p
-              style={{
-                marginBottom: 0
-              }}
-            >
+            <p>
               {th
-                ? 'ตรวจสอบสถานะและความคืบหน้าการเข้าพักปฏิบัติธรรมของคุณ'
-                : 'View the status and progress of your retreat stays.'}
+                ? 'ตรวจสอบสถานะ รายละเอียด และความคืบหน้าการเข้าพักปฏิบัติธรรมของท่าน'
+                : 'View the status, details and progress of your retreat stays.'}
             </p>
-
           </div>
 
-          <div
-            style={{
-              flexShrink: 0,
-              paddingTop: '20px'
-            }}
+          <button
+            type="button"
+            className="stayRefreshBtn"
+            onClick={() =>
+              loadBookings()
+            }
+            disabled={loading}
           >
-            <button
-              type="button"
-              onClick={() => loadBookings()}
-              disabled={loading}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: '#fff',
-                color: '#8f6a27',
-                border: '1px solid #d8c49a',
-                padding: '10px 15px',
-                borderRadius: '999px',
-                cursor: loading ? 'wait' : 'pointer',
-                fontSize: '13px',
-                fontWeight: '600'
-              }}
-            >
-              <span aria-hidden="true">↻</span>
-              {th
-                ? 'อัปเดตสถานะ'
-                : 'Refresh status'}
-            </button>
-          </div>
+            <span aria-hidden="true">
+              ↻
+            </span>
 
+            {th
+              ? 'อัปเดตสถานะ'
+              : 'Refresh status'}
+          </button>
         </div>
 
-
-        {/* =====================================================
-            LOADING
-            ===================================================== */}
-
         {loading && (
-          <p>
+          <div className="stayEmpty">
             {th
               ? 'กำลังโหลดข้อมูล...'
               : 'Loading...'}
-          </p>
-        )}
-
-
-        {/* =====================================================
-            ERROR
-            ===================================================== */}
-
-        {error && (
-          <div
-            style={{
-              padding: '16px',
-              border: '1px solid #ddd',
-              marginBottom: '20px'
-            }}
-          >
-            {error}
           </div>
         )}
 
-
-        {/* =====================================================
-            EMPTY
-            ===================================================== */}
+        {!loading &&
+          error && (
+            <div className="stayError">
+              {error}
+            </div>
+          )}
 
         {!loading &&
           !error &&
           bookings.length === 0 && (
+            <div className="stayEmpty">
+              <img
+                src="/icons/lotus.svg"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  marginBottom: '12px'
+                }}
+              />
 
-            <div
-              style={{
-                padding: '40px 20px',
-                textAlign: 'center',
-                border: '1px solid #e5e0d8'
-              }}
-            >
-
-              <p>
+              <div>
                 {th
                   ? 'ยังไม่มีรายการขอเข้าพักปฏิบัติธรรม'
                   : 'You do not have any retreat stay requests yet.'}
-              </p>
-
+              </div>
 
               <button
-                onClick={() =>
-                  goToPage('booking-page')
-                }
+                type="button"
+                className="primaryContactBtn"
                 style={{
-                  marginTop: '15px',
-                  padding: '12px 20px',
-                  cursor: 'pointer'
+                  marginTop: '16px'
                 }}
+                onClick={() =>
+                  goToPage(
+                    'booking-page'
+                  )
+                }
               >
                 {th
-                  ? 'ขอเข้าพักปฏิบัติธรรม'
-                  : 'Request a Retreat Stay'}
+                  ? 'ขอเข้าพักปฏิบัติธรรม →'
+                  : 'Request a Retreat Stay →'}
               </button>
-
             </div>
           )}
 
-
-        {/* =====================================================
-            BOOKING CARDS
-            ===================================================== */}
-
         {!loading &&
-          bookings.map((booking) => (
+          !error &&
+          bookings.map((booking) => {
+            const stopped =
+              booking.status ===
+                'rejected' ||
+              booking.status ===
+                'cancelled';
 
-            <div
-              key={booking.id}
-              style={{
-                border: '1px solid #e3ddd3',
-                padding: '24px',
-                marginBottom: '24px',
-                background: '#fff'
-              }}
-            >
-
-              {/* TOP */}
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  gap: '20px',
-                  flexWrap: 'wrap'
-                }}
+            return (
+              <article
+                key={booking.id}
+                className="stayRequestCard"
               >
+                <div className="stayCardTop">
+                  <div>
+                    <h2 className="stayName">
+                      {booking.name}
+                    </h2>
 
-                <div>
+                    <div className="stayRequestCodeRow">
+                      <span>
+                        {th
+                          ? 'รหัสคำขอ'
+                          : 'Request ID'}
+                      </span>
 
-                  <strong>
-                    {booking.name}
-                  </strong>
+                      <span
+                        className="stayRequestCode"
+                        title={getRequestCode(
+                          booking
+                        )}
+                      >
+                        {shortRequestCode(
+                          booking
+                        )}
+                      </span>
 
-                  <div
-                    style={{
-                      marginTop: '6px',
-                      color: '#9b7226',
-                      fontSize: '12px',
-                      lineHeight: '1.5',
-                      wordBreak: 'break-all'
-                    }}
-                    title={getRequestCode(booking)}
-                  >
-                    {th
-                      ? 'รหัสคำขอ: '
-                      : 'Request ID: '}
-                    <span
-                      style={{
-                        fontFamily:
-                          'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
-                      }}
-                    >
-                      {getRequestCode(booking)}
-                    </span>
+                      {!!getRequestCode(
+                        booking
+                      ) && (
+                        <button
+                          type="button"
+                          className="stayCopyBtn"
+                          onClick={() =>
+                            copyRequestCode(
+                              booking
+                            )
+                          }
+                        >
+                          {copiedId ===
+                          booking.id
+                            ? th
+                              ? 'คัดลอกแล้ว ✓'
+                              : 'Copied ✓'
+                            : th
+                            ? 'คัดลอก'
+                            : 'Copy'}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="stayDates">
+                      <img
+                        src="/icons/calendar.svg"
+                        alt=""
+                        aria-hidden="true"
+                      />
+
+                      <span>
+                        {formatDate(
+                          booking.start_date
+                        )}
+                      </span>
+
+                      <span>
+                        →
+                      </span>
+
+                      <span>
+                        {formatDate(
+                          booking.end_date
+                        )}
+                      </span>
+                    </div>
                   </div>
 
                   <div
-                    style={{
-                      marginTop: '8px',
-                      color: '#666'
-                    }}
+                    className={
+                      stopped
+                        ? 'stayStatusBadge stopped'
+                        : 'stayStatusBadge'
+                    }
                   >
-                    {booking.start_date ||
-                      (th
-                        ? 'ยังไม่ระบุวันเข้าพัก'
-                        : 'Start date not set')}
-                    {' → '}
-                    {booking.end_date ||
-                      (th
-                        ? 'ยังไม่ระบุวันสิ้นสุด'
-                        : 'End date not set')}
+                    {booking.status ===
+                    'completed'
+                      ? '✓ '
+                      : ''}
+                    {statusText[
+                      booking.status
+                    ] ||
+                      booking.status}
+                  </div>
+                </div>
+
+                <div className="stayMetaGrid">
+                  <div className="stayMetaItem">
+                    <img
+                      src="/icons/dhamma-book.svg"
+                      alt=""
+                      className="stayMetaIcon"
+                      aria-hidden="true"
+                    />
+
+                    <div>
+                      <span className="stayMetaLabel">
+                        {th
+                          ? 'จุดประสงค์'
+                          : 'Purpose'}
+                      </span>
+
+                      <div className="stayMetaValue">
+                        {booking.purpose ||
+                          (th
+                            ? 'ไม่ได้ระบุ'
+                            : 'Not specified')}
+                      </div>
+                    </div>
                   </div>
 
+                  <div className="stayMetaItem">
+                    <img
+                      src="/icons/stay.svg"
+                      alt=""
+                      className="stayMetaIcon"
+                      aria-hidden="true"
+                    />
+
+                    <div>
+                      <span className="stayMetaLabel">
+                        {th
+                          ? 'สถานที่พัก'
+                          : 'Accommodation'}
+                      </span>
+
+                      <div className="stayMetaValue">
+                        {booking.accommodation_name ||
+                          (th
+                            ? 'ยังไม่ได้ระบุ'
+                            : 'Not assigned yet')}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-
-                {/* STATUS BADGE */}
-
-                <div
-                  style={{
-                    padding: '7px 13px',
-
-                    background:
-                      booking.status === 'rejected' ||
-                      booking.status === 'cancelled'
-                        ? '#faf1ef'
-                        : '#eef6ed',
-
-                    borderRadius: '20px',
-
-                    height: 'fit-content',
-
-                    fontWeight: '500'
-                  }}
-                >
-                  {statusText[booking.status] ||
-                    booking.status}
-                </div>
-
-              </div>
-
-
-              <hr
-                style={{
-                  border: 0,
-                  borderTop: '1px solid #eee',
-                  margin: '20px 0'
-                }}
-              />
-
-
-              {/* PURPOSE */}
-
-              <p>
-                <strong>
-                  {th
-                    ? 'จุดประสงค์: '
-                    : 'Purpose: '}
-                </strong>
-
-                {booking.purpose ||
-                  (th
-                    ? 'ไม่ได้ระบุ'
-                    : 'Not specified')}
-              </p>
-
-
-              {/* ACCOMMODATION */}
-
-              {booking.accommodation_name && (
-
-                <p>
-                  <strong>
+                {booking.status ===
+                  'completed' && (
+                  <div className="stayCompletedMessage">
                     {th
-                      ? 'สถานที่พัก: '
-                      : 'Accommodation: '}
-                  </strong>
+                      ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว ขออนุโมทนาในการปฏิบัติ และขอให้เดินทางกลับโดยสวัสดิภาพ ยินดีต้อนรับกลับมาปฏิบัติธรรมอีกครั้ง'
+                      : '✓ Your retreat stay is complete. We rejoice in your practice, wish you a safe journey home, and warmly welcome you to return again.'}
+                  </div>
+                )}
 
-                  {booking.accommodation_name}
-                </p>
-
-              )}
-
-
-              {/* APPROVED MESSAGE */}
-
-              {booking.status ===
-                'approved' && (
-
-                <div
-                  style={{
-                    marginTop: '20px',
-                    padding: '15px',
-                    background: '#faf7ef'
-                  }}
-                >
-                  {th
-                    ? '✓ คำขอเข้าพักปฏิบัติธรรมได้รับอนุมัติแล้ว เมื่อเดินทางถึงวัด กรุณาลงทะเบียนเข้าพักกับเจ้าหน้าที่'
-                    : '✓ Your retreat stay has been approved. Please register with monastery staff when you arrive.'}
-                </div>
-
-              )}
-
-
-              {/* CHECKED IN MESSAGE */}
-
-              {booking.status ===
-                'checked_in' && (
-
-                <div
-                  style={{
-                    marginTop: '20px',
-                    padding: '15px',
-                    background: '#eef6ed'
-                  }}
-                >
-                  {th
-                    ? '✓ ลงทะเบียนเข้าพักเรียบร้อยแล้ว กรุณารอเจ้าหน้าที่จัดสถานที่พัก'
-                    : '✓ Stay registration completed. Please wait for monastery staff to assign your accommodation.'}
-                </div>
-
-              )}
-
-
-              {/* COMPLETED MESSAGE */}
-
-              {booking.status ===
-                'completed' && (
-
-                <div
-                  style={{
-                    marginTop: '20px',
-                    padding: '15px',
-                    background: '#eef6ed'
-                  }}
-                >
-                  {th
-                    ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว'
-                    : '✓ Your retreat stay has been completed.'}
-                </div>
-
-              )}
-
-
-              {/* TRACKING */}
-
-              <StayTracking
-                booking={booking}
-              />
-
-            </div>
-          ))}
-
+                <StayTracking
+                  booking={booking}
+                />
+              </article>
+            );
+          })}
       </div>
     </div>
   );
 }
-
 
 export default MyStaysPage;
