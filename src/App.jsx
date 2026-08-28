@@ -617,31 +617,35 @@ const handleLineLogin = () => {
             <section id="home" className="hero"></section>
 
             {/* ABOUT */}
-            <section id="about" className="aboutSection">
-              <div className="aboutImage">
-                <img
-                  src="/images/watermarked_img_18048839418065383299.jpg"
-                  alt="วัดพุทธอุทยานนาเทิง"
-                />
-              </div>
-              <div className="aboutContent">
+            <section id="about" className="aboutSection aboutSectionClean">
+              <div className="aboutInner">
+                <div className="sectionOrnament" aria-hidden="true">
+                  <span></span>
+                  <img src="/icons/lotus.svg" alt="" />
+                  <span></span>
+                </div>
+
                 <p className="eyebrow">{lang === 'en' ? 'ABOUT THE MONASTERY' : 'เกี่ยวกับวัด'}</p>
+
                 <h2>
                   {lang === 'en'
                     ? 'A Forest Monastery in Northeast Thailand'
                     : 'วัดป่าท่ามกลางธรรมชาติแห่งภาคอีสาน'}
                 </h2>
-                <p>
+
+                <p className="aboutLead">
                   {lang === 'en'
                     ? "Buddhist Park Monastery of Nathoeng is a place for the practice and study of the Buddha's teachings, surrounded by the peaceful natural environment of Sakon Nakhon in Northeast Thailand."
                     : 'วัดพุทธอุทยานนาเทิง เป็นสถานที่สำหรับการศึกษาและปฏิบัติตามพระธรรมคำสอนของพระพุทธเจ้า ท่ามกลางธรรมชาติอันสงบในจังหวัดสกลนคร'}
                 </p>
-                <p>
+
+                <p className="aboutSubtext">
                   {lang === 'en'
                     ? 'The monastery offers a simple setting for meditation, mindfulness, Dhamma practice and community activities.'
                     : 'วัดเป็นสถานที่สำหรับการภาวนา เจริญสติ ศึกษาธรรมะ และร่วมกิจกรรมทางพระพุทธศาสนาอย่างเรียบง่าย'}
                 </p>
-                <button onClick={() => goToPage('teachings-page')} className="textLinkButton">
+
+                <button onClick={() => goToPage('teachings-page')} className="textLinkButton aboutLink">
                   {lang === 'en' ? 'Discover monastery life →' : 'สัมผัสวิถีชีวิตภายในวัด →'}
                 </button>
               </div>
@@ -650,8 +654,17 @@ const handleLineLogin = () => {
             {/* MAIN FEATURES */}
             <section className="featureSection">
               <div className="sectionHeading">
-                <p className="eyebrow">{lang === 'en' ? 'EXPLORE' : 'เรียนรู้และเยี่ยมชม'}</p>
+                <div className="sectionOrnament" aria-hidden="true">
+                  <span></span>
+                  <img src="/icons/lotus.svg" alt="" />
+                  <span></span>
+                </div>
                 <h2>{lang === 'en' ? 'Life at the Monastery' : 'วิถีแห่งวัดพุทธอุทยานนาเทิง'}</h2>
+                <p className="sectionIntro">
+                  {lang === 'en'
+                    ? 'Explore teachings, community events and the quiet rhythm of monastery life.'
+                    : 'เรียนรู้พระธรรม ร่วมกิจกรรม และสัมผัสวิถีชีวิตอันเรียบง่ายและสงบภายในวัด'}
+                </p>
               </div>
 
               <div className="cards">
@@ -661,7 +674,9 @@ const handleLineLogin = () => {
                     <img src="/images/486526184_680593961012974_4699356998246297917_n.jpg" alt="Dhamma" />
                   </div>
                   <div className="cardContent">
-                    <span className="cardIcon">☸</span>
+                    <span className="cardIconFrame" aria-hidden="true">
+                      <img src="/icons/dhamma-wheel.svg" alt="" />
+                    </span>
                     <h3>{t.teachings}</h3>
                     <p>{t.teachingsText}</p>
                     <button onClick={() => goToPage('teachings-page')} className="inlineButtonLink">
@@ -676,7 +691,9 @@ const handleLineLogin = () => {
                     <img src="/images/487812128_689539323451771_1128859791552978185_n.jpg" alt="Events" />
                   </div>
                   <div className="cardContent">
-                    <span className="cardIcon">◷</span>
+                    <span className="cardIconFrame" aria-hidden="true">
+                      <img src="/icons/calendar.svg" alt="" />
+                    </span>
                     <h3>{t.events}</h3>
                     <p>{t.eventsText}</p>
                     <button onClick={() => goToPage('event-kathina')} className="inlineButtonLink">
@@ -691,7 +708,9 @@ const handleLineLogin = () => {
                     <img src="/images/99425106_2619520384959784_4372406926441447424_n.jpg" alt="Visit" />
                   </div>
                   <div className="cardContent">
-                    <span className="cardIcon">⌂</span>
+                    <span className="cardIconFrame" aria-hidden="true">
+                      <img src="/icons/stay.svg" alt="" />
+                    </span>
                     <h3>{t.visit}</h3>
                     <p>{t.visitText}</p>
                     <button onClick={() => goToPage('visit-guide')} className="inlineButtonLink">
@@ -704,47 +723,62 @@ const handleLineLogin = () => {
 
             {/* RETREATS */}
             <section id="retreats" className="quietSection">
-              <div className="quietImage">
-                <img src="/images/c8549361-f40f-49cc-ba0d-e3d70810a1bb.jpg" alt="Retreats" />
-              </div>
-              <div className="quietContent">
-                <p className="eyebrow">{lang === 'en' ? 'PRACTICE' : 'การปฏิบัติ'}</p>
-                <h2>{t.retreats}</h2>
-                <p>{t.retreatsText}</p>
-                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: '15px' }}>
-                  <button onClick={() => goToPage('visit-guide')} className="textLinkButton">
-                    {lang === 'en' ? 'Read guidelines & book stay →' : 'อ่านระเบียบการและจองเข้าพัก →'}
-                  </button>
-                  <button onClick={() => goToPage('calendar-page')} className="textLinkButton" style={{ color: '#9b7226' }}>
-                    {lang === 'en' ? 'View Schedule →' : 'ดูตารางการจองเข้าพัก →'}
-                  </button>
+              <div className="quietInner">
+                <div className="quietImage">
+                  <img src="/images/c8549361-f40f-49cc-ba0d-e3d70810a1bb.jpg" alt="Retreats" />
+                </div>
+
+                <div className="quietContent">
+                  <p className="eyebrow">{lang === 'en' ? 'PRACTICE' : 'การปฏิบัติ'}</p>
+                  <h2>{t.retreats}</h2>
+                  <p>{t.retreatsText}</p>
+
+                  <div className="practiceHighlights">
+                    <span><img src="/icons/forest-path.svg" alt="" />{lang === 'en' ? 'Forest Paths' : 'ทางเดินท่ามกลางป่า'}</span>
+                    <span><img src="/icons/meditation.svg" alt="" />{lang === 'en' ? 'Silent Practice' : 'การภาวนาอย่างสงบ'}</span>
+                    <span><img src="/icons/dhamma-book.svg" alt="" />{lang === 'en' ? 'Dhamma Study' : 'ศึกษาพระธรรม'}</span>
+                  </div>
+
+                  <div className="quietActions">
+                    <button onClick={() => goToPage('visit-guide')} className="textLinkButton">
+                      {lang === 'en' ? 'Read guidelines & book stay →' : 'อ่านระเบียบการและจองเข้าพัก →'}
+                    </button>
+                    <button onClick={() => goToPage('calendar-page')} className="textLinkButton">
+                      {lang === 'en' ? 'View Schedule →' : 'ดูตารางการจองเข้าพัก →'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
 
             {/* SUPPORT */}
             <section id="support" className="support">
-              <div>
-                <p className="eyebrow">{lang === 'en' ? 'GENEROSITY' : 'การให้'}</p>
+              <div className="supportInner">
+                <div className="sectionOrnament" aria-hidden="true">
+                  <span></span>
+                  <img src="/icons/donation.svg" alt="" />
+                  <span></span>
+                </div>
                 <h2>{t.support}</h2>
                 <p>{t.supportText}</p>
-                <button onClick={() => goToPage('donation-page')} className="primaryContactBtn" style={{ background: '#8f6a27', color: '#fff', padding: '12px 28px', border: '1px solid #8f6a27', cursor: 'pointer' }}>
-                  {lang === 'en' ? 'Proceed to Donate →' : 'ร่วมทำบุญบริจาคเงินสนับสนุนวัด →'}
+                <button onClick={() => goToPage('donation-page')} className="primaryContactBtn supportButton">
+                  {lang === 'en' ? 'Make a Donation →' : 'ร่วมทำบุญสนับสนุนวัด →'}
                 </button>
               </div>
             </section>
 
             {/* CONTACT */}
             <section id="contact" className="contactSection">
-              <p className="eyebrow">{lang === 'en' ? 'CONTACT' : 'ติดต่อ'}</p>
+              <div className="sectionOrnament" aria-hidden="true">
+                <span></span>
+                <img src="/icons/location.svg" alt="" />
+                <span></span>
+              </div>
               <h2>{t.contact}</h2>
               <p>{t.contactText}</p>
-              <div style={{ marginTop: '25px' }}>
-                <button onClick={() => goToPage('contact-page')} className="primaryContactBtn">
-                  {lang === 'en' ? 'View Map & Contact Details →' : 'ดูแผนที่และช่องทางการติดต่อ →'}
-                </button>
-              </div>
-              <div className="lotus">❦</div>
+              <button onClick={() => goToPage('contact-page')} className="primaryContactBtn contactButton">
+                {lang === 'en' ? 'View Map & Contact Details →' : 'ดูแผนที่และช่องทางการติดต่อ →'}
+              </button>
             </section>
           </>
         ) : currentPage === 'teachings-page' ? (
