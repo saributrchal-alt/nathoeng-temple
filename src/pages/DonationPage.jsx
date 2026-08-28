@@ -118,6 +118,11 @@ export default function DonationPage({ lang, goToPage }) {
 
   const t = text[lang]
 
+  // แสดงเมนูเจ้าหน้าที่เฉพาะบัญชี Admin ที่ LINE Login ส่งมาเท่านั้น
+  const isAdmin =
+    user?.isAdmin === true ||
+    user?.role === 'admin'
+
   const [formData, setFormData] =
     useState({
       fullName: user ? user.name : '',
@@ -347,17 +352,19 @@ export default function DonationPage({ lang, goToPage }) {
             {t.back}
           </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              goToPage(
-                'donation-list'
-              )
-            }
-            className="donationAdminLink"
-          >
-            {t.viewListBtn}
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() =>
+                goToPage(
+                  'donation-list'
+                )
+              }
+              className="donationAdminLink"
+            >
+              {t.viewListBtn}
+            </button>
+          )}
         </div>
 
         {!user ? (
@@ -760,16 +767,18 @@ export default function DonationPage({ lang, goToPage }) {
                 {t.okBtn}
               </button>
 
-              <button
-                onClick={() =>
-                  goToPage(
-                    'donation-list'
-                  )
-                }
-                className="donationSecondaryBtn"
-              >
-                {t.viewListBtn}
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={() =>
+                    goToPage(
+                      'donation-list'
+                    )
+                  }
+                  className="donationSecondaryBtn"
+                >
+                  {t.viewListBtn}
+                </button>
+              )}
             </div>
           </div>
         )}
