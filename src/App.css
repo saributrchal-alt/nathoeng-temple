@@ -101,7 +101,7 @@ img {
 
 /* English monastery title: smaller on desktop so it does not overlap navigation */
 .brandText strong.brandTitleEn {
-  font-size: 10px;
+  font-size: 16px;
 }
 
 /* Thai monastery title keeps the original size */

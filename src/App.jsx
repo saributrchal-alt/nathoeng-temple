@@ -491,7 +491,7 @@ const handleLineLogin = () => {
               className="headerLogo"
             />
             <span className="brandText">
-              <strong>
+              <strong className={lang === 'en' ? 'brandTitleEn' : 'brandTitleTh'}>
                 {lang === 'en'
                   ? 'Buddhist Park Monastery'
                   : 'วัดพุทธอุทยานนาเทิง'}
