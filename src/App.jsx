@@ -419,20 +419,33 @@ const handleLineLogin = () => {
     state
   );
 
-  // Mobile browsers can lose sessionStorage when LINE opens and returns.
-  // Mirror the continuation data to localStorage before leaving the site.
-  const afterLoginPage =
-    sessionStorage.getItem('after_login_page');
+  // Remember where the visitor should return after LINE Login.
+  // Keep a destination already set by a special flow (for example QR check-in).
+  const existingAfterLoginPage =
+    sessionStorage.getItem('after_login_page') ||
+    localStorage.getItem('after_login_page');
 
+  const pageToReturn =
+    existingAfterLoginPage ||
+    (currentPage === 'login-page'
+      ? 'my-dashboard'
+      : currentPage) ||
+    'home';
+
+  sessionStorage.setItem(
+    'after_login_page',
+    pageToReturn
+  );
+
+  localStorage.setItem(
+    'after_login_page',
+    pageToReturn
+  );
+
+  // Mobile browsers can lose sessionStorage when LINE opens and returns.
+  // Preserve the QR check-in token in localStorage as well.
   const pendingCheckinToken =
     sessionStorage.getItem('pending_checkin_token');
-
-  if (afterLoginPage) {
-    localStorage.setItem(
-      'after_login_page',
-      afterLoginPage
-    );
-  }
 
   if (pendingCheckinToken) {
     localStorage.setItem(
@@ -447,7 +460,8 @@ const handleLineLogin = () => {
     '&client_id=' + encodeURIComponent(channelId) +
     '&redirect_uri=' + encodeURIComponent(redirectUri) +
     '&state=' + encodeURIComponent(state) +
-    '&scope=' + encodeURIComponent('profile openid email');
+    '&scope=' + encodeURIComponent('profile openid email') +
+    '&bot_prompt=aggressive';
 
   window.location.href = lineAuthUrl;
 };
