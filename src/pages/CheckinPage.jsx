@@ -32,6 +32,8 @@ function CheckinPage({
 
   const scanLockedRef = useRef(false);
 
+  const fileInputRef = useRef(null);
+
   const th = lang === 'th';
 
 
@@ -355,8 +357,96 @@ function CheckinPage({
     };
 
 
+
+  /* =========================================================
+     SCAN QR FROM PHOTO
+     ใช้เป็นทางสำรองกรณี live camera มีปัญหา
+     ========================================================= */
+
+  const handleQrImageFile =
+    async (event) => {
+
+      const file =
+        event.target.files?.[0];
+
+      if (!file) {
+        return;
+      }
+
+      event.target.value = '';
+
+      setError('');
+      setScannerMessage(
+        th
+          ? 'กำลังอ่าน QR Code จากภาพ...'
+          : 'Reading QR code from image...'
+      );
+
+      try {
+
+        const imageScanner =
+          new Html5Qrcode(
+            'qr-file-reader'
+          );
+
+        const decodedText =
+          await imageScanner.scanFile(
+            file,
+            true
+          );
+
+        try {
+          await imageScanner.clear();
+        } catch {
+          // ignore
+        }
+
+        const token =
+          extractTokenFromQr(
+            decodedText
+          );
+
+        if (!token) {
+          throw new Error(
+            th
+              ? 'ไม่พบข้อมูล Check-in ใน QR Code นี้'
+              : 'No check-in information was found in this QR code.'
+          );
+        }
+
+        setScannerMessage(
+          th
+            ? 'อ่าน QR Code สำเร็จ'
+            : 'QR code detected'
+        );
+
+        await handleCheckin(
+          token
+        );
+
+      } catch (err) {
+
+        console.error(
+          'QR image scan error:',
+          err
+        );
+
+        setScannerMessage('');
+
+        setError(
+          th
+            ? 'ไม่สามารถอ่าน QR Code จากภาพได้ กรุณาถ่ายให้เห็น QR Code ชัดเจนเต็มภาพ แล้วลองใหม่อีกครั้ง'
+            : 'Unable to read the QR code from the image. Please take a clear photo showing the full QR code and try again.'
+        );
+      }
+    };
+
+
   /* =========================================================
      START CAMERA WHEN scannerOpen = true
+
+     ใช้ config เดิมที่เคยเปิดกล้องได้จริง
+     และ clear scanner เก่าก่อนเริ่มใหม่
      ========================================================= */
 
   useEffect(() => {
@@ -365,6 +455,8 @@ function CheckinPage({
       return;
     }
 
+
+    let cancelled = false;
 
     scanLockedRef.current =
       false;
@@ -384,6 +476,17 @@ function CheckinPage({
 
         try {
 
+          /*
+           เคลียร์ scanner รอบก่อน ถ้ามีค้างอยู่
+          */
+
+          await stopScanner();
+
+          if (cancelled) {
+            return;
+          }
+
+
           const scanner =
             new Html5Qrcode(
               'qr-reader'
@@ -393,41 +496,25 @@ function CheckinPage({
             scanner;
 
 
+          /*
+           กลับมาใช้ config เดิม:
+           config ชุดนี้เคยเปิดกล้องบนเครื่องนี้ได้
+          */
+
           await scanner.start(
 
             {
-              facingMode: {
-                ideal: 'environment'
-              }
+              facingMode:
+                'environment'
             },
 
             {
-              fps: 15,
+              fps: 10,
 
-              qrbox: (
-                viewfinderWidth,
-                viewfinderHeight
-              ) => {
-                const minEdge =
-                  Math.min(
-                    viewfinderWidth,
-                    viewfinderHeight
-                  );
-
-                const size =
-                  Math.floor(
-                    minEdge * 0.8
-                  );
-
-                return {
-                  width: size,
-                  height: size
-                };
-              },
-
-              aspectRatio: 1.0,
-
-              disableFlip: false
+              qrbox: {
+                width: 240,
+                height: 240
+              }
             },
 
             async (
@@ -475,6 +562,11 @@ function CheckinPage({
 
               await stopScanner();
 
+              if (cancelled) {
+                return;
+              }
+
+
               setScannerOpen(
                 false
               );
@@ -495,6 +587,12 @@ function CheckinPage({
           );
 
 
+          if (cancelled) {
+            await stopScanner();
+            return;
+          }
+
+
           setScannerMessage(
             th
               ? 'วาง QR Code ให้อยู่ภายในกรอบ'
@@ -510,34 +608,51 @@ function CheckinPage({
           );
 
 
+          /*
+           สำคัญมาก:
+           ถ้าเปิดกล้องล้มเหลว ต้อง clear instance ทิ้ง
+           ไม่เช่นนั้นปุ่ม "สแกนอีกครั้ง" อาจดูเหมือนกดไม่ได้
+          */
+
+          await stopScanner();
+
+
+          if (cancelled) {
+            return;
+          }
+
+
           setScannerOpen(
             false
           );
 
 
+          const cameraDetail =
+            err?.name ||
+            err?.message ||
+            'Camera start failed';
+
+
           setError(
             th
-              ? 'ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้กล้องใน Browser แล้วลองใหม่อีกครั้ง'
-              : 'Unable to open the camera. Please allow camera access in your browser and try again.'
+              ? `ไม่สามารถเปิดกล้องสแกนสดได้ (${cameraDetail}) กรุณากด “สแกนอีกครั้ง” หรือใช้ปุ่ม “ถ่ายภาพ QR Code”`
+              : `Unable to open the live QR scanner (${cameraDetail}). Please tap “Scan Again” or use “Take QR Photo”.`
           );
 
         }
       };
 
 
-    /*
-     รอให้ div #qr-reader
-     ถูก render ก่อนเล็กน้อย
-    */
-
     const timer =
       setTimeout(
         startCamera,
-        100
+        150
       );
 
 
     return () => {
+
+      cancelled = true;
 
       clearTimeout(
         timer
@@ -548,6 +663,39 @@ function CheckinPage({
     };
 
   }, [scannerOpen]);
+
+
+  /*
+   บังคับ restart จริง
+   ปิดก่อน แล้วค่อยเปิดใหม่ใน tick ถัดไป
+  */
+
+  const restartScanner =
+    async () => {
+
+      setError('');
+      setScannerMessage('');
+
+      await stopScanner();
+
+      setScannerOpen(
+        false
+      );
+
+      setTimeout(
+        () => {
+
+          scanLockedRef.current =
+            false;
+
+          setScannerOpen(
+            true
+          );
+
+        },
+        100
+      );
+    };
 
 
   /* =========================================================
@@ -738,15 +886,7 @@ function CheckinPage({
 
 
             <button
-              onClick={() => {
-
-                setError('');
-
-                setScannerOpen(
-                  true
-                );
-
-              }}
+              onClick={restartScanner}
               className="primaryContactBtn"
               style={{
                 marginTop: '15px',
@@ -854,6 +994,96 @@ function CheckinPage({
         )}
 
 
+
+        {/* =====================================================
+            PHOTO FALLBACK
+
+            ใช้ label -> input โดยตรง
+            ไม่เรียก input.click() หลัง await
+            เพื่อให้ Android / LINE browser เปิดกล้องได้แน่นอนกว่า
+            ===================================================== */}
+
+        {!result && (
+
+          <div
+            style={{
+              marginTop: '18px',
+              textAlign: 'center'
+            }}
+          >
+
+            <input
+              id="qr-photo-input"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleQrImageFile}
+              style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                opacity: 0,
+                pointerEvents: 'none'
+              }}
+            />
+
+            <div
+              id="qr-file-reader"
+              style={{
+                display: 'none'
+              }}
+            />
+
+
+            <label
+              htmlFor="qr-photo-input"
+              onClick={() => {
+
+                setError('');
+                setScannerMessage('');
+
+                stopScanner();
+
+                setScannerOpen(
+                  false
+                );
+              }}
+              style={{
+                display: 'inline-block',
+                padding: '12px 20px',
+                background: '#fff',
+                border: '1px solid #c5a880',
+                color: '#8f6a27',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              📷{' '}
+              {th
+                ? 'ถ่ายภาพ QR Code'
+                : 'Take QR Photo'}
+            </label>
+
+
+            <p
+              style={{
+                marginTop: '10px',
+                color: '#777',
+                fontSize: '13px',
+                lineHeight: '1.6'
+              }}
+            >
+              {th
+                ? 'ถ้าสแกนสดไม่ได้ ให้ใช้ปุ่มนี้เปิดกล้องถ่าย QR Code โดยตรง'
+                : 'If live scanning is unavailable, use this button to take a QR photo directly.'}
+            </p>
+
+          </div>
+
+        )}
+
+
         {/* =====================================================
             PROCESSING
             ===================================================== */}
@@ -936,15 +1166,8 @@ function CheckinPage({
             >
 
               <button
-                onClick={() => {
-
-                  setError('');
-
-                  setScannerOpen(
-                    true
-                  );
-
-                }}
+                type="button"
+                onClick={restartScanner}
                 className="primaryContactBtn"
               >
                 📷{' '}
@@ -952,6 +1175,37 @@ function CheckinPage({
                   ? 'สแกนอีกครั้ง'
                   : 'Scan Again'}
               </button>
+
+
+              <label
+                htmlFor="qr-photo-input"
+                onClick={() => {
+
+                  setError('');
+                  setScannerMessage('');
+
+                  stopScanner();
+
+                  setScannerOpen(
+                    false
+                  );
+                }}
+                style={{
+                  padding:
+                    '10px 18px',
+                  background: '#fff',
+                  border:
+                    '1px solid #c5a880',
+                  color: '#8f6a27',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                📷{' '}
+                {th
+                  ? 'ถ่ายภาพ QR Code'
+                  : 'Take QR Photo'}
+              </label>
 
 
               <button
