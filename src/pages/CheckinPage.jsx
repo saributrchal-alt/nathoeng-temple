@@ -1280,9 +1280,17 @@ function CheckinPage({
                 color: '#2e7d32'
               }}
             >
-              {th
-                ? 'ลงทะเบียนเข้าพักเรียบร้อยแล้ว'
-                : 'Stay Registration Completed'}
+              {result.status === 'completed'
+                ? (th
+                    ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว'
+                    : 'Retreat Stay Completed')
+                : result.status === 'accommodated'
+                  ? (th
+                      ? 'ยืนยันเข้าที่พักเรียบร้อยแล้ว'
+                      : 'Accommodation Confirmed')
+                  : (th
+                      ? 'ลงทะเบียนเข้าพักเรียบร้อยแล้ว'
+                      : 'Stay Registration Completed')}
             </h2>
 
 
@@ -1306,9 +1314,17 @@ function CheckinPage({
                 lineHeight: '1.8'
               }}
             >
-              {th
-                ? 'กรุณาติดต่อเจ้าหน้าที่เพื่อรับการจัดสรรสถานที่พัก และคำแนะนำสำหรับการเข้าพักปฏิบัติธรรม'
-                : 'Please contact monastery staff for accommodation assignment and retreat guidance.'}
+              {result.status === 'completed'
+                ? (th
+                    ? 'ขอบคุณที่มาพักปฏิบัติธรรม ณ วัดพุทธอุทยานนาเทิง'
+                    : 'Thank you for staying and practicing Dhamma at Buddhist Park Monastery of Nathoeng.')
+                : result.status === 'accommodated'
+                  ? (th
+                      ? 'ยืนยันสถานที่พักเรียบร้อยแล้ว กรุณาเข้าพักตามสถานที่ที่ได้รับการจัดสรร และปฏิบัติตามคำแนะนำของเจ้าหน้าที่'
+                      : 'Your accommodation has been confirmed. Please stay in the assigned accommodation and follow the monastery staff guidance.')
+                  : (th
+                      ? 'ลงทะเบียนเข้าพักเรียบร้อยแล้ว กรุณาติดต่อเจ้าหน้าที่เพื่อรับการจัดสรรสถานที่พัก และคำแนะนำสำหรับการเข้าพักปฏิบัติธรรม'
+                      : 'Your stay registration is complete. Please contact monastery staff for accommodation assignment and retreat guidance.')}
             </p>
 
 
@@ -1323,9 +1339,13 @@ function CheckinPage({
                 marginTop: '20px'
               }}
             >
-              {th
-                ? 'ดูความคืบหน้าการเข้าพักปฏิบัติธรรม'
-                : 'View Retreat Stay Progress'}
+              {result.status === 'completed'
+                ? (th
+                    ? 'ดูรายละเอียดการเข้าพักปฏิบัติธรรม'
+                    : 'View Retreat Stay Details')
+                : (th
+                    ? 'ดูความคืบหน้าการเข้าพักปฏิบัติธรรม'
+                    : 'View Retreat Stay Progress')}
             </button>
 
           </div>
