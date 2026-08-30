@@ -52,7 +52,7 @@ function AdminDashboard({ lang, goToPage }) {
       cancel: 'Cancel',
 
       accommodationPrompt:
-        'Select the assigned accommodation:',
+        'Enter accommodation name, kuti, building, or room:',
       notePrompt: 'Optional admin note:',
       confirmAction: 'Confirm this stay status change?',
       actionSuccess: 'Stay status updated successfully.',
@@ -124,7 +124,7 @@ function AdminDashboard({ lang, goToPage }) {
       complete: 'ปิดการเข้าพัก',
       cancel: 'ยกเลิก',
 
-      accommodationPrompt: 'เลือกห้องพักที่จัดสรรให้ผู้เข้าพัก:',
+      accommodationPrompt: 'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
       notePrompt: 'หมายเหตุของผู้ดูแล (ถ้ามี):',
       confirmAction: 'ยืนยันการเปลี่ยนสถานะรายการนี้หรือไม่?',
       actionSuccess: 'เปลี่ยนสถานะการเข้าพักเรียบร้อยแล้ว',
@@ -154,15 +154,6 @@ function AdminDashboard({ lang, goToPage }) {
         'ข้อมูลการทำบุญยังใช้ระบบเดิมในเครื่องอยู่ชั่วคราว'
     }
   }[lang];
-
-  const accommodationOptions = [
-    'กุฏิยอดคำ ห้อง 2',
-    'กุฏิสกุลคุณสวัสดิ์ 1 ห้อง 1',
-    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 1',
-    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 2',
-    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 1',
-    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 2'
-  ];
 
   const statusLabel = (status) => {
     return t[status] || status || '-';
@@ -311,61 +302,17 @@ function AdminDashboard({ lang, goToPage }) {
     let note = '';
 
     if (action === 'assign_accommodation') {
-      /*
-        Admin เลือกห้องจากรายการที่กำหนดไว้เท่านั้น
-        ใช้เลข 1-6 เพื่อป้องกันการพิมพ์ชื่อห้องผิด
-        ซึ่งสำคัญต่อการตรวจ QR ของแต่ละห้อง
-      */
-      const currentIndex =
-        accommodationOptions.indexOf(
-          booking.accommodation_name || ''
-        );
-
-      const optionText =
-        accommodationOptions
-          .map(
-            (name, index) =>
-              `${index + 1}. ${name}`
-          )
-          .join('\n');
-
-      const selected =
-        window.prompt(
-          lang === 'th'
-            ? `เลือกห้องพักที่จัดสรรให้ผู้เข้าพัก\n\n${optionText}\n\nกรอกหมายเลข 1-6:`
-            : `Select the assigned accommodation\n\n${optionText}\n\nEnter number 1-6:`,
-          currentIndex >= 0
-            ? String(currentIndex + 1)
-            : ''
-        );
-
-      if (selected === null) {
-        return;
-      }
-
-      const selectedIndex =
-        Number(selected.trim()) - 1;
+      accommodationName = window.prompt(
+        t.accommodationPrompt,
+        booking.accommodation_name || ''
+      );
 
       if (
-        !Number.isInteger(
-          selectedIndex
-        ) ||
-        selectedIndex < 0 ||
-        selectedIndex >=
-          accommodationOptions.length
+        accommodationName === null ||
+        !accommodationName.trim()
       ) {
-        alert(
-          lang === 'th'
-            ? 'กรุณาเลือกหมายเลขห้อง 1-6'
-            : 'Please select accommodation number 1-6.'
-        );
         return;
       }
-
-      accommodationName =
-        accommodationOptions[
-          selectedIndex
-        ];
     }
 
     if (action === 'reject' || action === 'cancel') {
