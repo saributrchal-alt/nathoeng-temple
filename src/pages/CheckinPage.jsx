@@ -396,17 +396,38 @@ function CheckinPage({
           await scanner.start(
 
             {
-              facingMode:
-                'environment'
+              facingMode: {
+                ideal: 'environment'
+              }
             },
 
             {
-              fps: 10,
+              fps: 15,
 
-              qrbox: {
-                width: 240,
-                height: 240
-              }
+              qrbox: (
+                viewfinderWidth,
+                viewfinderHeight
+              ) => {
+                const minEdge =
+                  Math.min(
+                    viewfinderWidth,
+                    viewfinderHeight
+                  );
+
+                const size =
+                  Math.floor(
+                    minEdge * 0.8
+                  );
+
+                return {
+                  width: size,
+                  height: size
+                };
+              },
+
+              aspectRatio: 1.0,
+
+              disableFlip: false
             },
 
             async (
