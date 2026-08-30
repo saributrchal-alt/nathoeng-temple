@@ -22,6 +22,9 @@ function CheckinPage({
   const [error, setError] =
     useState('');
 
+  const [errorTitle, setErrorTitle] =
+    useState('');
+
   const [scannerOpen, setScannerOpen] =
     useState(false);
 
@@ -123,6 +126,185 @@ function CheckinPage({
     }
 
     return text;
+  };
+
+
+  const getQrErrorPresentation = (data) => {
+    const code = data?.code || '';
+
+    if (code === 'WRONG_ACCOMMODATION') {
+      const assigned =
+        data?.assignedAccommodation || '-';
+
+      const scanned =
+        data?.scannedAccommodation || '-';
+
+      return {
+        title: th
+          ? 'QR Code ไม่ตรงกับที่พักที่ได้รับการจัดสรร'
+          : 'QR Code Does Not Match Assigned Accommodation',
+        message: th
+          ? `ที่พักที่ได้รับ: ${assigned}\nQR ที่สแกน: ${scanned}\nกรุณาสแกน QR Code ของที่พักที่ได้รับการจัดสรรเท่านั้น`
+          : `Assigned accommodation: ${assigned}\nScanned QR: ${scanned}\nPlease scan only the QR code for your assigned accommodation.`
+      };
+    }
+
+    if (code === 'WRONG_QR_TYPE_EXPECT_RETURN') {
+      return {
+        title: th
+          ? 'QR Code นี้ไม่ใช่จุดคืนกุญแจ/อุปกรณ์'
+          : 'This Is Not the Return-Point QR Code',
+        message: th
+          ? 'ขณะนี้อยู่ในขั้นตอนคืนกุญแจ/อุปกรณ์ กรุณาสแกน QR Code ที่จุดคืนกุญแจ/อุปกรณ์ของวัด'
+          : 'You are at the return stage. Please scan the monastery return-point QR code.'
+      };
+    }
+
+    if (code === 'WRONG_QR_TYPE_EXPECT_ACCOMMODATION') {
+      return {
+        title: th
+          ? 'QR Code นี้ยังไม่ใช่ขั้นตอนที่ต้องสแกน'
+          : 'This QR Code Is Not for the Current Step',
+        message: th
+          ? 'กรุณาสแกน QR Code ของที่พักที่เจ้าหน้าที่จัดสรรให้ก่อน แล้วจึงดำเนินขั้นตอนถัดไป'
+          : 'Please scan the QR code for your assigned accommodation before proceeding to the next step.'
+      };
+    }
+
+    if (code === 'WRONG_QR_TYPE_EXPECT_REGISTRATION') {
+      return {
+        title: th
+          ? 'กรุณาลงทะเบียนเข้าพักก่อน'
+          : 'Please Complete Registration First',
+        message: th
+          ? 'QR Code ที่สแกนไม่ตรงกับขั้นตอนปัจจุบัน กรุณาสแกน QR Code ที่จุดลงทะเบียนเข้าพักก่อน'
+          : 'The scanned QR code does not match the current step. Please scan the registration-point QR code first.'
+      };
+    }
+
+    if (code === 'RETURN_NOT_READY') {
+      return {
+        title: th
+          ? 'ยังไม่ถึงขั้นตอนคืนกุญแจ/อุปกรณ์'
+          : 'Return Step Is Not Yet Available',
+        message: th
+          ? 'การเข้าพักยังไม่ถึงขั้นคืนกุญแจ/อุปกรณ์ กรุณารอเจ้าหน้าที่ยืนยันว่าการเข้าพักปฏิบัติครบกำหนดแล้ว'
+          : 'Your stay has not yet reached the return stage. Please wait for staff to confirm that the retreat stay period is completed.'
+      };
+    }
+
+    if (code === 'STAY_ALREADY_COMPLETED') {
+      return {
+        title: th
+          ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว'
+          : 'Retreat Stay Already Completed',
+        message: th
+          ? 'รายการนี้เสร็จสมบูรณ์แล้ว ไม่จำเป็นต้องสแกน QR Code เพิ่ม'
+          : 'This retreat stay is already completed. No further QR scan is required.'
+      };
+    }
+
+    if (
+      code === 'ACCOMMODATION_ALREADY_CONFIRMED' ||
+      code === 'ACCOMMODATION_ALREADY_PROCESSED'
+    ) {
+      return {
+        title: th
+          ? 'ยืนยันที่พักเรียบร้อยแล้ว'
+          : 'Accommodation Already Confirmed',
+        message: th
+          ? 'รายการนี้ยืนยันที่พักเรียบร้อยแล้ว ไม่จำเป็นต้องสแกน QR ที่พักซ้ำ'
+          : 'Accommodation has already been confirmed for this retreat stay. No repeat scan is required.'
+      };
+    }
+
+    if (code === 'ACCOMMODATION_NOT_ASSIGNED') {
+      return {
+        title: th
+          ? 'ยังไม่ได้รับการจัดสรรที่พัก'
+          : 'Accommodation Not Yet Assigned',
+        message: th
+          ? 'เจ้าหน้าที่ยังไม่ได้จัดสรรสถานที่พัก กรุณาติดต่อเจ้าหน้าที่ก่อนสแกน QR Code ที่พัก'
+          : 'Accommodation has not yet been assigned. Please contact monastery staff before scanning an accommodation QR code.'
+      };
+    }
+
+    if (code === 'NO_CHECKED_IN_BOOKING') {
+      return {
+        title: th
+          ? 'ยังไม่สามารถยืนยันเข้าที่พักได้'
+          : 'Accommodation Confirmation Unavailable',
+        message: th
+          ? 'ไม่พบรายการที่อยู่ในขั้นรอยืนยันเข้าที่พัก กรุณาตรวจสอบสถานะการเข้าพักของท่าน'
+          : 'No retreat stay is currently waiting for accommodation confirmation. Please check your stay status.'
+      };
+    }
+
+    if (code === 'NO_RETURN_ELIGIBLE_BOOKING') {
+      return {
+        title: th
+          ? 'ยังไม่สามารถยืนยันการคืนได้'
+          : 'Return Confirmation Unavailable',
+        message: th
+          ? 'ไม่พบรายการที่อยู่ในขั้นพร้อมคืนกุญแจ/อุปกรณ์ กรุณาตรวจสอบสถานะการเข้าพักของท่าน'
+          : 'No retreat stay is currently ready for return confirmation. Please check your stay status.'
+      };
+    }
+
+    if (code === 'RETURN_ALREADY_PROCESSED') {
+      return {
+        title: th
+          ? 'ยืนยันการคืนเรียบร้อยแล้ว'
+          : 'Return Already Confirmed',
+        message: th
+          ? 'รายการนี้ได้รับการยืนยันการคืนเรียบร้อยแล้ว ไม่จำเป็นต้องสแกนซ้ำ'
+          : 'The return has already been confirmed. No repeat scan is required.'
+      };
+    }
+
+    if (code === 'NO_ELIGIBLE_BOOKING') {
+      return {
+        title: th
+          ? 'ยังไม่สามารถลงทะเบียนเข้าพักได้'
+          : 'Registration Not Yet Available',
+        message: th
+          ? 'วันนี้ยังไม่มีรายการเข้าพักปฏิบัติธรรมที่ได้รับอนุมัติและถึงกำหนดลงทะเบียน กรุณาติดต่อเจ้าหน้าที่วัด'
+          : 'There is no approved retreat stay eligible for registration today. Please contact monastery staff.'
+      };
+    }
+
+    if (code === 'INVALID_QR') {
+      return {
+        title: th
+          ? 'QR Code ไม่ถูกต้อง'
+          : 'Invalid QR Code',
+        message: th
+          ? 'QR Code นี้ไม่ใช่ QR Code ที่ใช้กับระบบเข้าพักปฏิบัติธรรม กรุณาสแกน QR Code ของวัดที่ตรงกับขั้นตอนปัจจุบัน'
+          : 'This QR code is not valid for the retreat-stay system. Please scan the monastery QR code for your current step.'
+      };
+    }
+
+    if (code === 'MULTIPLE_BOOKINGS') {
+      return {
+        title: th
+          ? 'พบรายการเข้าพักมากกว่าหนึ่งรายการ'
+          : 'Multiple Retreat Stays Found',
+        message: th
+          ? 'ระบบพบรายการที่อาจดำเนินการได้มากกว่าหนึ่งรายการ กรุณาติดต่อเจ้าหน้าที่วัด'
+          : 'More than one eligible retreat stay was found. Please contact monastery staff.'
+      };
+    }
+
+    return {
+      title: th
+        ? 'ไม่สามารถดำเนินการด้วย QR Code นี้ได้'
+        : 'Unable to Process This QR Code',
+      message:
+        data?.message ||
+        (th
+          ? 'กรุณาตรวจสอบ QR Code และสถานะการเข้าพัก แล้วลองอีกครั้ง'
+          : 'Please check the QR code and your retreat-stay status, then try again.')
+    };
   };
 
 
@@ -241,6 +423,7 @@ function CheckinPage({
 
       setLoading(true);
       setError('');
+      setErrorTitle('');
       setScannerMessage('');
 
 
@@ -275,38 +458,17 @@ function CheckinPage({
           !response.ok ||
           !data.success
         ) {
-
-          if (
-            data.code ===
-            'NO_ELIGIBLE_BOOKING'
-          ) {
-            throw new Error(
-              th
-                ? 'วันนี้ยังไม่มีรายการเข้าพักปฏิบัติธรรมที่ได้รับอนุมัติและถึงกำหนดลงทะเบียน กรุณาติดต่อเจ้าหน้าที่วัด'
-                : 'There is no approved retreat stay eligible for registration today. Please contact monastery staff.'
+          const presentation =
+            getQrErrorPresentation(
+              data
             );
-          }
 
-
-          if (
-            data.code ===
-            'INVALID_QR'
-          ) {
-            throw new Error(
-              th
-                ? 'QR Code นี้ไม่ถูกต้อง กรุณาสแกน QR ที่จุดลงทะเบียนของวัด'
-                : 'This QR code is invalid. Please scan the QR code at the monastery registration point.'
-            );
-          }
-
+          setErrorTitle(
+            presentation.title
+          );
 
           throw new Error(
-            data.message ||
-            (
-              th
-                ? 'ไม่สามารถลงทะเบียนเข้าพักได้'
-                : 'Unable to register your stay'
-            )
+            presentation.message
           );
         }
 
@@ -674,6 +836,7 @@ function CheckinPage({
     async () => {
 
       setError('');
+      setErrorTitle('');
       setScannerMessage('');
 
       await stopScanner();
@@ -1140,15 +1303,17 @@ function CheckinPage({
                 color: '#c62828'
               }}
             >
-              {th
-                ? 'ไม่สามารถลงทะเบียนเข้าพักได้'
-                : 'Registration unavailable'}
+              {errorTitle ||
+                (th
+                  ? 'ไม่สามารถดำเนินการได้'
+                  : 'Unable to Continue')}
             </h3>
 
 
             <p
               style={{
-                lineHeight: '1.7'
+                lineHeight: '1.7',
+                whiteSpace: 'pre-line'
               }}
             >
               {error}

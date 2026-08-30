@@ -225,34 +225,6 @@ async function fetchBookings({
   };
 }
 
-
-async function findFirstBookingByStatuses({
-  supabaseUrl,
-  supabaseSecretKey,
-  memberId,
-  statuses
-}) {
-  for (const status of statuses) {
-    const { response, data } =
-      await fetchBookings({
-        supabaseUrl,
-        supabaseSecretKey,
-        memberId,
-        status
-      });
-
-    if (
-      response.ok &&
-      Array.isArray(data) &&
-      data.length > 0
-    ) {
-      return data[0];
-    }
-  }
-
-  return null;
-}
-
 async function updateBookingStatus({
   supabaseUrl,
   supabaseSecretKey,
@@ -788,85 +760,6 @@ export default async function handler(
         !Array.isArray(bookings) ||
         bookings.length === 0
       ) {
-        const otherBooking =
-          await findFirstBookingByStatuses({
-            supabaseUrl,
-            supabaseSecretKey,
-            memberId:
-              session.memberId,
-            statuses: [
-              'checked_out',
-              'completed',
-              'approved',
-              'accommodated',
-              'in_retreat'
-            ]
-          });
-
-        if (
-          otherBooking?.status ===
-          'checked_out'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'WRONG_QR_TYPE_EXPECT_RETURN',
-            actionType:
-              'accommodation',
-            scannedAccommodation:
-              qrPoint.name,
-            message:
-              'This is an accommodation QR code. Please scan the return-point QR code.'
-          });
-        }
-
-        if (
-          otherBooking?.status ===
-          'completed'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'STAY_ALREADY_COMPLETED',
-            actionType:
-              'accommodation',
-            message:
-              'This retreat stay has already been completed.'
-          });
-        }
-
-        if (
-          otherBooking?.status ===
-          'approved'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'WRONG_QR_TYPE_EXPECT_REGISTRATION',
-            actionType:
-              'accommodation',
-            message:
-              'Please scan the registration-point QR code before scanning an accommodation QR code.'
-          });
-        }
-
-        if (
-          otherBooking?.status ===
-            'accommodated' ||
-          otherBooking?.status ===
-            'in_retreat'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'ACCOMMODATION_ALREADY_CONFIRMED',
-            actionType:
-              'accommodation',
-            message:
-              'Accommodation has already been confirmed for this retreat stay.'
-          });
-        }
-
         return res.status(404).json({
           success: false,
           code:
@@ -1065,83 +958,6 @@ export default async function handler(
         !Array.isArray(bookings) ||
         bookings.length === 0
       ) {
-        const otherBooking =
-          await findFirstBookingByStatuses({
-            supabaseUrl,
-            supabaseSecretKey,
-            memberId:
-              session.memberId,
-            statuses: [
-              'checked_in',
-              'approved',
-              'accommodated',
-              'in_retreat',
-              'completed'
-            ]
-          });
-
-        if (
-          otherBooking?.status ===
-          'checked_in'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'WRONG_QR_TYPE_EXPECT_ACCOMMODATION',
-            actionType:
-              'return',
-            message:
-              'Please scan the QR code of the accommodation assigned to you before using the return point.'
-          });
-        }
-
-        if (
-          otherBooking?.status ===
-          'approved'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'WRONG_QR_TYPE_EXPECT_REGISTRATION',
-            actionType:
-              'return',
-            message:
-              'Please complete registration before using the return point.'
-          });
-        }
-
-        if (
-          otherBooking?.status ===
-            'accommodated' ||
-          otherBooking?.status ===
-            'in_retreat'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'RETURN_NOT_READY',
-            actionType:
-              'return',
-            message:
-              'The retreat stay has not yet reached the return-confirmation stage.'
-          });
-        }
-
-        if (
-          otherBooking?.status ===
-          'completed'
-        ) {
-          return res.status(409).json({
-            success: false,
-            code:
-              'STAY_ALREADY_COMPLETED',
-            actionType:
-              'return',
-            message:
-              'This retreat stay has already been completed.'
-          });
-        }
-
         return res.status(404).json({
           success: false,
           code:
