@@ -137,7 +137,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
       <div style={{ maxWidth:680, margin:'0 auto', padding:'18px 14px 24px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:14, background:'#fff', border:'1px solid #e3ddd2', borderRadius:18, padding:16 }}>
           <div style={{ width:58, height:58, borderRadius:16, overflow:'hidden', background:'#eee8dc', display:'grid', placeItems:'center', color:'#7d6236', flex:'0 0 auto' }}>
-            {data.student.pictureUrl ? <img src={data.student.pictureUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <RoutineIcon type="profile" size={28}/>} 
+            {getStudentPicture(data.student) ? <img src={getStudentPicture(data.student)} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <RoutineIcon type="profile" size={28}/>} 
           </div>
           <div style={{minWidth:0,flex:1}}><div style={{fontSize:12,color:'#8a7d6d',fontWeight:800,letterSpacing:'.08em'}}>{th ? 'กิจวัตรของฉัน' : 'MY ROUTINE'}</div><div style={{fontSize:22,fontWeight:800,color:'#332f29',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{data.student.nickname || data.student.displayName}</div><div style={{fontSize:13,color:'#756c60'}}>{dateFmt(data.today, lang)} · {doneCount}/{activeCount}</div></div>
           <button onClick={async () => { try { await fetch('/api/student?route=logout',{method:'POST',credentials:'include'}); } catch {} localStorage.removeItem('temple_student_user'); onStudentLogout?.(); goToPage('student-login'); }} style={ghostBtn}>{th ? 'ออก' : 'Logout'}</button>
@@ -152,7 +152,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
         </>}
         {tab === 'plan' && <PlanView th={th} data={data} busy={busy} onSchool={saveTomorrow} onStay={stayTomorrow} onHome={requestHome} />}
         {tab === 'messages' && <MessagesView th={th} lang={lang} messages={data.messages} message={message} setMessage={setMessage} sendMessage={sendMessage} busy={busy} />}
-        {tab === 'profile' && <ProfileView th={th} data={data} profile={profile} setProfile={setProfile} saveProfile={saveProfile} busy={busy} fileRef={fileRef} pickPhoto={pickPhoto} />}
+        {tab === 'profile' && <ProfileView th={th} data={data} profile={profile} setProfile={setProfile} saveProfile={saveProfile} busy={busy} />}
       </div>
       <nav style={bottomNav}>
         <NavButton active={tab==='today'} onClick={()=>setTab('today')} icon="check" label={th?'วันนี้':'Today'} />
@@ -221,7 +221,109 @@ function PlanView({th,data,busy,onSchool,onStay,onHome}) {
 
 function MessagesView({th,lang,messages,message,setMessage,sendMessage,busy}){return <div style={{marginTop:16}}><div style={{...panel,minHeight:300}}><h2 style={{...sectionTitle,marginTop:0}}>{th?'ข้อความถึงพระอาจารย์':'Messages to Admin'}</h2><div style={{display:'grid',gap:8,maxHeight:390,overflowY:'auto',padding:'4px 0 12px'}}>{!messages?.length&&<p style={{color:'#887f74'}}>{th?'ยังไม่มีข้อความ':'No messages yet.'}</p>}{messages?.map(m=><div key={m.id} style={{maxWidth:'84%',justifySelf:m.sender_type==='student'?'end':'start',background:m.sender_type==='student'?'#eee7da':'#f4f3ef',border:'1px solid #e1dbcf',borderRadius:14,padding:'9px 11px'}}><div style={{fontSize:12,fontWeight:800,color:'#766b5e',marginBottom:3}}>{m.sender_type==='student'?(th?'ผม':'Me'):(th?'พระอาจารย์':'Admin')}</div><div style={{whiteSpace:'pre-wrap'}}>{m.message}</div><div style={{fontSize:11,color:'#968d81',marginTop:4}}>{timeFmt(m.created_at,lang)}</div></div>)}</div><div style={{display:'flex',gap:8}}><textarea value={message} onChange={e=>setMessage(e.target.value)} rows={2} style={{...inputStyle,resize:'vertical'}} placeholder={th?'พิมพ์ข้อความถึงพระอาจารย์...':'Write a message to Admin...'}/><button disabled={busy==='message'||!message.trim()} onClick={sendMessage} style={{...ghostBtn,background:'#7b6033',color:'#fff',minWidth:74}}>{th?'ส่ง':'Send'}</button></div></div></div>}
 
-function ProfileView({th,data,profile,setProfile,saveProfile,busy,fileRef,pickPhoto}){return <div style={{marginTop:16}}><div style={panel}><h2 style={{...sectionTitle,marginTop:0}}>{th?'โปรไฟล์ของฉัน':'My Profile'}</h2><div style={{display:'flex',alignItems:'center',gap:14,marginBottom:18}}><div style={{width:78,height:78,borderRadius:18,overflow:'hidden',background:'#eee8dc',display:'grid',placeItems:'center',color:'#7d6236'}}>{data.student.pictureUrl?<img src={data.student.pictureUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<RoutineIcon type="profile" size={34}/>}</div><div><button onClick={()=>fileRef.current?.click()} style={ghostBtn}>{th?'เปลี่ยนรูป':'Change Photo'}</button><input ref={fileRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>pickPhoto(e.target.files?.[0])}/><div style={{fontSize:11,color:'#8c8277',marginTop:6}}>{th?'ไม่เกิน 2 MB':'Max 2 MB'}</div></div></div><Field label={th?'ชื่อเล่น':'Nickname'} value={profile.nickname} onChange={v=>setProfile({...profile,nickname:v})}/><Field label={th?'โรงเรียน':'School'} value={profile.schoolName} onChange={v=>setProfile({...profile,schoolName:v})}/><Field label={th?'ชั้นเรียน':'Grade / Class'} value={profile.gradeLevel} onChange={v=>setProfile({...profile,gradeLevel:v})}/><label style={fieldLabel}>{th?'เกี่ยวกับฉัน':'About Me'}</label><textarea value={profile.aboutMe} onChange={e=>setProfile({...profile,aboutMe:e.target.value})} rows={4} style={{...inputStyle,resize:'vertical'}}/><button disabled={busy==='profile'} onClick={()=>saveProfile()} style={{...primaryWide,marginTop:14,justifyContent:'center'}}>{busy==='profile'?(th?'กำลังบันทึก...':'Saving...'):(th?'บันทึกโปรไฟล์':'Save Profile')}</button></div></div>}
+function getStudentPicture(student) {
+  const name = `${student?.displayName || ''} ${student?.nickname || ''}`.toLowerCase();
+
+  if (name.includes('john')) {
+    return '/images/366.jpg';
+  }
+
+  if (name.includes('devid') || name.includes('david')) {
+    return '/images/365.jpg';
+  }
+
+  return student?.pictureUrl || '';
+}
+
+function ProfileView({th,data,profile,setProfile,saveProfile,busy}){
+  const picture = getStudentPicture(data.student);
+
+  return <div style={{marginTop:16}}>
+    <div style={panel}>
+      <h2 style={{...sectionTitle,marginTop:0}}>
+        {th?'โปรไฟล์ของฉัน':'My Profile'}
+      </h2>
+
+      <div style={{
+        display:'flex',
+        alignItems:'center',
+        gap:14,
+        marginBottom:18
+      }}>
+        <div style={{
+          width:78,
+          height:78,
+          borderRadius:18,
+          overflow:'hidden',
+          background:'#eee8dc',
+          display:'grid',
+          placeItems:'center',
+          color:'#7d6236'
+        }}>
+          {picture
+            ? <img
+                src={picture}
+                alt=""
+                style={{
+                  width:'100%',
+                  height:'100%',
+                  objectFit:'cover'
+                }}
+              />
+            : <RoutineIcon type="profile" size={34}/>
+          }
+        </div>
+      </div>
+
+      <Field
+        label={th?'ชื่อเล่น':'Nickname'}
+        value={profile.nickname}
+        onChange={v=>setProfile({...profile,nickname:v})}
+      />
+
+      <Field
+        label={th?'โรงเรียน':'School'}
+        value={profile.schoolName}
+        onChange={v=>setProfile({...profile,schoolName:v})}
+      />
+
+      <Field
+        label={th?'ชั้นเรียน':'Grade / Class'}
+        value={profile.gradeLevel}
+        onChange={v=>setProfile({...profile,gradeLevel:v})}
+      />
+
+      <label style={fieldLabel}>
+        {th?'เกี่ยวกับฉัน':'About Me'}
+      </label>
+
+      <textarea
+        value={profile.aboutMe}
+        onChange={e=>setProfile({
+          ...profile,
+          aboutMe:e.target.value
+        })}
+        rows={4}
+        style={{...inputStyle,resize:'vertical'}}
+      />
+
+      <button
+        disabled={busy==='profile'}
+        onClick={()=>saveProfile()}
+        style={{
+          ...primaryWide,
+          marginTop:14,
+          justifyContent:'center'
+        }}
+      >
+        {busy==='profile'
+          ? (th?'กำลังบันทึก...':'Saving...')
+          : (th?'บันทึกโปรไฟล์':'Save Profile')
+        }
+      </button>
+    </div>
+  </div>
+}
 function Field({label,value,onChange}){return <><label style={fieldLabel}>{label}</label><input value={value} onChange={e=>onChange(e.target.value)} style={inputStyle}/></>}
 function NavButton({active,onClick,icon,label}){return <button onClick={onClick} style={{border:0,background:'transparent',color:active?'#6f5428':'#80786e',display:'grid',placeItems:'center',gap:3,fontSize:11,fontWeight:active?800:600,minWidth:68}}><RoutineIcon type={icon} size={22}/><span>{label}</span></button>}
 
