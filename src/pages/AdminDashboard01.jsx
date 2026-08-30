@@ -45,8 +45,7 @@ function AdminDashboard({ lang, goToPage }) {
       approve: 'Approve',
       reject: 'Reject',
       checkIn: 'Check In',
-      assignAccommodation: 'Assign / Change Room',
-      confirmAccommodation: 'Confirm Accommodation',
+      assignAccommodation: 'Assign Accommodation',
       startRetreat: 'Start Retreat',
       checkOut: 'Check Out',
       complete: 'Complete Stay',
@@ -119,8 +118,7 @@ function AdminDashboard({ lang, goToPage }) {
       approve: 'อนุมัติ',
       reject: 'ไม่อนุมัติ',
       checkIn: 'เช็กอิน',
-      assignAccommodation: 'จัด / เปลี่ยนห้องพัก',
-      confirmAccommodation: 'ยืนยันเข้าที่พัก',
+      assignAccommodation: 'จัดเข้าที่พัก',
       startRetreat: 'เริ่มปฏิบัติธรรม',
       checkOut: 'เช็กเอาต์',
       complete: 'ปิดการเข้าพัก',
@@ -503,23 +501,6 @@ function AdminDashboard({ lang, goToPage }) {
             onClick={() =>
               callStayAction(
                 booking,
-                'assign_accommodation'
-              )
-            }
-            style={{
-              ...actionButtonStyle,
-              background: '#7e57c2',
-              color: '#fff'
-            }}
-          >
-            {t.assignAccommodation}
-          </button>
-
-          <button
-            disabled={busy}
-            onClick={() =>
-              callStayAction(
-                booking,
                 'check_in'
               )
             }
@@ -554,66 +535,22 @@ function AdminDashboard({ lang, goToPage }) {
 
     if (booking.status === 'checked_in') {
       return (
-        <div
+        <button
+          disabled={busy}
+          onClick={() =>
+            callStayAction(
+              booking,
+              'assign_accommodation'
+            )
+          }
           style={{
-            display: 'flex',
-            gap: '6px',
-            flexWrap: 'wrap'
+            ...actionButtonStyle,
+            background: '#7e57c2',
+            color: '#fff'
           }}
         >
-          <button
-            disabled={busy}
-            onClick={() =>
-              callStayAction(
-                booking,
-                'assign_accommodation'
-              )
-            }
-            style={{
-              ...actionButtonStyle,
-              background: '#7e57c2',
-              color: '#fff'
-            }}
-          >
-            {t.assignAccommodation}
-          </button>
-
-          <button
-            disabled={
-              busy ||
-              !booking.accommodation_name
-            }
-            onClick={() =>
-              callStayAction(
-                booking,
-                'confirm_accommodation'
-              )
-            }
-            style={{
-              ...actionButtonStyle,
-              background:
-                booking.accommodation_name
-                  ? '#5e35b1'
-                  : '#c9c4cf',
-              color: '#fff',
-              cursor:
-                booking.accommodation_name
-                  ? 'pointer'
-                  : 'not-allowed'
-            }}
-            title={
-              booking.accommodation_name
-                ? ''
-                : (
-                    lang === 'th'
-                      ? 'กรุณาจัดห้องพักก่อน'
-                      : 'Please assign a room first'
-                  )
-            }
-          >
-            {t.confirmAccommodation}
-          </button>
-        </div>
+          {t.assignAccommodation}
+        </button>
       );
     }
 
