@@ -155,6 +155,29 @@ function LoginPage({
           background: #fff;
         }
 
+        .studentLoginBtn {
+          width: 100%;
+          min-height: 50px;
+          margin-top: 12px;
+          padding: 12px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          border: 1px solid #d8c49a;
+          border-radius: 999px;
+          background: #fff;
+          color: #8d6626;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .studentLoginBtn:hover {
+          background: #fff8ec;
+        }
+
         .loginHelpText {
           max-width: 510px;
           margin: 18px auto 0;
@@ -549,6 +572,24 @@ function LoginPage({
                   {th
                     ? 'เข้าสู่ระบบด้วย LINE'
                     : 'Login with LINE'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  goToPage('student-login')
+                }
+                className="studentLoginBtn"
+              >
+                <span aria-hidden="true">
+                  ◇
+                </span>
+
+                <span>
+                  {th
+                    ? 'เด็กวัดเข้าสู่ระบบ'
+                    : 'Temple Student Login'}
                 </span>
               </button>
 
