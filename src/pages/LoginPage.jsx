@@ -186,6 +186,25 @@ function LoginPage({
           line-height: 1.75;
         }
 
+        .studentLoginTextLink {
+          display: block;
+          margin: 18px auto 0;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: #9b7226;
+          font-family: inherit;
+          font-size: 11.5px;
+          font-weight: 500;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          cursor: pointer;
+        }
+
+        .studentLoginTextLink:hover {
+          color: #6f4e18;
+        }
+
         .loginPrivacyText {
           max-width: 500px;
           margin: 16px auto 0;
@@ -575,23 +594,7 @@ function LoginPage({
                 </span>
               </button>
 
-              <button
-                type="button"
-                onClick={() =>
-                  goToPage('student-login')
-                }
-                className="studentLoginBtn"
-              >
-                <span aria-hidden="true">
-                  ◇
-                </span>
 
-                <span>
-                  {th
-                    ? 'เด็กวัดเข้าสู่ระบบ'
-                    : 'Temple Student Login'}
-                </span>
-              </button>
 
               <p className="loginHelpText">
                 {th
@@ -604,6 +607,18 @@ function LoginPage({
                   ? 'การเข้าสู่ระบบถือว่าท่านยอมรับนโยบายความเป็นส่วนตัวและเงื่อนไขการใช้งานของทางวัด'
                   : 'By logging in, you accept the monastery privacy policy and terms of use.'}
               </p>
+
+              <button
+                type="button"
+                className="studentLoginTextLink"
+                onClick={() =>
+                  goToPage('student-login')
+                }
+              >
+                {th
+                  ? 'สำหรับเด็กวัด'
+                  : 'For Temple Students'}
+              </button>
             </>
           )}
         </div>
