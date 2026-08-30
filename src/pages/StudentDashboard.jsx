@@ -35,7 +35,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
   const load = async () => {
     setError('');
     try {
-      const r = await fetch('/api/student-dashboard', { credentials: 'include' });
+      const r = await fetch('/api/student?route=dashboard', { credentials: 'include' });
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.message || 'Unable to load');
       setData(j);
@@ -49,7 +49,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
   const postAction = async (body, key='action') => {
     setBusy(key); setError('');
     try {
-      const r = await fetch('/api/student-action', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      const r = await fetch('/api/student?route=action', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
       const j = await r.json();
       if (!r.ok || !j.success) throw new Error(j.message || 'Unable to save');
       await load();
@@ -105,7 +105,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
     if (!message.trim()) return;
     setBusy('message');
     try {
-      const r = await fetch('/api/student-message', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message }) });
+      const r = await fetch('/api/student?route=message', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message }) });
       const j = await r.json(); if (!r.ok || !j.success) throw new Error(j.message || 'Unable to send');
       setMessage(''); await load();
     } catch(e) { setError(e.message); } finally { setBusy(''); }
@@ -114,7 +114,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
   const saveProfile = async (imageData = '') => {
     setBusy('profile');
     try {
-      const r = await fetch('/api/student-profile', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...profile, imageData }) });
+      const r = await fetch('/api/student?route=profile', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...profile, imageData }) });
       const j = await r.json(); if (!r.ok || !j.success) throw new Error(j.message || 'Unable to save');
       await load();
     } catch(e) { setError(e.message); } finally { setBusy(''); }
@@ -140,7 +140,7 @@ export default function StudentDashboard({ lang, goToPage, studentUser, onStuden
             {data.student.pictureUrl ? <img src={data.student.pictureUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <RoutineIcon type="profile" size={28}/>} 
           </div>
           <div style={{minWidth:0,flex:1}}><div style={{fontSize:12,color:'#8a7d6d',fontWeight:800,letterSpacing:'.08em'}}>{th ? 'กิจวัตรของฉัน' : 'MY ROUTINE'}</div><div style={{fontSize:22,fontWeight:800,color:'#332f29',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{data.student.nickname || data.student.displayName}</div><div style={{fontSize:13,color:'#756c60'}}>{dateFmt(data.today, lang)} · {doneCount}/{activeCount}</div></div>
-          <button onClick={async () => { try { await fetch('/api/student-logout',{method:'POST',credentials:'include'}); } catch {} localStorage.removeItem('temple_student_user'); onStudentLogout?.(); goToPage('student-login'); }} style={ghostBtn}>{th ? 'ออก' : 'Logout'}</button>
+          <button onClick={async () => { try { await fetch('/api/student?route=logout',{method:'POST',credentials:'include'}); } catch {} localStorage.removeItem('temple_student_user'); onStudentLogout?.(); goToPage('student-login'); }} style={ghostBtn}>{th ? 'ออก' : 'Logout'}</button>
         </div>
 
         {error && <div style={{marginTop:12,padding:12,borderRadius:12,background:'#fff2ef',color:'#972d2d',border:'1px solid #f0d2cc'}}>{error}</div>}

@@ -1,6 +1,6 @@
 import {
   requireAdmin
-} from './_auth.js';
+} from '../lib/_auth.js';
 
 const ACCOMMODATION_OPTIONS = [
   'กุฏิยอดคำ ห้อง 2',

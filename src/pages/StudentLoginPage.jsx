@@ -13,7 +13,7 @@ export default function StudentLoginPage({ lang, goToPage, onStudentLogin }) {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/student-login', {
+      const response = await fetch('/api/student?route=login', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, pin })
       });

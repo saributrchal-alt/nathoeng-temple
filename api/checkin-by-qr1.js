@@ -1,6 +1,6 @@
 import {
   getSessionFromRequest
-} from './_auth.js';
+} from '../lib/_auth.js';
 
 function getBangkokDate() {
   const parts = new Intl.DateTimeFormat(

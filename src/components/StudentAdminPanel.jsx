@@ -20,7 +20,7 @@ export default function StudentAdminPanel({lang}){
   const load=async()=>{
     setError('');
     try{
-      const r=await fetch('/api/admin-students',{credentials:'include'});
+      const r=await fetch('/api/student?route=admin-students',{credentials:'include'});
       const j=await r.json();
       if(!r.ok||!j.success) throw new Error(j.message||'Unable to load');
       setData(j);
@@ -31,7 +31,7 @@ export default function StudentAdminPanel({lang}){
   const act=async(body,key='admin')=>{
     setBusy(key); setError('');
     try{
-      const r=await fetch('/api/admin-student-action',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const r=await fetch('/api/student?route=admin-student-action',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
       const j=await r.json(); if(!r.ok||!j.success) throw new Error(j.message||'Unable to save');
       await load(); return true;
     }catch(e){setError(e.message);return false;}finally{setBusy('');}
