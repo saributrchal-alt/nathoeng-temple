@@ -256,6 +256,8 @@ useEffect(() => {
         hash === 'privacy-policy' ||
         hash === 'terms-page' ||
         hash === 'login-page' ||
+        hash === 'student-login' ||
+        hash === 'student-dashboard' ||
         hash === 'my-dashboard' ||
         hash === 'my-stays' ||
         hash === 'checkin-page'
