@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import StudentAdminPanel from '../components/StudentAdminPanel';
 
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
@@ -828,6 +829,8 @@ function AdminDashboard({ lang, goToPage }) {
             {t.title}
           </h1>
         </div>
+
+        <StudentAdminPanel lang={lang} />
 
         <div
           style={{

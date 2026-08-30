@@ -11,6 +11,8 @@ import AdminDashboard from './pages/AdminDashboard'
 import MyStaysPage from './pages/MyStaysPage'
 import CheckinPage from './pages/CheckinPage'
 import MyDashboard from './pages/MyDashboard'
+import StudentLoginPage from './pages/StudentLoginPage'
+import StudentDashboard from './pages/StudentDashboard'
 
 const content = {
   en: {
@@ -964,6 +966,16 @@ const handleLineLogin = () => {
             goToPage={goToPage}
             user={user}
             handleLineLogin={handleLineLogin}
+          />
+        ) : currentPage === 'student-login' ? (
+          <StudentLoginPage
+            lang={lang}
+            goToPage={goToPage}
+          />
+        ) : currentPage === 'student-dashboard' ? (
+          <StudentDashboard
+            lang={lang}
+            goToPage={goToPage}
           />
         ) : currentPage === 'admin-dashboard' ? (
           /* ================= PAGE: ADMIN DASHBOARD ================= */

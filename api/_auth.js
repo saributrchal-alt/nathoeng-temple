@@ -43,6 +43,7 @@ export function createSessionToken(user) {
     memberId: user.memberId,
     lineUid: user.lineUid,
     role: user.role,
+    studentId: user.studentId || null,
     exp: Date.now() + 1000 * 60 * 60 * 24 * 7
   };
 
@@ -159,6 +160,28 @@ export function clearSessionCookie(res) {
     COOKIE_NAME +
       '=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
   );
+}
+
+export function requireStudent(req, res) {
+  const session = getSessionFromRequest(req);
+
+  if (!session || session.role !== 'temple_student' || !session.studentId) {
+    res.status(403).json({ success: false, message: 'Student permission required' });
+    return null;
+  }
+
+  return session;
+}
+
+export function requireAdminOrStudent(req, res) {
+  const session = getSessionFromRequest(req);
+
+  if (!session || !['admin', 'temple_student'].includes(session.role)) {
+    res.status(403).json({ success: false, message: 'Permission required' });
+    return null;
+  }
+
+  return session;
 }
 
 export function requireAdmin(req, res) {
