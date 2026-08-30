@@ -20,6 +20,7 @@ export default function StudentLoginPage({ lang, goToPage, onStudentLogin }) {
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || 'Login failed');
       localStorage.setItem('temple_student_user', JSON.stringify(data.student));
+      window.dispatchEvent(new Event('temple-student-session-changed'));
       onStudentLogin?.(data.student);
       goToPage('student-dashboard');
     } catch (err) {

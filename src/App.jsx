@@ -210,9 +210,37 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [user, setUser] = useState(null)
+
+  const [studentUser, setStudentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('temple_student_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const t = content[lang]
 
-  useEffect(() => {
+    useEffect(() => {
+    const syncStudentUser = () => {
+      try {
+        const saved = localStorage.getItem('temple_student_user');
+        setStudentUser(saved ? JSON.parse(saved) : null);
+      } catch {
+        setStudentUser(null);
+      }
+    };
+
+    window.addEventListener('storage', syncStudentUser);
+    window.addEventListener('temple-student-session-changed', syncStudentUser);
+
+    return () => {
+      window.removeEventListener('storage', syncStudentUser);
+      window.removeEventListener('temple-student-session-changed', syncStudentUser);
+    };
+  }, []);
+
+useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '')
       if (
@@ -607,6 +635,37 @@ const handleLineLogin = () => {
                   type="button"
                   className="headerLogoutBtn"
                   onClick={handleLogout}
+                >
+                  {lang === 'en' ? 'Logout' : 'ออก'}
+                </button>
+              </>
+            ) : studentUser ? (
+              <>
+                <button
+                  type="button"
+                  className="headerAccountBtn"
+                  onClick={() => goToPage('student-dashboard')}
+                >
+                  <span className="accountIcon" aria-hidden="true">♙</span>
+                  <span>{lang === 'en' ? 'Student Account' : 'บัญชีเด็กวัด'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="headerLogoutBtn"
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/student?route=logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                    } catch {}
+
+                    localStorage.removeItem('temple_student_user');
+                    setStudentUser(null);
+                    window.dispatchEvent(new Event('temple-student-session-changed'));
+                    goToPage('student-login');
+                  }}
                 >
                   {lang === 'en' ? 'Logout' : 'ออก'}
                 </button>
