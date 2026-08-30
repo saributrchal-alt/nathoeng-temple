@@ -442,38 +442,8 @@ function MyStaysPage({
      ========================================================= */
 
   function StayTracking({ booking }) {
-    /*
-      Tracking is action-oriented:
-      - approved   -> step 3 is active (registration QR)
-      - checked_in -> step 4 is active (accommodation QR)
-      - checked_out -> step 7 is active (return QR)
-      Other manual stages keep their own current step active.
-    */
-    const activeStepIndex = {
-      pending: 0,
-      approved: 2,
-      checked_in: 3,
-      accommodated: 4,
-      in_retreat: 5,
-      checked_out: 6,
-      completed: 6
-    };
-
     const currentIndex =
-      activeStepIndex[booking.status] ?? 0;
-
-    const completedThroughIndex = {
-      pending: -1,
-      approved: 1,
-      checked_in: 2,
-      accommodated: 3,
-      in_retreat: 4,
-      checked_out: 5,
-      completed: 6
-    };
-
-    const completedIndex =
-      completedThroughIndex[booking.status] ?? -1;
+      statusOrder[booking.status] ?? 0;
 
     const stopped =
       booking.status === 'rejected' ||
@@ -507,17 +477,23 @@ function MyStaysPage({
           {trackingSteps.map(
             (step, index) => {
               const completed =
-                index <= completedIndex;
+                index < currentIndex ||
+                (
+                  booking.status ===
+                    'completed' &&
+                  index === currentIndex
+                );
 
               const current =
                 index === currentIndex &&
-                !completed;
+                booking.status !==
+                  'completed';
 
               const reached =
-                index <= completedIndex;
+                index <= currentIndex;
 
               const future =
-                !completed && !current;
+                index > currentIndex;
 
               const last =
                 index ===
@@ -561,7 +537,9 @@ function MyStaysPage({
                     {!last && (
                       <div
                         className={
-                          reached
+                          reached &&
+                          index <
+                            currentIndex
                             ? 'stayStepLine reached'
                             : 'stayStepLine'
                         }
@@ -589,18 +567,9 @@ function MyStaysPage({
                       </div>
 
                       <div className="stayStepDescription">
-                        {step.key === 'accommodated' &&
-                        booking.accommodation_name
-                          ? (
-                              th
-                                ? `ที่พักที่ได้รับมอบหมาย: ${booking.accommodation_name}`
-                                : `Assigned accommodation: ${booking.accommodation_name}`
-                            )
-                          : (
-                              th
-                                ? step.descriptionTh
-                                : step.descriptionEn
-                            )}
+                        {th
+                          ? step.descriptionTh
+                          : step.descriptionEn}
                       </div>
 
                       <div
@@ -626,53 +595,30 @@ function MyStaysPage({
                           : '• Upcoming'}
                       </div>
 
-                      {/* QR BUTTON — show only at the next QR-triggered step */}
-                      {(
-                        (
-                          booking.status === 'approved' &&
-                          step.key === 'checked_in'
-                        ) ||
-                        (
-                          booking.status === 'checked_in' &&
-                          step.key === 'accommodated'
-                        ) ||
-                        (
-                          booking.status === 'checked_out' &&
-                          step.key === 'completed'
-                        )
-                      ) && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            goToPage(
-                              'checkin-page'
-                            )
-                          }
-                          className="stayQrButton"
-                        >
-                          <span aria-hidden="true">
-                            ▦
-                          </span>
+                      {/* QR BUTTON — preserve existing flow:
+                          show only when the current booking status is approved */}
+                      {step.key ===
+                        'checked_in' &&
+                        booking.status ===
+                          'approved' && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              goToPage(
+                                'checkin-page'
+                              )
+                            }
+                            className="stayQrButton"
+                          >
+                            <span aria-hidden="true">
+                              ▦
+                            </span>
 
-                          {booking.status === 'approved'
-                            ? (
-                                th
-                                  ? 'สแกน QR จุดลงทะเบียน'
-                                  : 'SCAN REGISTRATION QR'
-                              )
-                            : booking.status === 'checked_in'
-                            ? (
-                                th
-                                  ? 'สแกน QR เข้าที่พัก'
-                                  : 'SCAN ACCOMMODATION QR'
-                              )
-                            : (
-                                th
-                                  ? 'สแกน QR คืนกุญแจ / อุปกรณ์'
-                                  : 'SCAN RETURN QR'
-                              )}
-                        </button>
-                      )}
+                            {th
+                              ? 'สแกน QR Code'
+                              : 'SCAN QR CODE'}
+                          </button>
+                        )}
                     </div>
                   </div>
                 </div>
