@@ -60,7 +60,6 @@ function MyDashboard({
           {th ? '← กลับสู่หน้าหลัก' : '← Back to Home'}
         </button>
 
-        {/* HERO */}
         <div className="dashboardHero">
           <img
             src="/icons/lotus.svg"
@@ -73,9 +72,7 @@ function MyDashboard({
             NATHOENG CONNECT
           </span>
 
-          <h1>
-            {th ? 'บัญชีของฉัน' : 'My Account'}
-          </h1>
+          <h1>{th ? 'บัญชีของฉัน' : 'My Account'}</h1>
 
           <p>
             {th
@@ -84,7 +81,6 @@ function MyDashboard({
           </p>
         </div>
 
-        {/* PROFILE */}
         <section className="dashboardProfileCard">
           <div className="dashboardProfileAvatar">
             {user?.picture && !profileImageError ? (
@@ -106,19 +102,9 @@ function MyDashboard({
           </div>
 
           <div className="dashboardProfileText">
-            <small>
-              {th ? 'สมาชิก : โยมปฏิบัติ' : 'Member: Practitioner'}
-            </small>
-
-            <strong>
-              {user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}
-            </strong>
-
-            <span>
-              {th
-                ? 'เชื่อมต่อบัญชี LINE แล้ว'
-                : 'LINE account connected'}
-            </span>
+            <small>{th ? 'สมาชิก : โยมปฏิบัติ' : 'Member: Practitioner'}</small>
+            <strong>{user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}</strong>
+            <span>{th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE account connected'}</span>
           </div>
 
           <div className="dashboardConnectedBadge">
@@ -126,44 +112,28 @@ function MyDashboard({
           </div>
         </section>
 
-        {/* RETREAT STAY */}
         <section className="dashboardMainCard dashboardStayCard">
           <div className="dashboardSectionTop">
             <div>
               <span className="dashboardSectionEyebrow">
                 {th ? 'เข้าพักปฏิบัติธรรม' : 'RETREAT STAY'}
               </span>
-
               <h2>
-                {th
-                  ? 'สถานะการเข้าพักปฏิบัติธรรม'
-                  : 'Retreat Stay Status'}
+                {th ? 'สถานะการเข้าพักปฏิบัติธรรม' : 'Retreat Stay Status'}
               </h2>
             </div>
 
             <div className="dashboardSectionIcon">
-              <img
-                src="/icons/stay.svg"
-                alt=""
-                aria-hidden="true"
-              />
+              <img src="/icons/stay.svg" alt="" aria-hidden="true" />
             </div>
           </div>
 
           <div className="dashboardEmptyStay">
             <div className="dashboardEmptyStayIcon">
-              <img
-                src="/icons/meditation.svg"
-                alt=""
-                aria-hidden="true"
-              />
+              <img src="/icons/meditation.svg" alt="" aria-hidden="true" />
             </div>
 
-            <h3>
-              {th
-                ? 'ยังไม่มีรายการเข้าพัก'
-                : 'No retreat stay yet'}
-            </h3>
+            <h3>{th ? 'ยังไม่มีรายการเข้าพัก' : 'No retreat stay yet'}</h3>
 
             <p>
               {th
@@ -176,21 +146,9 @@ function MyDashboard({
               className="dashboardPrimaryButton"
               onClick={() => goToPage('booking-page')}
             >
-              <span>
-                {th
-                  ? 'สร้างคำขอเข้าพักปฏิบัติธรรม'
-                  : 'Apply for a Retreat Stay'}
-              </span>
-
-              <small>
-                {th
-                  ? 'เริ่มต้นการเข้าพักปฏิบัติธรรม'
-                  : 'Start your retreat stay'}
-              </small>
-
-              <strong aria-hidden="true">
-                ›
-              </strong>
+              <span>{th ? 'สร้างคำขอเข้าพักปฏิบัติธรรม' : 'Apply for a Retreat Stay'}</span>
+              <small>{th ? 'เริ่มต้นการเข้าพักปฏิบัติธรรม' : 'Start your retreat stay'}</small>
+              <strong aria-hidden="true">›</strong>
             </button>
 
             <button
@@ -198,45 +156,32 @@ function MyDashboard({
               className="dashboardTextButton"
               onClick={() => goToPage('my-stays')}
             >
-              {th
-                ? 'ดูรายการเข้าพักของฉัน'
-                : 'View my retreat stays'}
+              {th ? 'ดูรายการเข้าพักของฉัน' : 'View my retreat stays'}
             </button>
           </div>
         </section>
 
-        {/* DONATION MEMORY */}
         <section className="dashboardMainCard dashboardDonationCard">
           <div className="dashboardSectionTop">
             <div>
               <span className="dashboardSectionEyebrow">
                 {th ? 'การร่วมบุญ' : 'DONATIONS'}
               </span>
-
               <h2>
-                {th
-                  ? 'บันทึกความจำ การบริจาคของฉัน'
-                  : 'My Donation Memories'}
+                {th ? 'บันทึกความจำ การบริจาคของฉัน' : 'My Donation Memories'}
               </h2>
             </div>
 
             <div className="dashboardSectionIcon">
-              <img
-                src="/icons/donation.svg"
-                alt=""
-                aria-hidden="true"
-              />
+              <img src="/icons/donation.svg" alt="" aria-hidden="true" />
             </div>
           </div>
 
           <div className="dashboardDonationBody">
             <div>
               <span className="dashboardDonationLabel">
-                {th
-                  ? 'ยอดการบริจาคของฉัน'
-                  : 'My total donations'}
+                {th ? 'ยอดการบริจาคของฉัน' : 'My total donations'}
               </span>
-
               <p>
                 {th
                   ? 'ดูประวัติการบริจาคและโครงการที่ท่านเคยร่วมสนับสนุน'
@@ -249,26 +194,18 @@ function MyDashboard({
               className="dashboardSecondaryButton"
               onClick={() => goToPage('donation-list')}
             >
-              {th
-                ? 'ดูบันทึกการบริจาค'
-                : 'View donation history'}
+              {th ? 'ดูบันทึกการบริจาค' : 'View donation history'}
               <span aria-hidden="true">›</span>
             </button>
           </div>
         </section>
 
-        {/* SERVICES */}
         <section className="dashboardServicesSection">
           <div className="dashboardServicesHeading">
             <span className="dashboardSectionEyebrow">
               {th ? 'ข้อมูลและบริการ' : 'INFORMATION & SERVICES'}
             </span>
-
-            <h2>
-              {th
-                ? 'บริการและข้อมูลที่สำคัญ'
-                : 'Important Information'}
-            </h2>
+            <h2>{th ? 'บริการและข้อมูลที่สำคัญ' : 'Important Information'}</h2>
           </div>
 
           <div className="dashboardServicesGrid">
@@ -280,40 +217,22 @@ function MyDashboard({
                 onClick={() => goToPage(service.page)}
               >
                 <span className="dashboardServiceIcon">
-                  <img
-                    src={service.icon}
-                    alt=""
-                    aria-hidden="true"
-                  />
+                  <img src={service.icon} alt="" aria-hidden="true" />
                 </span>
 
-                <strong>
-                  {th ? service.titleTh : service.titleEn}
-                </strong>
-
-                <span>
-                  {th ? service.textTh : service.textEn}
-                </span>
+                <strong>{th ? service.titleTh : service.titleEn}</strong>
+                <span>{th ? service.textTh : service.textEn}</span>
               </button>
             ))}
           </div>
         </section>
 
-        {/* CONTACT */}
         <section className="dashboardContactCard">
-          <div className="dashboardContactIcon">
-            LINE
-          </div>
+          <div className="dashboardContactIcon">LINE</div>
 
           <div className="dashboardContactText">
-            <span>
-              {th ? 'ติดต่อวัด' : 'Contact the Monastery'}
-            </span>
-
-            <strong>
-              LINE OA @nathoeng
-            </strong>
-
+            <span>{th ? 'ติดต่อวัด' : 'Contact the Monastery'}</span>
+            <strong>LINE OA @nathoeng</strong>
             <p>
               {th
                 ? 'สอบถามข้อมูลเพิ่มเติมผ่าน LINE Official Account'
@@ -331,39 +250,24 @@ function MyDashboard({
           </a>
         </section>
 
-        {/* DHAMMA */}
         <button
           type="button"
           className="dashboardDhammaCard"
           onClick={() => goToPage('teachings-page')}
         >
-          <img
-            src="/icons/dhamma-book.svg"
-            alt=""
-            aria-hidden="true"
-          />
-
+          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
           <div>
-            <span>
-              {th ? 'ธรรมะถึงฉัน' : 'Dhamma for Me'}
-            </span>
-
+            <span>{th ? 'ธรรมะถึงฉัน' : 'Dhamma for Me'}</span>
             <strong>
               {th
                 ? 'อ่านพระธรรมคำสอนและข้อคิดจากทางวัด'
                 : 'Read Dhamma teachings and reflections.'}
             </strong>
           </div>
-
-          <span aria-hidden="true">
-            ›
-          </span>
+          <span aria-hidden="true">›</span>
         </button>
 
-        <div
-          className="dashboardDivider"
-          aria-hidden="true"
-        >
+        <div className="dashboardDivider" aria-hidden="true">
           <span></span>
           <img src="/icons/lotus.svg" alt="" />
           <span></span>
@@ -378,8 +282,45 @@ function MyDashboard({
             {th ? 'ออกจากระบบ' : 'Logout'}
           </button>
         </div>
-
       </div>
+
+      <nav className="dashboardBottomNav" aria-label={th ? 'เมนูหลัก' : 'Main navigation'}>
+        <button
+          type="button"
+          className="dashboardBottomNavItem"
+          onClick={() => goToPage('home')}
+        >
+          <img src="/icons/home.svg" alt="" aria-hidden="true" />
+          <span>{th ? 'หน้าแรก' : 'Home'}</span>
+        </button>
+
+        <button
+          type="button"
+          className="dashboardBottomNavItem"
+          onClick={() => goToPage('my-stays')}
+        >
+          <img src="/icons/stay.svg" alt="" aria-hidden="true" />
+          <span>{th ? 'เข้าพักปฏิบัติธรรม' : 'Retreat'}</span>
+        </button>
+
+        <button
+          type="button"
+          className="dashboardBottomNavItem active"
+          aria-current="page"
+        >
+          <img src="/icons/contact.svg" alt="" aria-hidden="true" />
+          <span>{th ? 'บัญชีของฉัน' : 'My Account'}</span>
+        </button>
+
+        <button
+          type="button"
+          className="dashboardBottomNavItem"
+          onClick={() => goToPage('contact-page')}
+        >
+          <img src="/icons/location.svg" alt="" aria-hidden="true" />
+          <span>{th ? 'ติดต่อวัด' : 'Contact'}</span>
+        </button>
+      </nav>
     </div>
   );
 }
