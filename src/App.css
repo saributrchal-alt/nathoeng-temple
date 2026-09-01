@@ -3917,3 +3917,59 @@ img {
     display: none !important;
   }
 }
+/* =========================================
+   MY ACCOUNT — BOTTOM NAV FINAL TUNE
+   ========================================= */
+
+@media (max-width: 560px) {
+  .dashboardBottomNav {
+    min-height: 52px !important;
+    padding: 3px 6px calc(3px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .dashboardBottomNavItem {
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 2px 1px !important;
+    gap: 1px !important;
+    border-radius: 9px !important;
+  }
+
+  .dashboardBottomNavItem > img {
+    width: 17px !important;
+    min-width: 17px !important;
+    max-width: 17px !important;
+
+    height: 17px !important;
+    min-height: 17px !important;
+    max-height: 17px !important;
+
+    flex: 0 0 17px !important;
+  }
+
+  .dashboardBottomNavItem > span {
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+  }
+
+  .dashboardBottomNavItem.active {
+    background: #edf6ef !important;
+  }
+
+  /* ซ่อนไอคอนหน้าแรกที่โหลดไม่ขึ้น */
+  .dashboardBottomNavItem:first-child > img {
+    display: none !important;
+  }
+
+  /* ใช้รูปบ้านจาก CSS แทน */
+  .dashboardBottomNavItem:first-child::before {
+    content: "⌂";
+    display: block;
+    margin-bottom: 1px;
+    color: #838b83;
+    font-size: 21px;
+    line-height: 17px;
+    font-weight: 400;
+  }
+}
