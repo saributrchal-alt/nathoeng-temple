@@ -511,6 +511,28 @@ const handleLineLogin = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Bottom navigation for the signed-in user's account area.
+  // Keep it visible while moving between account-related pages.
+  const accountPages = [
+    'my-dashboard',
+    'my-stays',
+    'booking-page',
+    'donation-list',
+    'checkin-page'
+  ];
+
+  const showAccountBottomNav =
+    !!user && !user.isAdmin && accountPages.includes(currentPage);
+
+  const accountNavActive =
+    currentPage === 'my-stays' ||
+    currentPage === 'booking-page' ||
+    currentPage === 'checkin-page'
+      ? 'stay'
+      : currentPage === 'donation-list'
+        ? 'account'
+        : 'account';
+
   const currentUrl = window.location.href
 
   const handleCopyLink = () => {
@@ -1271,6 +1293,51 @@ const handleLineLogin = () => {
           </div>
         )}
       </main>
+
+      {showAccountBottomNav && (
+        <nav
+          className="dashboardBottomNav"
+          aria-label={lang === 'th' ? 'เมนูบัญชีของฉัน' : 'My Account navigation'}
+        >
+          <button
+            type="button"
+            className="dashboardBottomNavItem"
+            onClick={() => goToPage('home')}
+          >
+            <img src="/icons/home.svg" alt="" aria-hidden="true" />
+            <span>{lang === 'th' ? 'หน้าแรก' : 'Home'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`dashboardBottomNavItem ${accountNavActive === 'stay' ? 'active' : ''}`}
+            onClick={() => goToPage('my-stays')}
+          >
+            <img src="/icons/stay.svg" alt="" aria-hidden="true" />
+            <span>{lang === 'th' ? 'เข้าพักปฏิบัติธรรม' : 'Retreat Stay'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`dashboardBottomNavItem ${accountNavActive === 'account' ? 'active' : ''}`}
+            onClick={() => goToPage('my-dashboard')}
+          >
+            <img src="/icons/contact.svg" alt="" aria-hidden="true" />
+            <span>{lang === 'th' ? 'บัญชีของฉัน' : 'My Account'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboardBottomNavItem"
+            onClick={() => goToPage('contact-page')}
+          >
+            <img src="/icons/location.svg" alt="" aria-hidden="true" />
+            <span>{lang === 'th' ? 'ติดต่อวัด' : 'Contact'}</span>
+          </button>
+        </nav>
+      )}
+
+
 
       {/* FOOTER */}
       <footer className="siteFooter">
