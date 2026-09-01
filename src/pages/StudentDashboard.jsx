@@ -195,7 +195,20 @@ function RoutineCard({ item, th, lang, busy, onClick }) {
   return <button disabled={done||busy} onClick={onClick} style={{...cardBtn,borderColor:warn?'#e3b7ad':'#e3ddd2',background:warn?'#fff8f6':'#fff',cursor:done?'default':'pointer'}}>
     <span style={{...iconBox,color:done?'#2d6b49':warn?'#a54634':'#7c6238'}}><RoutineIcon type={item.key} size={23}/></span>
     <span style={{flex:1,minWidth:0,textAlign:'left'}}><strong style={{display:'block',fontSize:15.5,color:'#37322c'}}>{th?item.label.th:item.label.en}</strong>{item.timeRule&&<small style={small}>{th?'กำหนดไม่เกิน':'Rule: no later than'} {item.timeRule}</small>}{status&&<small style={{...small,color:warn?'#a24433':done?'#2f6d4c':'#766c60'}}>{status}</small>}</span>
-    <span style={{fontWeight:800,color:done?'#2f6d4c':'#8c6b34',fontSize:13}}>{busy?(th?'กำลังบันทึก':'Saving'):done?(th?'ทำแล้ว':'Done'):(th?'กดเมื่อทำแล้ว':'Complete')}</span>
+    <span
+      style={{
+        fontWeight: 900,
+        color: done ? '#16a34a' : '#8c6b34',
+        fontSize: done ? 28 : 13,
+        lineHeight: 1
+      }}
+    >
+      {busy
+        ? (th ? 'กำลังบันทึก' : 'Saving')
+        : done
+          ? '✓'
+          : (th ? 'กดเมื่อทำแล้ว' : 'Complete')}
+    </span>
   </button>;
 }
 
