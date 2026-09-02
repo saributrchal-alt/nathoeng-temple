@@ -8,7 +8,6 @@ export default async function handler(req, res) {
 
   const {
     lineUid,
-    name,
     phone,
     startDate,
     endDate,
@@ -17,7 +16,6 @@ export default async function handler(req, res) {
 
   if (
     !lineUid ||
-    !name ||
     !phone ||
     !startDate ||
     !endDate
@@ -51,7 +49,7 @@ export default async function handler(req, res) {
       supabaseUrl +
         '/rest/v1/members?line_uid=eq.' +
         encodeURIComponent(lineUid) +
-        '&select=id,line_uid,display_name,role',
+        '&select=id,line_uid,display_name,full_name,donation_profile_completed_at,role',
       {
         method: 'GET',
         headers: {
@@ -76,11 +74,22 @@ export default async function handler(req, res) {
 
     const member = members[0];
 
+    if (
+      !member.full_name ||
+      !member.donation_profile_completed_at
+    ) {
+      return res.status(400).json({
+        success: false,
+        code: 'IDENTITY_PROFILE_REQUIRED',
+        message: 'Verified identity profile is required'
+      });
+    }
+
     // 2. บันทึก Booking
     const bookingData = {
       member_id: member.id,
       line_uid: member.line_uid,
-      name: name.trim(),
+      name: member.full_name.trim(),
       phone: phone.trim(),
       start_date: startDate,
       end_date: endDate,
