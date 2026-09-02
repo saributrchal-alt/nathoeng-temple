@@ -1,7 +1,143 @@
-import {
-  getSessionFromRequest,
-  requireAdmin
-} from '../lib/_auth.js';
+import crypto from 'crypto';
+
+const COOKIE_NAME = 'nathoeng_session';
+
+function base64UrlDecode(value) {
+  let base64 = value
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  return Buffer.from(base64, 'base64').toString();
+}
+
+function sign(value, secret) {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(value)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function verifySessionToken(token) {
+  const secret = process.env.SESSION_SECRET;
+
+  if (!secret || !token) {
+    return null;
+  }
+
+  const parts = token.split('.');
+
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const encodedPayload = parts[0];
+  const receivedSignature = parts[1];
+
+  const expectedSignature = sign(
+    encodedPayload,
+    secret
+  );
+
+  const receivedBuffer = Buffer.from(
+    receivedSignature
+  );
+
+  const expectedBuffer = Buffer.from(
+    expectedSignature
+  );
+
+  if (
+    receivedBuffer.length !==
+    expectedBuffer.length
+  ) {
+    return null;
+  }
+
+  if (
+    !crypto.timingSafeEqual(
+      receivedBuffer,
+      expectedBuffer
+    )
+  ) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(
+      base64UrlDecode(encodedPayload)
+    );
+
+    if (
+      !payload.exp ||
+      Date.now() > payload.exp
+    ) {
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    console.error(
+      'Invalid session payload:',
+      error
+    );
+    return null;
+  }
+}
+
+function getSessionFromRequest(req) {
+  const cookieHeader =
+    req.headers.cookie || '';
+
+  const cookies = cookieHeader
+    .split(';')
+    .map((item) => item.trim());
+
+  const sessionCookie =
+    cookies.find((item) =>
+      item.startsWith(
+        COOKIE_NAME + '='
+      )
+    );
+
+  if (!sessionCookie) {
+    return null;
+  }
+
+  const token = decodeURIComponent(
+    sessionCookie.substring(
+      COOKIE_NAME.length + 1
+    )
+  );
+
+  return verifySessionToken(token);
+}
+
+function requireAdmin(req, res) {
+  const session =
+    getSessionFromRequest(req);
+
+  if (
+    !session ||
+    session.role !== 'admin'
+  ) {
+    res.status(403).json({
+      success: false,
+      message:
+        'Admin permission required'
+    });
+
+    return null;
+  }
+
+  return session;
+}
 
 function supabaseHeaders(secretKey, extra = {}) {
   return {
