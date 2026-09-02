@@ -16,6 +16,9 @@ export default function DonationListPage({
       eyebrow: 'NATHOENG CONNECT',
       title: 'การทำบุญของฉัน',
       intro: 'ประวัติการร่วมทำบุญที่บันทึกไว้ในบัญชีของท่าน',
+      historyNoticeTitle: 'ข้อมูลประวัติการทำบุญ',
+      historyNotice:
+        'ระบบเริ่มบันทึกประวัติการทำบุญตั้งแต่วันที่ 2 กันยายน 2569 เป็นต้นไป รายการทำบุญก่อนวันที่ดังกล่าวอาจไม่ปรากฏในประวัตินี้',
       loading: 'กำลังโหลดประวัติการทำบุญ...',
       noData: 'ยังไม่มีประวัติการทำบุญในบัญชีนี้',
       retry: 'ลองใหม่',
@@ -40,6 +43,9 @@ export default function DonationListPage({
       eyebrow: 'NATHOENG CONNECT',
       title: 'My Donations',
       intro: 'Your donation and merit-making history recorded with the monastery.',
+      historyNoticeTitle: 'Donation History Information',
+      historyNotice:
+        'Donation history has been recorded in this system since 2 September 2026. Donations made before this date may not appear in your history.',
       loading: 'Loading donation history...',
       noData: 'No donation history has been recorded for this account yet.',
       retry: 'Try again',
@@ -89,11 +95,13 @@ export default function DonationListPage({
       )
     } catch (err) {
       console.error('Donation history error:', err)
+
       setError(
         th
           ? 'ไม่สามารถโหลดประวัติการทำบุญได้'
           : 'Unable to load donation history'
       )
+
       setDonations([])
     } finally {
       setLoading(false)
@@ -109,6 +117,7 @@ export default function DonationListPage({
     const money = donations.filter(
       (item) => item.donation_type === 'money'
     )
+
     const items = donations.filter(
       (item) => item.donation_type === 'item'
     )
@@ -152,6 +161,31 @@ export default function DonationListPage({
         maximumFractionDigits: 2
       }
     )
+
+  const getPurposeLabel = (item) => {
+    const purpose = item?.purpose || ''
+
+    if (purpose === 'custom') {
+      return (
+        item?.custom_purpose ||
+        (th ? 'วัตถุประสงค์เฉพาะ' : 'Specific purpose')
+      )
+    }
+
+    const labels = {
+      general: th
+        ? 'ทำบุญตามอัธยาศัยทางคณะสงฆ์'
+        : 'General donation',
+      utilities: th
+        ? 'เพื่อค่าน้ำ - ค่าไฟวัด'
+        : 'Electricity & water expenses',
+      development: th
+        ? 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
+        : 'Monastery development & maintenance'
+    }
+
+    return labels[purpose] || purpose || '—'
+  }
 
   return (
     <div className="guidePage">
@@ -222,6 +256,31 @@ export default function DonationListPage({
 
         <div
           style={{
+            marginBottom: '18px',
+            padding: '14px 16px',
+            border: '1px solid #e4d3ad',
+            borderRadius: '14px',
+            background: '#fffaf0',
+            color: '#655744',
+            fontSize: '13px',
+            lineHeight: 1.65
+          }}
+        >
+          <strong
+            style={{
+              display: 'block',
+              marginBottom: '3px',
+              color: '#9b7226'
+            }}
+          >
+            ⓘ {t.historyNoticeTitle}
+          </strong>
+
+          {t.historyNotice}
+        </div>
+
+        <div
+          style={{
             border: '1px solid #e4ddd2',
             borderRadius: '22px',
             background: '#fff',
@@ -280,6 +339,7 @@ export default function DonationListPage({
               >
                 {loading ? '—' : summary.moneyCount}
               </strong>
+
               <span
                 style={{
                   fontSize: '13px',
@@ -300,6 +360,7 @@ export default function DonationListPage({
               >
                 {loading ? '—' : summary.itemCount}
               </strong>
+
               <span
                 style={{
                   fontSize: '13px',
@@ -354,6 +415,7 @@ export default function DonationListPage({
             <p style={{ marginTop: 0 }}>
               {error}
             </p>
+
             <button
               type="button"
               onClick={loadDonations}
@@ -501,12 +563,10 @@ export default function DonationListPage({
                       </div>
                     )}
 
-                    {item.purpose && (
-                      <div>
-                        <strong>{t.purpose}: </strong>
-                        {item.purpose}
-                      </div>
-                    )}
+                    <div>
+                      <strong>{t.purpose}: </strong>
+                      {getPurposeLabel(item)}
+                    </div>
 
                     {item.note && (
                       <div>
@@ -515,11 +575,10 @@ export default function DonationListPage({
                       </div>
                     )}
 
-                    {typeof item.tax_receipt_requested ===
-                      'boolean' && (
+                    {isMoney && (
                       <div>
                         <strong>{t.receipt}: </strong>
-                        {item.tax_receipt_requested
+                        {item.receipt_requested === true
                           ? t.receiptYes
                           : t.receiptNo}
                       </div>
