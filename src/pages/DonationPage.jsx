@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function DonationPage({ lang, goToPage }) {
   // ดึงข้อมูลผู้ใช้ที่ล็อกอินผ่าน LINE จาก localStorage
@@ -125,8 +125,6 @@ export default function DonationPage({ lang, goToPage }) {
 
   const [formData, setFormData] =
     useState({
-      fullName: user ? user.name : '',
-      idNumber: '',
       amount: '',
       purpose: 'general',
       customPurpose: '',
@@ -144,6 +142,160 @@ export default function DonationPage({ lang, goToPage }) {
 
   const [profileImageError, setProfileImageError] =
     useState(false)
+
+  // Donation profile: ชื่อ-สกุล + เลข 13 หลัก เก็บครั้งเดียวใน Supabase
+  const [profileChecking, setProfileChecking] = useState(Boolean(user))
+  const [profileComplete, setProfileComplete] = useState(false)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileError, setProfileError] = useState('')
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    taxId: ''
+  })
+
+  useEffect(() => {
+    if (!user) {
+      setProfileChecking(false)
+      return
+    }
+
+    let cancelled = false
+
+    const checkDonationProfile = async () => {
+      setProfileChecking(true)
+      setProfileError('')
+
+      try {
+        const response = await fetch('/api/donation-profile', {
+          method: 'GET',
+          credentials: 'include'
+        })
+
+        const data = await response.json()
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message ||
+            (lang === 'th'
+              ? 'ไม่สามารถตรวจสอบข้อมูลผู้ทำบุญได้'
+              : 'Unable to check donation profile')
+          )
+        }
+
+        if (cancelled) return
+
+        const completed = data.donationProfileComplete === true
+        setProfileComplete(completed)
+
+        if (data.fullName) {
+          setProfileData((prev) => ({
+            ...prev,
+            fullName: data.fullName
+          }))
+        }
+
+        if (!completed) {
+          setProfileModalOpen(true)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setProfileError(error.message || 'Unable to check donation profile')
+        }
+      } finally {
+        if (!cancelled) {
+          setProfileChecking(false)
+        }
+      }
+    }
+
+    checkDonationProfile()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.memberId, lang])
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target
+
+    setProfileData((prev) => ({
+      ...prev,
+      [name]:
+        name === 'taxId'
+          ? value.replace(/\D/g, '').slice(0, 13)
+          : value
+    }))
+  }
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault()
+    setProfileError('')
+
+    const fullName = profileData.fullName.trim()
+    const taxId = profileData.taxId.replace(/\D/g, '')
+
+    if (!fullName) {
+      setProfileError(
+        lang === 'th'
+          ? 'กรุณาระบุชื่อและนามสกุล'
+          : 'Please enter your full name.'
+      )
+      return
+    }
+
+    if (taxId.length !== 13) {
+      setProfileError(
+        lang === 'th'
+          ? 'กรุณาระบุเลขประจำตัวประชาชนหรือเลขประจำตัวผู้เสียภาษีให้ครบ 13 หลัก'
+          : 'Please enter a 13-digit National ID or Tax ID.'
+      )
+      return
+    }
+
+    setProfileSaving(true)
+
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fullName,
+          taxId
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+          (lang === 'th'
+            ? 'ไม่สามารถบันทึกข้อมูลได้'
+            : 'Unable to save donation profile')
+        )
+      }
+
+      setProfileComplete(true)
+      setProfileModalOpen(false)
+      setProfileData({
+        fullName: data.fullName || fullName,
+        taxId: ''
+      })
+    } catch (error) {
+      setProfileError(
+        error.message ||
+        (lang === 'th'
+          ? 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'
+          : 'Something went wrong. Please try again.')
+      )
+    } finally {
+      setProfileSaving(false)
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -184,9 +336,12 @@ export default function DonationPage({ lang, goToPage }) {
       return
     }
 
+    if (!profileComplete) {
+      setProfileModalOpen(true)
+      return
+    }
+
     if (
-      !formData.fullName ||
-      !formData.idNumber ||
       !formData.amount ||
       !formData.taxReceipt
     ) {
@@ -244,8 +399,7 @@ export default function DonationPage({ lang, goToPage }) {
 
     const newEntry = {
       date: formattedDate,
-      name: formData.fullName,
-      idNumber: formData.idNumber,
+      name: profileData.fullName || user.name,
       purpose: selectedPurposeText,
       receipt: formData.taxReceipt,
       amount: Number(
@@ -288,15 +442,13 @@ export default function DonationPage({ lang, goToPage }) {
             access_key:
               '56740213-dd22-4925-948b-66e1bf47d993',
             subject:
-              `New Donation from ${formData.fullName}`,
+              `New Donation from ${profileData.fullName || user.name}`,
             from_name:
               'Buddhist Park Monastery Website',
             'Full Name':
-              formData.fullName,
+              profileData.fullName || user.name,
             'LINE User':
               user.name,
-            'ID / Tax ID':
-              formData.idNumber,
             'Amount (THB)':
               formData.amount,
             Purpose:
@@ -325,10 +477,6 @@ export default function DonationPage({ lang, goToPage }) {
       setIsSubmitted(false)
 
       setFormData({
-        fullName: user
-          ? user.name
-          : '',
-        idNumber: '',
         amount: '',
         purpose: 'general',
         customPurpose: '',
@@ -471,57 +619,6 @@ export default function DonationPage({ lang, goToPage }) {
             >
 
               <div className="donationFormGrid">
-                <div className="donationField">
-                  <label
-                    htmlFor="donation-full-name"
-                  >
-                    {t.nameLabel}
-                  </label>
-
-                  <input
-                    id="donation-full-name"
-                    type="text"
-                    name="fullName"
-                    value={
-                      formData.fullName
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder={
-                      t.namePlaceholder
-                    }
-                    autoComplete="name"
-                    required
-                  />
-                </div>
-
-                <div className="donationField">
-                  <label
-                    htmlFor="donation-id-number"
-                  >
-                    {t.idLabel}
-                  </label>
-
-                  <input
-                    id="donation-id-number"
-                    type="text"
-                    name="idNumber"
-                    inputMode="numeric"
-                    maxLength="13"
-                    value={
-                      formData.idNumber
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder={
-                      t.idPlaceholder
-                    }
-                    required
-                  />
-                </div>
-
                 <div className="donationField">
                   <label
                     htmlFor="donation-amount"
@@ -727,7 +824,7 @@ export default function DonationPage({ lang, goToPage }) {
               <div className="donationSubmitWrap">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || profileChecking || !profileComplete}
                   className="primaryContactBtn donationSubmitBtn"
                 >
                   {loading
@@ -782,6 +879,206 @@ export default function DonationPage({ lang, goToPage }) {
             </div>
           </div>
         )}
+
+        {user && profileModalOpen && (
+          <div className="donationProfileOverlay" role="presentation">
+            <div
+              className="donationProfileModal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="donation-profile-title"
+            >
+              <img
+                src="/icons/donation.svg"
+                alt=""
+                className="donationProfileModalIcon"
+                aria-hidden="true"
+              />
+
+              <span className="eyebrow">
+                {lang === 'th'
+                  ? 'ข้อมูลผู้ร่วมทำบุญ'
+                  : 'DONOR INFORMATION'}
+              </span>
+
+              <h2 id="donation-profile-title">
+                {lang === 'th'
+                  ? 'บันทึกข้อมูลครั้งแรก'
+                  : 'Save Your Information Once'}
+              </h2>
+
+              <p className="donationProfileIntro">
+                {lang === 'th'
+                  ? 'กรุณาบันทึกชื่อ-สกุล และเลขประจำตัวประชาชนหรือเลขประจำตัวผู้เสียภาษี ข้อมูลนี้บันทึกครั้งเดียว ครั้งต่อไปไม่ต้องกรอกซ้ำ'
+                  : 'Please save your full name and 13-digit National ID or Tax ID once. You will not need to enter them again for future donation records.'}
+              </p>
+
+              <form onSubmit={handleProfileSubmit}>
+                <div className="donationField">
+                  <label htmlFor="profile-full-name">
+                    {lang === 'th' ? 'ชื่อ - สกุล *' : 'Full Name *'}
+                  </label>
+                  <input
+                    id="profile-full-name"
+                    type="text"
+                    name="fullName"
+                    value={profileData.fullName}
+                    onChange={handleProfileChange}
+                    autoComplete="name"
+                    placeholder={
+                      lang === 'th'
+                        ? 'ระบุชื่อและนามสกุล'
+                        : 'Enter your full name'
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="donationField">
+                  <label htmlFor="profile-tax-id">
+                    {lang === 'th'
+                      ? 'เลขประจำตัวประชาชน / เลขประจำตัวผู้เสียภาษี 13 หลัก *'
+                      : '13-Digit National ID / Tax ID *'}
+                  </label>
+                  <input
+                    id="profile-tax-id"
+                    type="text"
+                    name="taxId"
+                    inputMode="numeric"
+                    maxLength="13"
+                    value={profileData.taxId}
+                    onChange={handleProfileChange}
+                    placeholder={
+                      lang === 'th'
+                        ? 'กรอกตัวเลข 13 หลัก'
+                        : 'Enter 13 digits'
+                    }
+                    required
+                  />
+                </div>
+
+                <p className="donationProfilePrivacy">
+                  {lang === 'th'
+                    ? 'ข้อมูลเลขประจำตัวจะจัดเก็บในระบบของวัด และจะไม่แสดงในหน้ารายการทำบุญทั่วไป'
+                    : 'Your identification number is stored securely and is not displayed in the general donation list.'}
+                </p>
+
+                {profileError && (
+                  <div className="donationProfileError">
+                    {profileError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="primaryContactBtn donationProfileSaveBtn"
+                >
+                  {profileSaving
+                    ? lang === 'th'
+                      ? 'กำลังบันทึก...'
+                      : 'Saving...'
+                    : lang === 'th'
+                      ? 'บันทึกและดำเนินการต่อ →'
+                      : 'Save and Continue →'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        <style>{`
+          .donationProfileOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(39, 31, 24, .58);
+            backdrop-filter: blur(3px);
+          }
+
+          .donationProfileModal {
+            width: min(100%, 460px);
+            max-height: calc(100vh - 36px);
+            overflow-y: auto;
+            padding: 28px 22px 24px;
+            border: 1px solid #e5d8c6;
+            border-radius: 18px;
+            background: #fffefb;
+            box-shadow: 0 24px 70px rgba(40, 30, 20, .22);
+          }
+
+          .donationProfileModalIcon {
+            width: 44px;
+            height: 44px;
+            display: block;
+            margin: 0 auto 12px;
+          }
+
+          .donationProfileModal .eyebrow,
+          .donationProfileModal h2,
+          .donationProfileIntro {
+            text-align: center;
+          }
+
+          .donationProfileModal h2 {
+            margin: 8px 0 10px;
+            color: #3d3025;
+            font-size: 23px;
+            font-weight: 600;
+          }
+
+          .donationProfileIntro {
+            margin: 0 0 20px;
+            color: #6f655c;
+            font-size: 13px;
+            line-height: 1.75;
+          }
+
+          .donationProfileModal .donationField {
+            margin-bottom: 15px;
+          }
+
+          .donationProfilePrivacy {
+            margin: 4px 0 14px;
+            color: #857b72;
+            font-size: 11.5px;
+            line-height: 1.65;
+          }
+
+          .donationProfileError {
+            margin: 0 0 14px;
+            padding: 10px 12px;
+            border: 1px solid #e8c7c2;
+            border-radius: 8px;
+            background: #fff5f3;
+            color: #9a3d34;
+            font-size: 12px;
+            line-height: 1.5;
+          }
+
+          .donationProfileSaveBtn {
+            width: 100%;
+            min-height: 50px;
+            margin-top: 4px;
+          }
+
+          @media (max-width: 480px) {
+            .donationProfileOverlay {
+              align-items: flex-end;
+              padding: 10px;
+            }
+
+            .donationProfileModal {
+              width: 100%;
+              padding: 24px 18px 20px;
+              border-radius: 18px 18px 12px 12px;
+            }
+          }
+        `}</style>
 
       </div>
     </div>
