@@ -162,11 +162,13 @@ export default async function handler(req, res) {
         const response = await fetch(
           `${supabaseUrl}/rest/v1/members` +
             '?select=id,full_name,display_name,role' +
-            '&order=full_name.asc.nullslast,display_name.asc.nullslast',
+            '&order=full_name.asc' +
+            '&limit=500',
           {
             method: 'GET',
             headers:
-              supabaseHeaders(supabaseSecretKey)
+              supabaseHeaders(supabaseSecretKey),
+            cache: 'no-store'
           }
         );
 
@@ -174,6 +176,11 @@ export default async function handler(req, res) {
           await readJson(response);
 
         if (!response.ok) {
+          console.error(
+            'Practice message member lookup failed:',
+            data
+          );
+
           return res.status(500).json({
             success: false,
             message: 'Unable to load members'
