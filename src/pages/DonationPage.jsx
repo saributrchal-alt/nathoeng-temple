@@ -132,7 +132,7 @@ export default function DonationPage({ lang, goToPage }) {
       quantity: '',
       unit: '',
       note: '',
-      purpose: 'general',
+      purpose: '',
       customPurpose: '',
       taxReceipt: ''
     })
@@ -325,7 +325,12 @@ export default function DonationPage({ lang, goToPage }) {
     t.purposeOptions.find(
       (opt) =>
         opt.value === formData.purpose
-    ) || t.purposeOptions[0]
+    ) || null
+
+  const itemPurposeOptions =
+    t.purposeOptions.filter(
+      (opt) => opt.value !== 'utilities'
+    )
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -380,6 +385,15 @@ export default function DonationPage({ lang, goToPage }) {
         lang === 'th'
           ? 'กรุณาระบุสิ่งของ จำนวน และหน่วยให้ครบถ้วน'
           : 'Please enter the item, quantity, and unit.'
+      )
+      return
+    }
+
+    if (!formData.purpose) {
+      alert(
+        lang === 'th'
+          ? 'กรุณาเลือกวัตถุประสงค์ในการทำบุญ'
+          : 'Please select a donation purpose.'
       )
       return
     }
@@ -665,10 +679,19 @@ export default function DonationPage({ lang, goToPage }) {
                   }
                   onClick={() => {
                     setDonationType('item')
+                    setPurposeOpen(false)
                     setFormData((prev) => ({
                       ...prev,
                       amount: '',
-                      taxReceipt: ''
+                      taxReceipt: '',
+                      purpose:
+                        prev.purpose === 'utilities'
+                          ? 'general'
+                          : prev.purpose,
+                      customPurpose:
+                        prev.purpose === 'utilities'
+                          ? ''
+                          : prev.customPurpose
                     }))
                   }}
                 >
@@ -744,8 +767,18 @@ export default function DonationPage({ lang, goToPage }) {
                       aria-haspopup="listbox"
                       aria-expanded={purposeOpen}
                     >
-                      <span>
-                        {selectedPurposeOption.label}
+                      <span
+                        style={{
+                          color: selectedPurposeOption
+                            ? undefined
+                            : '#9b958d'
+                        }}
+                      >
+                        {selectedPurposeOption
+                          ? selectedPurposeOption.label
+                          : (lang === 'th'
+                              ? 'กรุณาเลือกจุดประสงค์'
+                              : 'Please select a purpose')}
                       </span>
 
                       <span
@@ -897,7 +930,19 @@ export default function DonationPage({ lang, goToPage }) {
                         aria-haspopup="listbox"
                         aria-expanded={purposeOpen}
                       >
-                        <span>{selectedPurposeOption.label}</span>
+                        <span
+                          style={{
+                            color: selectedPurposeOption
+                              ? undefined
+                              : '#9b958d'
+                          }}
+                        >
+                          {selectedPurposeOption
+                            ? selectedPurposeOption.label
+                            : (lang === 'th'
+                                ? 'กรุณาเลือกจุดประสงค์'
+                                : 'Please select a purpose')}
+                        </span>
                         <span
                           className={
                             purposeOpen
@@ -912,7 +957,7 @@ export default function DonationPage({ lang, goToPage }) {
 
                       {purposeOpen && (
                         <div className="donationPurposeMenu" role="listbox">
-                          {t.purposeOptions.map((opt) => (
+                          {itemPurposeOptions.map((opt) => (
                             <button
                               key={opt.value}
                               type="button"
