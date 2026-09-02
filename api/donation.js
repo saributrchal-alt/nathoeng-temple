@@ -321,10 +321,61 @@ export default async function handler(req, res) {
         });
       }
 
+      let donations =
+        Array.isArray(data) ? data : [];
+
+      // Admin needs to see the CURRENT linked owner, while
+      // donor_name_snapshot remains the historical donor name.
+      if (adminScope && donations.length > 0) {
+        const memberResponse = await fetch(
+          `${supabaseUrl}/rest/v1/members` +
+            `?select=id,full_name,display_name`,
+          {
+            method: 'GET',
+            headers: jsonHeaders(supabaseSecretKey),
+            cache: 'no-store'
+          }
+        );
+
+        const memberRows =
+          await memberResponse.json();
+
+        if (memberResponse.ok && Array.isArray(memberRows)) {
+          const memberMap =
+            new Map(
+              memberRows.map((member) => [
+                member.id,
+                member
+              ])
+            );
+
+          donations =
+            donations.map((item) => {
+              const owner =
+                item.owner_member_id
+                  ? memberMap.get(
+                      item.owner_member_id
+                    )
+                  : null;
+
+              return {
+                ...item,
+                owner_current_name:
+                  owner?.full_name ||
+                  owner?.display_name ||
+                  null,
+                owner_display_name:
+                  owner?.display_name ||
+                  null
+              };
+            });
+        }
+      }
+
       return res.status(200).json({
         success: true,
         scope: adminScope ? 'admin' : 'member',
-        donations: Array.isArray(data) ? data : []
+        donations
       });
     } catch (error) {
       console.error(

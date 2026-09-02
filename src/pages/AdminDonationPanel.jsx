@@ -75,6 +75,110 @@ export default function AdminDonationPanel({
   const memberName = (m) =>
     m?.full_name || m?.display_name || (th ? 'สมาชิก' : 'Member');
 
+
+  const safePurposeLabel = (item) => {
+    const raw =
+      String(item?.purpose || '')
+        .trim()
+        .toLowerCase();
+
+    const custom =
+      String(item?.custom_purpose || '')
+        .trim();
+
+    const groups = {
+      general: [
+        'general',
+        'general_donation',
+        'merit',
+        'merit_making',
+        'unspecified'
+      ],
+      utilities: [
+        'utilities',
+        'utility',
+        'electricity_water',
+        'water_electricity',
+        'water_and_electricity'
+      ],
+      development: [
+        'development',
+        'monastery_development',
+        'maintenance',
+        'building_maintenance',
+        'facility_development'
+      ],
+      custom: [
+        'custom',
+        'other',
+        'specific',
+        'specific_purpose'
+      ]
+    };
+
+    if (groups.general.includes(raw)) {
+      return th
+        ? 'ทำบุญตามอัธยาศัยทางคณะสงฆ์'
+        : 'General donation';
+    }
+
+    if (groups.utilities.includes(raw)) {
+      return th
+        ? 'เพื่อค่าน้ำ - ค่าไฟวัด'
+        : 'Electricity & water expenses';
+    }
+
+    if (groups.development.includes(raw)) {
+      return th
+        ? 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
+        : 'Monastery development & maintenance';
+    }
+
+    if (groups.custom.includes(raw)) {
+      return custom ||
+        (th
+          ? 'วัตถุประสงค์อื่น'
+          : 'Other purpose');
+    }
+
+    // If the database already contains a human-readable phrase,
+    // keep it. Never expose snake_case/system codes to users.
+    if (
+      raw &&
+      !raw.includes('_') &&
+      !/^[a-z0-9-]+$/.test(raw)
+    ) {
+      return item.purpose;
+    }
+
+    const legacy =
+      donationPurposeLabel?.(item);
+
+    if (
+      legacy &&
+      legacy !== item?.purpose &&
+      !String(legacy).includes('_')
+    ) {
+      return legacy;
+    }
+
+    return th
+      ? 'วัตถุประสงค์อื่น'
+      : 'Other purpose';
+  };
+
+  const currentOwnerName = (item) =>
+    item?.owner_member_id
+      ? (
+          item?.owner_current_name ||
+          (th ? 'สมาชิกในระบบ' : 'Registered member')
+        )
+      : (
+          th
+            ? 'บุคคลทั่วไป / ยังไม่ผูกสมาชิก'
+            : 'Guest / not linked'
+        );
+
   const matchingMembers = useMemo(() => {
     const q = memberSearch.trim().toLowerCase();
     return members
@@ -302,7 +406,22 @@ export default function AdminDonationPanel({
                   <div style={{color:'#9b7226',fontSize:12,fontWeight:800}}>
                     {money?t.donationMoney:t.donationItem} · {item.owner_member_id?(th?'สมาชิก':'Member'):(th?'บุคคลทั่วไป':'Guest')}
                   </div>
-                  <strong style={{display:'block',marginTop:3,color:'#302d29',fontSize:16,overflowWrap:'anywhere'}}>{item.donor_name_snapshot||'—'}</strong>
+                  <strong style={{display:'block',marginTop:3,color:'#302d29',fontSize:16,overflowWrap:'anywhere'}}>
+                    {item.owner_member_id
+                      ? currentOwnerName(item)
+                      : (item.donor_name_snapshot || '—')}
+                  </strong>
+
+                  {item.owner_member_id &&
+                    item.donor_name_snapshot &&
+                    item.donor_name_snapshot !== item.owner_current_name && (
+                    <div style={{marginTop:3,color:'#8a8178',fontSize:11,lineHeight:1.45}}>
+                      {th
+                        ? `ชื่อที่บันทึกตอนทำบุญ: ${item.donor_name_snapshot}`
+                        : `Recorded donor name: ${item.donor_name_snapshot}`}
+                    </div>
+                  )}
+
                   <div style={{marginTop:4,color:'#888',fontSize:12}}>{formatDonationDate(item)}</div>
                 </div>
                 {money && <strong style={{flex:'0 0 auto',color:'#236b4a',fontSize:20}}>{Number(item.amount||0).toLocaleString()} ฿</strong>}
@@ -314,7 +433,7 @@ export default function AdminDonationPanel({
               </div>}
 
               <div style={{marginTop:12,color:'#625d55',fontSize:12,lineHeight:1.55}}>
-                <strong>{t.donationPurpose}: </strong>{donationPurposeLabel(item)}
+                <strong>{t.donationPurpose}: </strong>{safePurposeLabel(item)}
               </div>
 
               <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:14}}>
@@ -339,9 +458,17 @@ export default function AdminDonationPanel({
 
           {mode==='owner' ? <>
             <div style={{padding:12,marginBottom:12,borderRadius:12,background:'#f7f5f0'}}>
-              <div style={{fontSize:12,color:'#81786d'}}>{th?'ชื่อผู้บริจาคที่บันทึกไว้':'Recorded donor name'}</div>
+              <div style={{fontSize:12,color:'#81786d'}}>{th?'เจ้าของรายการปัจจุบัน':'Current linked owner'}</div>
+              <strong>{selected ? currentOwnerName(selected) : '—'}</strong>
+
+              <div style={{fontSize:12,color:'#81786d',marginTop:9}}>{th?'ชื่อผู้บริจาคที่บันทึกไว้เดิม':'Original recorded donor name'}</div>
               <strong>{selected?.donor_name_snapshot||'—'}</strong>
-              <div style={{marginTop:5,color:'#8a611d',fontSize:12}}>{th?'ชื่อนี้จะยังคงเก็บไว้ ไม่ถูกลบเมื่อเปลี่ยนเจ้าของ':'This snapshot name will be preserved.'}</div>
+
+              <div style={{marginTop:5,color:'#8a611d',fontSize:12}}>
+                {th
+                  ? 'ชื่อเดิมจะเก็บไว้เป็นประวัติ แต่ชื่อเจ้าของปัจจุบันจะเปลี่ยนตามสมาชิกที่เลือก'
+                  : 'The original snapshot is preserved, while the current owner changes to the selected member.'}
+              </div>
             </div>
 
             <label style={label}>{th?'ค้นหาสมาชิกเจ้าของใหม่':'Search new owner'}</label>
