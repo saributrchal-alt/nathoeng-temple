@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import StudentAdminPanel from '../components/StudentAdminPanel';
 
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
@@ -8,6 +7,10 @@ function AdminDashboard({ lang, goToPage }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [processingId, setProcessingId] = useState(null);
+  const [donationLoading, setDonationLoading] = useState(true);
+  const [donationError, setDonationError] = useState('');
+  const [donationSearch, setDonationSearch] = useState('');
+  const [donationFilter, setDonationFilter] = useState('all');
 
   const t = {
     en: {
@@ -46,15 +49,14 @@ function AdminDashboard({ lang, goToPage }) {
       approve: 'Approve',
       reject: 'Reject',
       checkIn: 'Check In',
-      assignAccommodation: 'Assign / Change Room',
-      confirmAccommodation: 'Confirm Accommodation',
+      assignAccommodation: 'Assign Accommodation',
       startRetreat: 'Start Retreat',
       checkOut: 'Check Out',
       complete: 'Complete Stay',
       cancel: 'Cancel',
 
       accommodationPrompt:
-        'Select the assigned accommodation:',
+        'Enter accommodation name, kuti, building, or room:',
       notePrompt: 'Optional admin note:',
       confirmAction: 'Confirm this stay status change?',
       actionSuccess: 'Stay status updated successfully.',
@@ -81,7 +83,15 @@ function AdminDashboard({ lang, goToPage }) {
       receiptNo: 'Not requested',
 
       donationNotice:
-        'Donation records are still using the existing local system for now.'
+        'Donation records shown here are loaded directly from the monastery database.',
+      donationSearch: 'Search donor name',
+      donationAll: 'All',
+      donationMoney: 'Money',
+      donationItem: 'Items',
+      donationMoneyCount: 'Money donations',
+      donationItemCount: 'Item offerings',
+      donationSystemStart:
+        'Donation history in this system starts from 2 September 2026.'
     },
 
     th: {
@@ -120,14 +130,13 @@ function AdminDashboard({ lang, goToPage }) {
       approve: 'อนุมัติ',
       reject: 'ไม่อนุมัติ',
       checkIn: 'เช็กอิน',
-      assignAccommodation: 'จัด / เปลี่ยนห้องพัก',
-      confirmAccommodation: 'ยืนยันเข้าที่พัก',
+      assignAccommodation: 'จัดเข้าที่พัก',
       startRetreat: 'เริ่มปฏิบัติธรรม',
       checkOut: 'เช็กเอาต์',
       complete: 'ปิดการเข้าพัก',
       cancel: 'ยกเลิก',
 
-      accommodationPrompt: 'เลือกห้องพักที่จัดสรรให้ผู้เข้าพัก:',
+      accommodationPrompt: 'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
       notePrompt: 'หมายเหตุของผู้ดูแล (ถ้ามี):',
       confirmAction: 'ยืนยันการเปลี่ยนสถานะรายการนี้หรือไม่?',
       actionSuccess: 'เปลี่ยนสถานะการเข้าพักเรียบร้อยแล้ว',
@@ -154,18 +163,17 @@ function AdminDashboard({ lang, goToPage }) {
       receiptNo: 'ไม่ต้องการ',
 
       donationNotice:
-        'ข้อมูลการทำบุญยังใช้ระบบเดิมในเครื่องอยู่ชั่วคราว'
+        'รายการทำบุญหน้านี้ดึงจากฐานข้อมูลของวัดโดยตรง',
+      donationSearch: 'ค้นหาชื่อผู้บริจาค',
+      donationAll: 'ทั้งหมด',
+      donationMoney: 'เงิน',
+      donationItem: 'สิ่งของ',
+      donationMoneyCount: 'รายการทำบุญเป็นเงิน',
+      donationItemCount: 'รายการสิ่งของถวาย',
+      donationSystemStart:
+        'ระบบเริ่มบันทึกประวัติการทำบุญตั้งแต่วันที่ 2 กันยายน 2569 เป็นต้นไป'
     }
   }[lang];
-
-  const accommodationOptions = [
-    'กุฏิยอดคำ ห้อง 2',
-    'กุฏิสกุลคุณสวัสดิ์ 1 ห้อง 1',
-    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 1',
-    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 2',
-    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 1',
-    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 2'
-  ];
 
   const statusLabel = (status) => {
     return t[status] || status || '-';
@@ -281,13 +289,45 @@ function AdminDashboard({ lang, goToPage }) {
     }
   };
 
-  useEffect(() => {
-    const savedDonations = JSON.parse(
-      localStorage.getItem('nathoeng_donations') || '[]'
-    );
+  const loadDonations = async () => {
+    setDonationLoading(true);
+    setDonationError('');
 
-    setDonations(savedDonations);
+    try {
+      const response = await fetch('/api/donation?scope=admin', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to load donations');
+      }
+
+      setDonations(
+        Array.isArray(data.donations)
+          ? data.donations
+          : []
+      );
+    } catch (err) {
+      console.error('Admin donation load error:', err);
+      setDonationError(
+        lang === 'en'
+          ? 'Unable to load donation records.'
+          : 'ไม่สามารถโหลดรายการทำบุญได้'
+      );
+      setDonations([]);
+    } finally {
+      setDonationLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadBookings();
+    loadDonations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalDonationAmount = useMemo(() => {
@@ -297,6 +337,77 @@ function AdminDashboard({ lang, goToPage }) {
       0
     );
   }, [donations]);
+
+  const donationMoneyCount = donations.filter(
+    (item) => item.donation_type === 'money'
+  ).length;
+
+  const donationItemCount = donations.filter(
+    (item) => item.donation_type === 'item'
+  ).length;
+
+  const formatDonationDate = (item) => {
+    const raw = item?.donation_date || item?.created_at;
+    if (!raw) return '—';
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return String(raw);
+
+    return new Intl.DateTimeFormat(
+      lang === 'th' ? 'th-TH' : 'en-GB',
+      {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'Asia/Bangkok'
+      }
+    ).format(date);
+  };
+
+  const donationPurposeLabel = (item) => {
+    const purpose = item?.purpose || '';
+
+    if (purpose === 'custom') {
+      return item?.custom_purpose ||
+        (lang === 'th' ? 'วัตถุประสงค์เฉพาะ' : 'Specific purpose');
+    }
+
+    const labels = {
+      general:
+        lang === 'th'
+          ? 'ทำบุญตามอัธยาศัยทางคณะสงฆ์'
+          : 'General donation',
+      utilities:
+        lang === 'th'
+          ? 'เพื่อค่าน้ำ - ค่าไฟวัด'
+          : 'Electricity & water expenses',
+      development:
+        lang === 'th'
+          ? 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
+          : 'Monastery development & maintenance'
+    };
+
+    return labels[purpose] || purpose || '—';
+  };
+
+  const filteredDonations = useMemo(() => {
+    const search = donationSearch.trim().toLowerCase();
+
+    return donations.filter((item) => {
+      if (
+        donationFilter !== 'all' &&
+        item.donation_type !== donationFilter
+      ) {
+        return false;
+      }
+
+      if (!search) return true;
+
+      return String(
+        item.donor_name_snapshot || ''
+      ).toLowerCase().includes(search);
+    });
+  }, [donations, donationSearch, donationFilter]);
 
   const pendingCount = bookings.filter(
     (item) => item.status === 'pending'
@@ -314,61 +425,17 @@ function AdminDashboard({ lang, goToPage }) {
     let note = '';
 
     if (action === 'assign_accommodation') {
-      /*
-        Admin เลือกห้องจากรายการที่กำหนดไว้เท่านั้น
-        ใช้เลข 1-6 เพื่อป้องกันการพิมพ์ชื่อห้องผิด
-        ซึ่งสำคัญต่อการตรวจ QR ของแต่ละห้อง
-      */
-      const currentIndex =
-        accommodationOptions.indexOf(
-          booking.accommodation_name || ''
-        );
-
-      const optionText =
-        accommodationOptions
-          .map(
-            (name, index) =>
-              `${index + 1}. ${name}`
-          )
-          .join('\n');
-
-      const selected =
-        window.prompt(
-          lang === 'th'
-            ? `เลือกห้องพักที่จัดสรรให้ผู้เข้าพัก\n\n${optionText}\n\nกรอกหมายเลข 1-6:`
-            : `Select the assigned accommodation\n\n${optionText}\n\nEnter number 1-6:`,
-          currentIndex >= 0
-            ? String(currentIndex + 1)
-            : ''
-        );
-
-      if (selected === null) {
-        return;
-      }
-
-      const selectedIndex =
-        Number(selected.trim()) - 1;
+      accommodationName = window.prompt(
+        t.accommodationPrompt,
+        booking.accommodation_name || ''
+      );
 
       if (
-        !Number.isInteger(
-          selectedIndex
-        ) ||
-        selectedIndex < 0 ||
-        selectedIndex >=
-          accommodationOptions.length
+        accommodationName === null ||
+        !accommodationName.trim()
       ) {
-        alert(
-          lang === 'th'
-            ? 'กรุณาเลือกหมายเลขห้อง 1-6'
-            : 'Please select accommodation number 1-6.'
-        );
         return;
       }
-
-      accommodationName =
-        accommodationOptions[
-          selectedIndex
-        ];
     }
 
     if (action === 'reject' || action === 'cancel') {
@@ -504,23 +571,6 @@ function AdminDashboard({ lang, goToPage }) {
             onClick={() =>
               callStayAction(
                 booking,
-                'assign_accommodation'
-              )
-            }
-            style={{
-              ...actionButtonStyle,
-              background: '#7e57c2',
-              color: '#fff'
-            }}
-          >
-            {t.assignAccommodation}
-          </button>
-
-          <button
-            disabled={busy}
-            onClick={() =>
-              callStayAction(
-                booking,
                 'check_in'
               )
             }
@@ -555,66 +605,22 @@ function AdminDashboard({ lang, goToPage }) {
 
     if (booking.status === 'checked_in') {
       return (
-        <div
+        <button
+          disabled={busy}
+          onClick={() =>
+            callStayAction(
+              booking,
+              'assign_accommodation'
+            )
+          }
           style={{
-            display: 'flex',
-            gap: '6px',
-            flexWrap: 'wrap'
+            ...actionButtonStyle,
+            background: '#7e57c2',
+            color: '#fff'
           }}
         >
-          <button
-            disabled={busy}
-            onClick={() =>
-              callStayAction(
-                booking,
-                'assign_accommodation'
-              )
-            }
-            style={{
-              ...actionButtonStyle,
-              background: '#7e57c2',
-              color: '#fff'
-            }}
-          >
-            {t.assignAccommodation}
-          </button>
-
-          <button
-            disabled={
-              busy ||
-              !booking.accommodation_name
-            }
-            onClick={() =>
-              callStayAction(
-                booking,
-                'confirm_accommodation'
-              )
-            }
-            style={{
-              ...actionButtonStyle,
-              background:
-                booking.accommodation_name
-                  ? '#5e35b1'
-                  : '#c9c4cf',
-              color: '#fff',
-              cursor:
-                booking.accommodation_name
-                  ? 'pointer'
-                  : 'not-allowed'
-            }}
-            title={
-              booking.accommodation_name
-                ? ''
-                : (
-                    lang === 'th'
-                      ? 'กรุณาจัดห้องพักก่อน'
-                      : 'Please assign a room first'
-                  )
-            }
-          >
-            {t.confirmAccommodation}
-          </button>
-        </div>
+          {t.assignAccommodation}
+        </button>
       );
     }
 
@@ -829,8 +835,6 @@ function AdminDashboard({ lang, goToPage }) {
             {t.title}
           </h1>
         </div>
-
-        <StudentAdminPanel lang={lang} />
 
         <div
           style={{
@@ -1186,135 +1190,411 @@ function AdminDashboard({ lang, goToPage }) {
           </div>
         ) : (
           <div>
-            <h3>
-              {t.donationTitle}
-            </h3>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '12px',
+                flexWrap: 'wrap',
+                marginBottom: '16px'
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0 }}>
+                  {t.donationTitle}
+                </h3>
+                <div
+                  style={{
+                    marginTop: '5px',
+                    color: '#7a7066',
+                    fontSize: '12px'
+                  }}
+                >
+                  {t.donationSystemStart}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadDonations}
+                style={{
+                  minHeight: '42px',
+                  padding: '0 14px',
+                  border: '1px solid #d8ccb9',
+                  borderRadius: '12px',
+                  background: '#fff',
+                  color: '#6e5a3b',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {t.refresh}
+              </button>
+            </div>
 
             <div
               style={{
-                padding: '12px 15px',
-                marginBottom: '15px',
-                background: '#fff8e1',
-                border: '1px solid #ffe0a3',
-                borderRadius: '4px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: '10px',
+                marginBottom: '14px'
+              }}
+            >
+              <div
+                style={{
+                  padding: '14px',
+                  border: '1px solid #e4ddd2',
+                  borderRadius: '16px',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ color: '#777', fontSize: '11px' }}>
+                  {t.donationTotal}
+                </div>
+                <strong
+                  style={{
+                    display: 'block',
+                    marginTop: '4px',
+                    color: '#236b4a',
+                    fontSize: '22px'
+                  }}
+                >
+                  {Number(totalDonationAmount || 0).toLocaleString()}
+                  {' '}
+                  ฿
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  padding: '14px',
+                  border: '1px solid #e4ddd2',
+                  borderRadius: '16px',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ color: '#777', fontSize: '11px' }}>
+                  {t.donationMoneyCount}
+                </div>
+                <strong
+                  style={{
+                    display: 'block',
+                    marginTop: '4px',
+                    color: '#9b7226',
+                    fontSize: '22px'
+                  }}
+                >
+                  {donationMoneyCount}
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  padding: '14px',
+                  border: '1px solid #e4ddd2',
+                  borderRadius: '16px',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ color: '#777', fontSize: '11px' }}>
+                  {t.donationItemCount}
+                </div>
+                <strong
+                  style={{
+                    display: 'block',
+                    marginTop: '4px',
+                    color: '#9b7226',
+                    fontSize: '22px'
+                  }}
+                >
+                  {donationItemCount}
+                </strong>
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 14px',
+                marginBottom: '14px',
+                background: '#fff8e8',
+                border: '1px solid #ead5a7',
+                borderRadius: '14px',
                 color: '#725515',
-                fontSize: '13px'
+                fontSize: '12px',
+                lineHeight: 1.6
               }}
             >
               {t.donationNotice}
             </div>
 
+            <input
+              type="search"
+              value={donationSearch}
+              onChange={(e) => setDonationSearch(e.target.value)}
+              placeholder={t.donationSearch}
+              style={{
+                width: '100%',
+                minHeight: '46px',
+                boxSizing: 'border-box',
+                padding: '0 14px',
+                marginBottom: '10px',
+                border: '1px solid #ddd3c6',
+                borderRadius: '14px',
+                background: '#fff',
+                font: 'inherit'
+              }}
+            />
+
             <div
               style={{
-                overflowX: 'auto'
+                display: 'flex',
+                gap: '8px',
+                overflowX: 'auto',
+                paddingBottom: '4px',
+                marginBottom: '16px'
               }}
             >
-              <table
+              {[
+                ['all', t.donationAll],
+                ['money', t.donationMoney],
+                ['item', t.donationItem]
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDonationFilter(value)}
+                  style={{
+                    minHeight: '40px',
+                    padding: '0 14px',
+                    border:
+                      donationFilter === value
+                        ? '1px solid #9b7226'
+                        : '1px solid #ddd3c6',
+                    borderRadius: '999px',
+                    background:
+                      donationFilter === value
+                        ? '#fff7e7'
+                        : '#fff',
+                    color:
+                      donationFilter === value
+                        ? '#8a611d'
+                        : '#655d55',
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {donationLoading ? (
+              <div
                 style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  textAlign: 'left',
-                  fontSize: '14px'
+                  padding: '34px 16px',
+                  textAlign: 'center',
+                  color: '#777'
                 }}
               >
-                <thead>
-                  <tr
-                    style={{
-                      background: '#f6f4ef',
-                      borderBottom: '1px solid #dcd5c8'
-                    }}
-                  >
-                    <th style={{ padding: '12px' }}>
-                      {t.donationDate}
-                    </th>
+                {t.loading}
+              </div>
+            ) : donationError ? (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  border: '1px solid #eaded2',
+                  borderRadius: '16px',
+                  background: '#fff'
+                }}
+              >
+                <div style={{ color: '#a2463d', marginBottom: '12px' }}>
+                  {donationError}
+                </div>
+                <button
+                  type="button"
+                  onClick={loadDonations}
+                  style={{
+                    minHeight: '42px',
+                    padding: '0 18px',
+                    border: 0,
+                    borderRadius: '12px',
+                    background: '#9b7226',
+                    color: '#fff',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {t.refresh}
+                </button>
+              </div>
+            ) : filteredDonations.length === 0 ? (
+              <div
+                style={{
+                  padding: '34px 16px',
+                  textAlign: 'center',
+                  border: '1px solid #eee8df',
+                  borderRadius: '16px',
+                  background: '#fff',
+                  color: '#777'
+                }}
+              >
+                {t.noDonations}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gap: '12px'
+                }}
+              >
+                {filteredDonations.map((item) => {
+                  const isMoney =
+                    item.donation_type === 'money';
 
-                    <th style={{ padding: '12px' }}>
-                      {t.donorName}
-                    </th>
-
-                    <th style={{ padding: '12px' }}>
-                      {t.donationPurpose}
-                    </th>
-
-                    <th style={{ padding: '12px' }}>
-                      {t.receipt}
-                    </th>
-
-                    <th
+                  return (
+                    <article
+                      key={item.id}
                       style={{
-                        padding: '12px',
-                        textAlign: 'right'
+                        border: '1px solid #e4ddd2',
+                        borderRadius: '18px',
+                        background: '#fff',
+                        padding: '16px'
                       }}
                     >
-                      {t.amount}
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {donations.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="5"
+                      <div
                         style={{
-                          padding: '30px',
-                          textAlign: 'center',
-                          color: '#888'
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '12px'
                         }}
                       >
-                        {t.noDonations}
-                      </td>
-                    </tr>
-                  ) : (
-                    donations.map((item, index) => (
-                      <tr
-                        key={index}
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              color: '#9b7226',
+                              fontSize: '12px',
+                              fontWeight: 800
+                            }}
+                          >
+                            {isMoney
+                              ? t.donationMoney
+                              : t.donationItem}
+                          </div>
+
+                          <strong
+                            style={{
+                              display: 'block',
+                              marginTop: '3px',
+                              color: '#302d29',
+                              fontSize: '16px',
+                              overflowWrap: 'anywhere'
+                            }}
+                          >
+                            {item.donor_name_snapshot || '—'}
+                          </strong>
+
+                          <div
+                            style={{
+                              marginTop: '4px',
+                              color: '#888',
+                              fontSize: '12px'
+                            }}
+                          >
+                            {formatDonationDate(item)}
+                          </div>
+                        </div>
+
+                        {isMoney ? (
+                          <strong
+                            style={{
+                              flex: '0 0 auto',
+                              color: '#236b4a',
+                              fontSize: '21px'
+                            }}
+                          >
+                            {Number(item.amount || 0).toLocaleString()}
+                            {' '}
+                            ฿
+                          </strong>
+                        ) : (
+                          <img
+                            src="/icons/lotus.svg"
+                            alt=""
+                            aria-hidden="true"
+                            style={{
+                              width: '30px',
+                              height: '30px'
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {!isMoney && (
+                        <div
+                          style={{
+                            marginTop: '13px',
+                            padding: '11px 12px',
+                            borderRadius: '12px',
+                            background: '#faf8f4'
+                          }}
+                        >
+                          <strong>{item.item_name || '—'}</strong>
+                          <span
+                            style={{
+                              marginLeft: '8px',
+                              color: '#8a611d',
+                              fontWeight: 700
+                            }}
+                          >
+                            {item.quantity ?? '—'}
+                            {item.unit ? ` ${item.unit}` : ''}
+                          </span>
+                        </div>
+                      )}
+
+                      <div
                         style={{
-                          borderBottom: '1px solid #eeeae2'
+                          display: 'grid',
+                          gap: '7px',
+                          marginTop: '13px',
+                          color: '#625d55',
+                          fontSize: '12px',
+                          lineHeight: 1.5
                         }}
                       >
-                        <td style={{ padding: '12px' }}>
-                          {item.date}
-                        </td>
+                        <div>
+                          <strong>{t.donationPurpose}: </strong>
+                          {donationPurposeLabel(item)}
+                        </div>
 
-                        <td
-                          style={{
-                            padding: '12px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {item.name}
-                        </td>
+                        {isMoney && (
+                          <div>
+                            <strong>{t.receipt}: </strong>
+                            {item.receipt_requested === true
+                              ? t.receiptYes
+                              : t.receiptNo}
+                          </div>
+                        )}
 
-                        <td style={{ padding: '12px' }}>
-                          {item.purpose}
-                        </td>
-
-                        <td style={{ padding: '12px' }}>
-                          {item.receipt === 'yes'
-                            ? t.receiptYes
-                            : t.receiptNo}
-                        </td>
-
-                        <td
-                          style={{
-                            padding: '12px',
-                            textAlign: 'right',
-                            fontWeight: '600',
-                            color: '#9b7226'
-                          }}
-                        >
-                          {Number(
-                            item.amount
-                          ).toLocaleString()}{' '}
-                          ฿
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        {item.note && (
+                          <div>
+                            <strong>
+                              {lang === 'en' ? 'Note' : 'หมายเหตุ'}:
+                            </strong>
+                            {' '}
+                            {item.note}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

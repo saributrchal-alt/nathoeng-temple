@@ -34,21 +34,38 @@ export default async function handler(req, res) {
   }
 
   const memberId = session.memberId;
+  const adminScope =
+    String(req.query?.scope || '') === 'admin';
 
   // =====================================================
   // GET
-  // รายการทำบุญของสมาชิกที่ล็อกอินอยู่
+  // Member: only own donations
+  // Admin: all donations
   // =====================================================
   if (req.method === 'GET') {
+    if (adminScope && session.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin permission required'
+      });
+    }
+
     try {
+      const baseSelect =
+        'id,donation_type,owner_member_id,donor_name_snapshot,amount,item_name,quantity,unit,purpose,custom_purpose,receipt_requested,donation_date,note,source,created_by_member_id,created_at,updated_at';
+
+      const query = adminScope
+        ? `?select=${baseSelect}&order=donation_date.desc,created_at.desc`
+        : `?owner_member_id=eq.${encodeURIComponent(memberId)}` +
+          `&select=${baseSelect}` +
+          `&order=donation_date.desc,created_at.desc`;
+
       const response = await fetch(
-        `${supabaseUrl}/rest/v1/donations` +
-          `?owner_member_id=eq.${encodeURIComponent(memberId)}` +
-          `&select=id,donation_type,donor_name_snapshot,amount,item_name,quantity,unit,purpose,custom_purpose,receipt_requested,donation_date,note,created_at` +
-          `&order=donation_date.desc`,
+        `${supabaseUrl}/rest/v1/donations${query}`,
         {
           method: 'GET',
-          headers: jsonHeaders(supabaseSecretKey)
+          headers: jsonHeaders(supabaseSecretKey),
+          cache: 'no-store'
         }
       );
 
@@ -68,6 +85,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
+        scope: adminScope ? 'admin' : 'member',
         donations: Array.isArray(data) ? data : []
       });
     } catch (error) {
@@ -85,7 +103,7 @@ export default async function handler(req, res) {
 
   // =====================================================
   // POST
-  // บันทึกการทำบุญเป็นเงิน / ถวายสิ่งของ
+  // Member donation flow - unchanged
   // =====================================================
   if (req.method === 'POST') {
     const {
@@ -182,8 +200,6 @@ export default async function handler(req, res) {
     }
 
     try {
-      // อ่านชื่อจริงจาก member ฝั่ง server
-      // ไม่เชื่อชื่อหรือ owner ที่ browser ส่งมา
       const memberResponse = await fetch(
         `${supabaseUrl}/rest/v1/members` +
           `?id=eq.${encodeURIComponent(memberId)}` +
