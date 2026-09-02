@@ -33,6 +33,13 @@ export default function DonationListPage({
       receipt: 'ใบอนุโมทนาบัตร',
       receiptYes: 'ต้องการ',
       receiptNo: 'ไม่ต้องการ',
+      verificationPending: 'รอตรวจสอบ',
+      verificationVerified: 'รายการถูกต้อง',
+      verificationNeedsCorrection: 'ต้องแก้ไขข้อมูล',
+      receiptWaitingReview: 'รอการตรวจสอบรายการ',
+      receiptPreparing: 'กำลังจัดทำใบอนุโมทนาบัตร',
+      receiptDownload: 'ดาวน์โหลดใบอนุโมทนาบัตร',
+      correctionNote: 'ข้อมูลที่ต้องแก้ไข',
       totalMoney: 'ยอดทำบุญเป็นเงินรวม',
       moneyCount: 'ครั้งที่ทำบุญเป็นเงิน',
       itemCount: 'รายการสิ่งของถวาย',
@@ -60,6 +67,13 @@ export default function DonationListPage({
       receipt: 'Donation receipt',
       receiptYes: 'Requested',
       receiptNo: 'Not requested',
+      verificationPending: 'Pending review',
+      verificationVerified: 'Verified',
+      verificationNeedsCorrection: 'Needs correction',
+      receiptWaitingReview: 'Waiting for review',
+      receiptPreparing: 'Certificate is being prepared',
+      receiptDownload: 'Download donation certificate',
+      correctionNote: 'Correction needed',
       totalMoney: 'Total money donations',
       moneyCount: 'Money donations',
       itemCount: 'Items offered',
@@ -166,7 +180,61 @@ export default function DonationListPage({
     const purpose = item?.purpose || ''
 
     if (purpose === 'custom') {
-      return (
+      const verificationMeta = (item) => {
+    const status = item?.verification_status || 'pending'
+
+    if (status === 'verified') {
+      return {
+        text: t.verificationVerified,
+        color: '#236b4a',
+        background: '#edf7f1',
+        border: '#cce4d5'
+      }
+    }
+
+    if (status === 'needs_correction') {
+      return {
+        text: t.verificationNeedsCorrection,
+        color: '#9a3f35',
+        background: '#fff1ef',
+        border: '#efcfc9'
+      }
+    }
+
+    return {
+      text: t.verificationPending,
+      color: '#8a611d',
+      background: '#fff7e7',
+      border: '#ead6ad'
+    }
+  }
+
+  const receiptContent = (item) => {
+    if (item?.receipt_requested !== true) return null
+
+    const status = item?.verification_status || 'pending'
+
+    if (status === 'verified' && item?.receipt_url) {
+      return {
+        type: 'download',
+        text: t.receiptDownload
+      }
+    }
+
+    if (status === 'verified') {
+      return {
+        type: 'text',
+        text: t.receiptPreparing
+      }
+    }
+
+    return {
+      type: 'text',
+      text: t.receiptWaitingReview
+    }
+  }
+
+  return (
         item?.custom_purpose ||
         (th ? 'วัตถุประสงค์เฉพาะ' : 'Specific purpose')
       )
