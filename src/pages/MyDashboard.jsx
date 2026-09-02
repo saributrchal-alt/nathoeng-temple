@@ -375,11 +375,21 @@ function MyDashboard({
 
           <button
             type="button"
-            className="compactApplyButton"
             onClick={() => goToPage('booking-page')}
+            style={{
+              width: '100%',
+              minHeight: '50px',
+              marginTop: '16px',
+              borderRadius: '14px',
+              border: '1px solid #b1842b',
+              background: '#fffdf8',
+              color: '#9b7226',
+              fontWeight: 700,
+              fontSize: '15px',
+              cursor: 'pointer'
+            }}
           >
-            <span>＋</span>
-            {th ? 'สร้างคำขอเข้าพักปฏิบัติธรรม' : 'Apply for a Retreat Stay'}
+            ＋ {th ? 'ทำรายการเข้าพักปฏิบัติธรรม' : 'Make a Retreat Stay Request'}
           </button>
         </section>
 
