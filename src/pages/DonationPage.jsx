@@ -62,7 +62,7 @@ export default function DonationPage({ lang, goToPage }) {
       eyebrow: 'ร่วมสนับสนุนวัด',
       title: 'บันทึกข้อมูลการบริจาค',
       intro:
-        'การให้ของท่านช่วยเกื้อกูลวัด กิจกรรมเผยแผ่ธรรมะ และงานเพื่อชุมชน ผู้มีจิตศรัทธาทุกท่านสามารถกรอกข้อมูลร่วมบุญได้ผ่านแบบฟอร์มด้านล่างนี้',
+        'การให้ของท่านช่วยเกื้อกูลวัด กิจกรรมเผยแผ่ธรรมะ และงานเพื่อชุมชน ผู้มีจิตศรัทธาสามารถบันทึกข้อมูลการร่วมบุญผ่านระบบของวัดได้ด้านล่างนี้',
       nameLabel: 'ชื่อ - สกุล *',
       namePlaceholder:
         'ระบุชื่อและนามสกุลของคุณ',
@@ -123,9 +123,15 @@ export default function DonationPage({ lang, goToPage }) {
     user?.isAdmin === true ||
     user?.role === 'admin'
 
+  const [donationType, setDonationType] = useState('')
+
   const [formData, setFormData] =
     useState({
       amount: '',
+      itemName: '',
+      quantity: '',
+      unit: '',
+      note: '',
       purpose: 'general',
       customPurpose: '',
       taxReceipt: ''
@@ -324,12 +330,11 @@ export default function DonationPage({ lang, goToPage }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // บังคับตรวจเช็ก LINE Login ป้องกัน Spam
     if (!user) {
       alert(
         lang === 'th'
-          ? 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำการบริจาค'
-          : 'Please login with LINE before making a donation.'
+          ? 'กรุณาเข้าสู่ระบบด้วย LINE ก่อนทำรายการ'
+          : 'Please login with LINE before continuing.'
       )
 
       goToPage('login-page')
@@ -341,132 +346,120 @@ export default function DonationPage({ lang, goToPage }) {
       return
     }
 
-    if (
-      !formData.amount ||
-      !formData.taxReceipt
-    ) {
+    if (!donationType) {
       alert(
         lang === 'th'
-          ? 'กรุณากรอกข้อมูลและเลือกรายการให้ครบถ้วน'
-          : 'Please fill in all required fields and select receipt option.'
+          ? 'กรุณาเลือกรูปแบบการทำบุญ'
+          : 'Please choose a donation type.'
       )
-
       return
     }
 
-    let selectedPurposeText = ''
+    if (
+      donationType === 'money' &&
+      (!formData.amount || Number(formData.amount) <= 0 || !formData.taxReceipt)
+    ) {
+      alert(
+        lang === 'th'
+          ? 'กรุณาระบุยอดทำบุญและเลือกความต้องการใบอนุโมทนาบัตร'
+          : 'Please enter the donation amount and receipt preference.'
+      )
+      return
+    }
 
     if (
-      formData.purpose === 'custom'
+      donationType === 'item' &&
+      (
+        !formData.itemName.trim() ||
+        !formData.quantity ||
+        Number(formData.quantity) <= 0 ||
+        !formData.unit.trim()
+      )
     ) {
-      selectedPurposeText =
-        formData.customPurpose ||
-        (lang === 'th'
-          ? 'ระบุเอง'
-          : 'Custom')
-    } else {
-      const found =
-        t.purposeOptions.find(
-          (opt) =>
-            opt.value ===
-            formData.purpose
-        )
+      alert(
+        lang === 'th'
+          ? 'กรุณาระบุสิ่งของ จำนวน และหน่วยให้ครบถ้วน'
+          : 'Please enter the item, quantity, and unit.'
+      )
+      return
+    }
 
-      selectedPurposeText =
-        found
-          ? found.label
-          : formData.purpose
+    if (
+      formData.purpose === 'custom' &&
+      !formData.customPurpose.trim()
+    ) {
+      alert(
+        lang === 'th'
+          ? 'กรุณาระบุวัตถุประสงค์ในการทำบุญ'
+          : 'Please specify the donation purpose.'
+      )
+      return
     }
 
     setLoading(true)
 
-    const now = new Date()
-
-    const formattedDate =
-      `${now.getFullYear()}-` +
-      `${String(
-        now.getMonth() + 1
-      ).padStart(2, '0')}-` +
-      `${String(
-        now.getDate()
-      ).padStart(2, '0')} ` +
-      `${String(
-        now.getHours()
-      ).padStart(2, '0')}:` +
-      `${String(
-        now.getMinutes()
-      ).padStart(2, '0')}`
-
-    const newEntry = {
-      date: formattedDate,
-      name: profileData.fullName || user.name,
-      purpose: selectedPurposeText,
-      receipt: formData.taxReceipt,
-      amount: Number(
-        formData.amount
-      ),
-      lineUser: user.name
-    }
-
     try {
-      const existing =
-        JSON.parse(
-          localStorage.getItem(
-            'nathoeng_donations'
-          ) || '[]'
+      const response = await fetch('/api/donation', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          donationType,
+          amount:
+            donationType === 'money'
+              ? Number(formData.amount)
+              : null,
+          itemName:
+            donationType === 'item'
+              ? formData.itemName.trim()
+              : null,
+          quantity:
+            donationType === 'item'
+              ? Number(formData.quantity)
+              : null,
+          unit:
+            donationType === 'item'
+              ? formData.unit.trim()
+              : null,
+          purpose: formData.purpose,
+          customPurpose:
+            formData.purpose === 'custom'
+              ? formData.customPurpose.trim()
+              : null,
+          receiptRequested:
+            donationType === 'money'
+              ? formData.taxReceipt === 'yes'
+              : false,
+          note:
+            donationType === 'item' && formData.note.trim()
+              ? formData.note.trim()
+              : null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+          (lang === 'th'
+            ? 'ไม่สามารถบันทึกรายการทำบุญได้'
+            : 'Unable to save donation.')
         )
-
-      localStorage.setItem(
-        'nathoeng_donations',
-        JSON.stringify([
-          newEntry,
-          ...existing
-        ])
-      )
-    } catch (err) {
-      console.error(err)
-    }
-
-    try {
-      await fetch(
-        'https://api.web3forms.com/submit',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json',
-            Accept:
-              'application/json'
-          },
-          body: JSON.stringify({
-            access_key:
-              '56740213-dd22-4925-948b-66e1bf47d993',
-            subject:
-              `New Donation from ${profileData.fullName || user.name}`,
-            from_name:
-              'Buddhist Park Monastery Website',
-            'Full Name':
-              profileData.fullName || user.name,
-            'LINE User':
-              user.name,
-            'Amount (THB)':
-              formData.amount,
-            Purpose:
-              selectedPurposeText,
-            'Needs Tax Receipt':
-              formData.taxReceipt ===
-              'yes'
-                ? 'Yes (ต้องการ)'
-                : 'No (ไม่ต้องการ)'
-          })
-        }
-      )
+      }
 
       setIsSubmitted(true)
     } catch (error) {
-      console.error(error)
+      console.error('Donation save error:', error)
 
-      setIsSubmitted(true)
+      alert(
+        error.message ||
+        (lang === 'th'
+          ? 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'
+          : 'Something went wrong. Please try again.')
+      )
     } finally {
       setLoading(false)
     }
@@ -476,8 +469,13 @@ export default function DonationPage({ lang, goToPage }) {
     () => {
       setIsSubmitted(false)
 
+      setDonationType('')
       setFormData({
         amount: '',
+        itemName: '',
+        quantity: '',
+        unit: '',
+        note: '',
         purpose: 'general',
         customPurpose: '',
         taxReceipt: ''
@@ -611,6 +609,86 @@ export default function DonationPage({ lang, goToPage }) {
               </span>
             </div>
 
+            <div className="donationTypeSection">
+              <div className="donationTypeHeading">
+                <strong>
+                  {lang === 'th'
+                    ? 'เลือกรูปแบบการทำบุญ'
+                    : 'Choose donation type'}
+                </strong>
+                <span>
+                  {lang === 'th'
+                    ? 'เลือก 1 รายการ แล้วกรอกข้อมูลด้านล่าง'
+                    : 'Choose one option, then complete the form below.'}
+                </span>
+              </div>
+
+              <div className="donationTypeGrid">
+                <button
+                  type="button"
+                  className={
+                    donationType === 'money'
+                      ? 'donationTypeCard isSelected'
+                      : 'donationTypeCard'
+                  }
+                  onClick={() => {
+                    setDonationType('money')
+                    setFormData((prev) => ({
+                      ...prev,
+                      itemName: '',
+                      quantity: '',
+                      unit: '',
+                      note: ''
+                    }))
+                  }}
+                >
+                  <img src="/icons/donation.svg" alt="" aria-hidden="true" />
+                  <span>
+                    <strong>
+                      {lang === 'th' ? 'ทำบุญเป็นเงิน' : 'Money Donation'}
+                    </strong>
+                    <small>
+                      {lang === 'th'
+                        ? 'บันทึกยอดเงินและวัตถุประสงค์'
+                        : 'Record amount and purpose'}
+                    </small>
+                  </span>
+                  <b>{donationType === 'money' ? '✓' : '›'}</b>
+                </button>
+
+                <button
+                  type="button"
+                  className={
+                    donationType === 'item'
+                      ? 'donationTypeCard isSelected'
+                      : 'donationTypeCard'
+                  }
+                  onClick={() => {
+                    setDonationType('item')
+                    setFormData((prev) => ({
+                      ...prev,
+                      amount: '',
+                      taxReceipt: ''
+                    }))
+                  }}
+                >
+                  <img src="/icons/lotus.svg" alt="" aria-hidden="true" />
+                  <span>
+                    <strong>
+                      {lang === 'th' ? 'ถวายสิ่งของ' : 'Offer Items'}
+                    </strong>
+                    <small>
+                      {lang === 'th'
+                        ? 'บันทึกสิ่งของ จำนวน และหน่วย'
+                        : 'Record item, quantity and unit'}
+                    </small>
+                  </span>
+                  <b>{donationType === 'item' ? '✓' : '›'}</b>
+                </button>
+              </div>
+            </div>
+
+            {donationType && (
             <form
               onSubmit={
                 handleSubmit
@@ -618,6 +696,7 @@ export default function DonationPage({ lang, goToPage }) {
               className="donationForm"
             >
 
+              {donationType === 'money' ? (
               <div className="donationFormGrid">
                 <div className="donationField">
                   <label
@@ -727,6 +806,137 @@ export default function DonationPage({ lang, goToPage }) {
                   </div>
                 </div>
               </div>
+              ) : (
+                <div className="donationFormGrid">
+                  <div className="donationField donationFieldFull">
+                    <label htmlFor="donation-item-name">
+                      {lang === 'th' ? 'สิ่งของที่ถวาย *' : 'Item Offered *'}
+                    </label>
+                    <input
+                      id="donation-item-name"
+                      type="text"
+                      name="itemName"
+                      value={formData.itemName}
+                      onChange={handleChange}
+                      placeholder={
+                        lang === 'th'
+                          ? 'เช่น ข้าวสาร น้ำดื่ม พัดลม'
+                          : 'e.g. rice, drinking water, fan'
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="donationField">
+                    <label htmlFor="donation-quantity">
+                      {lang === 'th' ? 'จำนวน *' : 'Quantity *'}
+                    </label>
+                    <input
+                      id="donation-quantity"
+                      type="number"
+                      name="quantity"
+                      inputMode="decimal"
+                      min="0.01"
+                      step="any"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      placeholder={lang === 'th' ? 'เช่น 2' : 'e.g. 2'}
+                      required
+                    />
+                  </div>
+
+                  <div className="donationField">
+                    <label htmlFor="donation-unit">
+                      {lang === 'th' ? 'หน่วย *' : 'Unit *'}
+                    </label>
+                    <input
+                      id="donation-unit"
+                      type="text"
+                      name="unit"
+                      value={formData.unit}
+                      onChange={handleChange}
+                      placeholder={
+                        lang === 'th'
+                          ? 'เช่น ถุง กล่อง เครื่อง กระสอบ'
+                          : 'e.g. bags, boxes, units'
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="donationField donationFieldFull">
+                    <label htmlFor="donation-item-note">
+                      {lang === 'th' ? 'หมายเหตุ' : 'Note'}
+                    </label>
+                    <textarea
+                      id="donation-item-note"
+                      name="note"
+                      value={formData.note}
+                      onChange={handleChange}
+                      rows="3"
+                      placeholder={
+                        lang === 'th'
+                          ? 'รายละเอียดเพิ่มเติม (ถ้ามี)'
+                          : 'Additional details (optional)'
+                      }
+                    />
+                  </div>
+
+                  <div className="donationField donationFieldFull">
+                    <label htmlFor="donation-purpose-item">
+                      {lang === 'th'
+                        ? 'วัตถุประสงค์ในการถวาย *'
+                        : 'Offering Purpose *'}
+                    </label>
+                    <div className="donationPurposeDropdown">
+                      <button
+                        id="donation-purpose-item"
+                        type="button"
+                        className="donationPurposeTrigger"
+                        onClick={() => setPurposeOpen((open) => !open)}
+                        aria-haspopup="listbox"
+                        aria-expanded={purposeOpen}
+                      >
+                        <span>{selectedPurposeOption.label}</span>
+                        <span
+                          className={
+                            purposeOpen
+                              ? 'donationPurposeChevron isOpen'
+                              : 'donationPurposeChevron'
+                          }
+                          aria-hidden="true"
+                        >
+                          ⌄
+                        </span>
+                      </button>
+
+                      {purposeOpen && (
+                        <div className="donationPurposeMenu" role="listbox">
+                          {t.purposeOptions.map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              role="option"
+                              aria-selected={formData.purpose === opt.value}
+                              className={
+                                formData.purpose === opt.value
+                                  ? 'donationPurposeOption isSelected'
+                                  : 'donationPurposeOption'
+                              }
+                              onClick={() => handlePurposeSelect(opt.value)}
+                            >
+                              <span className="donationPurposeCheck">
+                                {formData.purpose === opt.value ? '✓' : ''}
+                              </span>
+                              <span>{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {formData.purpose ===
                 'custom' && (
@@ -755,6 +965,7 @@ export default function DonationPage({ lang, goToPage }) {
                 </div>
               )}
 
+              {donationType === 'money' && (
               <fieldset className="donationReceiptBox">
                 <legend>
                   {t.taxReceiptLabel}
@@ -820,6 +1031,7 @@ export default function DonationPage({ lang, goToPage }) {
 
                 </div>
               </fieldset>
+              )}
 
               <div className="donationSubmitWrap">
                 <button
@@ -831,11 +1043,16 @@ export default function DonationPage({ lang, goToPage }) {
                     ? lang === 'th'
                       ? 'กำลังส่งข้อมูล...'
                       : 'Submitting...'
-                    : `${t.submitBtn} →`}
+                    : donationType === 'item'
+                      ? lang === 'th'
+                        ? 'ยืนยันการถวายสิ่งของ →'
+                        : 'Confirm Item Offering →'
+                      : `${t.submitBtn} →`}
                 </button>
               </div>
 
             </form>
+            )}
           </>
         ) : (
           <div className="donationSuccessBox">
@@ -988,6 +1205,100 @@ export default function DonationPage({ lang, goToPage }) {
         )}
 
         <style>{`
+          .donationTypeSection {
+            margin: 22px 0;
+          }
+
+          .donationTypeHeading {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+          }
+
+          .donationTypeHeading strong {
+            color: #3d3025;
+            font-size: 18px;
+          }
+
+          .donationTypeHeading span {
+            color: #7c7269;
+            font-size: 12px;
+          }
+
+          .donationTypeGrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+          }
+
+          .donationTypeCard {
+            width: 100%;
+            min-height: 108px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid #ded5c8;
+            border-radius: 14px;
+            background: #fffefb;
+            text-align: left;
+            cursor: pointer;
+          }
+
+          .donationTypeCard.isSelected {
+            border: 2px solid #a97a24;
+            background: #fffaf0;
+          }
+
+          .donationTypeCard img {
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
+          }
+
+          .donationTypeCard span {
+            min-width: 0;
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            gap: 4px;
+          }
+
+          .donationTypeCard strong {
+            color: #3d3025;
+            font-size: 16px;
+          }
+
+          .donationTypeCard small {
+            color: #7c7269;
+            font-size: 11px;
+            line-height: 1.45;
+          }
+
+          .donationTypeCard b {
+            color: #a97a24;
+            font-size: 20px;
+          }
+
+          .donationField textarea {
+            width: 100%;
+            box-sizing: border-box;
+            resize: vertical;
+          }
+
+          @media (max-width: 480px) {
+            .donationTypeGrid {
+              grid-template-columns: 1fr;
+              gap: 10px;
+            }
+
+            .donationTypeCard {
+              min-height: 88px;
+              padding: 14px;
+            }
+          }
+
           .donationProfileOverlay {
             position: fixed;
             inset: 0;
