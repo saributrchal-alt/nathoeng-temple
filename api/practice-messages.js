@@ -1,7 +1,7 @@
 import {
   getSessionFromRequest,
   requireAdmin
-} from './_auth.js';
+} from '../lib/_auth.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
   return {
