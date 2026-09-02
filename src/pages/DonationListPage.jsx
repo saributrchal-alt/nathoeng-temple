@@ -643,14 +643,84 @@ export default function DonationListPage({
                       </div>
                     )}
 
-                    {isMoney && (
-                      <div>
-                        <strong>{t.receipt}: </strong>
-                        {item.receipt_requested === true
-                          ? t.receiptYes
-                          : t.receiptNo}
-                      </div>
-                    )}
+                    <div style={{ marginTop: '4px' }}>
+                      {(() => {
+                        const vm = verificationMeta(item)
+                        return (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              minHeight: '30px',
+                              padding: '0 10px',
+                              borderRadius: '999px',
+                              border: `1px solid ${vm.border}`,
+                              background: vm.background,
+                              color: vm.color,
+                              fontSize: '12px',
+                              fontWeight: 800
+                            }}
+                          >
+                            {vm.text}
+                          </span>
+                        )
+                      })()}
+                    </div>
+
+                    {item.verification_status === 'needs_correction' &&
+                      item.verification_note && (
+                        <div
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '12px',
+                            background: '#fff3f1',
+                            border: '1px solid #efd3cd',
+                            color: '#8f4036',
+                            lineHeight: 1.55
+                          }}
+                        >
+                          <strong>{t.correctionNote}: </strong>
+                          {item.verification_note}
+                        </div>
+                      )}
+
+                    {isMoney && (() => {
+                      const rc = receiptContent(item)
+                      if (!rc) return null
+
+                      return (
+                        <div
+                          style={{
+                            padding: '11px 12px',
+                            borderRadius: '12px',
+                            background: '#f8f6f1',
+                            border: '1px solid #e4ddd2',
+                            lineHeight: 1.5
+                          }}
+                        >
+                          <strong>{t.receipt}: </strong>
+                          {rc.type === 'download' ? (
+                            <a
+                              href={item.receipt_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: '#236b4a',
+                                fontWeight: 800,
+                                textDecoration: 'none'
+                              }}
+                            >
+                              ↓ {rc.text}
+                            </a>
+                          ) : (
+                            <span>{rc.text}</span>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </article>
               )
