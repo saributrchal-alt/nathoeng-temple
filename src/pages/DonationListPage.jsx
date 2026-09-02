@@ -180,7 +180,28 @@ export default function DonationListPage({
     const purpose = item?.purpose || ''
 
     if (purpose === 'custom') {
-      const verificationMeta = (item) => {
+      return (
+        item?.custom_purpose ||
+        (th ? 'วัตถุประสงค์เฉพาะ' : 'Specific purpose')
+      )
+    }
+
+    const labels = {
+      general: th
+        ? 'ทำบุญตามอัธยาศัยทางคณะสงฆ์'
+        : 'General donation',
+      utilities: th
+        ? 'เพื่อค่าน้ำ - ค่าไฟวัด'
+        : 'Electricity & water expenses',
+      development: th
+        ? 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
+        : 'Monastery development & maintenance'
+    }
+
+    return labels[purpose] || purpose || '—'
+  }
+
+  const verificationMeta = (item) => {
     const status = item?.verification_status || 'pending'
 
     if (status === 'verified') {
@@ -215,44 +236,14 @@ export default function DonationListPage({
     const status = item?.verification_status || 'pending'
 
     if (status === 'verified' && item?.receipt_url) {
-      return {
-        type: 'download',
-        text: t.receiptDownload
-      }
+      return { type: 'download', text: t.receiptDownload }
     }
 
     if (status === 'verified') {
-      return {
-        type: 'text',
-        text: t.receiptPreparing
-      }
+      return { type: 'text', text: t.receiptPreparing }
     }
 
-    return {
-      type: 'text',
-      text: t.receiptWaitingReview
-    }
-  }
-
-  return (
-        item?.custom_purpose ||
-        (th ? 'วัตถุประสงค์เฉพาะ' : 'Specific purpose')
-      )
-    }
-
-    const labels = {
-      general: th
-        ? 'ทำบุญตามอัธยาศัยทางคณะสงฆ์'
-        : 'General donation',
-      utilities: th
-        ? 'เพื่อค่าน้ำ - ค่าไฟวัด'
-        : 'Electricity & water expenses',
-      development: th
-        ? 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
-        : 'Monastery development & maintenance'
-    }
-
-    return labels[purpose] || purpose || '—'
+    return { type: 'text', text: t.receiptWaitingReview }
   }
 
   return (
