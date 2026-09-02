@@ -574,6 +574,18 @@ export default function AdminDonationPanel({
 
               <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:14}}>
                 <button type="button" onClick={()=>openVerify(item)} style={{...smallBtn,background:'#355b49',borderColor:'#355b49',color:'#fff',fontWeight:800}}>{th?'ตรวจสอบรายการ':'Review'}</button>
+                {item.verification_status==='verified' && item.owner_member_id && (
+                  <button
+                    type="button"
+                    disabled={busy===`line-${item.id}`}
+                    onClick={()=>sendLineNotification(item)}
+                    style={{...smallBtn,background:'#16a34a',borderColor:'#16a34a',color:'#fff',fontWeight:800,opacity:busy===`line-${item.id}`?.65:1}}
+                  >
+                    {busy===`line-${item.id}`
+                      ? (th?'กำลังส่ง LINE...':'Sending LINE...')
+                      : (th?'💬 แจ้งผู้บริจาคทาง LINE':'💬 Notify donor via LINE')}
+                  </button>
+                )}
                 <button type="button" onClick={()=>openEdit(item)} style={smallBtn}>{th?'แก้ไขรายละเอียด':'Edit Details'}</button>
                 <button type="button" onClick={()=>openOwner(item)} style={{...smallBtn,background:'#fff8e8',color:'#8a611d',fontWeight:800}}>{th?'เปลี่ยนเจ้าของรายการ':'Change Owner'}</button>
               </div>
