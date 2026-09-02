@@ -71,7 +71,7 @@ function AdminPracticeMessagePanel({
           }
         ),
         fetch(
-          '/api/practice-messages?scope=members',
+          '/api/donation?scope=admin&resource=members',
           {
             credentials: 'include',
             cache: 'no-store'
@@ -103,7 +103,7 @@ function AdminPracticeMessagePanel({
       ) {
         throw new Error(
           membersData.message ||
-          'Unable to load members'
+          'Unable to load members from donation member lookup'
         );
       }
 
