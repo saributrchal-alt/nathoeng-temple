@@ -7,6 +7,7 @@ function BookingPage({ lang, goToPage }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
+  const [retreatPurpose, setRetreatPurpose] = useState('');
 
   const th = lang === 'th';
 
@@ -33,11 +34,21 @@ function BookingPage({ lang, goToPage }) {
     const startDate = formData.get('start_date');
     const endDate = formData.get('end_date');
 
+    const purposeChoice =
+      formData.get('purpose_choice') || '';
+
+    const customPurpose =
+      String(
+        formData.get('custom_purpose') || ''
+      ).trim();
+
     const purpose =
-      formData.get('message') ||
-      (lang === 'en'
-        ? 'General Stay'
-        : 'ปฏิบัติธรรมทั่วไป');
+      purposeChoice === 'custom'
+        ? customPurpose
+        : purposeChoice ||
+          (lang === 'en'
+            ? 'General Stay'
+            : 'ปฏิบัติธรรมทั่วไป');
 
     try {
       // 1. บันทึก Booking ลง Supabase ผ่าน Backend
@@ -416,22 +427,77 @@ function BookingPage({ lang, goToPage }) {
                 </div>
 
                 <div className="bookingFieldBody">
-                  <label htmlFor="booking-message">
+                  <label htmlFor="booking-purpose">
                     {th
-                      ? 'หมายเหตุ / จุดประสงค์การปฏิบัติธรรม'
-                      : 'Additional Notes / Purpose'}
+                      ? 'จุดประสงค์การปฏิบัติธรรม *'
+                      : 'Purpose of Dhamma Practice *'}
                   </label>
 
-                  <textarea
-                    id="booking-message"
-                    name="message"
-                    rows="4"
-                    placeholder={
-                      th
-                        ? 'เช่น ปฏิบัติธรรมส่วนตัว หรือมาเป็นคณะ...'
-                        : 'For example: personal retreat or group visit...'
+                  <select
+                    id="booking-purpose"
+                    name="purpose_choice"
+                    value={retreatPurpose}
+                    onChange={(event) =>
+                      setRetreatPurpose(event.target.value)
                     }
-                  ></textarea>
+                    required
+                  >
+                    <option value="">
+                      {th
+                        ? 'กรุณาเลือกจุดประสงค์'
+                        : 'Please select a purpose'}
+                    </option>
+
+                    <option value="เพื่อรักษาศีล 5">
+                      {th
+                        ? '1. เพื่อรักษาศีล 5'
+                        : '1. To observe the Five Precepts'}
+                    </option>
+
+                    <option value="เพื่อรักษาศีล 5 และฝึกสมาธิ">
+                      {th
+                        ? '2. เพื่อรักษาศีล 5 และฝึกสมาธิ'
+                        : '2. To observe the Five Precepts and practice meditation'}
+                    </option>
+
+                    <option value="เพื่อรักษาศีล 8">
+                      {th
+                        ? '3. เพื่อรักษาศีล 8'
+                        : '3. To observe the Eight Precepts'}
+                    </option>
+
+                    <option value="เพื่อฝึกฝนการพิจารณาเสือดำ">
+                      {th
+                        ? '4. เพื่อฝึกฝนการพิจารณาเสือดำ'
+                        : '4. To practise contemplation of Suea Dam'}
+                    </option>
+
+                    <option value="เพื่อฝึกฝนหลักสูตรการย้ายบ้าน">
+                      {th
+                        ? '5. เพื่อฝึกฝนหลักสูตรการย้ายบ้าน'
+                        : '5. To practise the Moving House course'}
+                    </option>
+
+                    <option value="custom">
+                      {th
+                        ? '6. เพื่อจุดประสงค์เฉพาะ ระบุ'
+                        : '6. Other specific purpose'}
+                    </option>
+                  </select>
+
+                  {retreatPurpose === 'custom' && (
+                    <input
+                      type="text"
+                      name="custom_purpose"
+                      placeholder={
+                        th
+                          ? 'กรุณาระบุจุดประสงค์การปฏิบัติธรรม'
+                          : 'Please specify your purpose'
+                      }
+                      style={{ marginTop: '12px' }}
+                      required
+                    />
+                  )}
                 </div>
               </div>
 
