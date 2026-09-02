@@ -912,6 +912,22 @@ export default function DonationPage({ lang, goToPage }) {
                           ? 'รายละเอียดเพิ่มเติม (ถ้ามี)'
                           : 'Additional details (optional)'
                       }
+                      style={{
+                        width: '100%',
+                        minHeight: '104px',
+                        boxSizing: 'border-box',
+                        border: '1px solid #ded5c8',
+                        borderRadius: '14px',
+                        background: '#fff',
+                        padding: '14px 16px',
+                        color: '#3d3025',
+                        fontFamily: 'inherit',
+                        fontSize: '15px',
+                        fontWeight: 400,
+                        lineHeight: 1.55,
+                        resize: 'vertical',
+                        outline: 'none'
+                      }}
                     />
                   </div>
 
