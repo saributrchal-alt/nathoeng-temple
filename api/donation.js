@@ -1229,37 +1229,66 @@ export default async function handler(req, res) {
         existing.donor_name_snapshot ||
         '';
 
-      const lines = [
-        'สาธุ อนุโมทนาบุญ 🙏',
-        donorName ? `คุณ ${donorName}` : '',
-        'รายการทำบุญของท่านได้รับการตรวจสอบเรียบร้อยแล้ว',
-        'ข้อมูลครบถ้วนสมบูรณ์',
-        '',
-        'ขออนุโมทนาในกุศลเจตนาของท่าน',
-        'สาธุ สาธุ สาธุ 🙏'
-      ];
+      const customMessage =
+        typeof body.messageText === 'string'
+          ? body.messageText.trim()
+          : '';
 
-      if (existing.receipt_requested === true) {
-        if (existing.receipt_url) {
-          lines.push(
-            '',
-            'ใบอนุโมทนาบัตรพร้อมแล้ว',
-            'กรุณาเปิดดูได้ที่ บัญชีของฉัน → การทำบุญของฉัน'
-          );
-        } else {
-          lines.push(
-            '',
-            'ใบอนุโมทนาบัตรอยู่ระหว่างการจัดทำ'
-          );
+      let messageText = customMessage;
+
+      if (!messageText) {
+        const lines = [
+          'สาธุ อนุโมทนาบุญ 🙏',
+          donorName ? `คุณ ${donorName}` : '',
+          'รายการทำบุญของท่านได้รับการตรวจสอบเรียบร้อยแล้ว',
+          'ข้อมูลครบถ้วนสมบูรณ์',
+          '',
+          'ขออนุโมทนาในกุศลเจตนาของท่าน',
+          'สาธุ สาธุ สาธุ 🙏'
+        ];
+
+        if (existing.receipt_requested === true) {
+          if (existing.receipt_url) {
+            lines.push(
+              '',
+              'ใบอนุโมทนาบัตรพร้อมแล้ว',
+              'กรุณาเปิดดูได้ที่ บัญชีของฉัน → การทำบุญของฉัน'
+            );
+          } else {
+            lines.push(
+              '',
+              'ใบอนุโมทนาบัตรอยู่ระหว่างการจัดทำ'
+            );
+          }
         }
+
+        lines.push(
+          '',
+          'วัดพุทธอุทยานนาเทิง',
+          'NATHOENG CONNECT'
+        );
+
+        messageText = lines
+          .filter((line, index, array) => {
+            if (line !== '') return true;
+            return index > 0 && array[index - 1] !== '';
+          })
+          .join('\n');
       }
 
-      lines.push('', 'วัดพุทธอุทยานนาเทิง', 'NATHOENG CONNECT');
+      if (!messageText) {
+        return res.status(400).json({
+          success: false,
+          message: 'LINE message is required'
+        });
+      }
 
-      const messageText = lines.filter((line, index, array) => {
-        if (line !== '') return true;
-        return index > 0 && array[index - 1] !== '';
-      }).join('\n');
+      if (messageText.length > 5000) {
+        return res.status(400).json({
+          success: false,
+          message: 'LINE message is too long'
+        });
+      }
 
       try {
         const lineResponse = await fetch(

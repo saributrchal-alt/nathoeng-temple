@@ -55,6 +55,8 @@ export default function AdminDonationPanel({
   const [verificationStatus, setVerificationStatus] = useState('pending');
   const [verificationNote, setVerificationNote] = useState('');
   const [receiptUrl, setReceiptUrl] = useState('');
+  const [lineMessage, setLineMessage] = useState('');
+  const [lineTarget, setLineTarget] = useState(null);
 
   const input = {
     width: '100%',
@@ -221,6 +223,8 @@ export default function AdminDonationPanel({
     setVerificationStatus('pending');
     setVerificationNote('');
     setReceiptUrl('');
+    setLineMessage('');
+    setLineTarget(null);
   };
 
   const openAdd = async () => {
@@ -377,17 +381,87 @@ export default function AdminDonationPanel({
     }
   };
 
-  const sendLineNotification = async (item) => {
+  const buildLineMessage = (item) => {
+    const donorName = item?.owner_member_id
+      ? currentOwnerName(item)
+      : (item?.donor_name_snapshot || '');
+
+    const lines = [
+      'สาธุ อนุโมทนาบุญ 🙏',
+      donorName ? `คุณ ${donorName}` : '',
+      'รายการทำบุญของท่านได้รับการตรวจสอบเรียบร้อยแล้ว',
+      'ข้อมูลครบถ้วนสมบูรณ์',
+      '',
+      'ขออนุโมทนาในกุศลเจตนาของท่าน',
+      'สาธุ สาธุ สาธุ 🙏'
+    ];
+
+    if (item?.receipt_requested === true) {
+      if (item?.receipt_url) {
+        lines.push(
+          '',
+          'ใบอนุโมทนาบัตรพร้อมแล้ว',
+          'กรุณาเปิดดูได้ที่ บัญชีของฉัน → การทำบุญของฉัน'
+        );
+      } else {
+        lines.push(
+          '',
+          'ใบอนุโมทนาบัตรอยู่ระหว่างการจัดทำ'
+        );
+      }
+    }
+
+    lines.push(
+      '',
+      'วัดพุทธอุทยานนาเทิง',
+      'NATHOENG CONNECT'
+    );
+
+    return lines
+      .filter((line, index, array) => {
+        if (line !== '') return true;
+        return index > 0 && array[index - 1] !== '';
+      })
+      .join('\n');
+  };
+
+  const openLineNotification = (item) => {
+    setSelected(item);
+    setLineTarget(item);
+    setLineMessage(buildLineMessage(item));
+    setFormError('');
+    setMode('line');
+  };
+
+  const sendLineNotification = async () => {
+    const item = lineTarget || selected;
+
     if (!item?.id) return;
 
-    const donorName = item.owner_member_id
-      ? currentOwnerName(item)
-      : (item.donor_name_snapshot || '');
+    const message = String(lineMessage || '').trim();
+
+    if (!message) {
+      setFormError(
+        th
+          ? 'กรุณากรอกข้อความก่อนส่ง'
+          : 'Please enter a message before sending'
+      );
+      return;
+    }
+
+    if (message.length > 5000) {
+      setFormError(
+        th
+          ? 'ข้อความยาวเกิน 5,000 ตัวอักษร'
+          : 'Message exceeds 5,000 characters'
+      );
+      return;
+    }
 
     const confirmed = window.confirm(
       th
-        ? `ยืนยันส่งข้อความ LINE OA แจ้ง ${donorName || 'ผู้บริจาค'} ว่ารายการตรวจสอบสมบูรณ์แล้วหรือไม่?`
-        : `Send a LINE OA message to ${donorName || 'this donor'} confirming that the donation has been verified?`
+        ? 'ยืนยันส่งข้อความนี้ทาง LINE OA ถึงผู้บริจาคหรือไม่?'
+        : 'Send this message to the donor via LINE OA?'
     );
 
     if (!confirmed) return;
@@ -398,7 +472,8 @@ export default function AdminDonationPanel({
     try {
       await post({
         action: 'admin_line_notify',
-        donationId: item.id
+        donationId: item.id,
+        messageText: message
       });
 
       window.alert(
@@ -406,12 +481,10 @@ export default function AdminDonationPanel({
           ? 'ส่งข้อความแจ้งผู้บริจาคทาง LINE OA เรียบร้อยแล้ว สาธุ 🙏'
           : 'LINE OA notification sent successfully.'
       );
+
+      close();
     } catch (e) {
-      window.alert(
-        th
-          ? `ส่งข้อความ LINE ไม่สำเร็จ: ${e.message}`
-          : `Unable to send LINE message: ${e.message}`
-      );
+      setFormError(e.message);
     } finally {
       setBusy(false);
     }
@@ -578,7 +651,7 @@ export default function AdminDonationPanel({
                   <button
                     type="button"
                     disabled={busy===`line-${item.id}`}
-                    onClick={()=>sendLineNotification(item)}
+                    onClick={()=>openLineNotification(item)}
                     style={{...smallBtn,background:'#16a34a',borderColor:'#16a34a',color:'#fff',fontWeight:800,opacity:busy===`line-${item.id}`?.65:1}}
                   >
                     {busy===`line-${item.id}`
@@ -604,14 +677,50 @@ export default function AdminDonationPanel({
                   ? (th?'แก้ไขรายละเอียด':'Edit Donation')
                   : mode==='verify'
                     ? (th?'ตรวจสอบรายการทำบุญ':'Review Donation')
-                    : (th?'เปลี่ยนเจ้าของรายการ':'Change Owner')}
+                    : mode==='line'
+                      ? (th?'แจ้งผู้บริจาคทาง LINE':'Notify Donor via LINE')
+                      : (th?'เปลี่ยนเจ้าของรายการ':'Change Owner')}
             </h3>
             <button type="button" onClick={close} style={{width:40,height:40,borderRadius:'50%',border:'1px solid #ddd3c6',background:'#fff',cursor:'pointer'}}>×</button>
           </div>
 
           {formError && <div style={{marginBottom:12,padding:'10px 12px',borderRadius:10,background:'#fff1ef',color:'#9a3d34',fontSize:13}}>{formError}</div>}
 
-          {mode==='verify' ? <>
+          {mode==='line' ? <>
+            <div style={{padding:12,marginBottom:14,borderRadius:12,background:'#f7f5f0'}}>
+              <div style={{fontSize:12,color:'#81786d'}}>{th?'ผู้รับข้อความ':'Recipient'}</div>
+              <strong>{lineTarget?.owner_member_id ? currentOwnerName(lineTarget) : (lineTarget?.donor_name_snapshot || '—')}</strong>
+              <div style={{marginTop:5,fontSize:11,color:'#82786d',lineHeight:1.45}}>
+                {th
+                  ? 'ระบบร่างข้อความจากข้อมูลรายการนี้ให้อัตโนมัติ สามารถแก้ไข เพิ่ม หรือลบข้อความได้ก่อนส่ง'
+                  : 'A message is drafted automatically from this donation. You can edit it before sending.'}
+              </div>
+            </div>
+
+            <label style={label}>{th?'ข้อความที่จะส่งทาง LINE OA':'LINE OA message'}</label>
+            <textarea
+              rows="12"
+              value={lineMessage}
+              onChange={(e)=>setLineMessage(e.target.value)}
+              style={{...input,minHeight:260,resize:'vertical',lineHeight:1.55}}
+              placeholder={th?'พิมพ์ข้อความ...':'Type message...'}
+            />
+
+            <div style={{marginTop:7,fontSize:11,color:lineMessage.length>5000?'#a2463d':'#82786d',textAlign:'right'}}>
+              {lineMessage.length}/5000
+            </div>
+
+            <button
+              type="button"
+              disabled={busy===`line-${lineTarget?.id}` || !lineMessage.trim() || lineMessage.length>5000}
+              onClick={sendLineNotification}
+              style={{width:'100%',minHeight:48,marginTop:16,border:0,borderRadius:12,background:'#16a34a',color:'#fff',fontWeight:800,cursor:'pointer',opacity:(busy===`line-${lineTarget?.id}` || !lineMessage.trim() || lineMessage.length>5000)?.65:1}}
+            >
+              {busy===`line-${lineTarget?.id}`
+                ? (th?'กำลังส่ง LINE...':'Sending LINE...')
+                : (th?'ส่งข้อความทาง LINE':'Send via LINE')}
+            </button>
+          </> : mode==='verify' ? <>
             <div style={{padding:12,marginBottom:14,borderRadius:12,background:'#f7f5f0'}}>
               <div style={{fontSize:12,color:'#81786d'}}>{th?'ผู้บริจาค':'Donor'}</div>
               <strong>{selected?.owner_member_id ? currentOwnerName(selected) : (selected?.donor_name_snapshot || '—')}</strong>
