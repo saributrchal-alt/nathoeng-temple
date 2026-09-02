@@ -1,257 +1,180 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function DonationListPage({
   lang,
   goToPage
 }) {
-  const savedUser =
-    localStorage.getItem('line_user')
+  const th = lang === 'th'
 
-  const user =
-    savedUser
-      ? JSON.parse(savedUser)
-      : null
-
-  const isAdmin =
-    user?.isAdmin === true ||
-    user?.role === 'admin'
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [donations, setDonations] = useState([])
 
   const text = {
-    en: {
-      back:
-        '← Back to Donation Form',
-      eyebrow:
-        'ADMIN · DONATIONS',
-      title:
-        'Donation Records',
-      intro:
-        'Donation records are available only to authorized monastery administrators.',
-      noData:
-        'No donation records found.',
-      dateHeader:
-        'Date',
-      nameHeader:
-        'Full Name',
-      purposeHeader:
-        'Purpose',
-      receiptHeader:
-        'Tax Receipt',
-      amountHeader:
-        'Amount (THB)',
-      deniedEyebrow:
-        'NATHOENG CONNECT',
-      deniedTitle:
-        'Admin Access Only',
-      deniedText:
-        'This page is available only to authorized monastery administrators.',
-      deniedButton:
-        'Back to Donation Form'
-    },
-
     th: {
-      back:
-        '← กลับสู่หน้าฟอร์มบริจาค',
-      eyebrow:
-        'สำหรับผู้ดูแลระบบ · รายการบริจาค',
-      title:
-        'ประวัติการทำบุญและบริจาค',
-      intro:
-        'ข้อมูลหน้านี้แสดงเฉพาะบัญชีผู้ดูแลระบบของวัด เพื่อใช้ตรวจสอบและจัดการข้อมูลการบริจาค',
-      noData:
-        'ยังไม่มีประวัติการบริจาคในระบบ',
-      dateHeader:
-        'วันเวลา',
-      nameHeader:
-        'ชื่อ - สกุล',
-      purposeHeader:
-        'วัตถุประสงค์',
-      receiptHeader:
-        'ใบอนุโมทนาฯ',
-      amountHeader:
-        'ยอดเงิน (บาท)',
-      deniedEyebrow:
-        'NATHOENG CONNECT',
-      deniedTitle:
-        'สำหรับผู้ดูแลระบบเท่านั้น',
-      deniedText:
-        'หน้านี้สามารถเข้าถึงได้เฉพาะบัญชีผู้ดูแลระบบของวัดที่ได้รับอนุญาต',
-      deniedButton:
-        'กลับสู่หน้าฟอร์มบริจาค'
+      back: '← กลับสู่บัญชีของฉัน',
+      eyebrow: 'NATHOENG CONNECT',
+      title: 'การทำบุญของฉัน',
+      intro: 'ประวัติการร่วมทำบุญที่บันทึกไว้ในบัญชีของท่าน',
+      loading: 'กำลังโหลดประวัติการทำบุญ...',
+      noData: 'ยังไม่มีประวัติการทำบุญในบัญชีนี้',
+      retry: 'ลองใหม่',
+      add: '+ ทำรายการบริจาคเพิ่ม',
+      money: 'ทำบุญเป็นเงิน',
+      item: 'ถวายสิ่งของ',
+      amount: 'จำนวนเงิน',
+      purpose: 'วัตถุประสงค์',
+      itemName: 'สิ่งของที่ถวาย',
+      quantity: 'จำนวน',
+      note: 'หมายเหตุ',
+      receipt: 'ใบอนุโมทนาบัตร',
+      receiptYes: 'ต้องการ',
+      receiptNo: 'ไม่ต้องการ',
+      totalMoney: 'ยอดทำบุญเป็นเงินรวม',
+      moneyCount: 'ครั้งที่ทำบุญเป็นเงิน',
+      itemCount: 'รายการสิ่งของถวาย',
+      baht: 'บาท'
+    },
+    en: {
+      back: '← Back to My Account',
+      eyebrow: 'NATHOENG CONNECT',
+      title: 'My Donations',
+      intro: 'Your donation and merit-making history recorded with the monastery.',
+      loading: 'Loading donation history...',
+      noData: 'No donation history has been recorded for this account yet.',
+      retry: 'Try again',
+      add: '+ Make Another Donation',
+      money: 'Money Donation',
+      item: 'Item Offering',
+      amount: 'Amount',
+      purpose: 'Purpose',
+      itemName: 'Item',
+      quantity: 'Quantity',
+      note: 'Note',
+      receipt: 'Donation receipt',
+      receiptYes: 'Requested',
+      receiptNo: 'Not requested',
+      totalMoney: 'Total money donations',
+      moneyCount: 'Money donations',
+      itemCount: 'Items offered',
+      baht: 'THB'
     }
   }
 
-  const t = text[lang]
+  const t = text[th ? 'th' : 'en']
 
-  const [donations, setDonations] =
-    useState([])
-
-  useEffect(() => {
-    // ไม่โหลดข้อมูลการบริจาคถ้าไม่ใช่ Admin
-    if (!isAdmin) {
-      setDonations([])
-      return
-    }
+  const loadDonations = async () => {
+    setLoading(true)
+    setError('')
 
     try {
-      const saved =
-        localStorage.getItem(
-          'nathoeng_donations'
-        )
+      const response = await fetch('/api/donation', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store'
+      })
 
-      if (saved) {
-        setDonations(
-          JSON.parse(saved)
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || 'Unable to load donations'
         )
       }
-    } catch (error) {
-      console.error(
-        'Unable to read donation records:',
-        error
+
+      setDonations(
+        Array.isArray(data.donations)
+          ? data.donations
+          : []
+      )
+    } catch (err) {
+      console.error('Donation history error:', err)
+      setError(
+        th
+          ? 'ไม่สามารถโหลดประวัติการทำบุญได้'
+          : 'Unable to load donation history'
       )
       setDonations([])
+    } finally {
+      setLoading(false)
     }
-  }, [isAdmin])
-
-  // ชั้นที่ 2:
-  // ต่อให้ผู้ใช้รู้ hash / URL ของ donation-list
-  // ก็ไม่แสดงรายชื่อถ้าไม่ใช่ Admin
-  if (!isAdmin) {
-    return (
-      <div className="guidePage">
-        <div
-          className="guideContainer"
-          style={{
-            maxWidth: '760px'
-          }}
-        >
-          <button
-            className="backButton"
-            onClick={() =>
-              goToPage(
-                'donation-page'
-              )
-            }
-          >
-            {t.back}
-          </button>
-
-          <div
-            style={{
-              margin:
-                '30px auto 10px',
-              padding:
-                '42px 28px',
-              border:
-                '1px solid #e5d9c8',
-              borderRadius:
-                '10px',
-              background:
-                '#faf7f0',
-              textAlign:
-                'center'
-            }}
-          >
-            <img
-              src="/icons/lotus.svg"
-              alt=""
-              aria-hidden="true"
-              style={{
-                width: '42px',
-                height: '42px',
-                margin:
-                  '0 auto 14px',
-                display: 'block'
-              }}
-            />
-
-            <span
-              className="eyebrow"
-              style={{
-                display: 'block',
-                textAlign:
-                  'center',
-                marginBottom:
-                  '12px'
-              }}
-            >
-              {t.deniedEyebrow}
-            </span>
-
-            <h1
-              style={{
-                margin:
-                  '0 0 14px',
-                textAlign:
-                  'center'
-              }}
-            >
-              {t.deniedTitle}
-            </h1>
-
-            <p
-              className="guideIntro"
-              style={{
-                maxWidth:
-                  '520px',
-                margin:
-                  '0 auto 22px',
-                textAlign:
-                  'center'
-              }}
-            >
-              {t.deniedText}
-            </p>
-
-            <button
-              type="button"
-              className="primaryContactBtn"
-              onClick={() =>
-                goToPage(
-                  'donation-page'
-                )
-              }
-            >
-              {t.deniedButton}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
   }
+
+  useEffect(() => {
+    loadDonations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const summary = useMemo(() => {
+    const money = donations.filter(
+      (item) => item.donation_type === 'money'
+    )
+    const items = donations.filter(
+      (item) => item.donation_type === 'item'
+    )
+
+    return {
+      total: money.reduce(
+        (sum, item) =>
+          sum + Number(item.amount || 0),
+        0
+      ),
+      moneyCount: money.length,
+      itemCount: items.length
+    }
+  }, [donations])
+
+  const formatDate = (value) => {
+    if (!value) return '—'
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value)
+    }
+
+    return new Intl.DateTimeFormat(
+      th ? 'th-TH' : 'en-GB',
+      {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'Asia/Bangkok'
+      }
+    ).format(date)
+  }
+
+  const moneyText = (value) =>
+    Number(value || 0).toLocaleString(
+      th ? 'th-TH' : 'en-US',
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      }
+    )
 
   return (
     <div className="guidePage">
       <div
         className="guideContainer"
         style={{
-          maxWidth: '1000px'
+          maxWidth: '760px',
+          paddingBottom: '110px'
         }}
       >
-        <div
-          style={{
-            marginBottom: '20px'
-          }}
+        <button
+          type="button"
+          className="backButton"
+          onClick={() => goToPage('my-dashboard')}
+          style={{ marginBottom: '22px' }}
         >
-          <button
-            className="backButton"
-            onClick={() =>
-              goToPage(
-                'donation-page'
-              )
-            }
-            style={{
-              margin: 0
-            }}
-          >
-            {t.back}
-          </button>
-        </div>
+          {t.back}
+        </button>
 
         <div
           style={{
             textAlign: 'center',
-            marginBottom:
-              '30px'
+            marginBottom: '26px'
           }}
         >
           <img
@@ -259,11 +182,10 @@ export default function DonationListPage({
             alt=""
             aria-hidden="true"
             style={{
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               display: 'block',
-              margin:
-                '0 auto 12px'
+              margin: '0 auto 10px'
             }}
           />
 
@@ -271,8 +193,7 @@ export default function DonationListPage({
             className="eyebrow"
             style={{
               display: 'block',
-              textAlign:
-                'center'
+              textAlign: 'center'
             }}
           >
             {t.eyebrow}
@@ -280,8 +201,8 @@ export default function DonationListPage({
 
           <h1
             style={{
-              textAlign:
-                'center'
+              margin: '8px 0 8px',
+              textAlign: 'center'
             }}
           >
             {t.title}
@@ -290,252 +211,323 @@ export default function DonationListPage({
           <p
             className="guideIntro"
             style={{
-              maxWidth:
-                '650px',
-              margin:
-                '0 auto',
-              textAlign:
-                'center'
+              maxWidth: '560px',
+              margin: '0 auto',
+              textAlign: 'center'
             }}
           >
             {t.intro}
           </p>
         </div>
 
-        {donations.length === 0 ? (
+        <div
+          style={{
+            border: '1px solid #e4ddd2',
+            borderRadius: '22px',
+            background: '#fff',
+            padding: '22px 18px',
+            marginBottom: '18px'
+          }}
+        >
           <div
             style={{
-              textAlign:
-                'center',
-              padding: '40px',
-              background:
-                '#fcfbfa',
-              borderRadius:
-                '6px',
-              border:
-                '1px solid #eeeae2'
+              textAlign: 'center',
+              color: '#777',
+              fontSize: '14px'
             }}
           >
-            <p
+            {t.totalMoney}
+          </div>
+
+          <div
+            style={{
+              textAlign: 'center',
+              color: '#236b4a',
+              fontWeight: 700,
+              fontSize: '34px',
+              marginTop: '4px'
+            }}
+          >
+            {loading ? '—' : moneyText(summary.total)}
+            {' '}
+            <span style={{ fontSize: '15px' }}>
+              {t.baht}
+            </span>
+          </div>
+
+          <div
+            style={{
+              borderTop: '1px solid #eee8df',
+              marginTop: '18px',
+              paddingTop: '16px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '8px'
+            }}
+          >
+            <div
               style={{
-                color: '#777',
-                fontSize:
-                  '15px'
+                textAlign: 'center',
+                borderRight: '1px solid #eee8df'
               }}
             >
-              {t.noData}
+              <strong
+                style={{
+                  display: 'block',
+                  color: '#236b4a',
+                  fontSize: '22px'
+                }}
+              >
+                {loading ? '—' : summary.moneyCount}
+              </strong>
+              <span
+                style={{
+                  fontSize: '13px',
+                  color: '#777'
+                }}
+              >
+                {t.moneyCount}
+              </span>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <strong
+                style={{
+                  display: 'block',
+                  color: '#236b4a',
+                  fontSize: '22px'
+                }}
+              >
+                {loading ? '—' : summary.itemCount}
+              </strong>
+              <span
+                style={{
+                  fontSize: '13px',
+                  color: '#777'
+                }}
+              >
+                {t.itemCount}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => goToPage('donation-page')}
+          style={{
+            width: '100%',
+            minHeight: '54px',
+            borderRadius: '16px',
+            border: '1px solid #b1842b',
+            background: '#fffdf8',
+            color: '#9b7226',
+            fontWeight: 700,
+            fontSize: '16px',
+            cursor: 'pointer',
+            marginBottom: '22px'
+          }}
+        >
+          {t.add}
+        </button>
+
+        {loading ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '34px 16px',
+              color: '#777'
+            }}
+          >
+            {t.loading}
+          </div>
+        ) : error ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '28px 18px',
+              border: '1px solid #eaded2',
+              borderRadius: '18px',
+              background: '#fff'
+            }}
+          >
+            <p style={{ marginTop: 0 }}>
+              {error}
             </p>
+            <button
+              type="button"
+              onClick={loadDonations}
+              style={{
+                minHeight: '44px',
+                padding: '0 24px',
+                borderRadius: '12px',
+                border: '1px solid #b1842b',
+                background: '#b1842b',
+                color: '#fff',
+                fontWeight: 700
+              }}
+            >
+              {t.retry}
+            </button>
+          </div>
+        ) : donations.length === 0 ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '38px 20px',
+              border: '1px solid #eee8df',
+              borderRadius: '20px',
+              background: '#fff',
+              color: '#777'
+            }}
+          >
+            {t.noData}
           </div>
         ) : (
           <div
             style={{
-              overflowX:
-                'auto',
-              background:
-                '#fff',
-              border:
-                '1px solid #eeeae2',
-              borderRadius:
-                '6px'
+              display: 'grid',
+              gap: '14px'
             }}
           >
-            <table
-              style={{
-                width: '100%',
-                borderCollapse:
-                  'collapse',
-                fontSize:
-                  '14px',
-                textAlign:
-                  'left'
-              }}
-            >
-              <thead>
-                <tr
+            {donations.map((item) => {
+              const isMoney =
+                item.donation_type === 'money'
+
+              return (
+                <article
+                  key={item.id}
                   style={{
-                    background:
-                      '#fcfbfa',
-                    borderBottom:
-                      '2px solid #dcd5c8',
-                    color:
-                      '#625d55'
+                    border: '1px solid #e4ddd2',
+                    borderRadius: '20px',
+                    background: '#fff',
+                    padding: '18px'
                   }}
                 >
-                  <th
+                  <div
                     style={{
-                      padding:
-                        '12px'
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '14px',
+                      alignItems: 'flex-start'
                     }}
                   >
-                    {t.dateHeader}
-                  </th>
+                    <div>
+                      <div
+                        style={{
+                          color: '#9b7226',
+                          fontWeight: 700,
+                          fontSize: '16px'
+                        }}
+                      >
+                        {isMoney
+                          ? t.money
+                          : t.item}
+                      </div>
 
-                  <th
-                    style={{
-                      padding:
-                        '12px'
-                    }}
-                  >
-                    {t.nameHeader}
-                  </th>
+                      <div
+                        style={{
+                          color: '#888',
+                          fontSize: '13px',
+                          marginTop: '4px'
+                        }}
+                      >
+                        {formatDate(
+                          item.donation_date ||
+                          item.created_at
+                        )}
+                      </div>
+                    </div>
 
-                  <th
-                    style={{
-                      padding:
-                        '12px'
-                    }}
-                  >
-                    {t.purposeHeader}
-                  </th>
-
-                  <th
-                    style={{
-                      padding:
-                        '12px',
-                      textAlign:
-                        'center'
-                    }}
-                  >
-                    {t.receiptHeader}
-                  </th>
-
-                  <th
-                    style={{
-                      padding:
-                        '12px',
-                      textAlign:
-                        'right'
-                    }}
-                  >
-                    {t.amountHeader}
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {donations.map(
-                  (item, idx) => (
-                    <tr
-                      key={idx}
+                    <img
+                      src={
+                        isMoney
+                          ? '/icons/donation.svg'
+                          : '/icons/lotus.svg'
+                      }
+                      alt=""
+                      aria-hidden="true"
                       style={{
-                        borderBottom:
-                          '1px solid #e6dfd5'
+                        width: '30px',
+                        height: '30px'
+                      }}
+                    />
+                  </div>
+
+                  {isMoney ? (
+                    <div
+                      style={{
+                        marginTop: '16px',
+                        fontSize: '28px',
+                        fontWeight: 700,
+                        color: '#236b4a'
                       }}
                     >
-                      <td
-                        style={{
-                          padding:
-                            '12px',
-                          color:
-                            '#777',
-                          fontSize:
-                            '13px',
-                          whiteSpace:
-                            'nowrap'
-                        }}
-                      >
-                        {item.date}
-                      </td>
+                      {moneyText(item.amount)}
+                      {' '}
+                      <span style={{ fontSize: '14px' }}>
+                        {t.baht}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        marginTop: '16px',
+                        fontSize: '20px',
+                        fontWeight: 700,
+                        color: '#302d29'
+                      }}
+                    >
+                      {item.item_name || '—'}
+                    </div>
+                  )}
 
-                      <td
-                        style={{
-                          padding:
-                            '12px',
-                          fontWeight:
-                            '500',
-                          color:
-                            '#302d29'
-                        }}
-                      >
-                        {item.name}
-                      </td>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gap: '8px',
+                      marginTop: '14px',
+                      fontSize: '14px',
+                      color: '#625d55'
+                    }}
+                  >
+                    {!isMoney && (
+                      <div>
+                        <strong>{t.quantity}: </strong>
+                        {item.quantity ?? '—'}
+                        {item.unit
+                          ? ` ${item.unit}`
+                          : ''}
+                      </div>
+                    )}
 
-                      <td
-                        style={{
-                          padding:
-                            '12px',
-                          color:
-                            '#625d55'
-                        }}
-                      >
+                    {item.purpose && (
+                      <div>
+                        <strong>{t.purpose}: </strong>
                         {item.purpose}
-                      </td>
+                      </div>
+                    )}
 
-                      <td
-                        style={{
-                          padding:
-                            '12px',
-                          textAlign:
-                            'center'
-                        }}
-                      >
-                        {item.receipt ===
-                        'yes' ? (
-                          <span
-                            style={{
-                              background:
-                                '#e8f5e9',
-                              color:
-                                '#2e7d32',
-                              padding:
-                                '3px 8px',
-                              borderRadius:
-                                '4px',
-                              fontSize:
-                                '12px',
-                              fontWeight:
-                                '500'
-                            }}
-                          >
-                            {lang ===
-                            'th'
-                              ? '✓ ต้องการ'
-                              : '✓ Yes'}
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              color:
-                                '#999',
-                              fontSize:
-                                '12px'
-                            }}
-                          >
-                            {lang ===
-                            'th'
-                              ? 'ไม่ต้องการ'
-                              : 'No'}
-                          </span>
-                        )}
-                      </td>
+                    {item.note && (
+                      <div>
+                        <strong>{t.note}: </strong>
+                        {item.note}
+                      </div>
+                    )}
 
-                      <td
-                        style={{
-                          padding:
-                            '12px',
-                          textAlign:
-                            'right',
-                          fontWeight:
-                            '600',
-                          color:
-                            '#9b7226'
-                        }}
-                      >
-                        {Number(
-                          String(
-                            item.amount
-                          ).replace(
-                            /,/g,
-                            ''
-                          )
-                        ).toLocaleString()}{' '}
-                        ฿
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
+                    {typeof item.tax_receipt_requested ===
+                      'boolean' && (
+                      <div>
+                        <strong>{t.receipt}: </strong>
+                        {item.tax_receipt_requested
+                          ? t.receiptYes
+                          : t.receiptNo}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
       </div>
