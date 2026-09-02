@@ -159,7 +159,7 @@ async function getMember({
   const response = await fetch(
     `${supabaseUrl}/rest/v1/members` +
       `?id=eq.${encodeURIComponent(memberId)}` +
-      `&select=id,full_name,display_name,role`,
+      `&select=id,full_name,display_name,role,line_uid,line_oa_friend`,
     {
       method: 'GET',
       headers: jsonHeaders(secretKey),
@@ -1142,6 +1142,170 @@ export default async function handler(req, res) {
         return res.status(500).json({
           success: false,
           message: 'Unable to update receipt URL'
+        });
+      }
+    }
+
+    // -----------------------------------------------------
+    // ADMIN: SEND VERIFIED DONATION NOTICE VIA LINE OA
+    // -----------------------------------------------------
+    if (action === 'admin_line_notify') {
+      if (!isAdmin(session)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin permission required'
+        });
+      }
+
+      const donationId = String(body.donationId || '').trim();
+
+      if (!donationId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Donation ID is required'
+        });
+      }
+
+      const lineMessagingAccessToken =
+        process.env.LINE_MESSAGING_ACCESS_TOKEN;
+
+      if (!lineMessagingAccessToken) {
+        return res.status(500).json({
+          success: false,
+          message: 'LINE Messaging API configuration is missing'
+        });
+      }
+
+      const existing = await getDonation({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        donationId
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: 'Donation not found'
+        });
+      }
+
+      if (existing.verification_status !== 'verified') {
+        return res.status(400).json({
+          success: false,
+          message: 'Donation must be verified before sending LINE notification'
+        });
+      }
+
+      if (!existing.owner_member_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'This donation is not linked to a registered member'
+        });
+      }
+
+      const owner = await getMember({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        memberId: existing.owner_member_id
+      });
+
+      if (!owner?.line_uid) {
+        return res.status(400).json({
+          success: false,
+          message: 'LINE account was not found for this donor'
+        });
+      }
+
+      if (owner.line_oa_friend === false) {
+        return res.status(400).json({
+          success: false,
+          message: 'The donor has not added or is no longer connected to the LINE Official Account'
+        });
+      }
+
+      const donorName =
+        owner.full_name ||
+        owner.display_name ||
+        existing.donor_name_snapshot ||
+        '';
+
+      const lines = [
+        'สาธุ อนุโมทนาบุญ 🙏',
+        donorName ? `คุณ ${donorName}` : '',
+        'รายการทำบุญของท่านได้รับการตรวจสอบเรียบร้อยแล้ว',
+        'ข้อมูลครบถ้วนสมบูรณ์',
+        '',
+        'ขออนุโมทนาในกุศลเจตนาของท่าน',
+        'สาธุ สาธุ สาธุ 🙏'
+      ];
+
+      if (existing.receipt_requested === true) {
+        if (existing.receipt_url) {
+          lines.push(
+            '',
+            'ใบอนุโมทนาบัตรพร้อมแล้ว',
+            'กรุณาเปิดดูได้ที่ บัญชีของฉัน → การทำบุญของฉัน'
+          );
+        } else {
+          lines.push(
+            '',
+            'ใบอนุโมทนาบัตรอยู่ระหว่างการจัดทำ'
+          );
+        }
+      }
+
+      lines.push('', 'วัดพุทธอุทยานนาเทิง', 'NATHOENG CONNECT');
+
+      const messageText = lines.filter((line, index, array) => {
+        if (line !== '') return true;
+        return index > 0 && array[index - 1] !== '';
+      }).join('\n');
+
+      try {
+        const lineResponse = await fetch(
+          'https://api.line.me/v2/bot/message/push',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${lineMessagingAccessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              to: owner.line_uid,
+              messages: [
+                {
+                  type: 'text',
+                  text: messageText
+                }
+              ]
+            })
+          }
+        );
+
+        if (!lineResponse.ok) {
+          const lineError = await lineResponse.text();
+          console.error(
+            'LINE donation notification failed:',
+            lineResponse.status,
+            lineError
+          );
+
+          return res.status(502).json({
+            success: false,
+            message: 'Unable to send LINE notification to donor'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: 'LINE notification sent',
+          donorName
+        });
+      } catch (error) {
+        console.error('LINE donation notification error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to send LINE notification to donor'
         });
       }
     }

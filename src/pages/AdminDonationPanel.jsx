@@ -377,6 +377,46 @@ export default function AdminDonationPanel({
     }
   };
 
+  const sendLineNotification = async (item) => {
+    if (!item?.id) return;
+
+    const donorName = item.owner_member_id
+      ? currentOwnerName(item)
+      : (item.donor_name_snapshot || '');
+
+    const confirmed = window.confirm(
+      th
+        ? `ยืนยันส่งข้อความ LINE OA แจ้ง ${donorName || 'ผู้บริจาค'} ว่ารายการตรวจสอบสมบูรณ์แล้วหรือไม่?`
+        : `Send a LINE OA message to ${donorName || 'this donor'} confirming that the donation has been verified?`
+    );
+
+    if (!confirmed) return;
+
+    setBusy(`line-${item.id}`);
+    setFormError('');
+
+    try {
+      await post({
+        action: 'admin_line_notify',
+        donationId: item.id
+      });
+
+      window.alert(
+        th
+          ? 'ส่งข้อความแจ้งผู้บริจาคทาง LINE OA เรียบร้อยแล้ว สาธุ 🙏'
+          : 'LINE OA notification sent successfully.'
+      );
+    } catch (e) {
+      window.alert(
+        th
+          ? `ส่งข้อความ LINE ไม่สำเร็จ: ${e.message}`
+          : `Unable to send LINE message: ${e.message}`
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const verificationMeta = (item) => {
     const status = item?.verification_status || 'pending';
 
