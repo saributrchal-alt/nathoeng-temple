@@ -123,9 +123,15 @@ export default function DonationPage({ lang, goToPage }) {
     user?.isAdmin === true ||
     user?.role === 'admin'
 
+  const [donationType, setDonationType] = useState('')
+
   const [formData, setFormData] =
     useState({
       amount: '',
+      itemName: '',
+      quantity: '',
+      unit: '',
+      note: '',
       purpose: 'general',
       customPurpose: '',
       taxReceipt: ''
@@ -341,16 +347,26 @@ export default function DonationPage({ lang, goToPage }) {
       return
     }
 
+    if (!donationType) {
+      alert(
+        lang === 'th'
+          ? 'กรุณาเลือกรูปแบบการทำบุญ'
+          : 'Please choose a donation type.'
+      )
+      return
+    }
+
     if (
-      !formData.amount ||
-      !formData.taxReceipt
+      (donationType === 'money' &&
+        (!formData.amount || !formData.taxReceipt)) ||
+      (donationType === 'item' &&
+        (!formData.itemName || !formData.quantity || !formData.unit))
     ) {
       alert(
         lang === 'th'
-          ? 'กรุณากรอกข้อมูลและเลือกรายการให้ครบถ้วน'
-          : 'Please fill in all required fields and select receipt option.'
+          ? 'กรุณากรอกข้อมูลให้ครบถ้วน'
+          : 'Please fill in all required fields.'
       )
-
       return
     }
 
@@ -400,11 +416,29 @@ export default function DonationPage({ lang, goToPage }) {
     const newEntry = {
       date: formattedDate,
       name: profileData.fullName || user.name,
+      donationType,
       purpose: selectedPurposeText,
-      receipt: formData.taxReceipt,
-      amount: Number(
-        formData.amount
-      ),
+      receipt:
+        donationType === 'money'
+          ? formData.taxReceipt
+          : 'no',
+      amount:
+        donationType === 'money'
+          ? Number(formData.amount)
+          : null,
+      itemName:
+        donationType === 'item'
+          ? formData.itemName
+          : '',
+      quantity:
+        donationType === 'item'
+          ? Number(formData.quantity)
+          : null,
+      unit:
+        donationType === 'item'
+          ? formData.unit
+          : '',
+      note: formData.note,
       lineUser: user.name
     }
 
@@ -449,13 +483,22 @@ export default function DonationPage({ lang, goToPage }) {
               profileData.fullName || user.name,
             'LINE User':
               user.name,
+            'Donation Type':
+              donationType === 'money' ? 'Money' : 'Item',
             'Amount (THB)':
-              formData.amount,
+              donationType === 'money' ? formData.amount : '',
+            'Item':
+              donationType === 'item' ? formData.itemName : '',
+            'Quantity':
+              donationType === 'item' ? formData.quantity : '',
+            'Unit':
+              donationType === 'item' ? formData.unit : '',
+            Note:
+              formData.note,
             Purpose:
               selectedPurposeText,
             'Needs Tax Receipt':
-              formData.taxReceipt ===
-              'yes'
+              donationType === 'money' && formData.taxReceipt === 'yes'
                 ? 'Yes (ต้องการ)'
                 : 'No (ไม่ต้องการ)'
           })
@@ -476,8 +519,13 @@ export default function DonationPage({ lang, goToPage }) {
     () => {
       setIsSubmitted(false)
 
+      setDonationType('')
       setFormData({
         amount: '',
+        itemName: '',
+        quantity: '',
+        unit: '',
+        note: '',
         purpose: 'general',
         customPurpose: '',
         taxReceipt: ''
@@ -611,6 +659,86 @@ export default function DonationPage({ lang, goToPage }) {
               </span>
             </div>
 
+            <div className="donationTypeSection">
+              <div className="donationTypeHeading">
+                <strong>
+                  {lang === 'th'
+                    ? 'เลือกรูปแบบการทำบุญ'
+                    : 'Choose donation type'}
+                </strong>
+                <span>
+                  {lang === 'th'
+                    ? 'เลือก 1 รายการ แล้วกรอกข้อมูลด้านล่าง'
+                    : 'Choose one option, then complete the form below.'}
+                </span>
+              </div>
+
+              <div className="donationTypeGrid">
+                <button
+                  type="button"
+                  className={
+                    donationType === 'money'
+                      ? 'donationTypeCard isSelected'
+                      : 'donationTypeCard'
+                  }
+                  onClick={() => {
+                    setDonationType('money')
+                    setFormData((prev) => ({
+                      ...prev,
+                      itemName: '',
+                      quantity: '',
+                      unit: '',
+                      note: ''
+                    }))
+                  }}
+                >
+                  <img src="/icons/donation.svg" alt="" aria-hidden="true" />
+                  <span>
+                    <strong>
+                      {lang === 'th' ? 'ทำบุญเป็นเงิน' : 'Money Donation'}
+                    </strong>
+                    <small>
+                      {lang === 'th'
+                        ? 'บันทึกยอดเงินและวัตถุประสงค์'
+                        : 'Record amount and purpose'}
+                    </small>
+                  </span>
+                  <b>{donationType === 'money' ? '✓' : '›'}</b>
+                </button>
+
+                <button
+                  type="button"
+                  className={
+                    donationType === 'item'
+                      ? 'donationTypeCard isSelected'
+                      : 'donationTypeCard'
+                  }
+                  onClick={() => {
+                    setDonationType('item')
+                    setFormData((prev) => ({
+                      ...prev,
+                      amount: '',
+                      taxReceipt: ''
+                    }))
+                  }}
+                >
+                  <img src="/icons/lotus.svg" alt="" aria-hidden="true" />
+                  <span>
+                    <strong>
+                      {lang === 'th' ? 'ถวายสิ่งของ' : 'Offer Items'}
+                    </strong>
+                    <small>
+                      {lang === 'th'
+                        ? 'บันทึกสิ่งของ จำนวน และหน่วย'
+                        : 'Record item, quantity and unit'}
+                    </small>
+                  </span>
+                  <b>{donationType === 'item' ? '✓' : '›'}</b>
+                </button>
+              </div>
+            </div>
+
+            {donationType && (
             <form
               onSubmit={
                 handleSubmit
@@ -618,6 +746,7 @@ export default function DonationPage({ lang, goToPage }) {
               className="donationForm"
             >
 
+              {donationType === 'money' ? (
               <div className="donationFormGrid">
                 <div className="donationField">
                   <label
@@ -727,6 +856,135 @@ export default function DonationPage({ lang, goToPage }) {
                   </div>
                 </div>
               </div>
+              ) : (
+                <div className="donationFormGrid">
+                  <div className="donationField donationFieldFull">
+                    <label htmlFor="donation-item-name">
+                      {lang === 'th' ? 'สิ่งของที่ถวาย *' : 'Item Offered *'}
+                    </label>
+                    <input
+                      id="donation-item-name"
+                      type="text"
+                      name="itemName"
+                      value={formData.itemName}
+                      onChange={handleChange}
+                      placeholder={
+                        lang === 'th'
+                          ? 'เช่น ข้าวสาร น้ำดื่ม พัดลม'
+                          : 'e.g. rice, drinking water, fan'
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="donationField">
+                    <label htmlFor="donation-quantity">
+                      {lang === 'th' ? 'จำนวน *' : 'Quantity *'}
+                    </label>
+                    <input
+                      id="donation-quantity"
+                      type="number"
+                      name="quantity"
+                      inputMode="decimal"
+                      min="0.01"
+                      step="any"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      placeholder={lang === 'th' ? 'เช่น 2' : 'e.g. 2'}
+                      required
+                    />
+                  </div>
+
+                  <div className="donationField">
+                    <label htmlFor="donation-unit">
+                      {lang === 'th' ? 'หน่วย *' : 'Unit *'}
+                    </label>
+                    <input
+                      id="donation-unit"
+                      type="text"
+                      name="unit"
+                      value={formData.unit}
+                      onChange={handleChange}
+                      placeholder={
+                        lang === 'th'
+                          ? 'เช่น ถุง กล่อง เครื่อง กระสอบ'
+                          : 'e.g. bags, boxes, units'
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="donationField donationFieldFull">
+                    <label htmlFor="donation-item-note">
+                      {lang === 'th' ? 'หมายเหตุ' : 'Note'}
+                    </label>
+                    <textarea
+                      id="donation-item-note"
+                      name="note"
+                      value={formData.note}
+                      onChange={handleChange}
+                      rows="3"
+                      placeholder={
+                        lang === 'th'
+                          ? 'รายละเอียดเพิ่มเติม (ถ้ามี)'
+                          : 'Additional details (optional)'
+                      }
+                    />
+                  </div>
+
+                  <div className="donationField donationFieldFull">
+                    <label htmlFor="donation-purpose-item">
+                      {t.purposeLabel}
+                    </label>
+                    <div className="donationPurposeDropdown">
+                      <button
+                        id="donation-purpose-item"
+                        type="button"
+                        className="donationPurposeTrigger"
+                        onClick={() => setPurposeOpen((open) => !open)}
+                        aria-haspopup="listbox"
+                        aria-expanded={purposeOpen}
+                      >
+                        <span>{selectedPurposeOption.label}</span>
+                        <span
+                          className={
+                            purposeOpen
+                              ? 'donationPurposeChevron isOpen'
+                              : 'donationPurposeChevron'
+                          }
+                          aria-hidden="true"
+                        >
+                          ⌄
+                        </span>
+                      </button>
+
+                      {purposeOpen && (
+                        <div className="donationPurposeMenu" role="listbox">
+                          {t.purposeOptions.map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              role="option"
+                              aria-selected={formData.purpose === opt.value}
+                              className={
+                                formData.purpose === opt.value
+                                  ? 'donationPurposeOption isSelected'
+                                  : 'donationPurposeOption'
+                              }
+                              onClick={() => handlePurposeSelect(opt.value)}
+                            >
+                              <span className="donationPurposeCheck">
+                                {formData.purpose === opt.value ? '✓' : ''}
+                              </span>
+                              <span>{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {formData.purpose ===
                 'custom' && (
@@ -755,6 +1013,7 @@ export default function DonationPage({ lang, goToPage }) {
                 </div>
               )}
 
+              {donationType === 'money' && (
               <fieldset className="donationReceiptBox">
                 <legend>
                   {t.taxReceiptLabel}
@@ -820,6 +1079,7 @@ export default function DonationPage({ lang, goToPage }) {
 
                 </div>
               </fieldset>
+              )}
 
               <div className="donationSubmitWrap">
                 <button
@@ -831,11 +1091,16 @@ export default function DonationPage({ lang, goToPage }) {
                     ? lang === 'th'
                       ? 'กำลังส่งข้อมูล...'
                       : 'Submitting...'
-                    : `${t.submitBtn} →`}
+                    : donationType === 'item'
+                      ? lang === 'th'
+                        ? 'ยืนยันการถวายสิ่งของ →'
+                        : 'Confirm Item Offering →'
+                      : `${t.submitBtn} →`}
                 </button>
               </div>
 
             </form>
+            )}
           </>
         ) : (
           <div className="donationSuccessBox">
@@ -988,6 +1253,100 @@ export default function DonationPage({ lang, goToPage }) {
         )}
 
         <style>{`
+          .donationTypeSection {
+            margin: 22px 0;
+          }
+
+          .donationTypeHeading {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+          }
+
+          .donationTypeHeading strong {
+            color: #3d3025;
+            font-size: 18px;
+          }
+
+          .donationTypeHeading span {
+            color: #7c7269;
+            font-size: 12px;
+          }
+
+          .donationTypeGrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+          }
+
+          .donationTypeCard {
+            width: 100%;
+            min-height: 108px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid #ded5c8;
+            border-radius: 14px;
+            background: #fffefb;
+            text-align: left;
+            cursor: pointer;
+          }
+
+          .donationTypeCard.isSelected {
+            border: 2px solid #a97a24;
+            background: #fffaf0;
+          }
+
+          .donationTypeCard img {
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
+          }
+
+          .donationTypeCard span {
+            min-width: 0;
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            gap: 4px;
+          }
+
+          .donationTypeCard strong {
+            color: #3d3025;
+            font-size: 16px;
+          }
+
+          .donationTypeCard small {
+            color: #7c7269;
+            font-size: 11px;
+            line-height: 1.45;
+          }
+
+          .donationTypeCard b {
+            color: #a97a24;
+            font-size: 20px;
+          }
+
+          .donationField textarea {
+            width: 100%;
+            box-sizing: border-box;
+            resize: vertical;
+          }
+
+          @media (max-width: 480px) {
+            .donationTypeGrid {
+              grid-template-columns: 1fr;
+              gap: 10px;
+            }
+
+            .donationTypeCard {
+              min-height: 88px;
+              padding: 14px;
+            }
+          }
+
           .donationProfileOverlay {
             position: fixed;
             inset: 0;
