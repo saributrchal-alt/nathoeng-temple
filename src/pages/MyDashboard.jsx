@@ -241,6 +241,24 @@ function MyDashboard({
               <span>{th ? 'รายการล่าสุด' : 'Latest'}</span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => goToPage('donation-page')}
+            style={{
+              width: '100%',
+              minHeight: '50px',
+              marginTop: '16px',
+              borderRadius: '14px',
+              border: '1px solid #b1842b',
+              background: '#fffdf8',
+              color: '#9b7226',
+              fontWeight: 700,
+              fontSize: '15px',
+              cursor: 'pointer'
+            }}
+          >
+            ＋ {th ? 'ทำรายการบริจาคเพิ่ม' : 'Make Another Donation'}
+          </button>
         </section>
 
         <section className="compactSummaryCard compactStaySummary">
