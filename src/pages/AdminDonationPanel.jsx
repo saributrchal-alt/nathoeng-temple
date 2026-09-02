@@ -52,6 +52,9 @@ export default function AdminDonationPanel({
   const [membersLoaded, setMembersLoaded] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [ownerReason, setOwnerReason] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState('pending');
+  const [verificationNote, setVerificationNote] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState('');
 
   const input = {
     width: '100%',
@@ -215,6 +218,9 @@ export default function AdminDonationPanel({
     setFormError('');
     setOwnerReason('');
     setMemberSearch('');
+    setVerificationStatus('pending');
+    setVerificationNote('');
+    setReceiptUrl('');
   };
 
   const openAdd = async () => {
@@ -329,6 +335,75 @@ export default function AdminDonationPanel({
     } finally {
       setBusy(false);
     }
+  };
+
+  const openVerify = (item) => {
+    setSelected(item);
+    setFormError('');
+    setVerificationStatus(item.verification_status || 'pending');
+    setVerificationNote(item.verification_note || '');
+    setReceiptUrl(item.receipt_url || '');
+    setMode('verify');
+  };
+
+  const saveVerification = async () => {
+    if (!selected?.id) return;
+
+    setBusy(true);
+    setFormError('');
+
+    try {
+      await post({
+        action: 'admin_verify',
+        donationId: selected.id,
+        verificationStatus,
+        verificationNote
+      });
+
+      if (selected.receipt_requested === true) {
+        await post({
+          action: 'admin_receipt_url',
+          donationId: selected.id,
+          receiptUrl
+        });
+      }
+
+      await loadDonations();
+      close();
+    } catch (e) {
+      setFormError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verificationMeta = (item) => {
+    const status = item?.verification_status || 'pending';
+
+    if (status === 'verified') {
+      return {
+        text: th ? 'รายการถูกต้อง' : 'Verified',
+        fg: '#236b4a',
+        bg: '#edf7f1',
+        border: '#cce4d5'
+      };
+    }
+
+    if (status === 'needs_correction') {
+      return {
+        text: th ? 'ต้องแก้ไขข้อมูล' : 'Needs correction',
+        fg: '#9a3f35',
+        bg: '#fff1ef',
+        border: '#efcfc9'
+      };
+    }
+
+    return {
+      text: th ? 'รอตรวจสอบ' : 'Pending review',
+      fg: '#8a611d',
+      bg: '#fff7e7',
+      border: '#ead6ad'
+    };
   };
 
   const chooseMember = (m) => {
@@ -449,7 +524,13 @@ export default function AdminDonationPanel({
         <div style={{width:'100%',maxWidth:600,maxHeight:'88vh',overflowY:'auto',background:'#fcfbf8',borderRadius:'20px 20px 12px 12px',padding:18,boxSizing:'border-box'}}>
           <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',marginBottom:16}}>
             <h3 style={{margin:0}}>
-              {mode==='add'?(th?'เพิ่มรายการทำบุญ':'Add Donation'):mode==='edit'?(th?'แก้ไขรายละเอียด':'Edit Donation'):(th?'เปลี่ยนเจ้าของรายการ':'Change Owner')}
+              {mode==='add'
+                ? (th?'เพิ่มรายการทำบุญ':'Add Donation')
+                : mode==='edit'
+                  ? (th?'แก้ไขรายละเอียด':'Edit Donation')
+                  : mode==='verify'
+                    ? (th?'ตรวจสอบรายการทำบุญ':'Review Donation')
+                    : (th?'เปลี่ยนเจ้าของรายการ':'Change Owner')}
             </h3>
             <button type="button" onClick={close} style={{width:40,height:40,borderRadius:'50%',border:'1px solid #ddd3c6',background:'#fff',cursor:'pointer'}}>×</button>
           </div>
