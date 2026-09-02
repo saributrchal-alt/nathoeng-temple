@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminDonationPanel from './AdminDonationPanel';
 import StudentAdminPanel from '../components/StudentAdminPanel';
+import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
 
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
@@ -26,6 +27,7 @@ function AdminDashboard({ lang, goToPage }) {
       bookingTab: '📅 Stay Management',
       donationTab: '💰 Donations',
       studentTab: '👤 Temple Students',
+      practiceMessageTab: '📖 Practice Messages',
       adminMenuTitle: 'Choose a management area',
       adminMenuHelp: 'Data is loaded only after you open a section.',
       studentTitle: 'Temple Student Management',
@@ -116,6 +118,7 @@ function AdminDashboard({ lang, goToPage }) {
       bookingTab: '📅 จัดการการเข้าพัก',
       donationTab: '💰 รายการทำบุญ',
       studentTab: '👤 เด็กวัด',
+      practiceMessageTab: '📖 เนื้อหาปฏิบัติถึงฉัน',
       adminMenuTitle: 'เลือกเมนูที่ต้องการจัดการ',
       adminMenuHelp: 'ระบบจะโหลดข้อมูลเมื่อกดเข้าแต่ละเมนูเท่านั้น',
       studentTitle: 'จัดการข้อมูลเด็กวัด',
@@ -401,7 +404,10 @@ function AdminDashboard({ lang, goToPage }) {
       return;
     }
 
-    if (section === 'students') {
+    if (
+      section === 'students' ||
+      section === 'practice-messages'
+    ) {
       return;
     }
   };
@@ -828,6 +834,15 @@ function AdminDashboard({ lang, goToPage }) {
           lang === 'en'
             ? 'Temple students, daily routine and latest status.'
             : 'รายชื่อเด็กวัด กิจวัตรประจำวัน และสถานะล่าสุด'
+      },
+      {
+        key: 'practice-messages',
+        icon: '/icons/dhamma-book.svg',
+        title: t.practiceMessageTab,
+        text:
+          lang === 'en'
+            ? 'One-way practice guidance for all practitioners or a selected member.'
+            : 'ฝากข้อความและแนวทางปฏิบัติแบบทางเดียว ถึงผู้ปฏิบัติทุกคนหรือเฉพาะบุคคล'
       }
     ];
 
@@ -1001,6 +1016,34 @@ function AdminDashboard({ lang, goToPage }) {
           </button>
 
           <StudentAdminPanel
+            lang={lang}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === 'practice-messages') {
+    return (
+      <div className="guidePage">
+        <div
+          className="guideContainer"
+          style={{
+            maxWidth: '900px',
+            paddingBottom: '70px'
+          }}
+        >
+          <button
+            type="button"
+            className="backButton"
+            onClick={() =>
+              setActiveTab('menu')
+            }
+          >
+            {t.backMenu}
+          </button>
+
+          <AdminPracticeMessagePanel
             lang={lang}
           />
         </div>

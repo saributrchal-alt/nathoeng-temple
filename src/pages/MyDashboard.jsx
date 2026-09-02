@@ -415,6 +415,27 @@ function MyDashboard({
           </div>
         </section>
 
+        <button
+          type="button"
+          className="compactDhammaStrip"
+          onClick={() => goToPage('practice-messages')}
+        >
+          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
+          <span>
+            <strong>
+              {th
+                ? 'เนื้อหาปฏิบัติถึงฉัน'
+                : 'Practice Messages for Me'}
+            </strong>
+            <small>
+              {th
+                ? 'อ่านข้อความและแนวทางปฏิบัติจากพระอาจารย์'
+                : 'Read one-way practice guidance from the teacher'}
+            </small>
+          </span>
+          <span aria-hidden="true">›</span>
+        </button>
+
         <section className="compactContactStrip">
           <div className="compactContactLeft">
             <span className="compactContactIcon">LINE</span>
@@ -433,19 +454,6 @@ function MyDashboard({
             LINE
           </a>
         </section>
-
-        <button
-          type="button"
-          className="compactDhammaStrip"
-          onClick={() => goToPage('teachings-page')}
-        >
-          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-          <span>
-            <strong>{th ? 'ธรรมะถึงฉัน' : 'Dhamma for Me'}</strong>
-            <small>{th ? 'อ่านพระธรรมคำสอนจากทางวัด' : 'Read monastery teachings'}</small>
-          </span>
-          <span aria-hidden="true">›</span>
-        </button>
 
         <div className="compactLogoutWrap">
           <button type="button" className="dashboardLogoutBtn" onClick={handleLogout}>

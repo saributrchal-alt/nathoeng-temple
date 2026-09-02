@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import MyStaysPage from './pages/MyStaysPage'
 import CheckinPage from './pages/CheckinPage'
 import MyDashboard from './pages/MyDashboard'
+import PracticeMessagesPage from './pages/PracticeMessagesPage'
 import StudentLoginPage from './pages/StudentLoginPage'
 import StudentDashboard from './pages/StudentDashboard'
 
@@ -1029,6 +1030,22 @@ const handleLineLogin = () => {
               goToPage={goToPage}
               user={user}
               handleLogout={handleLogout}
+            />
+          ) : (
+            <LoginPage
+              lang={lang}
+              goToPage={goToPage}
+              user={user}
+              handleLineLogin={handleLineLogin}
+              handleLogout={handleLogout}
+            />
+          )
+        ) : currentPage === 'practice-messages' ? (
+          /* ================= PAGE: PRACTICE MESSAGES ================= */
+          user ? (
+            <PracticeMessagesPage
+              lang={lang}
+              goToPage={goToPage}
             />
           ) : (
             <LoginPage
