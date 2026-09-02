@@ -8,8 +8,23 @@ function BookingPage({ lang, goToPage }) {
   const [loading, setLoading] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
   const [retreatPurpose, setRetreatPurpose] = useState('');
+  const [purposeOpen, setPurposeOpen] = useState(false);
 
   const th = lang === 'th';
+
+  const purposeOptions = [
+    { value: 'เพื่อรักษาศีล 5', th: '1. เพื่อรักษาศีล 5', en: '1. To observe the Five Precepts' },
+    { value: 'เพื่อรักษาศีล 5 และฝึกสมาธิ', th: '2. เพื่อรักษาศีล 5 และฝึกสมาธิ', en: '2. To observe the Five Precepts and practice meditation' },
+    { value: 'เพื่อรักษาศีล 8', th: '3. เพื่อรักษาศีล 8', en: '3. To observe the Eight Precepts' },
+    { value: 'เพื่อฝึกฝนการพิจารณาเสือดำ', th: '4. เพื่อฝึกฝนการพิจารณาเสือดำ', en: '4. To practise contemplation of Suea Dam' },
+    { value: 'เพื่อฝึกฝนหลักสูตรการย้ายบ้าน', th: '5. เพื่อฝึกฝนหลักสูตรการย้ายบ้าน', en: '5. To practise the Moving House course' },
+    { value: 'custom', th: '6. เพื่อจุดประสงค์เฉพาะ ระบุ', en: '6. Other specific purpose' }
+  ];
+
+  const selectedPurposeOption =
+    purposeOptions.find(
+      (option) => option.value === retreatPurpose
+    ) || null;
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -22,6 +37,15 @@ function BookingPage({ lang, goToPage }) {
       );
 
       goToPage('login-page');
+      return;
+    }
+
+    if (!retreatPurpose) {
+      alert(
+        th
+          ? 'กรุณาเลือกจุดประสงค์การปฏิบัติธรรม'
+          : 'Please select a purpose of Dhamma practice.'
+      );
       return;
     }
 
@@ -433,57 +457,116 @@ function BookingPage({ lang, goToPage }) {
                       : 'Purpose of Dhamma Practice *'}
                   </label>
 
-                  <select
-                    id="booking-purpose"
+                  <input
+                    type="hidden"
                     name="purpose_choice"
                     value={retreatPurpose}
-                    onChange={(event) =>
-                      setRetreatPurpose(event.target.value)
-                    }
-                    required
-                  >
-                    <option value="">
-                      {th
-                        ? 'กรุณาเลือกจุดประสงค์'
-                        : 'Please select a purpose'}
-                    </option>
+                  />
 
-                    <option value="เพื่อรักษาศีล 5">
-                      {th
-                        ? '1. เพื่อรักษาศีล 5'
-                        : '1. To observe the Five Precepts'}
-                    </option>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      id="booking-purpose"
+                      type="button"
+                      onClick={() =>
+                        setPurposeOpen((prev) => !prev)
+                      }
+                      aria-haspopup="listbox"
+                      aria-expanded={purposeOpen}
+                      style={{
+                        width: '100%',
+                        minHeight: '52px',
+                        border: '1px solid #d8c9b5',
+                        borderRadius: '10px',
+                        background: '#fff',
+                        padding: '0 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        color: retreatPurpose ? '#302d29' : '#9b958d',
+                        fontSize: '15px',
+                        textAlign: 'left',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <span>
+                        {selectedPurposeOption
+                          ? (th
+                              ? selectedPurposeOption.th
+                              : selectedPurposeOption.en)
+                          : (th
+                              ? 'กรุณาเลือกจุดประสงค์'
+                              : 'Please select a purpose')}
+                      </span>
 
-                    <option value="เพื่อรักษาศีล 5 และฝึกสมาธิ">
-                      {th
-                        ? '2. เพื่อรักษาศีล 5 และฝึกสมาธิ'
-                        : '2. To observe the Five Precepts and practice meditation'}
-                    </option>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          fontSize: '14px',
+                          transform: purposeOpen
+                            ? 'rotate(180deg)'
+                            : 'rotate(0deg)',
+                          transition: 'transform .18s ease'
+                        }}
+                      >
+                        ▾
+                      </span>
+                    </button>
 
-                    <option value="เพื่อรักษาศีล 8">
-                      {th
-                        ? '3. เพื่อรักษาศีล 8'
-                        : '3. To observe the Eight Precepts'}
-                    </option>
+                    {purposeOpen && (
+                      <div
+                        role="listbox"
+                        style={{
+                          position: 'absolute',
+                          zIndex: 30,
+                          top: 'calc(100% + 8px)',
+                          left: 0,
+                          right: 0,
+                          border: '1px solid #d8c9b5',
+                          borderRadius: '12px',
+                          background: '#fff',
+                          boxShadow: '0 14px 30px rgba(54, 40, 22, .12)',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {purposeOptions.map((option, index) => {
+                          const active =
+                            option.value === retreatPurpose;
 
-                    <option value="เพื่อฝึกฝนการพิจารณาเสือดำ">
-                      {th
-                        ? '4. เพื่อฝึกฝนการพิจารณาเสือดำ'
-                        : '4. To practise contemplation of Suea Dam'}
-                    </option>
-
-                    <option value="เพื่อฝึกฝนหลักสูตรการย้ายบ้าน">
-                      {th
-                        ? '5. เพื่อฝึกฝนหลักสูตรการย้ายบ้าน'
-                        : '5. To practise the Moving House course'}
-                    </option>
-
-                    <option value="custom">
-                      {th
-                        ? '6. เพื่อจุดประสงค์เฉพาะ ระบุ'
-                        : '6. Other specific purpose'}
-                    </option>
-                  </select>
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="option"
+                              aria-selected={active}
+                              onClick={() => {
+                                setRetreatPurpose(option.value);
+                                setPurposeOpen(false);
+                              }}
+                              style={{
+                                width: '100%',
+                                border: 0,
+                                borderBottom:
+                                  index === purposeOptions.length - 1
+                                    ? 'none'
+                                    : '1px solid #eee8df',
+                                background: active ? '#fff8e8' : '#fff',
+                                color: '#302d29',
+                                padding: '12px 14px',
+                                fontSize: '15px',
+                                lineHeight: 1.45,
+                                textAlign: 'left',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {active ? '✓ ' : ''}
+                              {th ? option.th : option.en}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {retreatPurpose === 'custom' && (
                     <input
