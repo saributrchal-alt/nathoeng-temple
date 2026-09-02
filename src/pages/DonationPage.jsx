@@ -584,7 +584,7 @@ export default function DonationPage({ lang, goToPage }) {
                 !profileImageError ? (
                   <img
                     src={user.picture}
-                    alt={user.name || ''}
+                    alt={(profileComplete && profileData.fullName) || user.name || ''}
                     referrerPolicy="no-referrer"
                     onError={() =>
                       setProfileImageError(true)
@@ -608,13 +608,19 @@ export default function DonationPage({ lang, goToPage }) {
                 </small>
 
                 <strong>
-                  {user.name}
+                  {profileComplete && profileData.fullName
+                    ? profileData.fullName
+                    : user.name}
                 </strong>
 
                 <span>
-                  {lang === 'th'
-                    ? 'ยืนยันตัวตนผ่าน LINE เรียบร้อย'
-                    : 'Identity verified with LINE'}
+                  {profileComplete && profileData.fullName
+                    ? (lang === 'th'
+                        ? '✓ ใช้ข้อมูลยืนยันตัวตนกลางของ Nathoeng Connect'
+                        : '✓ Using your verified Nathoeng Connect identity')
+                    : (lang === 'th'
+                        ? 'ยืนยันตัวตนผ่าน LINE เรียบร้อย'
+                        : 'Identity verified with LINE')}
                 </span>
               </div>
 
@@ -912,22 +918,6 @@ export default function DonationPage({ lang, goToPage }) {
                           ? 'รายละเอียดเพิ่มเติม (ถ้ามี)'
                           : 'Additional details (optional)'
                       }
-                      style={{
-                        width: '100%',
-                        minHeight: '104px',
-                        boxSizing: 'border-box',
-                        border: '1px solid #ded5c8',
-                        borderRadius: '14px',
-                        background: '#fff',
-                        padding: '14px 16px',
-                        color: '#3d3025',
-                        fontFamily: 'inherit',
-                        fontSize: '15px',
-                        fontWeight: 400,
-                        lineHeight: 1.55,
-                        resize: 'vertical',
-                        outline: 'none'
-                      }}
                     />
                   </div>
 

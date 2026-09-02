@@ -8,6 +8,8 @@ function MyDashboard({
 }) {
   const th = lang === 'th';
   const [profileImageError, setProfileImageError] = useState(false);
+  const [verifiedFullName, setVerifiedFullName] = useState('');
+  const [identityLoading, setIdentityLoading] = useState(Boolean(user));
   const [donationLoading, setDonationLoading] = useState(true);
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -15,6 +17,68 @@ function MyDashboard({
     itemCount: 0,
     latestAt: null
   });
+
+  useEffect(() => {
+    if (!user) {
+      setVerifiedFullName('');
+      setIdentityLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadIdentityProfile = async () => {
+      setIdentityLoading(true);
+
+      try {
+        const response = await fetch('/api/donation-profile', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message || 'Unable to load identity profile'
+          );
+        }
+
+        if (cancelled) return;
+
+        if (
+          data.donationProfileComplete === true &&
+          data.fullName
+        ) {
+          setVerifiedFullName(
+            String(data.fullName).trim()
+          );
+        } else {
+          setVerifiedFullName('');
+        }
+      } catch (error) {
+        console.error(
+          'MyDashboard identity profile error:',
+          error
+        );
+
+        if (!cancelled) {
+          setVerifiedFullName('');
+        }
+      } finally {
+        if (!cancelled) {
+          setIdentityLoading(false);
+        }
+      }
+    };
+
+    loadIdentityProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.memberId]);
 
   useEffect(() => {
     if (!user) {
@@ -180,7 +244,7 @@ function MyDashboard({
             {user?.picture && !profileImageError ? (
               <img
                 src={user.picture}
-                alt={user?.name || ''}
+                alt={verifiedFullName || user?.name || ''}
                 referrerPolicy="no-referrer"
                 onError={() => setProfileImageError(true)}
               />
@@ -196,8 +260,20 @@ function MyDashboard({
 
           <div className="compactProfileInfo">
             <small>{th ? 'สมาชิก : โยมปฏิบัติ' : 'Member: Practitioner'}</small>
-            <strong>{user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}</strong>
-            <span>✓ {th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}</span>
+            <strong>
+              {identityLoading
+                ? (th ? 'กำลังตรวจสอบข้อมูล...' : 'Checking identity...')
+                : verifiedFullName ||
+                  user?.name ||
+                  (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}
+            </strong>
+            <span>
+              {verifiedFullName
+                ? (th
+                    ? '✓ ข้อมูลยืนยันตัวตนจาก Nathoeng Connect'
+                    : '✓ Verified identity from Nathoeng Connect')
+                : `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`}
+            </span>
           </div>
         </section>
 
