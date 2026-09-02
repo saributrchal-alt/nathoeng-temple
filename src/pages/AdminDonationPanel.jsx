@@ -499,7 +499,13 @@ export default function AdminDonationPanel({
 
                   <div style={{marginTop:4,color:'#888',fontSize:12}}>{formatDonationDate(item)}</div>
                 </div>
-                {money && <strong style={{flex:'0 0 auto',color:'#236b4a',fontSize:20}}>{Number(item.amount||0).toLocaleString()} ฿</strong>}
+                <div style={{flex:'0 0 auto',display:'grid',justifyItems:'end',gap:7}}>
+                  {money && <strong style={{color:'#236b4a',fontSize:20}}>{Number(item.amount||0).toLocaleString()} ฿</strong>}
+                  {(() => {
+                    const vm = verificationMeta(item);
+                    return <span style={{fontSize:11,fontWeight:800,color:vm.fg,background:vm.bg,border:`1px solid ${vm.border}`,borderRadius:999,padding:'5px 9px',whiteSpace:'nowrap'}}>{vm.text}</span>;
+                  })()}
+                </div>
               </div>
 
               {!money && <div style={{marginTop:13,padding:'11px 12px',borderRadius:12,background:'#faf8f4'}}>
@@ -511,7 +517,23 @@ export default function AdminDonationPanel({
                 <strong>{t.donationPurpose}: </strong>{safePurposeLabel(item)}
               </div>
 
+              {item.verification_status==='needs_correction' && item.verification_note && (
+                <div style={{marginTop:10,padding:'9px 11px',borderRadius:11,background:'#fff3f1',border:'1px solid #efd3cd',color:'#8f4036',fontSize:12,lineHeight:1.5}}>
+                  <strong>{th?'เหตุผลที่ต้องแก้ไข: ':'Correction note: '}</strong>{item.verification_note}
+                </div>
+              )}
+
+              {item.receipt_requested === true && (
+                <div style={{marginTop:10,padding:'9px 11px',borderRadius:11,background:'#f8f6f1',border:'1px solid #e4ddd2',fontSize:12,color:'#665d52'}}>
+                  <strong>{th?'ใบอนุโมทนาบัตร: ':'Receipt: '}</strong>
+                  {item.receipt_url
+                    ? <a href={item.receipt_url} target="_blank" rel="noreferrer" style={{color:'#236b4a',fontWeight:800}}>{th?'มีลิงก์แล้ว':'Link ready'}</a>
+                    : (th?'ยังไม่มีลิงก์':'No link yet')}
+                </div>
+              )}
+
               <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:14}}>
+                <button type="button" onClick={()=>openVerify(item)} style={{...smallBtn,background:'#355b49',borderColor:'#355b49',color:'#fff',fontWeight:800}}>{th?'ตรวจสอบรายการ':'Review'}</button>
                 <button type="button" onClick={()=>openEdit(item)} style={smallBtn}>{th?'แก้ไขรายละเอียด':'Edit Details'}</button>
                 <button type="button" onClick={()=>openOwner(item)} style={{...smallBtn,background:'#fff8e8',color:'#8a611d',fontWeight:800}}>{th?'เปลี่ยนเจ้าของรายการ':'Change Owner'}</button>
               </div>
@@ -537,7 +559,43 @@ export default function AdminDonationPanel({
 
           {formError && <div style={{marginBottom:12,padding:'10px 12px',borderRadius:10,background:'#fff1ef',color:'#9a3d34',fontSize:13}}>{formError}</div>}
 
-          {mode==='owner' ? <>
+          {mode==='verify' ? <>
+            <div style={{padding:12,marginBottom:14,borderRadius:12,background:'#f7f5f0'}}>
+              <div style={{fontSize:12,color:'#81786d'}}>{th?'ผู้บริจาค':'Donor'}</div>
+              <strong>{selected?.owner_member_id ? currentOwnerName(selected) : (selected?.donor_name_snapshot || '—')}</strong>
+              <div style={{marginTop:6,fontSize:12,color:'#81786d'}}>
+                {selected?.donation_type==='money'
+                  ? `${Number(selected?.amount||0).toLocaleString()} ฿`
+                  : `${selected?.item_name||'—'} ${selected?.quantity??''} ${selected?.unit||''}`}
+              </div>
+            </div>
+
+            <label style={label}>{th?'สถานะการตรวจสอบ':'Verification status'}</label>
+            <div style={{display:'grid',gap:8,marginBottom:14}}>
+              {[
+                ['pending', th?'รอตรวจสอบ':'Pending review'],
+                ['verified', th?'รายการถูกต้อง':'Verified'],
+                ['needs_correction', th?'ต้องแก้ไขข้อมูล':'Needs correction']
+              ].map(([v,l])=><button key={v} type="button" onClick={()=>setVerificationStatus(v)} style={{minHeight:44,border:verificationStatus===v?'2px solid #9b7226':'1px solid #ddd3c6',borderRadius:12,background:verificationStatus===v?'#fff8e8':'#fff',fontWeight:800,textAlign:'left',padding:'0 12px',cursor:'pointer'}}>{verificationStatus===v?'✓ ':''}{l}</button>)}
+            </div>
+
+            <label style={label}>{th?'หมายเหตุการตรวจสอบ':'Verification note'}</label>
+            <textarea rows="3" value={verificationNote} onChange={(e)=>setVerificationNote(e.target.value)} style={{...input,resize:'vertical'}} placeholder={verificationStatus==='needs_correction'?(th?'ระบุข้อมูลที่ต้องแก้ไข...':'Describe what needs correction...'):''}/>
+
+            {selected?.receipt_requested === true && (
+              <div style={{marginTop:15,paddingTop:14,borderTop:'1px solid #e4ddd2'}}>
+                <label style={label}>{th?'ลิงก์ใบอนุโมทนาบัตร':'Receipt / certificate URL'}</label>
+                <input type="url" inputMode="url" value={receiptUrl} onChange={(e)=>setReceiptUrl(e.target.value)} style={input} placeholder="https://..." />
+                <div style={{marginTop:6,fontSize:11,color:'#82786d',lineHeight:1.45}}>
+                  {th?'ใส่เมื่อจัดทำใบอนุโมทนาบัตรเสร็จแล้ว เว้นว่างไว้ได้หากยังจัดทำไม่เสร็จ':'Add the URL when the certificate is ready. It may be left blank while being prepared.'}
+                </div>
+              </div>
+            )}
+
+            <button type="button" disabled={busy} onClick={saveVerification} style={{width:'100%',minHeight:48,marginTop:16,border:0,borderRadius:12,background:'#355b49',color:'#fff',fontWeight:800,cursor:'pointer',opacity:busy?.65:1}}>
+              {busy?(th?'กำลังบันทึก...':'Saving...'):(th?'บันทึกผลการตรวจสอบ':'Save Review')}
+            </button>
+          </> : mode==='owner' ? <>
             <div style={{padding:12,marginBottom:12,borderRadius:12,background:'#f7f5f0'}}>
               <div style={{fontSize:12,color:'#81786d'}}>{th?'เจ้าของรายการปัจจุบัน':'Current linked owner'}</div>
               <strong>{selected ? currentOwnerName(selected) : '—'}</strong>
