@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AdminDonationPanel from './AdminDonationPanel';
+import StudentAdminPanel from '../components/StudentAdminPanel';
 
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
@@ -401,7 +402,7 @@ function AdminDashboard({ lang, goToPage }) {
     }
 
     if (section === 'students') {
-      await loadStudents();
+      return;
     }
   };
 
@@ -985,328 +986,23 @@ function AdminDashboard({ lang, goToPage }) {
         <div
           className="guideContainer"
           style={{
-            maxWidth: '760px',
+            maxWidth: '980px',
             paddingBottom: '70px'
           }}
         >
           <button
             type="button"
             className="backButton"
-            onClick={() => setActiveTab('menu')}
+            onClick={() =>
+              setActiveTab('menu')
+            }
           >
             {t.backMenu}
           </button>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              gap: '12px',
-              marginBottom: '18px'
-            }}
-          >
-            <div>
-              <span className="eyebrow">
-                {t.eyebrow}
-              </span>
-              <h1
-                style={{
-                  margin: '6px 0 5px',
-                  fontSize: '26px'
-                }}
-              >
-                {t.studentTitle}
-              </h1>
-              <p
-                style={{
-                  margin: 0,
-                  color: '#756c60'
-                }}
-              >
-                {t.studentHelp}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={loadStudents}
-              style={{
-                minHeight: '42px',
-                padding: '0 13px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '12px',
-                background: '#fff',
-                color: '#6e5a3b',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              ↻ {t.refresh}
-            </button>
-          </div>
-
-          {studentLoading ? (
-            <div
-              style={{
-                padding: '36px 16px',
-                textAlign: 'center',
-                color: '#777'
-              }}
-            >
-              {t.loading}
-            </div>
-          ) : studentError ? (
-            <div
-              style={{
-                padding: '24px 16px',
-                textAlign: 'center',
-                border: '1px solid #eaded2',
-                borderRadius: '16px',
-                background: '#fff'
-              }}
-            >
-              <div
-                style={{
-                  color: '#a2463d',
-                  marginBottom: '12px'
-                }}
-              >
-                {studentError}
-              </div>
-              <button
-                type="button"
-                onClick={loadStudents}
-                className="primaryContactBtn"
-              >
-                {t.refresh}
-              </button>
-            </div>
-          ) : students.length === 0 ? (
-            <div
-              style={{
-                padding: '34px 16px',
-                textAlign: 'center',
-                border: '1px solid #eee8df',
-                borderRadius: '16px',
-                background: '#fff',
-                color: '#777'
-              }}
-            >
-              {t.noStudents}
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {students.map((row, index) => {
-                const student = row.student || row;
-                const name =
-                  student.nickname ||
-                  student.displayName ||
-                  student.display_name ||
-                  student.full_name ||
-                  student.name ||
-                  (lang === 'en'
-                    ? `Student ${index + 1}`
-                    : `เด็กวัด ${index + 1}`);
-
-                const picture =
-                  student.pictureUrl ||
-                  student.picture_url ||
-                  '';
-
-                const routine =
-                  Array.isArray(row.routine)
-                    ? row.routine
-                    : [];
-
-                const activeRoutine =
-                  routine.filter(
-                    (item) => item.active !== false
-                  );
-
-                const doneRoutine =
-                  activeRoutine.filter(
-                    (item) =>
-                      item.entry ||
-                      item.completed_at ||
-                      item.done === true
-                  );
-
-                const tomorrowPlan =
-                  row.tomorrowPlan ||
-                  row.tomorrow_plan ||
-                  null;
-
-                return (
-                  <article
-                    key={
-                      student.id ||
-                      row.id ||
-                      index
-                    }
-                    style={{
-                      padding: '16px',
-                      border: '1px solid #e4ddd2',
-                      borderRadius: '18px',
-                      background: '#fff'
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '13px',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: '54px',
-                          height: '54px',
-                          flex: '0 0 54px',
-                          borderRadius: '16px',
-                          overflow: 'hidden',
-                          background: '#eee8dc',
-                          display: 'grid',
-                          placeItems: 'center'
-                        }}
-                      >
-                        {picture ? (
-                          <img
-                            src={picture}
-                            alt=""
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        ) : (
-                          '👤'
-                        )}
-                      </div>
-
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <strong
-                          style={{
-                            display: 'block',
-                            color: '#332f29',
-                            fontSize: '18px'
-                          }}
-                        >
-                          {name}
-                        </strong>
-
-                        {(student.schoolName ||
-                          student.school_name ||
-                          student.gradeLevel ||
-                          student.grade_level) && (
-                          <div
-                            style={{
-                              marginTop: '4px',
-                              color: '#756c60',
-                              fontSize: '12px'
-                            }}
-                          >
-                            {student.schoolName ||
-                              student.school_name ||
-                              ''}
-                            {' '}
-                            {student.gradeLevel ||
-                              student.grade_level ||
-                              ''}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns:
-                          'repeat(2, minmax(0, 1fr))',
-                        gap: '8px',
-                        marginTop: '14px'
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: '10px 11px',
-                          borderRadius: '12px',
-                          background: '#f7f5f0'
-                        }}
-                      >
-                        <div
-                          style={{
-                            color: '#81786d',
-                            fontSize: '11px'
-                          }}
-                        >
-                          {lang === 'en'
-                            ? 'Today'
-                            : 'กิจวัตรวันนี้'}
-                        </div>
-                        <strong
-                          style={{
-                            display: 'block',
-                            marginTop: '3px',
-                            color: '#355b49'
-                          }}
-                        >
-                          {activeRoutine.length
-                            ? `${doneRoutine.length}/${activeRoutine.length}`
-                            : '—'}
-                        </strong>
-                      </div>
-
-                      <div
-                        style={{
-                          padding: '10px 11px',
-                          borderRadius: '12px',
-                          background: '#f7f5f0'
-                        }}
-                      >
-                        <div
-                          style={{
-                            color: '#81786d',
-                            fontSize: '11px'
-                          }}
-                        >
-                          {lang === 'en'
-                            ? 'Tomorrow'
-                            : 'แผนพรุ่งนี้'}
-                        </div>
-                        <strong
-                          style={{
-                            display: 'block',
-                            marginTop: '3px',
-                            color: '#8a611d',
-                            fontSize: '12px'
-                          }}
-                        >
-                          {tomorrowPlan
-                            ? (
-                                tomorrowPlan.location_plan ===
-                                'home'
-                                  ? (
-                                      lang === 'en'
-                                        ? 'Home leave'
-                                        : 'ขอกลับบ้าน'
-                                    )
-                                  : (
-                                      lang === 'en'
-                                        ? 'Stay at monastery'
-                                        : 'อยู่ที่วัด'
-                                    )
-                              )
-                            : '—'}
-                        </strong>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
+          <StudentAdminPanel
+            lang={lang}
+          />
         </div>
       </div>
     );

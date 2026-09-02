@@ -9,6 +9,13 @@ const nutritionLabel=(entry,th)=>{
   return entry.nutrition_other || (th?'อื่น ๆ':'Other');
 };
 
+const studentPicture=(student)=>{
+  const name=`${student?.displayName||''} ${student?.nickname||''}`.toLowerCase();
+  if(name.includes('john')) return '/images/366.jpg';
+  if(name.includes('devid') || name.includes('david')) return '/images/365.jpg';
+  return student?.pictureUrl || '';
+};
+
 export default function StudentAdminPanel({lang}){
   const th=lang==='th';
   const [data,setData]=useState(null);
@@ -20,7 +27,7 @@ export default function StudentAdminPanel({lang}){
   const load=async()=>{
     setError('');
     try{
-      const r=await fetch('/api/student?route=admin-students',{credentials:'include'});
+      const r=await fetch('/api/student?route=admin-students',{credentials:'include',cache:'no-store'});
       const j=await r.json();
       if(!r.ok||!j.success) throw new Error(j.message||'Unable to load');
       setData(j);
@@ -153,9 +160,13 @@ export default function StudentAdminPanel({lang}){
         const open=expanded[st.id];
         return <article key={st.id} style={{background:'#fff',border:'1px solid #ddd6cb',borderRadius:16,padding:15,boxShadow:'0 6px 18px rgba(51,42,28,.04)'}}>
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
-            <div style={{width:54,height:54,borderRadius:14,background:'#eee8dc',overflow:'hidden',display:'grid',placeItems:'center',color:'#775c31'}}>{st.pictureUrl?<img src={st.pictureUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<RoutineIcon type="profile" size={27}/>}</div>
+            <div style={{width:54,height:54,borderRadius:14,background:'#eee8dc',overflow:'hidden',display:'grid',placeItems:'center',color:'#775c31'}}>
+              {studentPicture(st)
+                ? <img src={studentPicture(st)} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                : <RoutineIcon type="profile" size={27}/>}
+            </div>
             <div style={{flex:1,minWidth:0}}><strong style={{fontSize:18,color:'#37322c'}}>{st.nickname||st.displayName}</strong><div style={{fontSize:12,color:'#82796d'}}>{done}/{active} {th?'รายการ':'items'} · {dayTypeLabel(s.dayStatus?.day_type,th)}</div></div>
-            <button onClick={()=>setExpanded(v=>({...v,[st.id]:!open}))} style={ghostBtn}>{open?(th?'ย่อ':'Less'):(th?'จัดการ':'Manage')}</button>
+            <button onClick={()=>setExpanded(v=>({...v,[st.id]:!open}))} style={ghostBtn}>{open?(th?'ย่อ':'Less'):(th?'ดูและจัดการ':'View & Manage')}</button>
           </div>
 
           <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:8,marginTop:13}}>
