@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 function MyDashboard({
   lang,
@@ -8,6 +8,119 @@ function MyDashboard({
 }) {
   const th = lang === 'th';
   const [profileImageError, setProfileImageError] = useState(false);
+  const [donationLoading, setDonationLoading] = useState(true);
+  const [donationSummary, setDonationSummary] = useState({
+    moneyTotal: 0,
+    moneyCount: 0,
+    itemCount: 0,
+    latestAt: null
+  });
+
+  useEffect(() => {
+    if (!user) {
+      setDonationLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadDonationSummary = async () => {
+      setDonationLoading(true);
+
+      try {
+        const response = await fetch('/api/donation', {
+          method: 'GET',
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message || 'Unable to load donations'
+          );
+        }
+
+        if (cancelled) return;
+
+        const donations = Array.isArray(data.donations)
+          ? data.donations
+          : [];
+
+        const moneyDonations = donations.filter(
+          (item) => item.donation_type === 'money'
+        );
+
+        const itemDonations = donations.filter(
+          (item) => item.donation_type === 'item'
+        );
+
+        const moneyTotal = moneyDonations.reduce(
+          (sum, item) => sum + Number(item.amount || 0),
+          0
+        );
+
+        const latest = donations[0] || null;
+
+        setDonationSummary({
+          moneyTotal,
+          moneyCount: moneyDonations.length,
+          itemCount: itemDonations.length,
+          latestAt:
+            latest?.donation_date ||
+            latest?.created_at ||
+            null
+        });
+      } catch (error) {
+        console.error(
+          'MyDashboard donation summary error:',
+          error
+        );
+
+        if (!cancelled) {
+          setDonationSummary({
+            moneyTotal: 0,
+            moneyCount: 0,
+            itemCount: 0,
+            latestAt: null
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setDonationLoading(false);
+        }
+      }
+    };
+
+    loadDonationSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.memberId]);
+
+  const moneyTotalText = donationLoading
+    ? '—'
+    : donationSummary.moneyTotal.toLocaleString(
+        th ? 'th-TH' : 'en-US',
+        {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        }
+      );
+
+  const latestDonationText = donationLoading
+    ? '—'
+    : donationSummary.latestAt
+      ? new Intl.DateTimeFormat(
+          th ? 'th-TH' : 'en-GB',
+          {
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'Asia/Bangkok'
+          }
+        ).format(new Date(donationSummary.latestAt))
+      : '—';
 
   const services = [
     {
@@ -106,25 +219,25 @@ function MyDashboard({
 
           <div className="compactDonationAmount">
             <span>{th ? 'ยอดการบริจาคของฉัน' : 'My donation total'}</span>
-            <strong>— <small>{th ? 'บาท' : 'THB'}</small></strong>
+            <strong>{moneyTotalText} <small>{th ? 'บาท' : 'THB'}</small></strong>
           </div>
 
           <div className="compactStatsRow">
             <div>
               <img src="/icons/donation.svg" alt="" aria-hidden="true" />
-              <strong>—</strong>
-              <span>{th ? 'ครั้งที่ร่วมบุญ' : 'Donations'}</span>
+              <strong>{donationLoading ? '—' : donationSummary.moneyCount}</strong>
+              <span>{th ? 'ครั้งที่ทำบุญเป็นเงิน' : 'Money donations'}</span>
             </div>
 
             <div>
               <img src="/icons/lotus.svg" alt="" aria-hidden="true" />
-              <strong>—</strong>
-              <span>{th ? 'โครงการ' : 'Projects'}</span>
+              <strong>{donationLoading ? '—' : donationSummary.itemCount}</strong>
+              <span>{th ? 'รายการสิ่งของถวาย' : 'Items offered'}</span>
             </div>
 
             <div>
               <img src="/icons/calendar.svg" alt="" aria-hidden="true" />
-              <strong>—</strong>
+              <strong>{latestDonationText}</strong>
               <span>{th ? 'รายการล่าสุด' : 'Latest'}</span>
             </div>
           </div>

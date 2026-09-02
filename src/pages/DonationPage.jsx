@@ -54,7 +54,7 @@ export default function DonationPage({ lang, goToPage }) {
       successTitle: 'Sadhu! อนุโมทนากุศลจิต',
       successMsg:
         'May the Triple Gem bless you and your family with peace, health, and prosperity. Your donation details have been securely sent to the monastery.',
-      okBtn: 'OK (Back to Home)'
+      okBtn: 'View My Account'
     },
 
     th: {
@@ -112,7 +112,7 @@ export default function DonationPage({ lang, goToPage }) {
         'สาธุ อนุโมทนาบุญด้วยครับ',
       successMsg:
         'ขออานุภาพแห่งคุณพระศรีรัตนตรัย จงดลบันดาลให้ท่านและครอบครัวประสบแต่ความสุข ความเจริญ มีอายุ วรรณะ สุขะ พละ ปฏิภาณ ธนสารสมบัติทุกประการ ทางวัดได้ทำการบันทึกและส่งข้อมูลให้ทางวัดเรียบร้อยแล้ว',
-      okBtn: 'ตกลง (กลับสู่หน้าหลัก)'
+      okBtn: 'ดูสรุปในบัญชีของฉัน'
     }
   }
 
@@ -481,7 +481,7 @@ export default function DonationPage({ lang, goToPage }) {
         taxReceipt: ''
       })
 
-      goToPage('home')
+      goToPage('my-dashboard')
     }
 
   return (
