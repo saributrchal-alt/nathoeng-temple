@@ -290,7 +290,7 @@ export default async function handler(req, res) {
       }
 
       const baseSelect =
-        'id,donation_type,owner_member_id,donor_name_snapshot,amount,item_name,quantity,unit,purpose,custom_purpose,receipt_requested,donation_date,note,source,created_by_member_id,created_at,updated_at';
+        'id,donation_type,owner_member_id,donor_name_snapshot,amount,item_name,quantity,unit,purpose,custom_purpose,receipt_requested,donation_date,note,source,created_by_member_id,created_at,updated_at,verification_status,verification_note,verified_at,verified_by_member_id,receipt_url';
 
       const query = adminScope
         ? `?select=${baseSelect}&order=donation_date.desc,created_at.desc`
@@ -944,6 +944,204 @@ export default async function handler(req, res) {
           success: false,
           message:
             'Unable to change donation owner'
+        });
+      }
+    }
+
+    // -----------------------------------------------------
+    // ADMIN: VERIFY / CORRECTION / RECEIPT LINK
+    // -----------------------------------------------------
+    if (action === 'admin_verify') {
+      if (!isAdmin(session)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin permission required'
+        });
+      }
+
+      const donationId = String(body.donationId || '').trim();
+      const verificationStatus = String(body.verificationStatus || '').trim();
+      const verificationNote = body.verificationNote
+        ? String(body.verificationNote).trim() || null
+        : null;
+
+      const allowedStatuses = [
+        'pending',
+        'verified',
+        'needs_correction'
+      ];
+
+      if (!donationId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Donation ID is required'
+        });
+      }
+
+      if (!allowedStatuses.includes(verificationStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid verification status'
+        });
+      }
+
+      const existing = await getDonation({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        donationId
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: 'Donation not found'
+        });
+      }
+
+      const now = new Date().toISOString();
+      const updateData = {
+        verification_status: verificationStatus,
+        verification_note: verificationNote,
+        verified_at: verificationStatus === 'verified' ? now : null,
+        verified_by_member_id: verificationStatus === 'verified' ? memberId : null,
+        updated_at: now
+      };
+
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/donations` +
+            `?id=eq.${encodeURIComponent(donationId)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              ...jsonHeaders(supabaseSecretKey),
+              Prefer: 'return=representation'
+            },
+            body: JSON.stringify(updateData)
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !Array.isArray(data) || data.length === 0) {
+          console.error('Donation verification update failed:', data);
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to update donation verification'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          donation: data[0]
+        });
+      } catch (error) {
+        console.error('Donation verification error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to update donation verification'
+        });
+      }
+    }
+
+    // -----------------------------------------------------
+    // ADMIN: UPDATE RECEIPT URL
+    // -----------------------------------------------------
+    if (action === 'admin_receipt_url') {
+      if (!isAdmin(session)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin permission required'
+        });
+      }
+
+      const donationId = String(body.donationId || '').trim();
+      const receiptUrl = body.receiptUrl
+        ? String(body.receiptUrl).trim()
+        : '';
+
+      if (!donationId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Donation ID is required'
+        });
+      }
+
+      const existing = await getDonation({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        donationId
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: 'Donation not found'
+        });
+      }
+
+      if (!existing.receipt_requested) {
+        return res.status(400).json({
+          success: false,
+          message: 'Receipt was not requested for this donation'
+        });
+      }
+
+      if (receiptUrl) {
+        let parsedUrl;
+        try {
+          parsedUrl = new URL(receiptUrl);
+        } catch {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid receipt URL'
+          });
+        }
+
+        if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+          return res.status(400).json({
+            success: false,
+            message: 'Receipt URL must use HTTP or HTTPS'
+          });
+        }
+      }
+
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/donations` +
+            `?id=eq.${encodeURIComponent(donationId)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              ...jsonHeaders(supabaseSecretKey),
+              Prefer: 'return=representation'
+            },
+            body: JSON.stringify({
+              receipt_url: receiptUrl || null,
+              updated_at: new Date().toISOString()
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !Array.isArray(data) || data.length === 0) {
+          console.error('Receipt URL update failed:', data);
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to update receipt URL'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          donation: data[0]
+        });
+      } catch (error) {
+        console.error('Receipt URL update error:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to update receipt URL'
         });
       }
     }
