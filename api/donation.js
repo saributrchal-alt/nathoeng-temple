@@ -10,7 +10,211 @@ function jsonHeaders(secretKey) {
   };
 }
 
+function isAdmin(session) {
+  return session?.role === 'admin';
+}
+
+function bangkokDate() {
+  return new Intl.DateTimeFormat(
+    'en-CA',
+    {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }
+  ).format(new Date());
+}
+
+function cleanDate(value) {
+  const date = String(value || '').trim();
+
+  if (!date) {
+    return bangkokDate();
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return null;
+  }
+
+  return date;
+}
+
+function validatePurpose(purpose, customPurpose) {
+  const cleanPurpose =
+    String(purpose || 'general').trim();
+
+  if (
+    ![
+      'general',
+      'utilities',
+      'development',
+      'custom'
+    ].includes(cleanPurpose)
+  ) {
+    return {
+      ok: false,
+      message: 'Invalid donation purpose'
+    };
+  }
+
+  const cleanCustomPurpose =
+    customPurpose
+      ? String(customPurpose).trim()
+      : null;
+
+  if (
+    cleanPurpose === 'custom' &&
+    !cleanCustomPurpose
+  ) {
+    return {
+      ok: false,
+      message: 'Custom purpose is required'
+    };
+  }
+
+  return {
+    ok: true,
+    purpose: cleanPurpose,
+    customPurpose:
+      cleanPurpose === 'custom'
+        ? cleanCustomPurpose
+        : null
+  };
+}
+
+function validateDonationValues({
+  donationType,
+  amount,
+  itemName,
+  quantity,
+  unit
+}) {
+  if (!['money', 'item'].includes(donationType)) {
+    return {
+      ok: false,
+      message: 'Invalid donation type'
+    };
+  }
+
+  if (donationType === 'money') {
+    const cleanAmount = Number(amount);
+
+    if (
+      !Number.isFinite(cleanAmount) ||
+      cleanAmount <= 0
+    ) {
+      return {
+        ok: false,
+        message: 'Donation amount must be greater than zero'
+      };
+    }
+
+    return {
+      ok: true,
+      amount: cleanAmount,
+      itemName: null,
+      quantity: null,
+      unit: null
+    };
+  }
+
+  const cleanItemName =
+    String(itemName || '').trim();
+
+  const cleanQuantity =
+    Number(quantity);
+
+  const cleanUnit =
+    String(unit || '').trim();
+
+  if (
+    !cleanItemName ||
+    !Number.isFinite(cleanQuantity) ||
+    cleanQuantity <= 0 ||
+    !cleanUnit
+  ) {
+    return {
+      ok: false,
+      message: 'Item, quantity and unit are required'
+    };
+  }
+
+  return {
+    ok: true,
+    amount: null,
+    itemName: cleanItemName,
+    quantity: cleanQuantity,
+    unit: cleanUnit
+  };
+}
+
+async function getMember({
+  supabaseUrl,
+  secretKey,
+  memberId
+}) {
+  if (!memberId) return null;
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/members` +
+      `?id=eq.${encodeURIComponent(memberId)}` +
+      `&select=id,full_name,display_name,role`,
+    {
+      method: 'GET',
+      headers: jsonHeaders(secretKey),
+      cache: 'no-store'
+    }
+  );
+
+  const data = await response.json();
+
+  if (
+    !response.ok ||
+    !Array.isArray(data) ||
+    data.length === 0
+  ) {
+    return null;
+  }
+
+  return data[0];
+}
+
+async function getDonation({
+  supabaseUrl,
+  secretKey,
+  donationId
+}) {
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/donations` +
+      `?id=eq.${encodeURIComponent(donationId)}` +
+      `&select=*`,
+    {
+      method: 'GET',
+      headers: jsonHeaders(secretKey),
+      cache: 'no-store'
+    }
+  );
+
+  const data = await response.json();
+
+  if (
+    !response.ok ||
+    !Array.isArray(data) ||
+    data.length === 0
+  ) {
+    return null;
+  }
+
+  return data[0];
+}
+
 export default async function handler(req, res) {
+  res.setHeader(
+    'Cache-Control',
+    'no-store, no-cache, must-revalidate'
+  );
+
   const session = getSessionFromRequest(req);
 
   if (!session?.memberId) {
@@ -39,11 +243,9 @@ export default async function handler(req, res) {
 
   // =====================================================
   // GET
-  // Member: only own donations
-  // Admin: all donations
   // =====================================================
   if (req.method === 'GET') {
-    if (adminScope && session.role !== 'admin') {
+    if (adminScope && !isAdmin(session)) {
       return res.status(403).json({
         success: false,
         message: 'Admin permission required'
@@ -51,6 +253,42 @@ export default async function handler(req, res) {
     }
 
     try {
+      if (
+        adminScope &&
+        String(req.query?.resource || '') === 'members'
+      ) {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/members` +
+            `?select=id,full_name,display_name,role` +
+            `&order=full_name.asc` +
+            `&limit=500`,
+          {
+            method: 'GET',
+            headers: jsonHeaders(supabaseSecretKey),
+            cache: 'no-store'
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(
+            'Admin member lookup failed:',
+            data
+          );
+
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to retrieve members'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          members: Array.isArray(data) ? data : []
+        });
+      }
+
       const baseSelect =
         'id,donation_type,owner_member_id,donor_name_snapshot,amount,item_name,quantity,unit,purpose,custom_purpose,receipt_requested,donation_date,note,source,created_by_member_id,created_at,updated_at';
 
@@ -103,9 +341,565 @@ export default async function handler(req, res) {
 
   // =====================================================
   // POST
-  // Member donation flow - unchanged
   // =====================================================
   if (req.method === 'POST') {
+    const body = req.body || {};
+    const action =
+      String(body.action || '').trim();
+
+    // -----------------------------------------------------
+    // ADMIN: CREATE DONATION
+    // -----------------------------------------------------
+    if (action === 'admin_create') {
+      if (!isAdmin(session)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin permission required'
+        });
+      }
+
+      const purposeResult =
+        validatePurpose(
+          body.purpose,
+          body.customPurpose
+        );
+
+      if (!purposeResult.ok) {
+        return res.status(400).json({
+          success: false,
+          message: purposeResult.message
+        });
+      }
+
+      const valueResult =
+        validateDonationValues({
+          donationType: body.donationType,
+          amount: body.amount,
+          itemName: body.itemName,
+          quantity: body.quantity,
+          unit: body.unit
+        });
+
+      if (!valueResult.ok) {
+        return res.status(400).json({
+          success: false,
+          message: valueResult.message
+        });
+      }
+
+      const donationDate =
+        cleanDate(body.donationDate);
+
+      if (!donationDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid donation date'
+        });
+      }
+
+      const ownerMemberId =
+        body.ownerMemberId
+          ? String(body.ownerMemberId).trim()
+          : null;
+
+      let donorName =
+        String(body.donorName || '').trim();
+
+      if (ownerMemberId) {
+        const owner = await getMember({
+          supabaseUrl,
+          secretKey: supabaseSecretKey,
+          memberId: ownerMemberId
+        });
+
+        if (!owner) {
+          return res.status(404).json({
+            success: false,
+            message: 'Selected member was not found'
+          });
+        }
+
+        donorName =
+          String(
+            owner.full_name ||
+            owner.display_name ||
+            donorName
+          ).trim();
+      }
+
+      if (!donorName) {
+        return res.status(400).json({
+          success: false,
+          message: 'Donor name is required'
+        });
+      }
+
+      const donationData = {
+        donation_type:
+          body.donationType,
+
+        owner_member_id:
+          ownerMemberId,
+
+        donor_name_snapshot:
+          donorName,
+
+        amount:
+          valueResult.amount,
+
+        item_name:
+          valueResult.itemName,
+
+        quantity:
+          valueResult.quantity,
+
+        unit:
+          valueResult.unit,
+
+        purpose:
+          purposeResult.purpose,
+
+        custom_purpose:
+          purposeResult.customPurpose,
+
+        receipt_requested:
+          body.donationType === 'money'
+            ? body.receiptRequested === true
+            : false,
+
+        donation_date:
+          donationDate,
+
+        note:
+          body.note
+            ? String(body.note).trim() || null
+            : null,
+
+        source:
+          'admin',
+
+        created_by_member_id:
+          memberId
+      };
+
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/donations`,
+          {
+            method: 'POST',
+            headers: {
+              ...jsonHeaders(supabaseSecretKey),
+              Prefer: 'return=representation'
+            },
+            body: JSON.stringify(donationData)
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error(
+            'Admin donation insert failed:',
+            data
+          );
+
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to save donation'
+          });
+        }
+
+        return res.status(201).json({
+          success: true,
+          donation:
+            Array.isArray(data) && data.length
+              ? data[0]
+              : null
+        });
+      } catch (error) {
+        console.error(
+          'Admin donation create error:',
+          error
+        );
+
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to save donation'
+        });
+      }
+    }
+
+    // -----------------------------------------------------
+    // ADMIN: EDIT DONATION DETAILS
+    // -----------------------------------------------------
+    if (action === 'admin_update') {
+      if (!isAdmin(session)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin permission required'
+        });
+      }
+
+      const donationId =
+        String(body.donationId || '').trim();
+
+      if (!donationId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Donation ID is required'
+        });
+      }
+
+      const existing = await getDonation({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        donationId
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: 'Donation not found'
+        });
+      }
+
+      const purposeResult =
+        validatePurpose(
+          body.purpose,
+          body.customPurpose
+        );
+
+      if (!purposeResult.ok) {
+        return res.status(400).json({
+          success: false,
+          message: purposeResult.message
+        });
+      }
+
+      const valueResult =
+        validateDonationValues({
+          donationType:
+            existing.donation_type,
+          amount: body.amount,
+          itemName: body.itemName,
+          quantity: body.quantity,
+          unit: body.unit
+        });
+
+      if (!valueResult.ok) {
+        return res.status(400).json({
+          success: false,
+          message: valueResult.message
+        });
+      }
+
+      const donationDate =
+        cleanDate(body.donationDate);
+
+      if (!donationDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid donation date'
+        });
+      }
+
+      const updateData = {
+        donor_name_snapshot:
+          String(
+            body.donorName ||
+            existing.donor_name_snapshot ||
+            ''
+          ).trim(),
+
+        amount:
+          valueResult.amount,
+
+        item_name:
+          valueResult.itemName,
+
+        quantity:
+          valueResult.quantity,
+
+        unit:
+          valueResult.unit,
+
+        purpose:
+          purposeResult.purpose,
+
+        custom_purpose:
+          purposeResult.customPurpose,
+
+        receipt_requested:
+          existing.donation_type === 'money'
+            ? body.receiptRequested === true
+            : false,
+
+        donation_date:
+          donationDate,
+
+        note:
+          body.note
+            ? String(body.note).trim() || null
+            : null,
+
+        updated_at:
+          new Date().toISOString()
+      };
+
+      if (!updateData.donor_name_snapshot) {
+        return res.status(400).json({
+          success: false,
+          message: 'Donor name is required'
+        });
+      }
+
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/donations` +
+            `?id=eq.${encodeURIComponent(donationId)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              ...jsonHeaders(supabaseSecretKey),
+              Prefer: 'return=representation'
+            },
+            body: JSON.stringify(updateData)
+          }
+        );
+
+        const data = await response.json();
+
+        if (
+          !response.ok ||
+          !Array.isArray(data) ||
+          data.length === 0
+        ) {
+          console.error(
+            'Admin donation update failed:',
+            data
+          );
+
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to update donation'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          donation: data[0]
+        });
+      } catch (error) {
+        console.error(
+          'Admin donation update error:',
+          error
+        );
+
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to update donation'
+        });
+      }
+    }
+
+    // -----------------------------------------------------
+    // ADMIN: CHANGE OWNER + AUDIT
+    // -----------------------------------------------------
+    if (action === 'change_owner') {
+      if (!isAdmin(session)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Admin permission required'
+        });
+      }
+
+      const donationId =
+        String(body.donationId || '').trim();
+
+      const newOwnerMemberId =
+        body.newOwnerMemberId
+          ? String(body.newOwnerMemberId).trim()
+          : null;
+
+      const reason =
+        body.reason
+          ? String(body.reason).trim() || null
+          : null;
+
+      if (!donationId || !newOwnerMemberId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Donation and new owner are required'
+        });
+      }
+
+      const existing = await getDonation({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        donationId
+      });
+
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: 'Donation not found'
+        });
+      }
+
+      if (
+        existing.owner_member_id ===
+        newOwnerMemberId
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'This member is already the owner'
+        });
+      }
+
+      const newOwner = await getMember({
+        supabaseUrl,
+        secretKey: supabaseSecretKey,
+        memberId: newOwnerMemberId
+      });
+
+      if (!newOwner) {
+        return res.status(404).json({
+          success: false,
+          message: 'Selected member was not found'
+        });
+      }
+
+      const previousOwnerMemberId =
+        existing.owner_member_id || null;
+
+      try {
+        const updateResponse = await fetch(
+          `${supabaseUrl}/rest/v1/donations` +
+            `?id=eq.${encodeURIComponent(donationId)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              ...jsonHeaders(supabaseSecretKey),
+              Prefer: 'return=representation'
+            },
+            body: JSON.stringify({
+              owner_member_id:
+                newOwnerMemberId,
+              updated_at:
+                new Date().toISOString()
+            })
+          }
+        );
+
+        const updated =
+          await updateResponse.json();
+
+        if (
+          !updateResponse.ok ||
+          !Array.isArray(updated) ||
+          updated.length === 0
+        ) {
+          console.error(
+            'Donation owner update failed:',
+            updated
+          );
+
+          return res.status(500).json({
+            success: false,
+            message:
+              'Unable to change donation owner'
+          });
+        }
+
+        const historyResponse = await fetch(
+          `${supabaseUrl}/rest/v1/donation_owner_history`,
+          {
+            method: 'POST',
+            headers: {
+              ...jsonHeaders(supabaseSecretKey),
+              Prefer: 'return=minimal'
+            },
+            body: JSON.stringify({
+              donation_id:
+                donationId,
+              previous_owner_member_id:
+                previousOwnerMemberId,
+              new_owner_member_id:
+                newOwnerMemberId,
+              changed_by_member_id:
+                memberId,
+              reason,
+              changed_at:
+                new Date().toISOString()
+            })
+          }
+        );
+
+        if (!historyResponse.ok) {
+          const historyError =
+            await historyResponse.text();
+
+          console.error(
+            'Donation owner history insert failed:',
+            historyError
+          );
+
+          // Roll back owner if audit logging fails.
+          await fetch(
+            `${supabaseUrl}/rest/v1/donations` +
+              `?id=eq.${encodeURIComponent(donationId)}`,
+            {
+              method: 'PATCH',
+              headers: {
+                ...jsonHeaders(supabaseSecretKey),
+                Prefer: 'return=minimal'
+              },
+              body: JSON.stringify({
+                owner_member_id:
+                  previousOwnerMemberId,
+                updated_at:
+                  new Date().toISOString()
+              })
+            }
+          );
+
+          return res.status(500).json({
+            success: false,
+            message:
+              'Owner was not changed because audit history could not be saved'
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          donation: updated[0],
+          owner: {
+            id: newOwner.id,
+            fullName:
+              newOwner.full_name ||
+              newOwner.display_name ||
+              ''
+          }
+        });
+      } catch (error) {
+        console.error(
+          'Donation owner change error:',
+          error
+        );
+
+        return res.status(500).json({
+          success: false,
+          message:
+            'Unable to change donation owner'
+        });
+      }
+    }
+
+    // -----------------------------------------------------
+    // MEMBER DONATION FLOW
+    // -----------------------------------------------------
     const {
       donationType,
       amount,
@@ -116,87 +910,35 @@ export default async function handler(req, res) {
       customPurpose,
       receiptRequested,
       note
-    } = req.body || {};
+    } = body;
 
-    if (!['money', 'item'].includes(donationType)) {
+    const purposeResult =
+      validatePurpose(
+        purpose,
+        customPurpose
+      );
+
+    if (!purposeResult.ok) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid donation type'
+        message: purposeResult.message
       });
     }
 
-    const cleanPurpose =
-      String(purpose || 'general').trim();
+    const valueResult =
+      validateDonationValues({
+        donationType,
+        amount,
+        itemName,
+        quantity,
+        unit
+      });
 
-    if (
-      ![
-        'general',
-        'utilities',
-        'development',
-        'custom'
-      ].includes(cleanPurpose)
-    ) {
+    if (!valueResult.ok) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid donation purpose'
+        message: valueResult.message
       });
-    }
-
-    const cleanCustomPurpose =
-      customPurpose
-        ? String(customPurpose).trim()
-        : null;
-
-    if (
-      cleanPurpose === 'custom' &&
-      !cleanCustomPurpose
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Custom purpose is required'
-      });
-    }
-
-    let cleanAmount = null;
-    let cleanItemName = null;
-    let cleanQuantity = null;
-    let cleanUnit = null;
-
-    if (donationType === 'money') {
-      cleanAmount = Number(amount);
-
-      if (
-        !Number.isFinite(cleanAmount) ||
-        cleanAmount <= 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: 'Donation amount must be greater than zero'
-        });
-      }
-    }
-
-    if (donationType === 'item') {
-      cleanItemName =
-        String(itemName || '').trim();
-
-      cleanQuantity =
-        Number(quantity);
-
-      cleanUnit =
-        String(unit || '').trim();
-
-      if (
-        !cleanItemName ||
-        !Number.isFinite(cleanQuantity) ||
-        cleanQuantity <= 0 ||
-        !cleanUnit
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: 'Item, quantity and unit are required'
-        });
-      }
     }
 
     try {
@@ -206,7 +948,8 @@ export default async function handler(req, res) {
           `&select=id,full_name,donation_profile_completed_at`,
         {
           method: 'GET',
-          headers: jsonHeaders(supabaseSecretKey)
+          headers: jsonHeaders(supabaseSecretKey),
+          cache: 'no-store'
         }
       );
 
@@ -260,32 +1003,22 @@ export default async function handler(req, res) {
           member.full_name,
 
         amount:
-          donationType === 'money'
-            ? cleanAmount
-            : null,
+          valueResult.amount,
 
         item_name:
-          donationType === 'item'
-            ? cleanItemName
-            : null,
+          valueResult.itemName,
 
         quantity:
-          donationType === 'item'
-            ? cleanQuantity
-            : null,
+          valueResult.quantity,
 
         unit:
-          donationType === 'item'
-            ? cleanUnit
-            : null,
+          valueResult.unit,
 
         purpose:
-          cleanPurpose,
+          purposeResult.purpose,
 
         custom_purpose:
-          cleanPurpose === 'custom'
-            ? cleanCustomPurpose
-            : null,
+          purposeResult.customPurpose,
 
         receipt_requested:
           donationType === 'money'
@@ -343,7 +1076,8 @@ export default async function handler(req, res) {
       if (!donation) {
         return res.status(500).json({
           success: false,
-          message: 'Donation record was not returned'
+          message:
+            'Donation record was not returned'
         });
       }
 
