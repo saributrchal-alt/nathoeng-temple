@@ -1139,10 +1139,10 @@ function AdminDashboard({ lang, goToPage }) {
         <button
           className="backButton"
           onClick={() =>
-            goToPage('home')
+            setActiveTab('menu')
           }
         >
-          {t.back}
+          {t.backMenu}
         </button>
 
         <div
@@ -1163,126 +1163,141 @@ function AdminDashboard({ lang, goToPage }) {
           </h1>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns:
-              'repeat(auto-fit, minmax(190px, 1fr))',
-            gap: '15px',
-            marginBottom: '30px'
-          }}
-        >
+        {activeTab === 'bookings' ? (
           <div
             style={{
-              background: '#f6f4ef',
-              padding: '18px',
-              border: '1px solid #dcd5c8',
-              borderRadius: '6px'
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(190px, 1fr))',
+              gap: '15px',
+              marginBottom: '30px'
             }}
           >
             <div
               style={{
-                fontSize: '13px',
-                color: '#777'
+                background: '#f6f4ef',
+                padding: '18px',
+                border: '1px solid #dcd5c8',
+                borderRadius: '6px'
               }}
             >
-              {t.totalBookings}
+              <div style={{ fontSize: '13px', color: '#777' }}>
+                {t.totalBookings}
+              </div>
+              <div style={{ fontSize: '28px', marginTop: '5px' }}>
+                {bookings.length}
+              </div>
             </div>
 
             <div
               style={{
-                fontSize: '28px',
-                marginTop: '5px'
+                background: '#f6f4ef',
+                padding: '18px',
+                border: '1px solid #dcd5c8',
+                borderRadius: '6px'
               }}
             >
-              {bookings.length}
+              <div style={{ fontSize: '13px', color: '#777' }}>
+                {t.pendingBookings}
+              </div>
+              <div
+                style={{
+                  fontSize: '28px',
+                  marginTop: '5px',
+                  color: '#9b7226'
+                }}
+              >
+                {pendingCount}
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#f6f4ef',
+                padding: '18px',
+                border: '1px solid #dcd5c8',
+                borderRadius: '6px'
+              }}
+            >
+              <div style={{ fontSize: '13px', color: '#777' }}>
+                {t.activeStays}
+              </div>
+              <div
+                style={{
+                  fontSize: '28px',
+                  marginTop: '5px',
+                  color: '#2e7d32'
+                }}
+              >
+                {activeCount}
+              </div>
             </div>
           </div>
-
+        ) : (
           <div
             style={{
-              background: '#f6f4ef',
-              padding: '18px',
-              border: '1px solid #dcd5c8',
-              borderRadius: '6px'
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(190px, 1fr))',
+              gap: '15px',
+              marginBottom: '30px'
             }}
           >
             <div
               style={{
-                fontSize: '13px',
-                color: '#777'
+                background: '#f6f4ef',
+                padding: '18px',
+                border: '1px solid #dcd5c8',
+                borderRadius: '6px'
               }}
             >
-              {t.pendingBookings}
+              <div style={{ fontSize: '13px', color: '#777' }}>
+                {t.donationTotal}
+              </div>
+              <div
+                style={{
+                  fontSize: '28px',
+                  marginTop: '5px',
+                  color: '#9b7226'
+                }}
+              >
+                {totalDonationAmount.toLocaleString()} ฿
+              </div>
             </div>
 
             <div
               style={{
-                fontSize: '28px',
-                marginTop: '5px',
-                color: '#9b7226'
+                background: '#f6f4ef',
+                padding: '18px',
+                border: '1px solid #dcd5c8',
+                borderRadius: '6px'
               }}
             >
-              {pendingCount}
+              <div style={{ fontSize: '13px', color: '#777' }}>
+                {t.donationMoneyCount}
+              </div>
+              <div style={{ fontSize: '28px', marginTop: '5px' }}>
+                {donationMoneyCount}
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#f6f4ef',
+                padding: '18px',
+                border: '1px solid #dcd5c8',
+                borderRadius: '6px'
+              }}
+            >
+              <div style={{ fontSize: '13px', color: '#777' }}>
+                {t.donationItemCount}
+              </div>
+              <div style={{ fontSize: '28px', marginTop: '5px' }}>
+                {donationItemCount}
+              </div>
             </div>
           </div>
-
-          <div
-            style={{
-              background: '#f6f4ef',
-              padding: '18px',
-              border: '1px solid #dcd5c8',
-              borderRadius: '6px'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '13px',
-                color: '#777'
-              }}
-            >
-              {t.activeStays}
-            </div>
-
-            <div
-              style={{
-                fontSize: '28px',
-                marginTop: '5px',
-                color: '#2e7d32'
-              }}
-            >
-              {activeCount}
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: '#f6f4ef',
-              padding: '18px',
-              border: '1px solid #dcd5c8',
-              borderRadius: '6px'
-            }}
-          >
-            <div
-              style={{
-                fontSize: '13px',
-                color: '#777'
-              }}
-            >
-              {t.donationTotal}
-            </div>
-
-            <div
-              style={{
-                fontSize: '28px',
-                marginTop: '5px',
-                color: '#9b7226'
-              }}
-            >
-              {totalDonationAmount.toLocaleString()} ฿
-            </div>
-          </div>
-        </div>
+        )}
 
         <div
           style={{
