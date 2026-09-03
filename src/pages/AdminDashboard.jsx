@@ -17,6 +17,10 @@ function AdminDashboard({ lang, goToPage }) {
   const [students, setStudents] = useState([]);
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState('');
+  const [lineApprovalTarget, setLineApprovalTarget] = useState(null);
+  const [lineApprovalMessage, setLineApprovalMessage] = useState('');
+  const [lineApprovalSending, setLineApprovalSending] = useState(false);
+  const [lineApprovalError, setLineApprovalError] = useState('');
 
   const t = {
     en: {
@@ -70,6 +74,16 @@ function AdminDashboard({ lang, goToPage }) {
       checkOut: 'Check Out',
       complete: 'Complete Stay',
       cancel: 'Cancel',
+      lineNotifyApproval: 'LINE Approval Notice',
+      lineNotifyTitle: 'Review LINE OA message before sending',
+      lineNotifyHelp:
+        'This is a bilingual system notification. You can edit the full message before sending.',
+      lineNotifyRecipient: 'Recipient',
+      lineNotifySend: 'Send via LINE OA',
+      lineNotifyCancel: 'Cancel',
+      lineNotifySending: 'Sending...',
+      lineNotifySuccess: 'LINE OA approval notice sent successfully.',
+      lineNotifyError: 'Unable to send LINE OA approval notice.',
 
       accommodationPrompt:
         'Enter accommodation name, kuti, building, or room:',
@@ -161,6 +175,16 @@ function AdminDashboard({ lang, goToPage }) {
       checkOut: 'เช็กเอาต์',
       complete: 'ปิดการเข้าพัก',
       cancel: 'ยกเลิก',
+      lineNotifyApproval: 'แจ้งอนุมัติทาง LINE',
+      lineNotifyTitle: 'ตรวจสอบข้อความก่อนส่งทาง LINE OA',
+      lineNotifyHelp:
+        'ข้อความนี้เป็นข้อความระบบ 2 ภาษา สามารถแก้ไขข้อความทั้งหมดได้ก่อนกดส่ง',
+      lineNotifyRecipient: 'ผู้รับ',
+      lineNotifySend: 'ส่งทาง LINE OA',
+      lineNotifyCancel: 'ยกเลิก',
+      lineNotifySending: 'กำลังส่ง...',
+      lineNotifySuccess: 'ส่งข้อความแจ้งผลอนุมัติทาง LINE OA เรียบร้อยแล้ว',
+      lineNotifyError: 'ไม่สามารถส่งข้อความแจ้งผลอนุมัติทาง LINE OA ได้',
 
       accommodationPrompt: 'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
       notePrompt: 'หมายเหตุของผู้ดูแล (ถ้ามี):',
@@ -502,6 +526,176 @@ function AdminDashboard({ lang, goToPage }) {
       item.status === 'in_retreat'
   ).length;
 
+  const formatStayDateForLine = (raw, locale) => {
+    if (!raw) return '-';
+
+    const date = new Date(`${raw}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return String(raw);
+
+    return new Intl.DateTimeFormat(
+      locale,
+      {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Bangkok'
+      }
+    ).format(date);
+  };
+
+  const buildApprovalLineMessage = (booking) => {
+    const name =
+      String(booking?.name || '').trim();
+
+    const startTh =
+      formatStayDateForLine(
+        booking?.start_date,
+        'th-TH'
+      );
+
+    const endTh =
+      formatStayDateForLine(
+        booking?.end_date,
+        'th-TH'
+      );
+
+    const startEn =
+      formatStayDateForLine(
+        booking?.start_date,
+        'en-GB'
+      );
+
+    const endEn =
+      formatStayDateForLine(
+        booking?.end_date,
+        'en-GB'
+      );
+
+    return [
+      '🙏 วัดพุทธอุทยานนาเทิง',
+      'แจ้งผลคำขอเข้าพักปฏิบัติธรรม',
+      '',
+      name ? `เรียน คุณ ${name}` : 'เรียน ผู้ปฏิบัติธรรม',
+      'คำขอเข้าพักปฏิบัติธรรมของท่านได้รับการอนุมัติแล้วครับ',
+      `กำหนดเข้าพัก: ${startTh} - ${endTh}`,
+      '',
+      'กรุณาศึกษาระเบียบการเข้าพักและเตรียมตัวก่อนเดินทาง',
+      'สามารถติดตามสถานะและขั้นตอนต่อไปได้ที่ “บัญชีของฉัน → การเข้าพักของฉัน”',
+      '',
+      'วัดพุทธอุทยานนาเทิง',
+      'NATHOENG CONNECT',
+      '',
+      '------------------------------',
+      '',
+      '🙏 Buddhist Park Monastery of Nathoeng',
+      'Retreat Stay Request Update',
+      '',
+      name ? `Dear ${name},` : 'Dear Practitioner,',
+      'Your retreat stay request has been approved.',
+      `Stay period: ${startEn} - ${endEn}`,
+      '',
+      'Please review the monastery stay guidelines and prepare before your arrival.',
+      'You can follow your status and next steps in “My Account → My Retreat Stays.”',
+      '',
+      'Buddhist Park Monastery of Nathoeng',
+      'NATHOENG CONNECT'
+    ].join('\n');
+  };
+
+  const openApprovalLineNotification = (booking) => {
+    setLineApprovalTarget(booking);
+    setLineApprovalMessage(
+      buildApprovalLineMessage(booking)
+    );
+    setLineApprovalError('');
+  };
+
+  const closeApprovalLineNotification = () => {
+    if (lineApprovalSending) return;
+
+    setLineApprovalTarget(null);
+    setLineApprovalMessage('');
+    setLineApprovalError('');
+  };
+
+  const sendApprovalLineNotification = async () => {
+    if (!lineApprovalTarget?.id) return;
+
+    const messageText =
+      String(lineApprovalMessage || '').trim();
+
+    if (!messageText) {
+      setLineApprovalError(
+        lang === 'th'
+          ? 'กรุณากรอกข้อความก่อนส่ง'
+          : 'Please enter a message before sending.'
+      );
+      return;
+    }
+
+    if (messageText.length > 5000) {
+      setLineApprovalError(
+        lang === 'th'
+          ? 'ข้อความยาวเกิน 5,000 ตัวอักษร'
+          : 'Message exceeds 5,000 characters.'
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      lang === 'th'
+        ? 'ยืนยันส่งข้อความนี้ทาง LINE OA ถึงผู้สมัครหรือไม่?'
+        : 'Send this approval message to the applicant via LINE OA?'
+    );
+
+    if (!confirmed) return;
+
+    setLineApprovalSending(true);
+    setLineApprovalError('');
+
+    try {
+      const response = await fetch(
+        '/api/stay-line-notify',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: lineApprovalTarget.id,
+            event: 'approved',
+            messageText
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+          t.lineNotifyError
+        );
+      }
+
+      window.alert(t.lineNotifySuccess);
+      closeApprovalLineNotification();
+    } catch (err) {
+      console.error(
+        'Stay LINE approval notification error:',
+        err
+      );
+
+      setLineApprovalError(
+        err.message ||
+        t.lineNotifyError
+      );
+    } finally {
+      setLineApprovalSending(false);
+    }
+  };
+
   const callStayAction = async (booking, action) => {
     let accommodationName = '';
     let note = '';
@@ -568,7 +762,14 @@ function AdminDashboard({ lang, goToPage }) {
 
       await loadBookings();
 
-      alert(t.actionSuccess);
+      if (action === 'approve') {
+        openApprovalLineNotification({
+          ...booking,
+          status: 'approved'
+        });
+      } else {
+        alert(t.actionSuccess);
+      }
     } catch (err) {
       console.error('Stay action error:', err);
 
@@ -663,6 +864,22 @@ function AdminDashboard({ lang, goToPage }) {
             }}
           >
             {t.checkIn}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              openApprovalLineNotification(
+                booking
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#06c755',
+              color: '#fff'
+            }}
+          >
+            {t.lineNotifyApproval}
           </button>
 
           <button
@@ -1139,10 +1356,10 @@ function AdminDashboard({ lang, goToPage }) {
         <button
           className="backButton"
           onClick={() =>
-            setActiveTab('menu')
+            goToPage('home')
           }
         >
-          {t.backMenu}
+          {t.back}
         </button>
 
         <div
@@ -1163,141 +1380,126 @@ function AdminDashboard({ lang, goToPage }) {
           </h1>
         </div>
 
-        {activeTab === 'bookings' ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: '15px',
+            marginBottom: '30px'
+          }}
+        >
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(190px, 1fr))',
-              gap: '15px',
-              marginBottom: '30px'
+              background: '#f6f4ef',
+              padding: '18px',
+              border: '1px solid #dcd5c8',
+              borderRadius: '6px'
             }}
           >
             <div
               style={{
-                background: '#f6f4ef',
-                padding: '18px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '6px'
+                fontSize: '13px',
+                color: '#777'
               }}
             >
-              <div style={{ fontSize: '13px', color: '#777' }}>
-                {t.totalBookings}
-              </div>
-              <div style={{ fontSize: '28px', marginTop: '5px' }}>
-                {bookings.length}
-              </div>
+              {t.totalBookings}
             </div>
 
             <div
               style={{
-                background: '#f6f4ef',
-                padding: '18px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '6px'
+                fontSize: '28px',
+                marginTop: '5px'
               }}
             >
-              <div style={{ fontSize: '13px', color: '#777' }}>
-                {t.pendingBookings}
-              </div>
-              <div
-                style={{
-                  fontSize: '28px',
-                  marginTop: '5px',
-                  color: '#9b7226'
-                }}
-              >
-                {pendingCount}
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: '#f6f4ef',
-                padding: '18px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '6px'
-              }}
-            >
-              <div style={{ fontSize: '13px', color: '#777' }}>
-                {t.activeStays}
-              </div>
-              <div
-                style={{
-                  fontSize: '28px',
-                  marginTop: '5px',
-                  color: '#2e7d32'
-                }}
-              >
-                {activeCount}
-              </div>
+              {bookings.length}
             </div>
           </div>
-        ) : (
+
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns:
-                'repeat(auto-fit, minmax(190px, 1fr))',
-              gap: '15px',
-              marginBottom: '30px'
+              background: '#f6f4ef',
+              padding: '18px',
+              border: '1px solid #dcd5c8',
+              borderRadius: '6px'
             }}
           >
             <div
               style={{
-                background: '#f6f4ef',
-                padding: '18px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '6px'
+                fontSize: '13px',
+                color: '#777'
               }}
             >
-              <div style={{ fontSize: '13px', color: '#777' }}>
-                {t.donationTotal}
-              </div>
-              <div
-                style={{
-                  fontSize: '28px',
-                  marginTop: '5px',
-                  color: '#9b7226'
-                }}
-              >
-                {totalDonationAmount.toLocaleString()} ฿
-              </div>
+              {t.pendingBookings}
             </div>
 
             <div
               style={{
-                background: '#f6f4ef',
-                padding: '18px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '6px'
+                fontSize: '28px',
+                marginTop: '5px',
+                color: '#9b7226'
               }}
             >
-              <div style={{ fontSize: '13px', color: '#777' }}>
-                {t.donationMoneyCount}
-              </div>
-              <div style={{ fontSize: '28px', marginTop: '5px' }}>
-                {donationMoneyCount}
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: '#f6f4ef',
-                padding: '18px',
-                border: '1px solid #dcd5c8',
-                borderRadius: '6px'
-              }}
-            >
-              <div style={{ fontSize: '13px', color: '#777' }}>
-                {t.donationItemCount}
-              </div>
-              <div style={{ fontSize: '28px', marginTop: '5px' }}>
-                {donationItemCount}
-              </div>
+              {pendingCount}
             </div>
           </div>
-        )}
+
+          <div
+            style={{
+              background: '#f6f4ef',
+              padding: '18px',
+              border: '1px solid #dcd5c8',
+              borderRadius: '6px'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#777'
+              }}
+            >
+              {t.activeStays}
+            </div>
+
+            <div
+              style={{
+                fontSize: '28px',
+                marginTop: '5px',
+                color: '#2e7d32'
+              }}
+            >
+              {activeCount}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: '#f6f4ef',
+              padding: '18px',
+              border: '1px solid #dcd5c8',
+              borderRadius: '6px'
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#777'
+              }}
+            >
+              {t.donationTotal}
+            </div>
+
+            <div
+              style={{
+                fontSize: '28px',
+                marginTop: '5px',
+                color: '#9b7226'
+              }}
+            >
+              {totalDonationAmount.toLocaleString()} ฿
+            </div>
+          </div>
+        </div>
 
         <div
           style={{
@@ -1567,6 +1769,230 @@ function AdminDashboard({ lang, goToPage }) {
             formatDonationDate={formatDonationDate}
             donationPurposeLabel={donationPurposeLabel}
           />
+        )}
+
+        {lineApprovalTarget && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.lineNotifyTitle}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              background: 'rgba(34, 30, 25, 0.55)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '18px'
+            }}
+            onClick={(event) => {
+              if (
+                event.target === event.currentTarget
+              ) {
+                closeApprovalLineNotification();
+              }
+            }}
+          >
+            <div
+              style={{
+                width: 'min(720px, 100%)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                background: '#fff',
+                borderRadius: '14px',
+                padding: '22px',
+                boxShadow:
+                  '0 22px 60px rgba(0,0,0,0.24)'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  marginBottom: '12px'
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: '#06a944',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      marginBottom: '5px'
+                    }}
+                  >
+                    LINE OA · NATHOENG CONNECT
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: '#302d29'
+                    }}
+                  >
+                    {t.lineNotifyTitle}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={lineApprovalSending}
+                  onClick={closeApprovalLineNotification}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#777'
+                  }}
+                  aria-label={t.lineNotifyCancel}
+                >
+                  ×
+                </button>
+              </div>
+
+              <p
+                style={{
+                  margin: '0 0 12px',
+                  color: '#6c675f',
+                  lineHeight: 1.55
+                }}
+              >
+                {t.lineNotifyHelp}
+              </p>
+
+              <div
+                style={{
+                  background: '#f5faf6',
+                  border: '1px solid #dcefe1',
+                  borderRadius: '9px',
+                  padding: '10px 12px',
+                  marginBottom: '12px'
+                }}
+              >
+                <strong>
+                  {t.lineNotifyRecipient}:
+                </strong>{' '}
+                {lineApprovalTarget.name || '-'}
+                <br />
+                <span
+                  style={{
+                    color: '#777',
+                    fontSize: '13px'
+                  }}
+                >
+                  {lineApprovalTarget.start_date || '-'}
+                  {' → '}
+                  {lineApprovalTarget.end_date || '-'}
+                </span>
+              </div>
+
+              <textarea
+                value={lineApprovalMessage}
+                onChange={(event) =>
+                  setLineApprovalMessage(
+                    event.target.value
+                  )
+                }
+                disabled={lineApprovalSending}
+                rows={22}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  border: '1px solid #d9d5ce',
+                  borderRadius: '9px',
+                  padding: '12px',
+                  font: 'inherit',
+                  lineHeight: 1.55,
+                  color: '#302d29',
+                  background: '#fff'
+                }}
+              />
+
+              <div
+                style={{
+                  marginTop: '6px',
+                  textAlign: 'right',
+                  fontSize: '12px',
+                  color:
+                    lineApprovalMessage.length > 5000
+                      ? '#c62828'
+                      : '#888'
+                }}
+              >
+                {lineApprovalMessage.length.toLocaleString()}
+                {' / 5,000'}
+              </div>
+
+              {lineApprovalError && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: '#fff0f0',
+                    color: '#b42318'
+                  }}
+                >
+                  {lineApprovalError}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '9px',
+                  marginTop: '16px',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={lineApprovalSending}
+                  onClick={closeApprovalLineNotification}
+                  style={{
+                    ...actionButtonStyle,
+                    padding: '10px 16px',
+                    background: '#f2f0ec',
+                    color: '#4e4a44'
+                  }}
+                >
+                  {t.lineNotifyCancel}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={
+                    lineApprovalSending ||
+                    !lineApprovalMessage.trim() ||
+                    lineApprovalMessage.length > 5000
+                  }
+                  onClick={sendApprovalLineNotification}
+                  style={{
+                    ...actionButtonStyle,
+                    padding: '10px 16px',
+                    background: '#06c755',
+                    color: '#fff',
+                    opacity:
+                      lineApprovalSending ||
+                      !lineApprovalMessage.trim() ||
+                      lineApprovalMessage.length > 5000
+                        ? 0.6
+                        : 1
+                  }}
+                >
+                  {lineApprovalSending
+                    ? t.lineNotifySending
+                    : t.lineNotifySend}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
