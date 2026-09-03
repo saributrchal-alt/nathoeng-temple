@@ -60,9 +60,9 @@ function AdminPracticeMessagePanel({
 
     try {
       const [
-        messagesResponse,
-        membersResponse
-      ] = await Promise.all([
+        messagesResult,
+        membersResult
+      ] = await Promise.allSettled([
         fetch(
           '/api/practice-messages?scope=admin',
           {
@@ -79,13 +79,17 @@ function AdminPracticeMessagePanel({
         )
       ]);
 
-      const [
-        messagesData,
-        membersData
-      ] = await Promise.all([
-        messagesResponse.json(),
-        membersResponse.json()
-      ]);
+      if (
+        messagesResult.status !== 'fulfilled'
+      ) {
+        throw messagesResult.reason;
+      }
+
+      const messagesResponse =
+        messagesResult.value;
+
+      const messagesData =
+        await messagesResponse.json();
 
       if (
         !messagesResponse.ok ||
@@ -97,31 +101,58 @@ function AdminPracticeMessagePanel({
         );
       }
 
-      if (
-        !membersResponse.ok ||
-        !membersData.success
-      ) {
-        throw new Error(
-          membersData.message ||
-          'Unable to load members from donation member lookup'
-        );
-      }
-
       setMessages(
-        Array.isArray(
-          messagesData.messages
-        )
+        Array.isArray(messagesData.messages)
           ? messagesData.messages
           : []
       );
 
-      setMembers(
-        Array.isArray(
-          membersData.members
-        )
-          ? membersData.members
-          : []
-      );
+      if (
+        membersResult.status === 'fulfilled'
+      ) {
+        const membersResponse =
+          membersResult.value;
+
+        const membersData =
+          await membersResponse.json();
+
+        if (
+          membersResponse.ok &&
+          membersData.success
+        ) {
+          setMembers(
+            Array.isArray(membersData.members)
+              ? membersData.members
+              : []
+          );
+        } else {
+          console.error(
+            'Admin practice member load error:',
+            membersData
+          );
+
+          setMembers([]);
+
+          setError(
+            th
+              ? 'โหลดข้อความได้ แต่ยังโหลดรายชื่อสมาชิกไม่ได้ กรุณากด “โหลดใหม่”'
+              : 'Messages loaded, but the member list could not be loaded. Please reload.'
+          );
+        }
+      } else {
+        console.error(
+          'Admin practice member request error:',
+          membersResult.reason
+        );
+
+        setMembers([]);
+
+        setError(
+          th
+            ? 'โหลดข้อความได้ แต่ยังโหลดรายชื่อสมาชิกไม่ได้ กรุณากด “โหลดใหม่”'
+            : 'Messages loaded, but the member list could not be loaded. Please reload.'
+        );
+      }
     } catch (err) {
       console.error(
         'Admin practice messages load error:',
@@ -578,8 +609,8 @@ function AdminPracticeMessagePanel({
                 }}
               >
                 {th
-                  ? 'เฉพาะสมาชิก'
-                  : 'Specific member'}
+                  ? 'เลือกผู้รับรายบุคคล'
+                  : 'Individual recipient'}
               </button>
             </div>
           </div>
@@ -607,9 +638,13 @@ function AdminPracticeMessagePanel({
                 style={inputStyle}
               >
                 <option value="">
-                  {th
-                    ? 'กรุณาเลือกสมาชิก'
-                    : 'Please select a member'}
+                  {members.length === 0
+                    ? (th
+                        ? 'ยังไม่มีรายชื่อสมาชิกให้เลือก'
+                        : 'No members available')
+                    : (th
+                        ? 'กรุณาเลือกสมาชิก'
+                        : 'Please select a member')}
                 </option>
 
                 {members.map(
@@ -911,8 +946,8 @@ function AdminPracticeMessagePanel({
                                 item.target_member_id
                               ) ||
                               (th
-                                ? 'เฉพาะสมาชิก'
-                                : 'Specific member')
+                                ? 'เลือกผู้รับรายบุคคล'
+                                : 'Individual recipient')
                             )
                             : (th
                                 ? 'ผู้ปฏิบัติทุกคน'

@@ -175,7 +175,7 @@ async function loadMember({
   const response = await fetch(
     `${supabaseUrl}/rest/v1/members` +
       `?id=eq.${encodeURIComponent(memberId)}` +
-      '&select=id,full_name,display_name,role' +
+      '&select=id,full_name,display_name' +
       '&limit=1',
     {
       method: 'GET',
@@ -226,11 +226,6 @@ async function loadMessage({
 }
 
 export default async function handler(req, res) {
-  res.setHeader(
-    'Cache-Control',
-    'no-store, no-cache, must-revalidate'
-  );
-
   const supabaseUrl =
     process.env.SUPABASE_URL;
 
@@ -302,8 +297,7 @@ export default async function handler(req, res) {
 
         const response = await fetch(
           `${supabaseUrl}/rest/v1/members` +
-            '?select=id,full_name,display_name,role' +
-            '&order=full_name.asc' +
+            '?select=id,full_name,display_name' +
             '&limit=500',
           {
             method: 'GET',
@@ -329,10 +323,36 @@ export default async function handler(req, res) {
           });
         }
 
+        const members =
+          (Array.isArray(data) ? data : [])
+            .slice()
+            .sort((a, b) => {
+              const aName =
+                String(
+                  a?.full_name ||
+                  a?.display_name ||
+                  ''
+                ).trim();
+
+              const bName =
+                String(
+                  b?.full_name ||
+                  b?.display_name ||
+                  ''
+                ).trim();
+
+              return aName.localeCompare(
+                bName,
+                'th',
+                {
+                  sensitivity: 'base'
+                }
+              );
+            });
+
         return res.status(200).json({
           success: true,
-          members:
-            Array.isArray(data) ? data : []
+          members
         });
       }
 
