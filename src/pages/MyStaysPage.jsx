@@ -124,6 +124,7 @@ function MyStaysPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copiedId, setCopiedId] = useState('');
+  const [expandedHistoryId, setExpandedHistoryId] = useState('');
 
   const th = lang === 'th';
 
@@ -729,6 +730,241 @@ function MyStaysPage({
 
 
   /* =========================================================
+     LATEST STAY + COMPACT HISTORY
+     ========================================================= */
+
+  const sortedBookings = useMemo(() => {
+    return [...bookings].sort((a, b) => {
+      const aValue =
+        a?.created_at ||
+        a?.start_date ||
+        '';
+
+      const bValue =
+        b?.created_at ||
+        b?.start_date ||
+        '';
+
+      return String(bValue).localeCompare(
+        String(aValue)
+      );
+    });
+  }, [bookings]);
+
+  const latestBooking =
+    sortedBookings[0] || null;
+
+  const historyBookings =
+    sortedBookings.slice(1);
+
+  function getHistoryState(booking) {
+    const isCompleted =
+      booking?.status === 'completed' ||
+      (
+        booking?.status === 'checked_out' &&
+        isReturnConfirmed(booking)
+      );
+
+    if (isCompleted) {
+      return {
+        type: 'complete',
+        symbol: '✓',
+        label: th
+          ? 'เสร็จสมบูรณ์'
+          : 'Completed'
+      };
+    }
+
+    if (
+      booking?.status === 'cancelled' ||
+      booking?.status === 'rejected'
+    ) {
+      return {
+        type: 'cancelled',
+        symbol: '×',
+        label: th
+          ? 'ยกเลิก / ไม่ได้เข้าพัก'
+          : 'Cancelled / not completed'
+      };
+    }
+
+    return {
+      type: 'incomplete',
+      symbol: '−',
+      label: th
+        ? 'จบไม่ครบ / มีเหตุขัดข้อง'
+        : 'Incomplete stay'
+    };
+  }
+
+  function FullStayCard({ booking }) {
+    if (!booking) {
+      return null;
+    }
+
+    const stopped =
+      booking.status === 'rejected' ||
+      booking.status === 'cancelled';
+
+    const displayCompleted =
+      booking.status === 'completed' ||
+      (
+        booking.status === 'checked_out' &&
+        isReturnConfirmed(booking)
+      );
+
+    return (
+      <article className="stayRequestCard">
+        <div className="stayCardTop">
+          <div>
+            <h2 className="stayName">
+              {booking.name}
+            </h2>
+
+            <div className="stayRequestCodeRow">
+              <span>
+                {th
+                  ? 'รหัสคำขอ'
+                  : 'Request ID'}
+              </span>
+
+              <span
+                className="stayRequestCode"
+                title={getRequestCode(
+                  booking
+                )}
+              >
+                {shortRequestCode(
+                  booking
+                )}
+              </span>
+
+              {!!getRequestCode(
+                booking
+              ) && (
+                <button
+                  type="button"
+                  className="stayCopyBtn"
+                  onClick={() =>
+                    copyRequestCode(
+                      booking
+                    )
+                  }
+                >
+                  {copiedId ===
+                  booking.id
+                    ? th
+                      ? 'คัดลอกแล้ว ✓'
+                      : 'Copied ✓'
+                    : th
+                    ? 'คัดลอก'
+                    : 'Copy'}
+                </button>
+              )}
+            </div>
+
+            <div className="stayDates">
+              <img
+                src="/icons/calendar.svg"
+                alt=""
+                aria-hidden="true"
+              />
+
+              <span>
+                {formatDate(
+                  booking.start_date
+                )}
+              </span>
+
+              <span>→</span>
+
+              <span>
+                {formatDate(
+                  booking.end_date
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div
+            className={
+              stopped
+                ? 'stayStatusBadge stopped'
+                : 'stayStatusBadge'
+            }
+          >
+            {displayCompleted
+              ? '✓ '
+              : ''}
+            {getStatusText(booking)}
+          </div>
+        </div>
+
+        <div className="stayMetaGrid">
+          <div className="stayMetaItem">
+            <img
+              src="/icons/dhamma-book.svg"
+              alt=""
+              className="stayMetaIcon"
+              aria-hidden="true"
+            />
+
+            <div>
+              <span className="stayMetaLabel">
+                {th
+                  ? 'จุดประสงค์'
+                  : 'Purpose'}
+              </span>
+
+              <div className="stayMetaValue">
+                {booking.purpose ||
+                  (th
+                    ? 'ไม่ได้ระบุ'
+                    : 'Not specified')}
+              </div>
+            </div>
+          </div>
+
+          <div className="stayMetaItem">
+            <img
+              src="/icons/stay.svg"
+              alt=""
+              className="stayMetaIcon"
+              aria-hidden="true"
+            />
+
+            <div>
+              <span className="stayMetaLabel">
+                {th
+                  ? 'สถานที่พัก'
+                  : 'Accommodation'}
+              </span>
+
+              <div className="stayMetaValue">
+                {booking.accommodation_name ||
+                  (th
+                    ? 'ยังไม่ได้ระบุ'
+                    : 'Not assigned yet')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {displayCompleted && (
+          <div className="stayCompletedMessage">
+            {th
+              ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว ขออนุโมทนาในการปฏิบัติ และขอให้เดินทางกลับโดยสวัสดิภาพ ยินดีต้อนรับกลับมาปฏิบัติธรรมอีกครั้ง'
+              : '✓ Your retreat stay is complete. We rejoice in your practice, wish you a safe journey home, and warmly welcome you to return again.'}
+          </div>
+        )}
+
+        <StayTracking booking={booking} />
+      </article>
+    );
+  }
+
+
+  /* =========================================================
      PAGE
      ========================================================= */
 
@@ -1133,6 +1369,113 @@ function MyStaysPage({
           font-weight: 600;
         }
 
+
+        .staySectionLabel {
+          margin: 6px 0 14px;
+          color: #7b633d;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: .04em;
+        }
+
+        .stayHistorySection {
+          margin-top: 32px;
+          padding-top: 26px;
+          border-top: 1px solid #eee5da;
+        }
+
+        .stayHistoryTitle {
+          margin: 0 0 12px;
+          color: #3f332a;
+          font-size: 17px;
+          font-weight: 600;
+        }
+
+        .stayHistoryList {
+          overflow: hidden;
+          border: 1px solid #e7ddcf;
+          border-radius: 12px;
+          background: #fffefb;
+        }
+
+        .stayHistoryItem + .stayHistoryItem {
+          border-top: 1px solid #eee6db;
+        }
+
+        .stayHistoryRow {
+          width: 100%;
+          min-height: 58px;
+          padding: 10px 14px;
+          display: grid;
+          grid-template-columns: 34px minmax(0,1fr) 18px;
+          gap: 10px;
+          align-items: center;
+          border: 0;
+          background: transparent;
+          color: inherit;
+          font-family: inherit;
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .stayHistoryRow:hover {
+          background: #fffaf2;
+        }
+
+        .stayHistoryStatusIcon {
+          width: 28px;
+          height: 28px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          color: #fff;
+          font-size: 17px;
+          font-weight: 800;
+          line-height: 1;
+        }
+
+        .stayHistoryStatusIcon.complete {
+          background: #24a148;
+        }
+
+        .stayHistoryStatusIcon.incomplete {
+          background: #d9a321;
+        }
+
+        .stayHistoryStatusIcon.cancelled {
+          background: #cf4a40;
+        }
+
+        .stayHistoryDateLine {
+          min-width: 0;
+          overflow: hidden;
+          color: #4a4037;
+          font-size: 13px;
+          font-weight: 600;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .stayHistoryChevron {
+          color: #a59a8e;
+          font-size: 22px;
+          line-height: 1;
+          transition: transform .18s ease;
+        }
+
+        .stayHistoryChevron.open {
+          transform: rotate(90deg);
+        }
+
+        .stayHistoryExpanded {
+          padding: 0 12px 12px;
+        }
+
+        .stayHistoryExpanded .stayRequestCard {
+          margin: 0;
+          box-shadow: none;
+        }
+
         @media (max-width: 720px) {
           .myStaysPage {
             padding: 22px 10px 44px;
@@ -1245,6 +1588,37 @@ function MyStaysPage({
 
           .stayQrButton {
             width: 100%;
+          }
+
+
+          .staySectionLabel {
+            margin-top: 2px;
+          }
+
+          .stayHistorySection {
+            margin-top: 24px;
+            padding-top: 20px;
+          }
+
+          .stayHistoryRow {
+            min-height: 54px;
+            padding: 9px 10px;
+            grid-template-columns: 30px minmax(0,1fr) 16px;
+            gap: 8px;
+          }
+
+          .stayHistoryStatusIcon {
+            width: 26px;
+            height: 26px;
+            font-size: 16px;
+          }
+
+          .stayHistoryDateLine {
+            font-size: 12.5px;
+          }
+
+          .stayHistoryExpanded {
+            padding: 0 8px 8px;
           }
         }
       `}</style>
@@ -1364,174 +1738,101 @@ function MyStaysPage({
 
         {!loading &&
           !error &&
-          bookings.map((booking) => {
-            const stopped =
-              booking.status ===
-                'rejected' ||
-              booking.status ===
-                'cancelled';
+          latestBooking && (
+            <>
+              <div className="staySectionLabel">
+                {th
+                  ? 'การเข้าพักล่าสุด'
+                  : 'LATEST RETREAT STAY'}
+              </div>
 
-            return (
-              <article
-                key={booking.id}
-                className="stayRequestCard"
-              >
-                <div className="stayCardTop">
-                  <div>
-                    <h2 className="stayName">
-                      {booking.name}
-                    </h2>
+              <FullStayCard
+                booking={latestBooking}
+              />
 
-                    <div className="stayRequestCodeRow">
-                      <span>
-                        {th
-                          ? 'รหัสคำขอ'
-                          : 'Request ID'}
-                      </span>
-
-                      <span
-                        className="stayRequestCode"
-                        title={getRequestCode(
-                          booking
-                        )}
-                      >
-                        {shortRequestCode(
-                          booking
-                        )}
-                      </span>
-
-                      {!!getRequestCode(
-                        booking
-                      ) && (
-                        <button
-                          type="button"
-                          className="stayCopyBtn"
-                          onClick={() =>
-                            copyRequestCode(
-                              booking
-                            )
-                          }
-                        >
-                          {copiedId ===
-                          booking.id
-                            ? th
-                              ? 'คัดลอกแล้ว ✓'
-                              : 'Copied ✓'
-                            : th
-                            ? 'คัดลอก'
-                            : 'Copy'}
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="stayDates">
-                      <img
-                        src="/icons/calendar.svg"
-                        alt=""
-                        aria-hidden="true"
-                      />
-
-                      <span>
-                        {formatDate(
-                          booking.start_date
-                        )}
-                      </span>
-
-                      <span>
-                        →
-                      </span>
-
-                      <span>
-                        {formatDate(
-                          booking.end_date
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    className={
-                      stopped
-                        ? 'stayStatusBadge stopped'
-                        : 'stayStatusBadge'
-                    }
-                  >
-                    {booking.status ===
-                    'completed'
-                      ? '✓ '
-                      : ''}
-                    {statusText[
-                      booking.status
-                    ] ||
-                      booking.status}
-                  </div>
-                </div>
-
-                <div className="stayMetaGrid">
-                  <div className="stayMetaItem">
-                    <img
-                      src="/icons/dhamma-book.svg"
-                      alt=""
-                      className="stayMetaIcon"
-                      aria-hidden="true"
-                    />
-
-                    <div>
-                      <span className="stayMetaLabel">
-                        {th
-                          ? 'จุดประสงค์'
-                          : 'Purpose'}
-                      </span>
-
-                      <div className="stayMetaValue">
-                        {booking.purpose ||
-                          (th
-                            ? 'ไม่ได้ระบุ'
-                            : 'Not specified')}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="stayMetaItem">
-                    <img
-                      src="/icons/stay.svg"
-                      alt=""
-                      className="stayMetaIcon"
-                      aria-hidden="true"
-                    />
-
-                    <div>
-                      <span className="stayMetaLabel">
-                        {th
-                          ? 'สถานที่พัก'
-                          : 'Accommodation'}
-                      </span>
-
-                      <div className="stayMetaValue">
-                        {booking.accommodation_name ||
-                          (th
-                            ? 'ยังไม่ได้ระบุ'
-                            : 'Not assigned yet')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {booking.status ===
-                  'completed' && (
-                  <div className="stayCompletedMessage">
+              {historyBookings.length > 0 && (
+                <section className="stayHistorySection">
+                  <h2 className="stayHistoryTitle">
                     {th
-                      ? '✓ การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์แล้ว ขออนุโมทนาในการปฏิบัติ และขอให้เดินทางกลับโดยสวัสดิภาพ ยินดีต้อนรับกลับมาปฏิบัติธรรมอีกครั้ง'
-                      : '✓ Your retreat stay is complete. We rejoice in your practice, wish you a safe journey home, and warmly welcome you to return again.'}
-                  </div>
-                )}
+                      ? 'ประวัติการเข้าพักก่อนหน้า'
+                      : 'Previous retreat stays'}
+                  </h2>
 
-                <StayTracking
-                  booking={booking}
-                />
-              </article>
-            );
-          })}
+                  <div className="stayHistoryList">
+                    {historyBookings.map(
+                      (booking) => {
+                        const historyState =
+                          getHistoryState(
+                            booking
+                          );
+
+                        const expanded =
+                          expandedHistoryId ===
+                          booking.id;
+
+                        return (
+                          <div
+                            key={booking.id}
+                            className="stayHistoryItem"
+                          >
+                            <button
+                              type="button"
+                              className="stayHistoryRow"
+                              onClick={() =>
+                                setExpandedHistoryId(
+                                  expanded
+                                    ? ''
+                                    : booking.id
+                                )
+                              }
+                              aria-expanded={expanded}
+                              title={historyState.label}
+                            >
+                              <span
+                                className={`stayHistoryStatusIcon ${historyState.type}`}
+                                aria-label={historyState.label}
+                              >
+                                {historyState.symbol}
+                              </span>
+
+                              <span className="stayHistoryDateLine">
+                                {formatDate(
+                                  booking.start_date
+                                )}
+                                {' – '}
+                                {formatDate(
+                                  booking.end_date
+                                )}
+                              </span>
+
+                              <span
+                                className={
+                                  expanded
+                                    ? 'stayHistoryChevron open'
+                                    : 'stayHistoryChevron'
+                                }
+                                aria-hidden="true"
+                              >
+                                ›
+                              </span>
+                            </button>
+
+                            {expanded && (
+                              <div className="stayHistoryExpanded">
+                                <FullStayCard
+                                  booking={booking}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
       </div>
     </div>
   );
