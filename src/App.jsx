@@ -15,6 +15,8 @@ import PracticeMessagesPage from './pages/PracticeMessagesPage'
 import StudentLoginPage from './pages/StudentLoginPage'
 import StudentDashboard from './pages/StudentDashboard'
 import PublicRetreatReviews from './components/PublicRetreatReviews'
+import StayProcessPage from './pages/StayProcessPage'
+import StayPreparationPage from './pages/StayPreparationPage'
 
 const content = {
   en: {
@@ -263,7 +265,9 @@ useEffect(() => {
         hash === 'my-dashboard' ||
         hash === 'my-stays' ||
         hash === 'checkin-page' ||
-        hash === 'practice-messages'
+        hash === 'practice-messages' ||
+        hash === 'stay-process' ||
+        hash === 'prepare-stay'
       ) {
         setCurrentPage(hash)
       } else {
@@ -522,7 +526,9 @@ const handleLineLogin = () => {
     'booking-page',
     'donation-list',
     'checkin-page',
-    'practice-messages'
+    'practice-messages',
+    'stay-process',
+    'prepare-stay'
   ];
 
   const showAccountBottomNav =
@@ -1015,6 +1021,10 @@ const handleLineLogin = () => {
               <PublicRetreatReviews lang={lang} />
             </div>
           </div>
+        ) : currentPage === 'stay-process' ? (
+          <StayProcessPage lang={lang} goToPage={goToPage} />
+        ) : currentPage === 'prepare-stay' ? (
+          <StayPreparationPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'booking-page' ? (
           /* ================= PAGE: BOOKING FORM ================= */
           <BookingPage lang={lang} goToPage={goToPage} />
