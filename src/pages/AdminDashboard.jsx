@@ -1172,6 +1172,17 @@ function AdminDashboard({ lang, goToPage }) {
     );
   };
 
+  const getAdminDisplayStatus = (booking) => {
+    if (
+      booking?.status === 'checked_out' &&
+      isReturnConfirmed(booking)
+    ) {
+      return 'completed';
+    }
+
+    return booking?.status || '';
+  };
+
   const renderActions = (booking) => {
     const busy =
       processingId === booking.id;
@@ -2198,11 +2209,15 @@ function AdminDashboard({ lang, goToPage }) {
                         <td style={{ padding: '11px' }}>
                           <span
                             style={statusStyle(
-                              booking.status
+                              getAdminDisplayStatus(
+                                booking
+                              )
                             )}
                           >
                             {statusLabel(
-                              booking.status
+                              getAdminDisplayStatus(
+                                booking
+                              )
                             )}
                           </span>
                         </td>
