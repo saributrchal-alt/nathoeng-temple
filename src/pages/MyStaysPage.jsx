@@ -172,7 +172,10 @@ function MyStaysPage({
 
 
   const isReturnConfirmed = (booking) =>
-    Boolean(booking?.completed_at);
+    Boolean(booking?.completed_at) ||
+    ['qr_return', 'admin_return'].includes(
+      booking?.checkout_method
+    );
 
   const getStatusText = (booking) => {
     if (
@@ -256,12 +259,12 @@ function MyStaysPage({
     {
       key: 'completed',
       icon: 'complete',
-      th: 'คืนกุญแจ / อุปกรณ์และเช็กเอาท์',
-      en: 'Return items & complete check-out',
+      th: 'คืนกุญแจ / อุปกรณ์และการเข้าพักเสร็จสมบูรณ์',
+      en: 'Return items & stay completed',
       descriptionTh:
-        'คืนกุญแจและอุปกรณ์เรียบร้อย การเข้าพักเสร็จสมบูรณ์',
+        'ยืนยันการคืนกุญแจและอุปกรณ์เรียบร้อยแล้ว การเข้าพักปฏิบัติธรรมของท่านเสร็จสมบูรณ์',
       descriptionEn:
-        'Keys and equipment have been returned and the stay is complete.'
+        'Keys and equipment have been returned successfully. Your retreat stay is complete.'
     }
   ];
 
@@ -516,6 +519,26 @@ function MyStaysPage({
 
     return (
       <div className="stayTracking">
+        {booking.status === 'checked_out' &&
+          isReturnConfirmed(booking) && (
+            <div
+              style={{
+                marginBottom: '18px',
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: '#edf8ef',
+                border: '1px solid #cfe8d3',
+                color: '#236b35',
+                fontWeight: 700,
+                lineHeight: 1.55
+              }}
+            >
+              {th
+                ? '✓ คืนกุญแจ / อุปกรณ์เรียบร้อยแล้ว การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์ ไม่ต้องสแกน QR ซ้ำ'
+                : '✓ Keys / equipment returned. Your retreat stay is complete. No further QR scan is required.'}
+            </div>
+          )}
+
         <div className="stayTrackingTitle">
           {th
             ? 'สถานะการเข้าพักปฏิบัติธรรม'

@@ -1164,7 +1164,12 @@ function AdminDashboard({ lang, goToPage }) {
   };
 
   const isReturnConfirmed = (booking) => {
-    return Boolean(booking?.completed_at);
+    return (
+      Boolean(booking?.completed_at) ||
+      ['qr_return', 'admin_return'].includes(
+        booking?.checkout_method
+      )
+    );
   };
 
   const renderActions = (booking) => {
