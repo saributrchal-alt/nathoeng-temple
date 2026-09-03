@@ -261,7 +261,8 @@ useEffect(() => {
         hash === 'student-dashboard' ||
         hash === 'my-dashboard' ||
         hash === 'my-stays' ||
-        hash === 'checkin-page'
+        hash === 'checkin-page' ||
+        hash === 'practice-messages'
       ) {
         setCurrentPage(hash)
       } else {
@@ -519,7 +520,8 @@ const handleLineLogin = () => {
     'my-stays',
     'booking-page',
     'donation-list',
-    'checkin-page'
+    'checkin-page',
+    'practice-messages'
   ];
 
   const showAccountBottomNav =
