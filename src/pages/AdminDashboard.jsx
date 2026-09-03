@@ -82,7 +82,7 @@ function AdminDashboard({ lang, goToPage }) {
       startRetreat: 'Start Retreat',
       checkOut: 'Retreat Period Completed',
       confirmReturn: 'Confirm Return for Guest',
-      returnConfirmed: 'Keys / equipment returned — ready to complete',
+      returnConfirmed: 'Keys / equipment returned — stay completed for guest',
       complete: 'Complete Stay',
       cancel: 'Cancel',
       lineNotifyApproval: 'LINE Approval Notice',
@@ -98,8 +98,8 @@ function AdminDashboard({ lang, goToPage }) {
       lineBlessingButton: 'Send Blessing',
       lineBlessingTitle: 'Review blessing message',
       lineBlessingHelp:
-        'This bilingual blessing is sent by the Nathoeng Forest Monastery Assistant after the practitioner has completed the stay. You can edit the full message first.',
-      lineBlessingSend: 'Send Send Blessing',
+        'This bilingual blessing is sent by the Nathoeng Forest Monastery Assistant after the guest has returned keys/equipment. You can edit the full message first.',
+      lineBlessingSend: 'Send Blessing',
       lineBlessingSuccess:
         'Blessing sent via LINE OA successfully.',
       lineBlessingError:
@@ -203,7 +203,7 @@ function AdminDashboard({ lang, goToPage }) {
       startRetreat: 'เริ่มปฏิบัติธรรม',
       checkOut: 'เข้าพักครบกำหนด',
       confirmReturn: 'ยืนยันคืนกุญแจ / อุปกรณ์แทนผู้เข้าพัก',
-      returnConfirmed: 'คืนกุญแจ / อุปกรณ์แล้ว — รออวยพรและปิดการเข้าพัก',
+      returnConfirmed: 'คืนกุญแจ / อุปกรณ์แล้ว — ผู้เข้าพักเห็นว่าการเข้าพักเสร็จสิ้นแล้ว',
       complete: 'ปิดการเข้าพัก',
       cancel: 'ยกเลิก',
       lineNotifyApproval: 'แจ้งอนุมัติทาง LINE',
@@ -219,7 +219,7 @@ function AdminDashboard({ lang, goToPage }) {
       lineBlessingButton: 'ส่งคำอวยพร',
       lineBlessingTitle: 'ตรวจสอบคำอวยพรก่อนส่ง',
       lineBlessingHelp:
-        'ข้อความนี้เป็นคำอวยพรระบบ 2 ภาษา จากศิษย์วัดป่านาเทิง หลังผู้เข้าพักคืนกุญแจ/อุปกรณ์และการเข้าพักเสร็จสิ้นแล้ว สามารถแก้ไขข้อความทั้งหมดได้ก่อนกดส่ง',
+        'ข้อความนี้เป็นคำอวยพรระบบ 2 ภาษา จากศิษย์วัดป่านาเทิง หลังผู้เข้าพักคืนกุญแจ/อุปกรณ์แล้ว สามารถแก้ไขข้อความทั้งหมดได้ก่อนกดส่ง',
       lineBlessingSend: 'ส่งคำอวยพร',
       lineBlessingSuccess:
         'ส่งคำอวยพรทาง LINE OA เรียบร้อยแล้ว',
@@ -815,6 +815,47 @@ function AdminDashboard({ lang, goToPage }) {
     setLineBlessingError('');
   };
 
+  const completeStayAfterBlessing = async (booking) => {
+    const response = await fetch(
+      '/api/update-stay-status',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          action: 'complete',
+          accommodationName: '',
+          note: ''
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    let data = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
+
+    if (
+      !response.ok ||
+      !data?.success
+    ) {
+      throw new Error(
+        data?.message ||
+        t.actionError
+      );
+    }
+
+    return data;
+  };
+
   const sendCompletionBlessing = async () => {
     if (!lineBlessingTarget?.id) return;
 
@@ -842,7 +883,7 @@ function AdminDashboard({ lang, goToPage }) {
     const confirmed = window.confirm(
       lang === 'th'
         ? 'ยืนยันส่งคำอวยพรทาง LINE OA ถึงผู้เข้าพักรายการนี้หรือไม่?'
-        : 'Send this blessing to the practitioner via LINE OA?'
+        : 'Send this blessing to the guest via LINE OA?'
     );
 
     if (!confirmed) return;
@@ -890,6 +931,10 @@ function AdminDashboard({ lang, goToPage }) {
           t.lineBlessingError
         );
       }
+
+      await completeStayAfterBlessing(
+        lineBlessingTarget
+      );
 
       await loadBookings();
 
@@ -1029,6 +1074,11 @@ function AdminDashboard({ lang, goToPage }) {
   };
 
   const callStayAction = async (booking, action) => {
+    if (action === 'complete') {
+      openCompletionBlessing(booking);
+      return;
+    }
+
     let accommodationName = '';
     let note = '';
 
@@ -1111,6 +1161,10 @@ function AdminDashboard({ lang, goToPage }) {
     cursor: 'pointer',
     fontSize: '12px',
     fontWeight: '600'
+  };
+
+  const isReturnConfirmed = (booking) => {
+    return Boolean(booking?.completed_at);
   };
 
   const renderActions = (booking) => {
@@ -1375,26 +1429,63 @@ function AdminDashboard({ lang, goToPage }) {
     }
 
     if (booking.status === 'checked_out') {
-      return (
-        <button
-          disabled={busy}
-          onClick={() => callStayAction(booking, 'confirm_return')}
-          style={{...actionButtonStyle, background: '#546e7a', color: '#fff'}}
-        >
-          {t.confirmReturn}
-        </button>
-      );
-    }
+      if (!isReturnConfirmed(booking)) {
+        return (
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'confirm_return'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#546e7a',
+              color: '#fff'
+            }}
+          >
+            {t.confirmReturn}
+          </button>
+        );
+      }
 
-    if (booking.status === 'completed') {
       return (
-        <button
-          disabled={busy}
-          onClick={() => openCompletionBlessing(booking)}
-          style={{...actionButtonStyle, background: '#00695c', color: '#fff'}}
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}
         >
-          {t.lineBlessingButton}
-        </button>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#2e7d32'
+            }}
+          >
+            ✓ {t.returnConfirmed}
+          </span>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'complete'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#00695c',
+              color: '#fff'
+            }}
+          >
+            {t.lineBlessingButton}
+          </button>
+        </div>
       );
     }
 

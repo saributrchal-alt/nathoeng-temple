@@ -144,7 +144,7 @@ export default async function handler(req, res) {
     const expectedStatus =
       cleanEvent === 'approved'
         ? 'approved'
-        : 'completed';
+        : 'checked_out';
 
     if (
       booking.status !== expectedStatus
@@ -154,7 +154,7 @@ export default async function handler(req, res) {
         message:
           cleanEvent === 'approved'
             ? 'Approval LINE notice can only be sent while the stay is approved'
-            : 'Completion blessing can only be sent after the stay is completed',
+            : 'Completion blessing can only be sent before the stay is completed',
         currentStatus:
           booking.status
       });

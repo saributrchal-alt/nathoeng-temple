@@ -171,6 +171,23 @@ function MyStaysPage({
   };
 
 
+  const isReturnConfirmed = (booking) =>
+    Boolean(booking?.completed_at);
+
+  const getStatusText = (booking) => {
+    if (
+      booking?.status === 'checked_out' &&
+      isReturnConfirmed(booking)
+    ) {
+      return th
+        ? 'การเข้าพักปฏิบัติธรรมเสร็จสมบูรณ์'
+        : 'Retreat stay completed';
+    }
+
+    return statusText[booking?.status] || '-';
+  };
+
+
   /* =========================================================
      TRACKING STEPS
      ========================================================= */
@@ -473,7 +490,9 @@ function MyStaysPage({
     };
 
     const completedIndex =
-      completedThroughIndex[booking.status] ?? -1;
+      isReturnConfirmed(booking)
+        ? 6
+        : completedThroughIndex[booking.status] ?? -1;
 
     const stopped =
       booking.status === 'rejected' ||
@@ -489,7 +508,7 @@ function MyStaysPage({
           </div>
 
           <div className="stayStoppedBox">
-            {statusText[booking.status] || '-'}
+            {getStatusText(booking)}
           </div>
         </div>
       );
@@ -638,6 +657,7 @@ function MyStaysPage({
                         ) ||
                         (
                           booking.status === 'checked_out' &&
+                          !isReturnConfirmed(booking) &&
                           step.key === 'completed'
                         )
                       ) && (
