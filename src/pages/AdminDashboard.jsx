@@ -25,6 +25,10 @@ function AdminDashboard({ lang, goToPage }) {
   const [lineBlessingMessage, setLineBlessingMessage] = useState('');
   const [lineBlessingSending, setLineBlessingSending] = useState(false);
   const [lineBlessingError, setLineBlessingError] = useState('');
+  const [accommodationTarget, setAccommodationTarget] = useState(null);
+  const [selectedAccommodation, setSelectedAccommodation] = useState('');
+  const [accommodationSaving, setAccommodationSaving] = useState(false);
+  const [accommodationError, setAccommodationError] = useState('');
 
   const t = {
     en: {
@@ -99,7 +103,15 @@ function AdminDashboard({ lang, goToPage }) {
         'Unable to send the blessing or complete the stay.',
 
       accommodationPrompt:
-        'Enter accommodation name, kuti, building, or room:',
+        'Choose an accommodation from the monastery list:',
+      accommodationPickerTitle: 'Choose Accommodation',
+      accommodationPickerHelp:
+        'Select one of the 6 accommodations registered in the system. Manual entry is disabled to prevent mismatched room names.',
+      accommodationPickerPlaceholder: 'Select accommodation',
+      accommodationPickerSave: 'Save Accommodation',
+      accommodationPickerCancel: 'Cancel',
+      accommodationPickerRequired: 'Please select an accommodation.',
+      accommodationPickerSuccess: 'Accommodation updated successfully.',
       notePrompt: 'Optional admin note:',
       confirmAction: 'Confirm this stay status change?',
       actionSuccess: 'Stay status updated successfully.',
@@ -208,7 +220,15 @@ function AdminDashboard({ lang, goToPage }) {
       lineBlessingError:
         'ไม่สามารถส่งคำอวยพรหรือปิดการเข้าพักได้',
 
-      accommodationPrompt: 'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
+      accommodationPrompt: 'เลือกที่พักจากรายการของวัด:',
+      accommodationPickerTitle: 'เลือกที่พัก',
+      accommodationPickerHelp:
+        'เลือกได้เฉพาะที่พัก 6 ห้องที่ลงทะเบียนไว้ในระบบ ไม่เปิดให้พิมพ์ชื่อเอง เพื่อป้องกันชื่อห้องไม่ตรงกับระบบ',
+      accommodationPickerPlaceholder: 'เลือกที่พัก',
+      accommodationPickerSave: 'บันทึกที่พัก',
+      accommodationPickerCancel: 'ยกเลิก',
+      accommodationPickerRequired: 'กรุณาเลือกที่พัก',
+      accommodationPickerSuccess: 'อัปเดตที่พักเรียบร้อยแล้ว',
       notePrompt: 'หมายเหตุของผู้ดูแล (ถ้ามี):',
       confirmAction: 'ยืนยันการเปลี่ยนสถานะรายการนี้หรือไม่?',
       actionSuccess: 'เปลี่ยนสถานะการเข้าพักเรียบร้อยแล้ว',
@@ -932,6 +952,119 @@ function AdminDashboard({ lang, goToPage }) {
     }
   };
 
+  const accommodationOptions = [
+    'กุฏิยอดคำ ห้อง 2',
+    'กุฏิสกุลคุณสวัสดิ์ 1 ห้อง 1',
+    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 1',
+    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 2',
+    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 1',
+    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 2'
+  ];
+
+  const openAccommodationPicker = (booking) => {
+    setAccommodationTarget(booking);
+    setSelectedAccommodation(
+      accommodationOptions.includes(
+        booking?.accommodation_name
+      )
+        ? booking.accommodation_name
+        : ''
+    );
+    setAccommodationError('');
+  };
+
+  const closeAccommodationPicker = () => {
+    if (accommodationSaving) return;
+
+    setAccommodationTarget(null);
+    setSelectedAccommodation('');
+    setAccommodationError('');
+  };
+
+  const saveAccommodationSelection = async () => {
+    if (!accommodationTarget?.id) return;
+
+    if (
+      !accommodationOptions.includes(
+        selectedAccommodation
+      )
+    ) {
+      setAccommodationError(
+        t.accommodationPickerRequired
+      );
+      return;
+    }
+
+    setAccommodationSaving(true);
+    setAccommodationError('');
+
+    try {
+      const response = await fetch(
+        '/api/update-stay-status',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: accommodationTarget.id,
+            action: 'assign_accommodation',
+            accommodationName:
+              selectedAccommodation,
+            note: ''
+          })
+        }
+      );
+
+      const responseText =
+        await response.text();
+
+      let data = null;
+
+      try {
+        data =
+          responseText
+            ? JSON.parse(responseText)
+            : null;
+      } catch {
+        data = null;
+      }
+
+      if (
+        !response.ok ||
+        !data?.success
+      ) {
+        throw new Error(
+          data?.message ||
+          t.actionError
+        );
+      }
+
+      await loadBookings();
+
+      window.alert(
+        t.accommodationPickerSuccess
+      );
+
+      setAccommodationTarget(null);
+      setSelectedAccommodation('');
+      setAccommodationError('');
+    } catch (err) {
+      console.error(
+        'Accommodation assignment error:',
+        err
+      );
+
+      setAccommodationError(
+        err.message ||
+        t.actionError
+      );
+    } finally {
+      setAccommodationSaving(false);
+    }
+  };
+
   const callStayAction = async (booking, action) => {
     if (action === 'complete') {
       openCompletionBlessing(booking);
@@ -942,17 +1075,8 @@ function AdminDashboard({ lang, goToPage }) {
     let note = '';
 
     if (action === 'assign_accommodation') {
-      accommodationName = window.prompt(
-        t.accommodationPrompt,
-        booking.accommodation_name || ''
-      );
-
-      if (
-        accommodationName === null ||
-        !accommodationName.trim()
-      ) {
-        return;
-      }
+      openAccommodationPicker(booking);
+      return;
     }
 
     if (action === 'reject' || action === 'cancel') {
@@ -2010,6 +2134,215 @@ function AdminDashboard({ lang, goToPage }) {
             formatDonationDate={formatDonationDate}
             donationPurposeLabel={donationPurposeLabel}
           />
+        )}
+
+        {accommodationTarget && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.accommodationPickerTitle}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10020,
+              background: 'rgba(34, 30, 25, 0.55)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '18px'
+            }}
+            onClick={(event) => {
+              if (
+                event.target === event.currentTarget
+              ) {
+                closeAccommodationPicker();
+              }
+            }}
+          >
+            <div
+              style={{
+                width: 'min(560px, 100%)',
+                background: '#fff',
+                borderRadius: '14px',
+                padding: '22px',
+                boxShadow:
+                  '0 22px 60px rgba(0,0,0,0.24)'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  marginBottom: '12px'
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: '#7e57c2',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      marginBottom: '5px'
+                    }}
+                  >
+                    NATHOENG · STAY MANAGEMENT
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: '#302d29'
+                    }}
+                  >
+                    {t.accommodationPickerTitle}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={accommodationSaving}
+                  onClick={closeAccommodationPicker}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#777'
+                  }}
+                  aria-label={
+                    t.accommodationPickerCancel
+                  }
+                >
+                  ×
+                </button>
+              </div>
+
+              <p
+                style={{
+                  margin: '0 0 14px',
+                  color: '#6c675f',
+                  lineHeight: 1.55
+                }}
+              >
+                {t.accommodationPickerHelp}
+              </p>
+
+              <div
+                style={{
+                  background: '#f7f4fb',
+                  border: '1px solid #e7def2',
+                  borderRadius: '9px',
+                  padding: '10px 12px',
+                  marginBottom: '14px'
+                }}
+              >
+                <strong>
+                  {t.name}:
+                </strong>{' '}
+                {accommodationTarget.name || '-'}
+              </div>
+
+              <select
+                value={selectedAccommodation}
+                disabled={accommodationSaving}
+                onChange={(event) => {
+                  setSelectedAccommodation(
+                    event.target.value
+                  );
+                  setAccommodationError('');
+                }}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  border: '1px solid #d9d5ce',
+                  borderRadius: '9px',
+                  padding: '12px',
+                  font: 'inherit',
+                  background: '#fff',
+                  color: '#302d29'
+                }}
+              >
+                <option value="">
+                  {t.accommodationPickerPlaceholder}
+                </option>
+
+                {accommodationOptions.map(
+                  (option) => (
+                    <option
+                      key={option}
+                      value={option}
+                    >
+                      {option}
+                    </option>
+                  )
+                )}
+              </select>
+
+              {accommodationError && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: '#fff0f0',
+                    color: '#b42318'
+                  }}
+                >
+                  {accommodationError}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '9px',
+                  marginTop: '18px',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={accommodationSaving}
+                  onClick={closeAccommodationPicker}
+                  style={{
+                    ...actionButtonStyle,
+                    padding: '10px 16px',
+                    background: '#f2f0ec',
+                    color: '#4e4a44'
+                  }}
+                >
+                  {t.accommodationPickerCancel}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={
+                    accommodationSaving ||
+                    !selectedAccommodation
+                  }
+                  onClick={saveAccommodationSelection}
+                  style={{
+                    ...actionButtonStyle,
+                    padding: '10px 16px',
+                    background: '#7e57c2',
+                    color: '#fff',
+                    opacity:
+                      accommodationSaving ||
+                      !selectedAccommodation
+                        ? 0.6
+                        : 1
+                  }}
+                >
+                  {accommodationSaving
+                    ? t.lineNotifySending
+                    : t.accommodationPickerSave}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {lineBlessingTarget && (
