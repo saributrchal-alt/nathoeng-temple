@@ -14,6 +14,7 @@ import MyDashboard from './pages/MyDashboard'
 import PracticeMessagesPage from './pages/PracticeMessagesPage'
 import StudentLoginPage from './pages/StudentLoginPage'
 import StudentDashboard from './pages/StudentDashboard'
+import PublicRetreatReviews from './components/PublicRetreatReviews'
 
 const content = {
   en: {
@@ -1010,6 +1011,8 @@ const handleLineLogin = () => {
                   {lang === 'en' ? 'Apply for a Retreat Stay →' : 'กรอกฟอร์มจองเข้าปฏิบัติธรรม →'}
                 </button>
               </div>
+
+              <PublicRetreatReviews lang={lang} />
             </div>
           </div>
         ) : currentPage === 'booking-page' ? (

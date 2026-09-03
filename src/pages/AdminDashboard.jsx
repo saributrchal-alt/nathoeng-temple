@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AdminDonationPanel from './AdminDonationPanel';
 import StudentAdminPanel from '../components/StudentAdminPanel';
 import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
+import AdminRetreatReviewPanel from '../components/AdminRetreatReviewPanel';
 
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
@@ -40,6 +41,7 @@ function AdminDashboard({ lang, goToPage }) {
       donationTab: '💰 Donations',
       studentTab: '👤 Temple Students',
       practiceMessageTab: '📖 Practice Messages',
+      reviewTab: '⭐ Retreat Reviews',
       adminMenuTitle: 'Choose a management area',
       adminMenuHelp: 'Data is loaded only after you open a section.',
       studentTitle: 'Temple Student Management',
@@ -161,6 +163,7 @@ function AdminDashboard({ lang, goToPage }) {
       donationTab: '💰 รายการทำบุญ',
       studentTab: '👤 เด็กวัด',
       practiceMessageTab: '📖 เนื้อหาปฏิบัติถึงฉัน',
+      reviewTab: '⭐ รีวิวผู้เข้าปฏิบัติธรรม',
       adminMenuTitle: 'เลือกเมนูที่ต้องการจัดการ',
       adminMenuHelp: 'ระบบจะโหลดข้อมูลเมื่อกดเข้าแต่ละเมนูเท่านั้น',
       studentTitle: 'จัดการข้อมูลเด็กวัด',
@@ -478,7 +481,8 @@ function AdminDashboard({ lang, goToPage }) {
 
     if (
       section === 'students' ||
-      section === 'practice-messages'
+      section === 'practice-messages' ||
+      section === 'reviews'
     ) {
       return;
     }
@@ -1554,6 +1558,15 @@ function AdminDashboard({ lang, goToPage }) {
           lang === 'en'
             ? 'One-way practice guidance for all practitioners or a selected member.'
             : 'ฝากข้อความและแนวทางปฏิบัติแบบทางเดียว ถึงผู้ปฏิบัติทุกคนหรือเฉพาะบุคคล'
+      },
+      {
+        key: 'reviews',
+        icon: '/icons/lotus.svg',
+        title: t.reviewTab,
+        text:
+          lang === 'en'
+            ? 'Review participant feedback before publishing it on the public website.'
+            : 'ตรวจสอบความคิดเห็นของผู้เข้าปฏิบัติธรรมก่อนอนุมัติให้แสดงบนหน้าเว็บไซต์'
       }
     ];
 
@@ -1757,6 +1770,30 @@ function AdminDashboard({ lang, goToPage }) {
           <AdminPracticeMessagePanel
             lang={lang}
           />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === 'reviews') {
+    return (
+      <div className="guidePage">
+        <div
+          className="guideContainer"
+          style={{
+            maxWidth: '900px',
+            paddingBottom: '70px'
+          }}
+        >
+          <button
+            type="button"
+            className="backButton"
+            onClick={() => setActiveTab('menu')}
+          >
+            {t.backMenu}
+          </button>
+
+          <AdminRetreatReviewPanel lang={lang} />
         </div>
       </div>
     );

@@ -3,6 +3,7 @@ import React, {
   useMemo,
   useState
 } from 'react';
+import RetreatReviewBox from '../components/RetreatReviewBox';
 
 
 /* =========================================================
@@ -959,6 +960,13 @@ function MyStaysPage({
         )}
 
         <StayTracking booking={booking} />
+
+        {displayCompleted && (
+          <RetreatReviewBox
+            lang={lang}
+            booking={booking}
+          />
+        )}
       </article>
     );
   }
