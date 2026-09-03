@@ -14,7 +14,7 @@ function AdminRetreatReviewPanel({ lang = 'th' }) {
 
     try {
       const response = await fetch(
-        `/api/my-bookings?route=reviews&scope=admin&ts=${Date.now()}`,
+        `/api/admin-bookings?route=reviews&ts=${Date.now()}`,
         {
           method: 'GET',
           credentials: 'include',
@@ -32,9 +32,8 @@ function AdminRetreatReviewPanel({ lang = 'th' }) {
     } catch (err) {
       console.error('Admin retreat reviews load error:', err);
       setError(
-        th
-          ? 'ไม่สามารถโหลดรีวิวได้'
-          : 'Unable to load retreat reviews.'
+        err.message ||
+          (th ? 'ไม่สามารถโหลดรีวิวได้' : 'Unable to load retreat reviews.')
       );
     } finally {
       setLoading(false);
@@ -65,7 +64,7 @@ function AdminRetreatReviewPanel({ lang = 'th' }) {
     setError('');
 
     try {
-      const response = await fetch('/api/my-bookings?route=reviews', {
+      const response = await fetch('/api/admin-bookings?route=reviews', {
         method: 'POST',
         credentials: 'include',
         headers: {
