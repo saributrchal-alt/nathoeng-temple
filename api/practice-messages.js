@@ -226,6 +226,11 @@ async function loadMessage({
 }
 
 export default async function handler(req, res) {
+  res.setHeader(
+    'Cache-Control',
+    'no-store, no-cache, must-revalidate'
+  );
+
   const supabaseUrl =
     process.env.SUPABASE_URL;
 
@@ -319,7 +324,8 @@ export default async function handler(req, res) {
 
           return res.status(500).json({
             success: false,
-            message: 'Unable to load members'
+            message: 'Unable to load members',
+            databaseError: data
           });
         }
 
