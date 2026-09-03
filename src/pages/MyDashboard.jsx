@@ -18,6 +18,12 @@ function MyDashboard({
     latestAt: null
   });
 
+  const [practiceMessageLoading, setPracticeMessageLoading] = useState(true);
+  const [practiceMessageSummary, setPracticeMessageSummary] = useState({
+    count: 0,
+    latestAt: null
+  });
+
   useEffect(() => {
     if (!user) {
       setVerifiedFullName('');
@@ -157,6 +163,68 @@ function MyDashboard({
     };
 
     loadDonationSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.memberId]);
+
+  useEffect(() => {
+    if (!user) {
+      setPracticeMessageLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadPracticeMessageSummary = async () => {
+      setPracticeMessageLoading(true);
+
+      try {
+        const response = await fetch('/api/practice-messages', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message || 'Unable to load practice messages'
+          );
+        }
+
+        if (cancelled) return;
+
+        const messages = Array.isArray(data.messages)
+          ? data.messages
+          : [];
+
+        setPracticeMessageSummary({
+          count: messages.length,
+          latestAt: messages[0]?.created_at || null
+        });
+      } catch (error) {
+        console.error(
+          'MyDashboard practice message summary error:',
+          error
+        );
+
+        if (!cancelled) {
+          setPracticeMessageSummary({
+            count: 0,
+            latestAt: null
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setPracticeMessageLoading(false);
+        }
+      }
+    };
+
+    loadPracticeMessageSummary();
 
     return () => {
       cancelled = true;
@@ -419,20 +487,59 @@ function MyDashboard({
           type="button"
           className="compactDhammaStrip"
           onClick={() => goToPage('practice-messages')}
+          style={{ position: 'relative' }}
         >
           <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-          <span>
+
+          <span style={{ flex: 1, textAlign: 'left' }}>
             <strong>
               {th
                 ? 'เนื้อหาปฏิบัติถึงฉัน'
                 : 'Practice Messages for Me'}
             </strong>
+
             <small>
-              {th
-                ? 'อ่านข้อความและแนวทางปฏิบัติจากพระอาจารย์'
-                : 'Read one-way practice guidance from the teacher'}
+              {practiceMessageLoading
+                ? (th
+                    ? 'กำลังตรวจสอบข้อความจากพระอาจารย์...'
+                    : 'Checking messages from the teacher...')
+                : practiceMessageSummary.count > 0
+                  ? (th
+                      ? `มีเนื้อหาปฏิบัติสำหรับคุณ ${practiceMessageSummary.count} ข้อความ`
+                      : `${practiceMessageSummary.count} practice message${practiceMessageSummary.count === 1 ? '' : 's'} for you`)
+                  : (th
+                      ? 'ยังไม่มีเนื้อหาปฏิบัติที่ฝากถึงคุณ'
+                      : 'No practice messages for you yet')}
             </small>
           </span>
+
+          {!practiceMessageLoading &&
+            practiceMessageSummary.count > 0 && (
+              <span
+                aria-label={
+                  th
+                    ? `${practiceMessageSummary.count} ข้อความ`
+                    : `${practiceMessageSummary.count} messages`
+                }
+                style={{
+                  minWidth: '28px',
+                  height: '28px',
+                  padding: '0 8px',
+                  borderRadius: '999px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#9b7226',
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  lineHeight: 1
+                }}
+              >
+                {practiceMessageSummary.count}
+              </span>
+            )}
+
           <span aria-hidden="true">›</span>
         </button>
 
