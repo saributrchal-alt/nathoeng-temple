@@ -77,7 +77,8 @@ function AdminDashboard({ lang, goToPage }) {
       approve: 'Approve',
       reject: 'Reject',
       checkIn: 'Check In',
-      assignAccommodation: 'Assign Accommodation',
+      assignAccommodation: 'Assign / Change Accommodation',
+      confirmAccommodation: 'Confirm Accommodation (Admin)',
       startRetreat: 'Start Retreat',
       checkOut: 'Check Out',
       complete: 'Complete Stay',
@@ -106,7 +107,7 @@ function AdminDashboard({ lang, goToPage }) {
         'Choose an accommodation from the monastery list:',
       accommodationPickerTitle: 'Choose Accommodation',
       accommodationPickerHelp:
-        'Select one of the 6 accommodations registered in the system. Manual entry is disabled to prevent mismatched room names.',
+        'Select one of the 6 accommodations registered in the system. You can assign the room before approving the stay. Manual entry is disabled to prevent mismatched room names.',
       accommodationPickerPlaceholder: 'Select accommodation',
       accommodationPickerSave: 'Save Accommodation',
       accommodationPickerCancel: 'Cancel',
@@ -195,7 +196,8 @@ function AdminDashboard({ lang, goToPage }) {
       approve: 'อนุมัติ',
       reject: 'ไม่อนุมัติ',
       checkIn: 'เช็กอิน',
-      assignAccommodation: 'จัดเข้าที่พัก',
+      assignAccommodation: 'เลือก / เปลี่ยนที่พัก',
+      confirmAccommodation: 'ยืนยันเข้าที่พักแทนผู้เข้าพัก',
       startRetreat: 'เริ่มปฏิบัติธรรม',
       checkOut: 'เช็กเอาต์',
       complete: 'ปิดการเข้าพัก',
@@ -223,7 +225,7 @@ function AdminDashboard({ lang, goToPage }) {
       accommodationPrompt: 'เลือกที่พักจากรายการของวัด:',
       accommodationPickerTitle: 'เลือกที่พัก',
       accommodationPickerHelp:
-        'เลือกได้เฉพาะที่พัก 6 ห้องที่ลงทะเบียนไว้ในระบบ ไม่เปิดให้พิมพ์ชื่อเอง เพื่อป้องกันชื่อห้องไม่ตรงกับระบบ',
+        'เลือกได้เฉพาะที่พัก 6 ห้องที่ลงทะเบียนไว้ในระบบ และสามารถเลือกไว้ก่อนอนุมัติคำขอได้ ไม่เปิดให้พิมพ์ชื่อเอง เพื่อป้องกันชื่อห้องไม่ตรงกับระบบ',
       accommodationPickerPlaceholder: 'เลือกที่พัก',
       accommodationPickerSave: 'บันทึกที่พัก',
       accommodationPickerCancel: 'ยกเลิก',
@@ -1173,6 +1175,23 @@ function AdminDashboard({ lang, goToPage }) {
             onClick={() =>
               callStayAction(
                 booking,
+                'assign_accommodation'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#7e57c2',
+              color: '#fff'
+            }}
+          >
+            {t.assignAccommodation}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
                 'approve'
               )
             }
@@ -1214,6 +1233,23 @@ function AdminDashboard({ lang, goToPage }) {
             flexWrap: 'wrap'
           }}
         >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'assign_accommodation'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#7e57c2',
+              color: '#fff'
+            }}
+          >
+            {t.assignAccommodation}
+          </button>
+
           <button
             disabled={busy}
             onClick={() =>
@@ -1269,22 +1305,49 @@ function AdminDashboard({ lang, goToPage }) {
 
     if (booking.status === 'checked_in') {
       return (
-        <button
-          disabled={busy}
-          onClick={() =>
-            callStayAction(
-              booking,
-              'assign_accommodation'
-            )
-          }
+        <div
           style={{
-            ...actionButtonStyle,
-            background: '#7e57c2',
-            color: '#fff'
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
           }}
         >
-          {t.assignAccommodation}
-        </button>
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'assign_accommodation'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#7e57c2',
+              color: '#fff'
+            }}
+          >
+            {t.assignAccommodation}
+          </button>
+
+          {booking.accommodation_name && (
+            <button
+              disabled={busy}
+              onClick={() =>
+                callStayAction(
+                  booking,
+                  'confirm_accommodation'
+                )
+              }
+              style={{
+                ...actionButtonStyle,
+                background: '#5e35b1',
+                color: '#fff'
+              }}
+            >
+              {t.confirmAccommodation}
+            </button>
+          )}
+        </div>
       );
     }
 

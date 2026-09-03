@@ -182,6 +182,7 @@ export default async function handler(req, res) {
     ) {
       if (
         ![
+          'pending',
           'approved',
           'checked_in'
         ].includes(
