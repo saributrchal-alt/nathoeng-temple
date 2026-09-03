@@ -71,7 +71,7 @@ function AdminPracticeMessagePanel({
           }
         ),
         fetch(
-          '/api/donation?scope=admin&resource=members',
+          '/api/practice-messages?scope=members',
           {
             credentials: 'include',
             cache: 'no-store'
