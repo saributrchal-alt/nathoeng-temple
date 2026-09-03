@@ -9,7 +9,6 @@ function RetreatReviewBox({ lang = 'th', booking }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [consentPublic, setConsentPublic] = useState(true);
-  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (!booking?.id) return;
@@ -108,7 +107,6 @@ function RetreatReviewBox({ lang = 'th', booking }) {
       }
 
       setReview(data.review || null);
-      setEditing(false);
     } catch (err) {
       console.error('Retreat review save error:', err);
       setError(
@@ -259,6 +257,43 @@ function RetreatReviewBox({ lang = 'th', booking }) {
           white-space: pre-wrap;
         }
 
+        .retreatReviewCompleted {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 14px;
+          padding: 16px;
+          border-radius: 12px;
+          background: #eef8f0;
+          border: 1px solid #cfe7d4;
+          color: #365b3d;
+        }
+
+        .retreatReviewCompletedIcon {
+          width: 38px;
+          height: 38px;
+          flex: 0 0 38px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: #4f9a5c;
+          color: #fff;
+          font-size: 20px;
+          font-weight: 800;
+        }
+
+        .retreatReviewCompleted strong {
+          display: block;
+          font-size: 14px;
+        }
+
+        .retreatReviewCompleted p {
+          margin: 3px 0 0;
+          font-size: 12px;
+          line-height: 1.55;
+          color: #607365;
+        }
+
         .retreatReviewError {
           margin: 10px 0;
           color: #a43f35;
@@ -290,40 +325,20 @@ function RetreatReviewBox({ lang = 'th', booking }) {
         <div className="retreatReviewHelp">
           {th ? 'กำลังโหลดรีวิว...' : 'Loading review...'}
         </div>
-      ) : review && !editing ? (
-        <>
-          <div className="retreatReviewStars" aria-label={`${review.rating} stars`}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span
-                key={star}
-                style={{
-                  fontSize: '24px',
-                  color: star <= Number(review.rating) ? '#c58b1c' : '#d9d2c8'
-                }}
-              >
-                ★
-              </span>
-            ))}
+      ) : review ? (
+        <div className="retreatReviewCompleted" role="status">
+          <div className="retreatReviewCompletedIcon" aria-hidden="true">✓</div>
+          <div>
+            <strong>
+              {th ? 'ผู้ปฏิบัติธรรมรีวิวแล้ว' : 'Your retreat review has been submitted'}
+            </strong>
+            <p>
+              {th
+                ? 'ขอบพระคุณสำหรับความคิดเห็นของท่าน'
+                : 'Thank you for sharing your feedback.'}
+            </p>
           </div>
-
-          <div className="retreatReviewStatus">
-            {statusLabel(review.status)}
-          </div>
-
-          <div className="retreatReviewReadOnlyComment">
-            {review.comment}
-          </div>
-
-          <div className="retreatReviewActions" style={{ marginTop: '14px' }}>
-            <button
-              type="button"
-              className="retreatReviewSecondary"
-              onClick={() => setEditing(true)}
-            >
-              {th ? 'แก้ไขรีวิว' : 'Edit review'}
-            </button>
-          </div>
-        </>
+        </div>
       ) : (
         <>
           <div className="retreatReviewStars">
@@ -378,36 +393,15 @@ function RetreatReviewBox({ lang = 'th', booking }) {
                 ? th
                   ? 'กำลังบันทึก...'
                   : 'Saving...'
-                : review
-                ? th
-                  ? 'บันทึกการแก้ไข'
-                  : 'Save changes'
                 : th
                 ? 'ส่งรีวิว'
                 : 'Submit review'}
             </button>
-
-            {review && (
-              <button
-                type="button"
-                className="retreatReviewSecondary"
-                onClick={() => {
-                  setEditing(false);
-                  setRating(Number(review.rating) || 5);
-                  setComment(review.comment || '');
-                  setConsentPublic(review.consent_public !== false);
-                  setError('');
-                }}
-                disabled={saving}
-              >
-                {th ? 'ยกเลิก' : 'Cancel'}
-              </button>
-            )}
           </div>
         </>
       )}
 
-      {!loading && review && !editing && error && (
+      {!loading && review && error && (
         <div className="retreatReviewError">{error}</div>
       )}
     </section>

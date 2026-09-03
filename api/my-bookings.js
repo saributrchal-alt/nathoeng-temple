@@ -458,18 +458,51 @@ async function handleReviewRoute(
           });
         }
 
+        const existingResponse = await fetch(
+          `${supabaseUrl}/rest/v1/retreat_reviews` +
+            `?booking_id=eq.${encodeURIComponent(bookingId)}` +
+            `&member_id=eq.${encodeURIComponent(session.memberId)}` +
+            `&select=id` +
+            `&limit=1`,
+          {
+            method: 'GET',
+            headers: jsonHeaders(supabaseSecretKey),
+            cache: 'no-store'
+          }
+        );
+
+        const existingRows = await readJson(existingResponse);
+
+        if (!existingResponse.ok) {
+          console.error(
+            'Retreat review duplicate check failed:',
+            existingRows
+          );
+
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to verify review'
+          });
+        }
+
+        if (Array.isArray(existingRows) && existingRows.length > 0) {
+          return res.status(409).json({
+            success: false,
+            message: 'This retreat stay has already been reviewed'
+          });
+        }
+
         const now = new Date().toISOString();
 
         const response = await fetch(
-          `${supabaseUrl}/rest/v1/retreat_reviews?on_conflict=booking_id`,
+          `${supabaseUrl}/rest/v1/retreat_reviews`,
           {
             method: 'POST',
             headers: {
               ...jsonHeaders(
                 supabaseSecretKey
               ),
-              Prefer:
-                'resolution=merge-duplicates,return=representation'
+              Prefer: 'return=representation'
             },
             body: JSON.stringify({
               booking_id: bookingId,
@@ -488,7 +521,7 @@ async function handleReviewRoute(
 
         if (!response.ok) {
           console.error(
-            'Retreat review upsert failed:',
+            'Retreat review insert failed:',
             data
           );
 
