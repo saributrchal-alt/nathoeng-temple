@@ -1,6 +1,6 @@
 import {
   getSessionFromRequest
-} from '../lib/_auth.js';
+} from './_auth.js';
 
 function getBangkokDate() {
   const parts = new Intl.DateTimeFormat(
@@ -362,7 +362,7 @@ async function writeHistory({
 }
 
 
-function getJourneyUi(status) {
+function getJourneyUi(status, checkoutMethod) {
   /*
     ข้อมูลนี้เตรียมไว้ให้ Frontend ใช้กับ Booking Journey Tracking
 
@@ -443,10 +443,15 @@ function getJourneyUi(status) {
       targetStep: 4,
       showScanButton: true
     };
-  } else if (status === 'checked_out') {
+  } else if (
+    status === 'checked_out' &&
+    !['qr_return', 'admin_return'].includes(
+      checkoutMethod
+    )
+  ) {
     nextQrAction = {
       type: 'return',
-      targetStatus: 'completed',
+      targetStatus: 'checked_out',
       targetStep: 7,
       showScanButton: true
     };
@@ -498,7 +503,8 @@ function bookingResult(
     */
     journey:
       getJourneyUi(
-        booking.status
+        booking.status,
+        booking.checkout_method
       ),
 
     ...extra
@@ -1025,7 +1031,7 @@ export default async function handler(
     /*
       =========================================================
       3) RETURN POINT
-      checked_out -> completed
+      checked_out -> checked_out + return confirmation marker
 
       ขั้น checked_out ต้องถูก Admin ยืนยันก่อน
       ตาม Journey ที่ตกลงกันไว้
@@ -1168,6 +1174,20 @@ export default async function handler(
       const booking =
         bookings[0];
 
+      if (
+        ['qr_return', 'admin_return'].includes(
+          booking.checkout_method
+        )
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: 'RETURN_ALREADY_PROCESSED',
+          actionType: 'return',
+          message:
+            'Keys/equipment return has already been confirmed'
+        });
+      }
+
       const now =
         new Date()
           .toISOString();
@@ -1186,8 +1206,11 @@ export default async function handler(
           fromStatus:
             'checked_out',
           toStatus:
-            'completed',
-          patchData: {}
+            'checked_out',
+          patchData: {
+            checkout_method:
+              'qr_return'
+          }
         });
 
       if (
@@ -1217,11 +1240,11 @@ export default async function handler(
         fromStatus:
           'checked_out',
         toStatus:
-          'completed',
+          'checked_out',
         memberId:
           session.memberId,
         note:
-          'QR equipment/room return completed'
+          'QR keys/equipment return confirmed; awaiting final stay completion'
       });
 
       return res
@@ -1235,13 +1258,15 @@ export default async function handler(
           pointName:
             qrPoint.name,
           message:
-            'Return completed',
+            'Return confirmed. Awaiting monastery completion.',
           booking:
             bookingResult(
               updatedBooking,
               {
-                completedAt:
-                  now
+                returnConfirmedAt:
+                  now,
+                returnMethod:
+                  'qr_return'
               }
             )
         });

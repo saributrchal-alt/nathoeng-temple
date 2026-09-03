@@ -171,6 +171,25 @@ function MyStaysPage({
   };
 
 
+  const isReturnConfirmed = (booking) =>
+    ['qr_return', 'admin_return'].includes(
+      booking?.checkout_method
+    );
+
+  const getStatusText = (booking) => {
+    if (
+      booking?.status === 'checked_out' &&
+      isReturnConfirmed(booking)
+    ) {
+      return th
+        ? 'คืนกุญแจ / อุปกรณ์เรียบร้อยแล้ว รอทางวัดปิดการเข้าพัก'
+        : 'Keys / equipment returned. Awaiting final completion by the monastery.';
+    }
+
+    return statusText[booking?.status] || '-';
+  };
+
+
   /* =========================================================
      TRACKING STEPS
      ========================================================= */
@@ -489,7 +508,7 @@ function MyStaysPage({
           </div>
 
           <div className="stayStoppedBox">
-            {statusText[booking.status]}
+            {getStatusText(booking)}
           </div>
         </div>
       );
@@ -617,6 +636,13 @@ function MyStaysPage({
                           ? th
                             ? '✓ เสร็จสิ้น'
                             : '✓ Completed'
+                          : current &&
+                            booking.status === 'checked_out' &&
+                            step.key === 'completed' &&
+                            isReturnConfirmed(booking)
+                          ? th
+                            ? '✓ คืนของแล้ว • รอทางวัดปิดการเข้าพัก'
+                            : '✓ Returned • Awaiting monastery completion'
                           : current
                           ? th
                             ? '◉ รอดำเนินการ'
@@ -638,6 +664,7 @@ function MyStaysPage({
                         ) ||
                         (
                           booking.status === 'checked_out' &&
+                          !isReturnConfirmed(booking) &&
                           step.key === 'completed'
                         )
                       ) && (

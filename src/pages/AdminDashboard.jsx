@@ -80,7 +80,9 @@ function AdminDashboard({ lang, goToPage }) {
       assignAccommodation: 'Assign / Change Accommodation',
       confirmAccommodation: 'Confirm Accommodation (Admin)',
       startRetreat: 'Start Retreat',
-      checkOut: 'Check Out',
+      checkOut: 'Retreat Period Completed',
+      confirmReturn: 'Confirm Return for Guest',
+      returnConfirmed: 'Keys / equipment returned — ready to complete',
       complete: 'Complete Stay',
       cancel: 'Cancel',
       lineNotifyApproval: 'LINE Approval Notice',
@@ -123,7 +125,7 @@ function AdminDashboard({ lang, goToPage }) {
       checked_in: 'Checked In',
       accommodated: 'Accommodation Assigned',
       in_retreat: 'In Retreat',
-      checked_out: 'Checked Out',
+      checked_out: 'Awaiting / Confirming Return',
       completed: 'Stay Completed',
       rejected: 'Rejected',
       cancelled: 'Cancelled',
@@ -199,7 +201,9 @@ function AdminDashboard({ lang, goToPage }) {
       assignAccommodation: 'เลือก / เปลี่ยนที่พัก',
       confirmAccommodation: 'ยืนยันเข้าที่พักแทนผู้เข้าพัก',
       startRetreat: 'เริ่มปฏิบัติธรรม',
-      checkOut: 'เช็กเอาต์',
+      checkOut: 'เข้าพักครบกำหนด',
+      confirmReturn: 'ยืนยันคืนกุญแจ / อุปกรณ์แทนผู้เข้าพัก',
+      returnConfirmed: 'คืนกุญแจ / อุปกรณ์แล้ว — รออวยพรและปิดการเข้าพัก',
       complete: 'ปิดการเข้าพัก',
       cancel: 'ยกเลิก',
       lineNotifyApproval: 'แจ้งอนุมัติทาง LINE',
@@ -241,7 +245,7 @@ function AdminDashboard({ lang, goToPage }) {
       checked_in: 'เช็กอินแล้ว',
       accommodated: 'เข้าที่พักเรียบร้อย',
       in_retreat: 'อยู่ระหว่างปฏิบัติธรรม',
-      checked_out: 'เช็กเอาต์แล้ว',
+      checked_out: 'รอคืนกุญแจ / อุปกรณ์',
       completed: 'การเข้าพักเสร็จสิ้น',
       rejected: 'ไม่อนุมัติ',
       cancelled: 'ยกเลิก',
@@ -1157,6 +1161,12 @@ function AdminDashboard({ lang, goToPage }) {
     fontWeight: '600'
   };
 
+  const isReturnConfirmed = (booking) => {
+    return ['qr_return', 'admin_return'].includes(
+      booking?.checkout_method
+    );
+  };
+
   const renderActions = (booking) => {
     const busy =
       processingId === booking.id;
@@ -1419,23 +1429,63 @@ function AdminDashboard({ lang, goToPage }) {
     }
 
     if (booking.status === 'checked_out') {
+      if (!isReturnConfirmed(booking)) {
+        return (
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'confirm_return'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#546e7a',
+              color: '#fff'
+            }}
+          >
+            {t.confirmReturn}
+          </button>
+        );
+      }
+
       return (
-        <button
-          disabled={busy}
-          onClick={() =>
-            callStayAction(
-              booking,
-              'complete'
-            )
-          }
+        <div
           style={{
-            ...actionButtonStyle,
-            background: '#00695c',
-            color: '#fff'
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
+            alignItems: 'center'
           }}
         >
-          {t.lineBlessingButton}
-        </button>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#2e7d32'
+            }}
+          >
+            ✓ {t.returnConfirmed}
+          </span>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'complete'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#00695c',
+              color: '#fff'
+            }}
+          >
+            {t.lineBlessingButton}
+          </button>
+        </div>
       );
     }
 

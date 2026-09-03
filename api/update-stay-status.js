@@ -311,6 +311,127 @@ export default async function handler(req, res) {
     }
 
     // ----------------------------------------------------
+    // 3. MANUAL RETURN CONFIRMATION
+    //    เทียบเท่าผู้เข้าพักสแกน QR จุดคืนกุญแจ/อุปกรณ์
+    //    ยังไม่ปิดการเข้าพัก — คง status = checked_out
+    // ----------------------------------------------------
+    if (action === 'confirm_return') {
+      if (booking.status !== 'checked_out') {
+        return res.status(409).json({
+          success: false,
+          code: 'RETURN_CONFIRMATION_NOT_ALLOWED',
+          message:
+            'Return can only be confirmed after the retreat stay period has ended',
+          currentStatus: booking.status
+        });
+      }
+
+      if (
+        ['qr_return', 'admin_return'].includes(
+          booking.checkout_method
+        )
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: 'RETURN_ALREADY_CONFIRMED',
+          message:
+            'Keys/equipment return has already been confirmed'
+        });
+      }
+
+      const returnUpdate = {
+        checkout_method: 'admin_return',
+        updated_at: now
+      };
+
+      if (note && note.trim()) {
+        returnUpdate.admin_note = note.trim();
+      }
+
+      const returnResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/bookings?id=eq.' +
+          encodeURIComponent(bookingId) +
+          '&status=eq.checked_out',
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization:
+              'Bearer ' + supabaseSecretKey,
+            'Content-Type': 'application/json',
+            Prefer: 'return=representation'
+          },
+          body: JSON.stringify(returnUpdate)
+        }
+      );
+
+      const returnedBookings =
+        await returnResponse.json();
+
+      if (
+        !returnResponse.ok ||
+        !Array.isArray(returnedBookings) ||
+        returnedBookings.length === 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            'Unable to confirm keys/equipment return'
+        });
+      }
+
+      const historyResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/stay_status_history',
+        {
+          method: 'POST',
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization:
+              'Bearer ' + supabaseSecretKey,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal'
+          },
+          body: JSON.stringify({
+            booking_id: booking.id,
+            from_status: 'checked_out',
+            to_status: 'checked_out',
+            trigger_method: 'admin',
+            triggered_by_member_id: admin.id,
+            note:
+              note && note.trim()
+                ? note.trim()
+                : 'Admin confirmed keys/equipment return'
+          })
+        }
+      );
+
+      if (!historyResponse.ok) {
+        const historyError =
+          await historyResponse.text();
+
+        console.error(
+          'Manual return history insert failed:',
+          historyError
+        );
+      }
+
+      return res.status(200).json({
+        success: true,
+        action: 'confirm_return',
+        booking: returnedBookings[0],
+        transition: {
+          from: 'checked_out',
+          to: 'checked_out',
+          method: 'admin',
+          statusChanged: false,
+          returnConfirmed: true
+        }
+      });
+    }
+
+    // ----------------------------------------------------
     // 3. Validate status-changing action
     // ----------------------------------------------------
     const transition =
@@ -350,6 +471,20 @@ export default async function handler(req, res) {
           'ACCOMMODATION_NOT_ASSIGNED',
         message:
           'Accommodation must be assigned before confirming accommodation'
+      });
+    }
+
+    if (
+      action === 'complete' &&
+      !['qr_return', 'admin_return'].includes(
+        booking.checkout_method
+      )
+    ) {
+      return res.status(409).json({
+        success: false,
+        code: 'RETURN_NOT_CONFIRMED',
+        message:
+          'Keys/equipment return must be confirmed before completing the stay'
       });
     }
 
