@@ -22,7 +22,7 @@ function RetreatReviewBox({ lang = 'th', booking }) {
 
     try {
       const response = await fetch(
-        `/api/retreat-reviews?scope=mine&bookingId=${encodeURIComponent(booking.id)}&ts=${Date.now()}`,
+        `/api/my-bookings?route=reviews&scope=mine&bookingId=${encodeURIComponent(booking.id)}&ts=${Date.now()}`,
         {
           method: 'GET',
           credentials: 'include',
@@ -86,7 +86,7 @@ function RetreatReviewBox({ lang = 'th', booking }) {
     setError('');
 
     try {
-      const response = await fetch('/api/retreat-reviews', {
+      const response = await fetch('/api/my-bookings?route=reviews', {
         method: 'POST',
         credentials: 'include',
         headers: {

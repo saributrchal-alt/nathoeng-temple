@@ -12,7 +12,7 @@ function PublicRetreatReviews({ lang = 'th' }) {
   const loadReviews = async () => {
     try {
       const response = await fetch(
-        `/api/retreat-reviews?scope=public&ts=${Date.now()}`,
+        `/api/my-bookings?route=reviews&scope=public&ts=${Date.now()}`,
         {
           method: 'GET',
           cache: 'no-store'

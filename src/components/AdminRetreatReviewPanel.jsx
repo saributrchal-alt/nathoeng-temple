@@ -14,7 +14,7 @@ function AdminRetreatReviewPanel({ lang = 'th' }) {
 
     try {
       const response = await fetch(
-        `/api/retreat-reviews?scope=admin&ts=${Date.now()}`,
+        `/api/my-bookings?route=reviews&scope=admin&ts=${Date.now()}`,
         {
           method: 'GET',
           credentials: 'include',
@@ -65,7 +65,7 @@ function AdminRetreatReviewPanel({ lang = 'th' }) {
     setError('');
 
     try {
-      const response = await fetch('/api/retreat-reviews', {
+      const response = await fetch('/api/my-bookings?route=reviews', {
         method: 'POST',
         credentials: 'include',
         headers: {
