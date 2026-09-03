@@ -21,6 +21,10 @@ function AdminDashboard({ lang, goToPage }) {
   const [lineApprovalMessage, setLineApprovalMessage] = useState('');
   const [lineApprovalSending, setLineApprovalSending] = useState(false);
   const [lineApprovalError, setLineApprovalError] = useState('');
+  const [lineBlessingTarget, setLineBlessingTarget] = useState(null);
+  const [lineBlessingMessage, setLineBlessingMessage] = useState('');
+  const [lineBlessingSending, setLineBlessingSending] = useState(false);
+  const [lineBlessingError, setLineBlessingError] = useState('');
 
   const t = {
     en: {
@@ -84,6 +88,15 @@ function AdminDashboard({ lang, goToPage }) {
       lineNotifySending: 'Sending...',
       lineNotifySuccess: 'LINE OA approval notice sent successfully.',
       lineNotifyError: 'Unable to send LINE OA approval notice.',
+      lineBlessingButton: 'Blessing & Complete Stay',
+      lineBlessingTitle: 'Review blessing message before completing the stay',
+      lineBlessingHelp:
+        'This bilingual blessing is sent by the Nathoeng Forest Monastery Assistant before the stay is completed. You can edit the full message first.',
+      lineBlessingSend: 'Send Blessing & Complete Stay',
+      lineBlessingSuccess:
+        'Blessing sent via LINE OA and the stay was completed successfully.',
+      lineBlessingError:
+        'Unable to send the blessing or complete the stay.',
 
       accommodationPrompt:
         'Enter accommodation name, kuti, building, or room:',
@@ -185,6 +198,15 @@ function AdminDashboard({ lang, goToPage }) {
       lineNotifySending: 'กำลังส่ง...',
       lineNotifySuccess: 'ส่งข้อความแจ้งผลอนุมัติทาง LINE OA เรียบร้อยแล้ว',
       lineNotifyError: 'ไม่สามารถส่งข้อความแจ้งผลอนุมัติทาง LINE OA ได้',
+      lineBlessingButton: 'ส่งคำอวยพรและปิดการเข้าพัก',
+      lineBlessingTitle: 'ตรวจสอบคำอวยพรก่อนปิดการเข้าพัก',
+      lineBlessingHelp:
+        'ข้อความนี้เป็นคำอวยพรระบบ 2 ภาษา จากศิษย์วัดป่านาเทิงก่อนปิดการเข้าพัก สามารถแก้ไขข้อความทั้งหมดได้ก่อนกดส่ง',
+      lineBlessingSend: 'ส่งคำอวยพรและปิดการเข้าพัก',
+      lineBlessingSuccess:
+        'ส่งคำอวยพรทาง LINE OA และปิดการเข้าพักเรียบร้อยแล้ว',
+      lineBlessingError:
+        'ไม่สามารถส่งคำอวยพรหรือปิดการเข้าพักได้',
 
       accommodationPrompt: 'กรอกชื่อกุฏิ อาคาร หรือห้องพัก:',
       notePrompt: 'หมายเหตุของผู้ดูแล (ถ้ามี):',
@@ -704,7 +726,218 @@ function AdminDashboard({ lang, goToPage }) {
     }
   };
 
+  const buildCompletionBlessingMessage = (booking) => {
+    const name =
+      String(booking?.name || '').trim();
+
+    return [
+      '🙏 สวัสดีครับ',
+      '',
+      'ศิษย์วัดป่านาเทิงขอส่งความปรารถนาดีในโอกาสที่ท่านได้เข้าพักปฏิบัติธรรมครบตามกำหนดครับ',
+      '',
+      name ? `เรียน คุณ ${name}` : 'เรียน ผู้ปฏิบัติธรรม',
+      'ขออนุโมทนาในการตั้งใจมาปฏิบัติธรรม ณ วัดพุทธอุทยานนาเทิงครับ',
+      '',
+      'ขออานิสงส์แห่งการภาวนา การรักษาศีล และความเพียรที่ท่านได้กระทำแล้ว จงเป็นเหตุปัจจัยเกื้อหนุนให้ท่านมีสติ มีปัญญา มีความสงบเย็น และมีกำลังใจในการดำเนินชีวิตตามหลักธรรมยิ่ง ๆ ขึ้นไปครับ',
+      '',
+      'ขอให้ท่านเดินทางกลับโดยสวัสดิภาพ และสามารถนำสิ่งที่ได้เรียนรู้จากการปฏิบัติกลับไปใช้ในชีวิตประจำวันอย่างต่อเนื่องครับ',
+      '',
+      'หากมีเนื้อหาปฏิบัติหรือคำแนะนำเพิ่มเติมจากพระอาจารย์ ศิษย์วัดป่านาเทิงจะช่วยประสานและแจ้งให้ท่านทราบผ่าน Nathoeng Connect ครับ',
+      '',
+      '🌿 ด้วยความปรารถนาดี',
+      'ศิษย์วัดป่านาเทิง',
+      'วัดพุทธอุทยานนาเทิง',
+      'NATHOENG CONNECT',
+      '',
+      '------------------------------',
+      '',
+      '🙏 Hello,',
+      '',
+      'This is the Nathoeng Forest Monastery Assistant, sending warm wishes as you complete your retreat stay.',
+      '',
+      name ? `Dear ${name},` : 'Dear Practitioner,',
+      'Thank you for your sincere effort in practicing at Buddhist Park Monastery of Nathoeng.',
+      '',
+      'May the benefit of your meditation, observance, and sincere practice support you with mindfulness, wisdom, inner peace, and strength to continue living in accordance with the Dhamma.',
+      '',
+      'We wish you a safe journey home and hope that what you have learned during your stay continues to support your daily life.',
+      '',
+      'If there are further practice materials or guidance from the teacher, I’ll help coordinate and keep you informed through Nathoeng Connect.',
+      '',
+      '🌿 With warm wishes,',
+      'Nathoeng Forest Monastery Assistant',
+      'Buddhist Park Monastery of Nathoeng',
+      'NATHOENG CONNECT'
+    ].join('\n');
+  };
+
+  const openCompletionBlessing = (booking) => {
+    setLineBlessingTarget(booking);
+    setLineBlessingMessage(
+      buildCompletionBlessingMessage(booking)
+    );
+    setLineBlessingError('');
+  };
+
+  const closeCompletionBlessing = () => {
+    if (lineBlessingSending) return;
+
+    setLineBlessingTarget(null);
+    setLineBlessingMessage('');
+    setLineBlessingError('');
+  };
+
+  const completeStayAfterBlessing = async (booking) => {
+    const response = await fetch(
+      '/api/update-stay-status',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          action: 'complete',
+          accommodationName: '',
+          note: ''
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    let data = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
+
+    if (
+      !response.ok ||
+      !data?.success
+    ) {
+      throw new Error(
+        data?.message ||
+        t.actionError
+      );
+    }
+
+    return data;
+  };
+
+  const sendCompletionBlessing = async () => {
+    if (!lineBlessingTarget?.id) return;
+
+    const messageText =
+      String(lineBlessingMessage || '').trim();
+
+    if (!messageText) {
+      setLineBlessingError(
+        lang === 'th'
+          ? 'กรุณากรอกคำอวยพรก่อนส่ง'
+          : 'Please enter the blessing message before sending.'
+      );
+      return;
+    }
+
+    if (messageText.length > 5000) {
+      setLineBlessingError(
+        lang === 'th'
+          ? 'ข้อความยาวเกิน 5,000 ตัวอักษร'
+          : 'Message exceeds 5,000 characters.'
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      lang === 'th'
+        ? 'ยืนยันส่งคำอวยพรทาง LINE OA และปิดการเข้าพักรายการนี้หรือไม่?'
+        : 'Send this blessing via LINE OA and complete this stay?'
+    );
+
+    if (!confirmed) return;
+
+    setLineBlessingSending(true);
+    setLineBlessingError('');
+
+    try {
+      const lineResponse = await fetch(
+        '/api/stay-line-notify',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: lineBlessingTarget.id,
+            event: 'completed_blessing',
+            messageText
+          })
+        }
+      );
+
+      const lineText =
+        await lineResponse.text();
+
+      let lineData = null;
+
+      try {
+        lineData =
+          lineText
+            ? JSON.parse(lineText)
+            : null;
+      } catch {
+        lineData = null;
+      }
+
+      if (
+        !lineResponse.ok ||
+        !lineData?.success
+      ) {
+        throw new Error(
+          lineData?.message ||
+          t.lineBlessingError
+        );
+      }
+
+      await completeStayAfterBlessing(
+        lineBlessingTarget
+      );
+
+      await loadBookings();
+
+      window.alert(
+        t.lineBlessingSuccess
+      );
+
+      setLineBlessingTarget(null);
+      setLineBlessingMessage('');
+      setLineBlessingError('');
+    } catch (err) {
+      console.error(
+        'Stay completion blessing error:',
+        err
+      );
+
+      setLineBlessingError(
+        err.message ||
+        t.lineBlessingError
+      );
+    } finally {
+      setLineBlessingSending(false);
+    }
+  };
+
   const callStayAction = async (booking, action) => {
+    if (action === 'complete') {
+      openCompletionBlessing(booking);
+      return;
+    }
+
     let accommodationName = '';
     let note = '';
 
@@ -1014,7 +1247,7 @@ function AdminDashboard({ lang, goToPage }) {
             color: '#fff'
           }}
         >
-          {t.complete}
+          {t.lineBlessingButton}
         </button>
       );
     }
@@ -1777,6 +2010,230 @@ function AdminDashboard({ lang, goToPage }) {
             formatDonationDate={formatDonationDate}
             donationPurposeLabel={donationPurposeLabel}
           />
+        )}
+
+        {lineBlessingTarget && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.lineBlessingTitle}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10000,
+              background: 'rgba(34, 30, 25, 0.55)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '18px'
+            }}
+            onClick={(event) => {
+              if (
+                event.target === event.currentTarget
+              ) {
+                closeCompletionBlessing();
+              }
+            }}
+          >
+            <div
+              style={{
+                width: 'min(720px, 100%)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                background: '#fff',
+                borderRadius: '14px',
+                padding: '22px',
+                boxShadow:
+                  '0 22px 60px rgba(0,0,0,0.24)'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  marginBottom: '12px'
+                }}
+              >
+                <div>
+                  <div
+                    style={{
+                      color: '#00695c',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      marginBottom: '5px'
+                    }}
+                  >
+                    LINE OA · NATHOENG CONNECT
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: '#302d29'
+                    }}
+                  >
+                    {t.lineBlessingTitle}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={lineBlessingSending}
+                  onClick={closeCompletionBlessing}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#777'
+                  }}
+                  aria-label={t.lineNotifyCancel}
+                >
+                  ×
+                </button>
+              </div>
+
+              <p
+                style={{
+                  margin: '0 0 12px',
+                  color: '#6c675f',
+                  lineHeight: 1.55
+                }}
+              >
+                {t.lineBlessingHelp}
+              </p>
+
+              <div
+                style={{
+                  background: '#f4faf8',
+                  border: '1px solid #d9ece6',
+                  borderRadius: '9px',
+                  padding: '10px 12px',
+                  marginBottom: '12px'
+                }}
+              >
+                <strong>
+                  {t.lineNotifyRecipient}:
+                </strong>{' '}
+                {lineBlessingTarget.name || '-'}
+                <br />
+                <span
+                  style={{
+                    color: '#777',
+                    fontSize: '13px'
+                  }}
+                >
+                  {lineBlessingTarget.start_date || '-'}
+                  {' → '}
+                  {lineBlessingTarget.end_date || '-'}
+                </span>
+              </div>
+
+              <textarea
+                value={lineBlessingMessage}
+                onChange={(event) =>
+                  setLineBlessingMessage(
+                    event.target.value
+                  )
+                }
+                disabled={lineBlessingSending}
+                rows={24}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  border: '1px solid #d9d5ce',
+                  borderRadius: '9px',
+                  padding: '12px',
+                  font: 'inherit',
+                  lineHeight: 1.55,
+                  color: '#302d29',
+                  background: '#fff'
+                }}
+              />
+
+              <div
+                style={{
+                  marginTop: '6px',
+                  textAlign: 'right',
+                  fontSize: '12px',
+                  color:
+                    lineBlessingMessage.length > 5000
+                      ? '#c62828'
+                      : '#888'
+                }}
+              >
+                {lineBlessingMessage.length.toLocaleString()}
+                {' / 5,000'}
+              </div>
+
+              {lineBlessingError && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    background: '#fff0f0',
+                    color: '#b42318'
+                  }}
+                >
+                  {lineBlessingError}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '9px',
+                  marginTop: '16px',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <button
+                  type="button"
+                  disabled={lineBlessingSending}
+                  onClick={closeCompletionBlessing}
+                  style={{
+                    ...actionButtonStyle,
+                    padding: '10px 16px',
+                    background: '#f2f0ec',
+                    color: '#4e4a44'
+                  }}
+                >
+                  {t.lineNotifyCancel}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={
+                    lineBlessingSending ||
+                    !lineBlessingMessage.trim() ||
+                    lineBlessingMessage.length > 5000
+                  }
+                  onClick={sendCompletionBlessing}
+                  style={{
+                    ...actionButtonStyle,
+                    padding: '10px 16px',
+                    background: '#00695c',
+                    color: '#fff',
+                    opacity:
+                      lineBlessingSending ||
+                      !lineBlessingMessage.trim() ||
+                      lineBlessingMessage.length > 5000
+                        ? 0.6
+                        : 1
+                  }}
+                >
+                  {lineBlessingSending
+                    ? t.lineNotifySending
+                    : t.lineBlessingSend}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {lineApprovalTarget && (

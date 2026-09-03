@@ -59,7 +59,12 @@ export default async function handler(req, res) {
     });
   }
 
-  if (cleanEvent !== 'approved') {
+  if (
+    ![
+      'approved',
+      'completed_blessing'
+    ].includes(cleanEvent)
+  ) {
     return res.status(400).json({
       success: false,
       message: 'Unsupported LINE notification event'
@@ -136,11 +141,20 @@ export default async function handler(req, res) {
 
     const booking = bookingData[0];
 
-    if (booking.status !== 'approved') {
+    const expectedStatus =
+      cleanEvent === 'approved'
+        ? 'approved'
+        : 'checked_out';
+
+    if (
+      booking.status !== expectedStatus
+    ) {
       return res.status(409).json({
         success: false,
         message:
-          'Approval LINE notice can only be sent while the stay is approved',
+          cleanEvent === 'approved'
+            ? 'Approval LINE notice can only be sent while the stay is approved'
+            : 'Completion blessing can only be sent before the stay is completed',
         currentStatus:
           booking.status
       });
@@ -234,7 +248,7 @@ export default async function handler(req, res) {
         await lineResponse.text();
 
       console.error(
-        'Stay approval LINE notification failed:',
+        'Stay LINE notification failed:',
         lineResponse.status,
         lineError
       );
@@ -242,26 +256,26 @@ export default async function handler(req, res) {
       return res.status(502).json({
         success: false,
         message:
-          'Unable to send LINE OA approval notice'
+          'Unable to send LINE OA message'
       });
     }
 
     return res.status(200).json({
       success: true,
       message:
-        'LINE OA approval notice sent',
+        cleanEvent === 'approved' ? 'LINE OA approval notice sent' : 'LINE OA completion blessing sent',
       recipientName
     });
   } catch (error) {
     console.error(
-      'Stay approval LINE notification error:',
+      'Stay LINE notification error:',
       error
     );
 
     return res.status(500).json({
       success: false,
       message:
-        'Unable to send LINE OA approval notice'
+        'Unable to send LINE OA message'
     });
   }
 }
