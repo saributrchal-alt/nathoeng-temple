@@ -679,22 +679,7 @@ const createTelegramPkce = async () => {
 
 const handleTelegramLogin = async () => {
   try {
-    const configResponse =
-      await fetch('/api/telegram-config');
-
-    const config =
-      await configResponse.json();
-
-    if (
-      !configResponse.ok ||
-      !config.success ||
-      !config.clientId
-    ) {
-      throw new Error(
-        config.message ||
-        'Telegram login configuration is missing'
-      );
-    }
+    const telegramClientId = '8612828517';
 
     const state = crypto.randomUUID();
     const { verifier, challenge } =
@@ -757,7 +742,7 @@ const handleTelegramLogin = async () => {
     const telegramAuthUrl =
       'https://oauth.telegram.org/auth' +
       '?client_id=' +
-        encodeURIComponent(config.clientId) +
+        encodeURIComponent(telegramClientId) +
       '&redirect_uri=' +
         encodeURIComponent(redirectUri) +
       '&response_type=code' +
@@ -781,8 +766,8 @@ const handleTelegramLogin = async () => {
 
     alert(
       lang === 'en'
-        ? 'Telegram Login is not configured yet.'
-        : 'ยังไม่ได้ตั้งค่าระบบ Telegram Login'
+        ? 'Telegram Login could not be started.'
+        : 'ไม่สามารถเริ่มการเข้าสู่ระบบ Telegram ได้'
     );
   }
 };
