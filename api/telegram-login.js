@@ -5,155 +5,55 @@ import {
   getSessionFromRequest
 } from '../lib/_auth.js';
 
-const TELEGRAM_ISSUER =
-  'https://oauth.telegram.org';
-
-const TELEGRAM_TOKEN_URL =
-  'https://oauth.telegram.org/token';
-
-const TELEGRAM_JWKS_URL =
-  'https://oauth.telegram.org/.well-known/jwks.json';
-
-function decodeBase64UrlJson(value) {
-  let base64 = value
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  while (base64.length % 4) {
-    base64 += '=';
-  }
-
-  return JSON.parse(
-    Buffer.from(base64, 'base64').toString('utf8')
-  );
-}
-
-function decodeBase64UrlBuffer(value) {
-  let base64 = value
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  while (base64.length % 4) {
-    base64 += '=';
-  }
-
-  return Buffer.from(base64, 'base64');
-}
-
-async function verifyTelegramIdToken(
-  idToken,
-  clientId
+async function mergeMembersForAccountLink(
+  supabaseUrl,
+  supabaseSecretKey,
+  currentMemberId,
+  providerOwnerId
 ) {
-  const parts = idToken.split('.');
+  const mergeResponse = await fetch(
+    supabaseUrl + '/rest/v1/rpc/merge_members_for_account_link',
+    {
+      method: 'POST',
+      headers: {
+        apikey: supabaseSecretKey,
+        Authorization: 'Bearer ' + supabaseSecretKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_member_a: currentMemberId,
+        p_member_b: providerOwnerId
+      })
+    }
+  );
 
-  if (parts.length !== 3) {
-    throw new Error('Invalid Telegram ID token');
-  }
+  const mergeResult = await mergeResponse.json();
 
-  const header =
-    decodeBase64UrlJson(parts[0]);
+  if (!mergeResponse.ok) {
+    console.error('Automatic member merge failed:', mergeResult);
 
-  const claims =
-    decodeBase64UrlJson(parts[1]);
-
-  if (header.alg !== 'RS256') {
-    throw new Error(
-      'Unsupported Telegram ID token algorithm'
-    );
-  }
-
-  if (!header.kid) {
-    throw new Error(
-      'Telegram ID token key ID is missing'
-    );
-  }
-
-  const jwksResponse =
-    await fetch(TELEGRAM_JWKS_URL);
-
-  if (!jwksResponse.ok) {
-    throw new Error(
-      'Unable to retrieve Telegram signing keys'
-    );
-  }
-
-  const jwks =
-    await jwksResponse.json();
-
-  const jwk =
-    Array.isArray(jwks.keys)
-      ? jwks.keys.find(
-          (key) => key.kid === header.kid
-        )
-      : null;
-
-  if (!jwk) {
-    throw new Error(
-      'Telegram signing key was not found'
-    );
-  }
-
-  const publicKey =
-    crypto.createPublicKey({
-      key: jwk,
-      format: 'jwk'
-    });
-
-  const signingInput =
-    Buffer.from(parts[0] + '.' + parts[1]);
-
-  const signature =
-    decodeBase64UrlBuffer(parts[2]);
-
-  const signatureValid =
-    crypto.verify(
-      'RSA-SHA256',
-      signingInput,
-      publicKey,
-      signature
+    const error = new Error(
+      mergeResult?.message ||
+      mergeResult?.hint ||
+      'Unable to merge member accounts'
     );
 
-  if (!signatureValid) {
-    throw new Error(
-      'Telegram ID token signature is invalid'
-    );
+    error.code = 'ACCOUNT_MERGE_FAILED';
+    throw error;
   }
 
-  if (claims.iss !== TELEGRAM_ISSUER) {
-    throw new Error(
-      'Telegram ID token issuer is invalid'
-    );
+  const mergedMemberId =
+    typeof mergeResult === 'string'
+      ? mergeResult
+      : mergeResult?.id || mergeResult;
+
+  if (!mergedMemberId) {
+    const error = new Error('Merged member ID was not returned');
+    error.code = 'ACCOUNT_MERGE_FAILED';
+    throw error;
   }
 
-  const audiences =
-    Array.isArray(claims.aud)
-      ? claims.aud.map(String)
-      : [String(claims.aud || '')];
-
-  if (!audiences.includes(String(clientId))) {
-    throw new Error(
-      'Telegram ID token audience is invalid'
-    );
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-
-  if (!claims.exp || claims.exp <= now) {
-    throw new Error(
-      'Telegram ID token has expired'
-    );
-  }
-
-  if (
-    claims.iat &&
-    claims.iat > now + 60
-  ) {
-    throw new Error(
-      'Telegram ID token issued-at time is invalid'
-    );
-  }
-
-  return claims;
+  return String(mergedMemberId);
 }
 
 export default async function handler(req, res) {
@@ -372,21 +272,35 @@ export default async function handler(req, res) {
           ? existingRows[0]
           : null;
 
+      let memberIdToUpdate = String(session.memberId);
+      let merged = false;
+
       if (
         existingOwner &&
         String(existingOwner.id) !== String(session.memberId)
       ) {
-        return res.status(409).json({
-          success: false,
-          code: 'PROVIDER_ALREADY_LINKED',
-          message: 'This Telegram account is already linked to another member'
-        });
+        try {
+          memberIdToUpdate = await mergeMembersForAccountLink(
+            supabaseUrl,
+            supabaseSecretKey,
+            session.memberId,
+            existingOwner.id
+          );
+          merged = true;
+        } catch (mergeError) {
+          return res.status(409).json({
+            success: false,
+            code: mergeError.code || 'ACCOUNT_MERGE_FAILED',
+            message:
+              'Telegram is already connected to another member and the accounts could not be merged safely'
+          });
+        }
       }
 
       const linkResponse = await fetch(
         supabaseUrl +
           '/rest/v1/members?id=eq.' +
-          encodeURIComponent(session.memberId),
+          encodeURIComponent(memberIdToUpdate),
         {
           method: 'PATCH',
           headers: {
@@ -438,6 +352,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         linked: true,
+        merged,
         user: {
           memberId: linkedMember.id,
           name: linkedMember.display_name,
@@ -450,6 +365,35 @@ export default async function handler(req, res) {
           isAdmin: linkedMember.role === 'admin'
         }
       });
+    }
+
+    // Preserve an existing Admin role. Logging in through Telegram
+    // must not downgrade an Admin account that was originally created by LINE.
+    let effectiveRole = role;
+
+    const existingRoleResponse = await fetch(
+      supabaseUrl +
+        '/rest/v1/members?telegram_uid=eq.' +
+        encodeURIComponent(telegramUid) +
+        '&select=role&limit=1',
+      {
+        headers: {
+          apikey: supabaseSecretKey,
+          Authorization: 'Bearer ' + supabaseSecretKey
+        }
+      }
+    );
+
+    if (existingRoleResponse.ok) {
+      const existingRoleRows = await existingRoleResponse.json();
+      const existingRole =
+        Array.isArray(existingRoleRows) && existingRoleRows.length > 0
+          ? existingRoleRows[0]?.role
+          : null;
+
+      if (existingRole === 'admin') {
+        effectiveRole = 'admin';
+      }
     }
 
     const memberData = {
@@ -470,7 +414,8 @@ export default async function handler(req, res) {
         claims.picture ||
         null,
 
-      role,
+      role:
+        effectiveRole,
 
       last_login_at:
         now

@@ -4,6 +4,57 @@ import {
   getSessionFromRequest
 } from '../lib/_auth.js';
 
+async function mergeMembersForAccountLink(
+  supabaseUrl,
+  supabaseSecretKey,
+  currentMemberId,
+  providerOwnerId
+) {
+  const mergeResponse = await fetch(
+    supabaseUrl + '/rest/v1/rpc/merge_members_for_account_link',
+    {
+      method: 'POST',
+      headers: {
+        apikey: supabaseSecretKey,
+        Authorization: 'Bearer ' + supabaseSecretKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_member_a: currentMemberId,
+        p_member_b: providerOwnerId
+      })
+    }
+  );
+
+  const mergeResult = await mergeResponse.json();
+
+  if (!mergeResponse.ok) {
+    console.error('Automatic member merge failed:', mergeResult);
+
+    const error = new Error(
+      mergeResult?.message ||
+      mergeResult?.hint ||
+      'Unable to merge member accounts'
+    );
+
+    error.code = 'ACCOUNT_MERGE_FAILED';
+    throw error;
+  }
+
+  const mergedMemberId =
+    typeof mergeResult === 'string'
+      ? mergeResult
+      : mergeResult?.id || mergeResult;
+
+  if (!mergedMemberId) {
+    const error = new Error('Merged member ID was not returned');
+    error.code = 'ACCOUNT_MERGE_FAILED';
+    throw error;
+  }
+
+  return String(mergedMemberId);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -249,15 +300,29 @@ export default async function handler(req, res) {
           ? existingRows[0]
           : null;
 
+      let memberIdToUpdate = String(session.memberId);
+      let merged = false;
+
       if (
         existingOwner &&
         String(existingOwner.id) !== String(session.memberId)
       ) {
-        return res.status(409).json({
-          success: false,
-          code: 'PROVIDER_ALREADY_LINKED',
-          message: 'This LINE account is already linked to another member'
-        });
+        try {
+          memberIdToUpdate = await mergeMembersForAccountLink(
+            supabaseUrl,
+            supabaseSecretKey,
+            session.memberId,
+            existingOwner.id
+          );
+          merged = true;
+        } catch (mergeError) {
+          return res.status(409).json({
+            success: false,
+            code: mergeError.code || 'ACCOUNT_MERGE_FAILED',
+            message:
+              'LINE is already connected to another member and the accounts could not be merged safely'
+          });
+        }
       }
 
       const patchData = {
@@ -273,7 +338,7 @@ export default async function handler(req, res) {
       const linkResponse = await fetch(
         supabaseUrl +
           '/rest/v1/members?id=eq.' +
-          encodeURIComponent(session.memberId),
+          encodeURIComponent(memberIdToUpdate),
         {
           method: 'PATCH',
           headers: {
@@ -321,6 +386,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         linked: true,
+        merged,
         user: {
           memberId: linkedMember.id,
           name: linkedMember.display_name,
@@ -338,7 +404,36 @@ export default async function handler(req, res) {
 
     // =====================================================
     // 5. Prepare member data
+    // Preserve an existing Admin role. A login through another provider
+    // must never downgrade a member who is already an administrator.
     // =====================================================
+    let effectiveRole = role;
+
+    const existingRoleResponse = await fetch(
+      supabaseUrl +
+        '/rest/v1/members?line_uid=eq.' +
+        encodeURIComponent(profile.userId) +
+        '&select=role&limit=1',
+      {
+        headers: {
+          apikey: supabaseSecretKey,
+          Authorization: 'Bearer ' + supabaseSecretKey
+        }
+      }
+    );
+
+    if (existingRoleResponse.ok) {
+      const existingRoleRows = await existingRoleResponse.json();
+      const existingRole =
+        Array.isArray(existingRoleRows) && existingRoleRows.length > 0
+          ? existingRoleRows[0]?.role
+          : null;
+
+      if (existingRole === 'admin') {
+        effectiveRole = 'admin';
+      }
+    }
+
     const memberData = {
       line_uid:
         profile.userId,
@@ -352,7 +447,7 @@ export default async function handler(req, res) {
         null,
 
       role:
-        role,
+        effectiveRole,
 
       last_login_at:
         now,
@@ -449,6 +544,10 @@ export default async function handler(req, res) {
 
         lineUid:
           savedMember.line_uid,
+
+        telegramUid:
+          savedMember.telegram_uid ||
+          null,
 
         authProvider:
           'line',

@@ -388,7 +388,9 @@ useEffect(() => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'LINE login failed');
+        const apiError = new Error(data.message || 'LINE login failed');
+        apiError.code = data.code || '';
+        throw apiError;
       }
 
       const lineUser = {
@@ -446,6 +448,14 @@ useEffect(() => {
       }
 
       setCurrentPage(afterLoginPage);
+
+      if (data.merged) {
+        alert(
+          lang === 'en'
+            ? 'LINE and Telegram accounts have been merged successfully.'
+            : 'รวมบัญชี LINE และ Telegram เรียบร้อยแล้ว'
+        );
+      }
     } catch (error) {
       console.error('LINE callback error:', error);
 
@@ -458,10 +468,17 @@ useEffect(() => {
         '/#login-page'
       );
 
+      const accountMergeFailed =
+        error?.code === 'ACCOUNT_MERGE_FAILED';
+
       alert(
-        lang === 'en'
-          ? 'LINE login failed. Please try again.'
-          : 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+        accountMergeFailed
+          ? (lang === 'en'
+              ? 'This LINE account belongs to an existing member, but the accounts could not be merged safely. Please contact the administrator.'
+              : 'LINE นี้เชื่อมกับสมาชิกเดิมอยู่แล้ว แต่ระบบยังรวมบัญชีให้อัตโนมัติไม่ได้ กรุณาติดต่อผู้ดูแลระบบ')
+          : (lang === 'en'
+              ? 'LINE login failed. Please try again.'
+              : 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
       );
     }
   };
@@ -568,7 +585,9 @@ useEffect(() => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Telegram login failed');
+        const apiError = new Error(data.message || 'Telegram login failed');
+        apiError.code = data.code || '';
+        throw apiError;
       }
 
       const telegramUser = {
@@ -630,6 +649,14 @@ useEffect(() => {
       }
 
       setCurrentPage(afterLoginPage);
+
+      if (data.merged) {
+        alert(
+          lang === 'en'
+            ? 'LINE and Telegram accounts have been merged successfully.'
+            : 'รวมบัญชี LINE และ Telegram เรียบร้อยแล้ว'
+        );
+      }
     } catch (error) {
       console.error('Telegram callback error:', error);
 
@@ -644,10 +671,17 @@ useEffect(() => {
         '/#login-page'
       );
 
+      const accountMergeFailed =
+        error?.code === 'ACCOUNT_MERGE_FAILED';
+
       alert(
-        lang === 'en'
-          ? 'Telegram login failed. Please try again.'
-          : 'เข้าสู่ระบบ Telegram ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+        accountMergeFailed
+          ? (lang === 'en'
+              ? 'This Telegram account belongs to an existing member, but the accounts could not be merged safely. Please contact the administrator.'
+              : 'Telegram นี้เชื่อมกับสมาชิกเดิมอยู่แล้ว แต่ระบบยังรวมบัญชีให้อัตโนมัติไม่ได้ กรุณาติดต่อผู้ดูแลระบบ')
+          : (lang === 'en'
+              ? 'Telegram login failed. Please try again.'
+              : 'เข้าสู่ระบบ Telegram ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
       );
     }
   };
