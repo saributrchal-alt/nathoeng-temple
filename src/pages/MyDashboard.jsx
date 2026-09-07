@@ -272,9 +272,67 @@ function MyDashboard({
                 ? (th
                     ? '✓ ข้อมูลยืนยันตัวตนจาก Nathoeng Connect'
                     : '✓ Verified identity from Nathoeng Connect')
-                : `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`}
+                : user?.authProvider === 'telegram'
+                  ? `✓ ${th ? 'เชื่อมต่อบัญชี Telegram แล้ว' : 'Telegram connected'}`
+                  : `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`}
             </span>
           </div>
+        </section>
+
+        <section className="compactSummaryCard compactStaySummary">
+          <div className="compactCardHead">
+            <div>
+              <span className="compactEyebrow">{th ? 'เข้าพักปฏิบัติธรรม' : 'RETREAT STAY'}</span>
+              <h2>{th ? 'สถานะการเข้าพักของฉัน' : 'My Retreat Stay'}</h2>
+            </div>
+
+            <img
+              className="compactHeadIcon"
+              src="/icons/stay.svg"
+              alt=""
+              aria-hidden="true"
+            />
+          </div>
+
+          <button
+            type="button"
+            className="compactStayAction"
+            onClick={() => goToPage('my-stays')}
+          >
+            <span className="compactStayActionIcon">
+              <img src="/icons/meditation.svg" alt="" aria-hidden="true" />
+            </span>
+
+            <span className="compactStayActionText">
+              <strong>{th ? 'ดูการเข้าพักปฏิบัติธรรมของฉัน' : 'View my retreat stay'}</strong>
+              <small>
+                {th
+                  ? 'ตรวจสอบคำขอ สถานะ และขั้นตอนการเข้าพัก'
+                  : 'Check requests, status, and retreat progress.'}
+              </small>
+            </span>
+
+            <span className="compactArrow" aria-hidden="true">›</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => goToPage('booking-page')}
+            style={{
+              width: '100%',
+              minHeight: '50px',
+              marginTop: '16px',
+              borderRadius: '14px',
+              border: '1px solid #b1842b',
+              background: '#fffdf8',
+              color: '#9b7226',
+              fontWeight: 700,
+              fontSize: '15px',
+              cursor: 'pointer'
+            }}
+          >
+            ＋ {th ? 'ทำรายการเข้าพักปฏิบัติธรรม' : 'Make a Retreat Stay Request'}
+          </button>
         </section>
 
         <section className="compactSummaryCard compactDonationSummary">
@@ -334,62 +392,6 @@ function MyDashboard({
             }}
           >
             ＋ {th ? 'ทำรายการบริจาคเพิ่ม' : 'Make Another Donation'}
-          </button>
-        </section>
-
-        <section className="compactSummaryCard compactStaySummary">
-          <div className="compactCardHead">
-            <div>
-              <span className="compactEyebrow">{th ? 'เข้าพักปฏิบัติธรรม' : 'RETREAT STAY'}</span>
-              <h2>{th ? 'สถานะการเข้าพักของฉัน' : 'My Retreat Stay'}</h2>
-            </div>
-
-            <img
-              className="compactHeadIcon"
-              src="/icons/stay.svg"
-              alt=""
-              aria-hidden="true"
-            />
-          </div>
-
-          <button
-            type="button"
-            className="compactStayAction"
-            onClick={() => goToPage('my-stays')}
-          >
-            <span className="compactStayActionIcon">
-              <img src="/icons/meditation.svg" alt="" aria-hidden="true" />
-            </span>
-
-            <span className="compactStayActionText">
-              <strong>{th ? 'ดูการเข้าพักปฏิบัติธรรมของฉัน' : 'View my retreat stay'}</strong>
-              <small>
-                {th
-                  ? 'ตรวจสอบคำขอ สถานะ และขั้นตอนการเข้าพัก'
-                  : 'Check requests, status, and retreat progress.'}
-              </small>
-            </span>
-
-            <span className="compactArrow" aria-hidden="true">›</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => goToPage('booking-page')}
-            style={{
-              width: '100%',
-              minHeight: '50px',
-              marginTop: '16px',
-              borderRadius: '14px',
-              border: '1px solid #b1842b',
-              background: '#fffdf8',
-              color: '#9b7226',
-              fontWeight: 700,
-              fontSize: '15px',
-              cursor: 'pointer'
-            }}
-          >
-            ＋ {th ? 'ทำรายการเข้าพักปฏิบัติธรรม' : 'Make a Retreat Stay Request'}
           </button>
         </section>
 
