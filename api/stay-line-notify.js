@@ -59,6 +59,7 @@ async function saveCommunication({
   secretKey,
   memberId,
   adminMemberId,
+  channel,
   messageText,
   status,
   errorMessage = null,
@@ -76,7 +77,10 @@ async function saveCommunication({
       ),
       body: JSON.stringify({
         member_id: memberId,
-        channel: 'line',
+        channel:
+          channel === 'telegram'
+            ? 'telegram'
+            : 'line',
         direction: 'outbound',
         message_text: messageText,
         status,
@@ -195,7 +199,7 @@ export default async function handler(req, res) {
         `${supabaseUrl}/rest/v1/member_communications` +
           `?member_id=eq.${encodeURIComponent(memberId)}` +
           '&select=*' +
-          '&order=created_at.desc' +
+          '&order=sent_at.desc.nullslast,created_at.desc' +
           '&limit=200',
         {
           method: 'GET',
@@ -283,14 +287,14 @@ export default async function handler(req, res) {
   if (!cleanMessage) {
     return res.status(400).json({
       success: false,
-      message: 'LINE message is required'
+      message: 'Message is required'
     });
   }
 
   if (cleanMessage.length > 5000) {
     return res.status(400).json({
       success: false,
-      message: 'LINE message is too long'
+      message: 'Message is too long'
     });
   }
 
@@ -363,6 +367,8 @@ export default async function handler(req, res) {
               supabaseSecretKey,
             memberId:
               cleanMemberId,
+            channel:
+              cleanChannel,
             adminMemberId:
               session.memberId,
             messageText:
@@ -389,6 +395,8 @@ export default async function handler(req, res) {
               supabaseSecretKey,
             memberId:
               cleanMemberId,
+            channel:
+              cleanChannel,
             adminMemberId:
               session.memberId,
             messageText:
@@ -430,6 +438,8 @@ export default async function handler(req, res) {
               supabaseSecretKey,
             memberId:
               cleanMemberId,
+            channel:
+              cleanChannel,
             adminMemberId:
               session.memberId,
             messageText:
@@ -470,6 +480,8 @@ export default async function handler(req, res) {
               supabaseSecretKey,
             memberId:
               cleanMemberId,
+            channel:
+              cleanChannel,
             adminMemberId:
               session.memberId,
             messageText:
@@ -515,6 +527,8 @@ export default async function handler(req, res) {
               supabaseSecretKey,
             memberId:
               cleanMemberId,
+            channel:
+              cleanChannel,
             adminMemberId:
               session.memberId,
             messageText:
@@ -536,39 +550,37 @@ export default async function handler(req, res) {
       const sentAt =
         new Date().toISOString();
 
-      // Save successful delivery in the same timeline.
-      const communicationResponse = await fetch(
-        `${supabaseUrl}/rest/v1/member_communications`,
-        {
-          method: 'POST',
-          headers: supabaseHeaders(
-            supabaseSecretKey,
-            {
-              Prefer: 'return=representation'
-            }
-          ),
-          body: JSON.stringify({
-            member_id: cleanMemberId,
-            channel: cleanChannel,
-            direction: 'outbound',
-            message_text: cleanMessage,
-            status: 'success',
-            sent_at: sentAt,
-            sent_by_member_id:
-              session.memberId || null,
-            error_message: null
-          })
-        }
-      );
-
       const communicationData =
-        await readJson(communicationResponse);
+        await saveCommunication({
+          supabaseUrl,
+          secretKey:
+            supabaseSecretKey,
+          memberId:
+            cleanMemberId,
+          adminMemberId:
+            session.memberId,
+          channel:
+            cleanChannel,
+          messageText:
+            cleanMessage,
+          status:
+            'success',
+          sentAt
+        });
 
-      if (!communicationResponse.ok) {
-        console.error(
-          'Unable to save successful member communication:',
-          communicationData
-        );
+      const savedCommunication =
+        Array.isArray(communicationData)
+          ? communicationData[0]
+          : communicationData;
+
+      if (!savedCommunication?.id) {
+        return res.status(500).json({
+          success: false,
+          code:
+            'COMMUNICATION_LOG_FAILED',
+          message:
+            'Message was sent, but the communication history could not be saved'
+        });
       }
 
       return res.status(200).json({

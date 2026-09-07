@@ -638,7 +638,10 @@ function AdminMembersPanel({ lang }) {
 
               <button
                 type="button"
-                onClick={() => setDetailTab('communication')}
+                onClick={() => {
+                  setDetailTab('communication');
+                  loadCommunications(selectedMember.id);
+                }}
                 style={{
                   border: '1px solid #d9d0c2',
                   borderRadius: '10px',
@@ -649,7 +652,7 @@ function AdminMembersPanel({ lang }) {
                   color: detailTab === 'communication' ? '#fff' : '#4b443c'
                 }}
               >
-                {text.communicationTab} ({selectedMessages.length})
+                {text.communicationTab} ({selectedMessages.length + communications.length})
               </button>
             </div>
 
