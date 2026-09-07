@@ -347,9 +347,10 @@ export default async function handler(req, res) {
         telegramClientId
       );
 
+    // Telegram Bot API needs the real Telegram user ID.
+    // OIDC `sub` is the subject identifier and must not be used as chat_id.
     const telegramUid =
       String(
-        claims.sub ||
         claims.id ||
         ''
       );
