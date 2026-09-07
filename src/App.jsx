@@ -280,9 +280,12 @@ useEffect(() => {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // ตรวจสอบและดึงข้อมูลผู้ใช้จาก LocalStorage พร้อมตรวจสอบ LINE UID อย่างเข้มงวด
+  // Restore the signed-in monastery member.
+  // Keep the legacy "line_user" key for compatibility with existing pages.
 useEffect(() => {
-  const savedUser = localStorage.getItem('line_user');
+  const savedUser =
+    localStorage.getItem('nathoeng_user') ||
+    localStorage.getItem('line_user');
 
   if (!savedUser) {
     return;
@@ -291,14 +294,24 @@ useEffect(() => {
   try {
     const parsedUser = JSON.parse(savedUser);
     setUser(parsedUser);
+
+    localStorage.setItem(
+      'nathoeng_user',
+      JSON.stringify(parsedUser)
+    );
   } catch (error) {
-    console.error('Error parsing saved LINE user:', error);
+    console.error('Error parsing saved member:', error);
+    localStorage.removeItem('nathoeng_user');
     localStorage.removeItem('line_user');
     setUser(null);
   }
 }, []);
 useEffect(() => {
   const handleLineCallback = async () => {
+    if (!window.location.pathname.endsWith('/line-callback')) {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
 
     const code = params.get('code');
@@ -378,11 +391,19 @@ useEffect(() => {
         memberId: data.user.memberId,
         name: data.user.name,
         lineUid: data.user.lineUid,
+        telegramUid: null,
+        authProvider: 'line',
         picture: data.user.picture || '',
         role: data.user.role || (data.user.isAdmin ? 'admin' : 'member'),
         isAdmin: data.user.isAdmin === true
       };
 
+      localStorage.setItem(
+        'nathoeng_user',
+        JSON.stringify(lineUser)
+      );
+
+      // Keep legacy storage for existing pages that still read "line_user".
       localStorage.setItem(
         'line_user',
         JSON.stringify(lineUser)
@@ -441,6 +462,330 @@ useEffect(() => {
 
   handleLineCallback();
 }, []);
+
+useEffect(() => {
+  const handleTelegramCallback = async () => {
+    if (!window.location.pathname.endsWith('/telegram-callback')) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    const code = params.get('code');
+    const returnedState = params.get('state');
+    const error = params.get('error');
+
+    if (error) {
+      console.error('Telegram Login error:', error);
+
+      window.history.replaceState(
+        {},
+        document.title,
+        '/#login-page'
+      );
+
+      return;
+    }
+
+    if (!code) {
+      return;
+    }
+
+    const sessionState =
+      sessionStorage.getItem('telegram_oauth_state');
+
+    const localState =
+      localStorage.getItem('telegram_oauth_state');
+
+    const stateMatched =
+      (sessionState && sessionState === returnedState) ||
+      (localState && localState === returnedState);
+
+    if (!stateMatched) {
+      sessionStorage.removeItem('telegram_oauth_state');
+      localStorage.removeItem('telegram_oauth_state');
+      sessionStorage.removeItem('telegram_pkce_verifier');
+      localStorage.removeItem('telegram_pkce_verifier');
+
+      window.history.replaceState(
+        {},
+        document.title,
+        '/#login-page'
+      );
+
+      alert(
+        lang === 'en'
+          ? 'Telegram login session expired. Please try again.'
+          : 'เซสชันการเข้าสู่ระบบ Telegram หมดอายุ กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง'
+      );
+
+      return;
+    }
+
+    const codeVerifier =
+      sessionStorage.getItem('telegram_pkce_verifier') ||
+      localStorage.getItem('telegram_pkce_verifier');
+
+    if (!codeVerifier) {
+      window.history.replaceState(
+        {},
+        document.title,
+        '/#login-page'
+      );
+
+      alert(
+        lang === 'en'
+          ? 'Telegram login verifier is missing. Please try again.'
+          : 'ไม่พบข้อมูลยืนยันการเข้าสู่ระบบ Telegram กรุณาลองใหม่อีกครั้ง'
+      );
+
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/telegram-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code,
+          codeVerifier,
+          redirectUri: 'https://watt.nathoeng.com/telegram-callback'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Telegram login failed');
+      }
+
+      const telegramUser = {
+        memberId: data.user.memberId,
+        name: data.user.name,
+        lineUid: data.user.lineUid || null,
+        telegramUid: data.user.telegramUid,
+        telegramUsername: data.user.telegramUsername || '',
+        authProvider: 'telegram',
+        picture: data.user.picture || '',
+        role: data.user.role || (data.user.isAdmin ? 'admin' : 'member'),
+        isAdmin: data.user.isAdmin === true
+      };
+
+      localStorage.setItem(
+        'nathoeng_user',
+        JSON.stringify(telegramUser)
+      );
+
+      // Keep legacy storage for existing pages while the site is migrated
+      // from LINE-only authentication to multi-provider authentication.
+      localStorage.setItem(
+        'line_user',
+        JSON.stringify(telegramUser)
+      );
+
+      sessionStorage.removeItem('telegram_oauth_state');
+      localStorage.removeItem('telegram_oauth_state');
+      sessionStorage.removeItem('telegram_pkce_verifier');
+      localStorage.removeItem('telegram_pkce_verifier');
+
+      setUser(telegramUser);
+
+      const afterLoginPage =
+        sessionStorage.getItem('after_login_page') ||
+        localStorage.getItem('after_login_page') ||
+        'home';
+
+      sessionStorage.removeItem('after_login_page');
+      localStorage.removeItem('after_login_page');
+
+      window.history.replaceState(
+        {},
+        document.title,
+        '/#' + afterLoginPage
+      );
+
+      const savedPendingCheckinToken =
+        sessionStorage.getItem('pending_checkin_token') ||
+        localStorage.getItem('pending_checkin_token');
+
+      if (savedPendingCheckinToken) {
+        sessionStorage.setItem(
+          'pending_checkin_token',
+          savedPendingCheckinToken
+        );
+      }
+
+      setCurrentPage(afterLoginPage);
+    } catch (error) {
+      console.error('Telegram callback error:', error);
+
+      sessionStorage.removeItem('telegram_oauth_state');
+      localStorage.removeItem('telegram_oauth_state');
+      sessionStorage.removeItem('telegram_pkce_verifier');
+      localStorage.removeItem('telegram_pkce_verifier');
+
+      window.history.replaceState(
+        {},
+        document.title,
+        '/#login-page'
+      );
+
+      alert(
+        lang === 'en'
+          ? 'Telegram login failed. Please try again.'
+          : 'เข้าสู่ระบบ Telegram ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
+      );
+    }
+  };
+
+  handleTelegramCallback();
+}, []);
+
+const base64UrlFromBytes = (bytes) =>
+  btoa(
+    Array.from(bytes)
+      .map((byte) => String.fromCharCode(byte))
+      .join('')
+  )
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+
+const createTelegramPkce = async () => {
+  const randomBytes = new Uint8Array(32);
+  crypto.getRandomValues(randomBytes);
+
+  const verifier =
+    base64UrlFromBytes(randomBytes);
+
+  const digest =
+    await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(verifier)
+    );
+
+  const challenge =
+    base64UrlFromBytes(
+      new Uint8Array(digest)
+    );
+
+  return {
+    verifier,
+    challenge
+  };
+};
+
+const handleTelegramLogin = async () => {
+  try {
+    const configResponse =
+      await fetch('/api/telegram-config');
+
+    const config =
+      await configResponse.json();
+
+    if (
+      !configResponse.ok ||
+      !config.success ||
+      !config.clientId
+    ) {
+      throw new Error(
+        config.message ||
+        'Telegram login configuration is missing'
+      );
+    }
+
+    const state = crypto.randomUUID();
+    const { verifier, challenge } =
+      await createTelegramPkce();
+
+    sessionStorage.setItem(
+      'telegram_oauth_state',
+      state
+    );
+
+    localStorage.setItem(
+      'telegram_oauth_state',
+      state
+    );
+
+    sessionStorage.setItem(
+      'telegram_pkce_verifier',
+      verifier
+    );
+
+    localStorage.setItem(
+      'telegram_pkce_verifier',
+      verifier
+    );
+
+    const existingAfterLoginPage =
+      sessionStorage.getItem('after_login_page') ||
+      localStorage.getItem('after_login_page');
+
+    const pageToReturn =
+      existingAfterLoginPage ||
+      (currentPage === 'login-page'
+        ? 'my-dashboard'
+        : currentPage) ||
+      'home';
+
+    sessionStorage.setItem(
+      'after_login_page',
+      pageToReturn
+    );
+
+    localStorage.setItem(
+      'after_login_page',
+      pageToReturn
+    );
+
+    const pendingCheckinToken =
+      sessionStorage.getItem('pending_checkin_token');
+
+    if (pendingCheckinToken) {
+      localStorage.setItem(
+        'pending_checkin_token',
+        pendingCheckinToken
+      );
+    }
+
+    const redirectUri =
+      'https://watt.nathoeng.com/telegram-callback';
+
+    const telegramAuthUrl =
+      'https://oauth.telegram.org/auth' +
+      '?client_id=' +
+        encodeURIComponent(config.clientId) +
+      '&redirect_uri=' +
+        encodeURIComponent(redirectUri) +
+      '&response_type=code' +
+      '&scope=' +
+        encodeURIComponent(
+          'openid profile telegram:bot_access'
+        ) +
+      '&state=' +
+        encodeURIComponent(state) +
+      '&code_challenge=' +
+        encodeURIComponent(challenge) +
+      '&code_challenge_method=S256';
+
+    window.location.href =
+      telegramAuthUrl;
+  } catch (error) {
+    console.error(
+      'Unable to start Telegram Login:',
+      error
+    );
+
+    alert(
+      lang === 'en'
+        ? 'Telegram Login is not configured yet.'
+        : 'ยังไม่ได้ตั้งค่าระบบ Telegram Login'
+    );
+  }
+};
 
 const handleLineLogin = () => {
   const channelId = '2011258009';
@@ -507,6 +852,7 @@ const handleLineLogin = () => {
 
   const handleLogout = () => {
     setUser(null)
+    localStorage.removeItem('nathoeng_user')
     localStorage.removeItem('line_user')
     goToPage('home')
   }
@@ -1052,6 +1398,7 @@ const handleLineLogin = () => {
               goToPage={goToPage}
               user={user}
               handleLineLogin={handleLineLogin}
+              handleTelegramLogin={handleTelegramLogin}
               handleLogout={handleLogout}
             />
           )
@@ -1068,6 +1415,7 @@ const handleLineLogin = () => {
               goToPage={goToPage}
               user={user}
               handleLineLogin={handleLineLogin}
+              handleTelegramLogin={handleTelegramLogin}
               handleLogout={handleLogout}
             />
           )
@@ -1116,7 +1464,14 @@ const handleLineLogin = () => {
           <TermsPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'login-page' ? (
           /* ================= PAGE: LOGIN PAGE ================= */
-          <LoginPage lang={lang} goToPage={goToPage} user={user} handleLineLogin={handleLineLogin} handleLogout={handleLogout} />
+          <LoginPage
+            lang={lang}
+            goToPage={goToPage}
+            user={user}
+            handleLineLogin={handleLineLogin}
+            handleTelegramLogin={handleTelegramLogin}
+            handleLogout={handleLogout}
+          />
         ) : currentPage === 'event-kathina' ? (
           /* ================= PAGE: KATHINA EVENT (Bilingual Thai/English) ================= */
           <div className="guidePage templeEditorialPage">

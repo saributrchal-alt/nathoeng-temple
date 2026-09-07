@@ -5,6 +5,7 @@ function LoginPage({
   goToPage,
   user,
   handleLineLogin,
+  handleTelegramLogin,
   handleLogout
 }) {
   const th = lang === 'th';
@@ -153,6 +154,54 @@ function LoginPage({
           height: 8px;
           border-radius: 50%;
           background: #fff;
+        }
+
+        .telegramLoginBtn {
+          width: 100%;
+          min-height: 52px;
+          margin-top: 12px;
+          padding: 13px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          border: 0;
+          border-radius: 999px;
+          background: #229ed9;
+          color: #fff;
+          font-family: inherit;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow:
+            0 8px 18px rgba(34, 158, 217, .18);
+        }
+
+        .telegramLoginIcon {
+          width: 22px;
+          height: 22px;
+          display: grid;
+          place-items: center;
+          border: 1.5px solid rgba(255,255,255,.88);
+          border-radius: 50%;
+          font-size: 12px;
+          line-height: 1;
+        }
+
+        .loginChannelNote {
+          margin: 16px auto 0;
+          padding: 12px 14px;
+          border: 1px solid #e7dccd;
+          border-radius: 8px;
+          background: #fff;
+          color: #6f655c;
+          font-size: 12px;
+          line-height: 1.75;
+          text-align: left;
+        }
+
+        .loginChannelNote strong {
+          color: #4f453c;
         }
 
         .studentLoginBtn {
@@ -374,7 +423,8 @@ function LoginPage({
             margin-bottom: 16px;
           }
 
-          .lineLoginBtn {
+          .lineLoginBtn,
+          .telegramLoginBtn {
             min-height: 50px;
             font-size: 15px;
           }
@@ -456,8 +506,8 @@ function LoginPage({
 
           <p>
             {th
-              ? 'เข้าสู่ระบบด้วยบัญชี LINE เพื่อจัดการข้อมูลการเข้าพักปฏิบัติธรรม ดูประวัติการทำบุญ และใช้บริการสมาชิกของวัด'
-              : 'Sign in with your LINE account to manage retreat stays, view donation history and access monastery member services.'}
+              ? 'เลือกช่องทางเข้าสู่ระบบสมาชิกของวัด: LINE สำหรับภาษาไทย หรือ Telegram สำหรับ English - ไทย'
+              : 'Choose a member sign-in channel: LINE for Thai or Telegram for English - Thai.'}
           </p>
         </div>
 
@@ -483,7 +533,7 @@ function LoginPage({
                     src={user.picture}
                     alt={
                       user.name ||
-                      'LINE User'
+                      'Member'
                     }
                     referrerPolicy="no-referrer"
                     onError={() =>
@@ -509,9 +559,13 @@ function LoginPage({
               </h3>
 
               <p className="loginSuccessText">
-                {th
-                  ? 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'
-                  : 'You are successfully signed in to the monastery member system with LINE.'}
+                {user.authProvider === 'telegram'
+                  ? th
+                    ? 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน Telegram เรียบร้อยแล้ว'
+                    : 'You are successfully signed in to the monastery member system with Telegram.'
+                  : th
+                    ? 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน LINE เรียบร้อยแล้ว'
+                    : 'You are successfully signed in to the monastery member system with LINE.'}
               </p>
 
               <div
@@ -587,19 +641,34 @@ function LoginPage({
                   aria-hidden="true"
                 ></span>
 
-                <span>
-                  {th
-                    ? 'เข้าสู่ระบบด้วย LINE'
-                    : 'Login with LINE'}
-                </span>
+                <span>LINE (ภาษาไทย)</span>
               </button>
 
+              <button
+                type="button"
+                onClick={handleTelegramLogin}
+                className="telegramLoginBtn"
+              >
+                <span
+                  className="telegramLoginIcon"
+                  aria-hidden="true"
+                >
+                  ↗
+                </span>
 
+                <span>Telegram (English - ไทย)</span>
+              </button>
+
+              <div className="loginChannelNote">
+                <strong>LINE:</strong> ภาษาไทย · Thai communication
+                <br />
+                <strong>Telegram:</strong> English + ไทย · bilingual communication
+              </div>
 
               <p className="loginHelpText">
                 {th
-                  ? 'ระบบจะใช้บัญชี LINE เพื่อยืนยันตัวตนก่อนทำรายการจองเข้าพักและใช้บริการสมาชิกของวัด'
-                  : 'LINE is used to verify your identity before booking a monastery stay or accessing member services.'}
+                  ? 'ระบบจะใช้บัญชี LINE หรือ Telegram เพื่อยืนยันตัวตนก่อนทำรายการจองเข้าพักปฏิบัติธรรมและใช้บริการสมาชิกของวัด'
+                  : 'LINE or Telegram is used to verify your identity before retreat booking and access to monastery member services.'}
               </p>
 
               <p className="loginPrivacyText">

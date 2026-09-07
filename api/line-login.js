@@ -318,6 +318,9 @@ export default async function handler(req, res) {
         lineUid:
           savedMember.line_uid,
 
+        authProvider:
+          'line',
+
         role:
           savedMember.role
       });
@@ -353,6 +356,9 @@ export default async function handler(req, res) {
         isAdmin:
           savedMember.role ===
           'admin',
+
+        authProvider:
+          'line',
 
         lineOaFriend:
           savedMember.line_oa_friend ===
