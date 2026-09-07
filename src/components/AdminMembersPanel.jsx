@@ -64,8 +64,11 @@ function AdminMembersPanel({ lang }) {
     notConnectedChannel: th ? 'สมาชิกยังไม่ได้เชื่อมต่อช่องทางนี้' : 'This member has not connected this channel.',
     closeComposer: th ? 'ปิดหน้าร่าง' : 'Close composer',
     confirmSendLine: th ? 'ยืนยันส่งผ่าน LINE' : 'Confirm send via LINE',
+    confirmSendTelegram: th ? 'ยืนยันส่งผ่าน Telegram' : 'Confirm send via Telegram',
     sendingLine: th ? 'กำลังส่งผ่าน LINE...' : 'Sending via LINE...',
+    sendingTelegram: th ? 'กำลังส่งผ่าน Telegram...' : 'Sending via Telegram...',
     sendSuccess: th ? 'ส่งข้อความผ่าน LINE เรียบร้อยแล้ว' : 'LINE message sent successfully.',
+    sendTelegramSuccess: th ? 'ส่งข้อความผ่าน Telegram เรียบร้อยแล้ว' : 'Telegram message sent successfully.',
     sent: th ? 'ส่งสำเร็จ' : 'Sent',
     failed: th ? 'ส่งไม่สำเร็จ' : 'Failed',
     communicationLog: th ? 'ประวัติการส่งข้อความ' : 'Delivery history',
@@ -383,17 +386,26 @@ function AdminMembersPanel({ lang }) {
     setCommunicationResult('');
   };
 
-  const sendLineMessage = async () => {
+  const sendMemberMessage = async (channel) => {
     const messageText = composeText.trim();
+    const cleanChannel =
+      channel === 'telegram'
+        ? 'telegram'
+        : 'line';
 
     if (!selectedMember?.id || !messageText) {
       return;
     }
 
+    const channelName =
+      cleanChannel === 'telegram'
+        ? 'Telegram'
+        : 'LINE';
+
     if (!window.confirm(
       th
-        ? 'ยืนยันส่งข้อความนี้ผ่าน LINE ถึงสมาชิกหรือไม่?'
-        : 'Send this message to the member via LINE?'
+        ? `ยืนยันส่งข้อความนี้ผ่าน ${channelName} ถึงสมาชิกหรือไม่?`
+        : `Send this message to the member via ${channelName}?`
     )) {
       return;
     }
@@ -410,6 +422,7 @@ function AdminMembersPanel({ lang }) {
         },
         body: JSON.stringify({
           action: 'member_message',
+          channel: cleanChannel,
           memberId: selectedMember.id,
           messageText
         })
@@ -418,10 +431,17 @@ function AdminMembersPanel({ lang }) {
       const data = await response.json();
 
       if (!response.ok || !data?.success) {
-        throw new Error(data?.message || 'Unable to send LINE message');
+        throw new Error(
+          data?.message ||
+          `Unable to send ${channelName} message`
+        );
       }
 
-      setCommunicationResult(text.sendSuccess);
+      setCommunicationResult(
+        cleanChannel === 'telegram'
+          ? text.sendTelegramSuccess
+          : text.sendSuccess
+      );
       setComposeText('');
       setComposeChannel(null);
       await loadCommunications(selectedMember.id);
@@ -432,6 +452,12 @@ function AdminMembersPanel({ lang }) {
       setCommunicationBusy(false);
     }
   };
+
+  const sendLineMessage = () =>
+    sendMemberMessage('line');
+
+  const sendTelegramMessage = () =>
+    sendMemberMessage('telegram');
 
   if (loading) {
     return (
@@ -828,7 +854,9 @@ function AdminMembersPanel({ lang }) {
                         ? (th
                             ? 'ตรวจข้อความให้เรียบร้อย แล้วกด “ยืนยันส่งผ่าน LINE” เพื่อส่งจริง'
                             : 'Review the message, then confirm to send it through LINE.')
-                        : text.composeHelp}
+                        : (th
+                            ? 'สำหรับ Telegram แนะนำให้เขียน English + ไทย แล้วกด “ยืนยันส่งผ่าน Telegram” เพื่อส่งจริง'
+                            : 'For Telegram, bilingual English + Thai is recommended. Review, then confirm to send.')}
                     </div>
                     <textarea
                       value={composeText}
@@ -858,6 +886,17 @@ function AdminMembersPanel({ lang }) {
                           {communicationBusy ? text.sendingLine : text.confirmSendLine}
                         </button>
                       ) : null}
+
+                      {composeChannel === 'Telegram' ? (
+                        <button
+                          type="button"
+                          onClick={sendTelegramMessage}
+                          disabled={communicationBusy || !composeText.trim()}
+                          style={{ border: 'none', borderRadius: '9px', background: '#2b8bc6', color: '#fff', padding: '9px 14px', fontWeight: 800, cursor: communicationBusy || !composeText.trim() ? 'not-allowed' : 'pointer', opacity: communicationBusy || !composeText.trim() ? 0.6 : 1 }}
+                        >
+                          {communicationBusy ? text.sendingTelegram : text.confirmSendTelegram}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
@@ -866,8 +905,8 @@ function AdminMembersPanel({ lang }) {
 
             <div style={{ padding: '12px', borderRadius: '10px', background: '#fbf8f2', color: '#756c60', fontSize: '13px', lineHeight: 1.55 }}>
               {th
-                ? 'Phase 4B: ส่ง LINE จริงและบันทึกประวัติการส่งแล้ว · Telegram จะต่อใน Phase 4C'
-                : 'Phase 4B: LINE delivery and communication logging are enabled. Telegram follows in Phase 4C.'}
+                ? 'Phase 4C: ส่ง LINE และ Telegram จริง พร้อมบันทึกประวัติการส่งใน timeline เดียวกัน'
+                : 'Phase 4C: LINE and Telegram delivery are enabled with one shared communication timeline.'}
             </div>
 
             <button

@@ -127,6 +127,27 @@ async function sendLinePush({
   );
 }
 
+async function sendTelegramMessage({
+  telegramBotToken,
+  telegramUid,
+  messageText
+}) {
+  return fetch(
+    `https://api.telegram.org/bot${telegramBotToken}/sendMessage`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json'
+      },
+      body: JSON.stringify({
+        chat_id: telegramUid,
+        text: messageText
+      })
+    }
+  );
+}
+
 export default async function handler(req, res) {
   const session = requireAdmin(req, res);
 
@@ -142,6 +163,9 @@ export default async function handler(req, res) {
 
   const lineMessagingAccessToken =
     process.env.LINE_MESSAGING_ACCESS_TOKEN;
+
+  const telegramBotToken =
+    process.env.TELEGRAM_BOT_TOKEN;
 
   if (
     !supabaseUrl ||
@@ -227,15 +251,9 @@ export default async function handler(req, res) {
     });
   }
 
-  if (!lineMessagingAccessToken) {
-    return res.status(500).json({
-      success: false,
-      message: 'LINE Messaging API configuration is missing'
-    });
-  }
-
   const {
     action,
+    channel,
     memberId,
     bookingId,
     event,
@@ -244,6 +262,11 @@ export default async function handler(req, res) {
 
   const cleanAction =
     String(action || '').trim();
+
+  const cleanChannel =
+    String(channel || 'line')
+      .trim()
+      .toLowerCase();
 
   const cleanMemberId =
     String(memberId || '').trim();
@@ -284,144 +307,282 @@ export default async function handler(req, res) {
         });
       }
 
-      const member =
-        await loadMember({
-          supabaseUrl,
-          secretKey:
-            supabaseSecretKey,
-          memberId:
-            cleanMemberId
+      if (!['line', 'telegram'].includes(cleanChannel)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unsupported communication channel'
         });
+      }
 
-      if (!member) {
+      const memberResponse = await fetch(
+        `${supabaseUrl}/rest/v1/members` +
+          `?id=eq.${encodeURIComponent(cleanMemberId)}` +
+          '&select=id,full_name,display_name,line_uid,line_oa_friend,telegram_uid,telegram_username' +
+          '&limit=1',
+        {
+          method: 'GET',
+          headers: supabaseHeaders(supabaseSecretKey),
+          cache: 'no-store'
+        }
+      );
+
+      const memberRows =
+        await readJson(memberResponse);
+
+      if (
+        !memberResponse.ok ||
+        !Array.isArray(memberRows) ||
+        memberRows.length === 0
+      ) {
         return res.status(404).json({
           success: false,
           message: 'Member not found'
         });
       }
 
-      const recipientLineUid =
-        String(
-          member.line_uid || ''
-        ).trim();
+      const member = memberRows[0];
 
-      if (!recipientLineUid) {
-        await saveCommunication({
-          supabaseUrl,
-          secretKey:
-            supabaseSecretKey,
-          memberId:
-            cleanMemberId,
-          adminMemberId:
-            session.memberId,
-          messageText:
-            cleanMessage,
-          status:
-            'failed',
-          errorMessage:
-            'LINE account was not found for this member'
-        });
+      if (cleanChannel === 'line') {
+        if (!lineMessagingAccessToken) {
+          return res.status(500).json({
+            success: false,
+            message:
+              'LINE Messaging API configuration is missing'
+          });
+        }
 
-        return res.status(400).json({
-          success: false,
-          message:
-            'LINE account was not found for this member'
-        });
+        const recipientLineUid =
+          String(
+            member.line_uid || ''
+          ).trim();
+
+        if (!recipientLineUid) {
+          await saveCommunication({
+            supabaseUrl,
+            secretKey:
+              supabaseSecretKey,
+            memberId:
+              cleanMemberId,
+            adminMemberId:
+              session.memberId,
+            messageText:
+              cleanMessage,
+            status:
+              'failed',
+            errorMessage:
+              'LINE account was not found for this member'
+          });
+
+          return res.status(400).json({
+            success: false,
+            message:
+              'LINE account was not found for this member'
+          });
+        }
+
+        if (
+          member.line_oa_friend === false
+        ) {
+          await saveCommunication({
+            supabaseUrl,
+            secretKey:
+              supabaseSecretKey,
+            memberId:
+              cleanMemberId,
+            adminMemberId:
+              session.memberId,
+            messageText:
+              cleanMessage,
+            status:
+              'failed',
+            errorMessage:
+              'The member has not added or is no longer connected to the LINE Official Account'
+          });
+
+          return res.status(400).json({
+            success: false,
+            message:
+              'The member has not added or is no longer connected to the LINE Official Account'
+          });
+        }
+
+        const lineResponse =
+          await sendLinePush({
+            lineMessagingAccessToken,
+            recipientLineUid,
+            messageText:
+              cleanMessage
+          });
+
+        if (!lineResponse.ok) {
+          const lineError =
+            await lineResponse.text();
+
+          console.error(
+            'Member LINE message failed:',
+            lineResponse.status,
+            lineError
+          );
+
+          await saveCommunication({
+            supabaseUrl,
+            secretKey:
+              supabaseSecretKey,
+            memberId:
+              cleanMemberId,
+            adminMemberId:
+              session.memberId,
+            messageText:
+              cleanMessage,
+            status:
+              'failed',
+            errorMessage:
+              lineError ||
+              'Unable to send LINE OA message'
+          });
+
+          return res.status(502).json({
+            success: false,
+            message:
+              'Unable to send LINE OA message'
+          });
+        }
       }
 
-      if (
-        member.line_oa_friend === false
-      ) {
-        await saveCommunication({
-          supabaseUrl,
-          secretKey:
-            supabaseSecretKey,
-          memberId:
-            cleanMemberId,
-          adminMemberId:
-            session.memberId,
-          messageText:
-            cleanMessage,
-          status:
-            'failed',
-          errorMessage:
-            'The member has not added or is no longer connected to the LINE Official Account'
-        });
+      if (cleanChannel === 'telegram') {
+        if (!telegramBotToken) {
+          return res.status(500).json({
+            success: false,
+            message:
+              'Telegram Bot configuration is missing'
+          });
+        }
 
-        return res.status(400).json({
-          success: false,
-          message:
-            'The member has not added or is no longer connected to the LINE Official Account'
-        });
-      }
+        const telegramUid =
+          String(
+            member.telegram_uid || ''
+          ).trim();
 
-      const lineResponse =
-        await sendLinePush({
-          lineMessagingAccessToken,
-          recipientLineUid,
-          messageText:
-            cleanMessage
-        });
+        if (!telegramUid) {
+          await saveCommunication({
+            supabaseUrl,
+            secretKey:
+              supabaseSecretKey,
+            memberId:
+              cleanMemberId,
+            adminMemberId:
+              session.memberId,
+            messageText:
+              cleanMessage,
+            status:
+              'failed',
+            errorMessage:
+              'Telegram account was not found for this member'
+          });
 
-      if (!lineResponse.ok) {
-        const lineError =
-          await lineResponse.text();
+          return res.status(400).json({
+            success: false,
+            message:
+              'Telegram account was not found for this member'
+          });
+        }
 
-        console.error(
-          'Member LINE message failed:',
-          lineResponse.status,
-          lineError
-        );
+        const telegramResponse =
+          await sendTelegramMessage({
+            telegramBotToken,
+            telegramUid,
+            messageText:
+              cleanMessage
+          });
 
-        await saveCommunication({
-          supabaseUrl,
-          secretKey:
-            supabaseSecretKey,
-          memberId:
-            cleanMemberId,
-          adminMemberId:
-            session.memberId,
-          messageText:
-            cleanMessage,
-          status:
-            'failed',
-          errorMessage:
-            lineError ||
-            'Unable to send LINE OA message'
-        });
+        const telegramData =
+          await readJson(telegramResponse);
 
-        return res.status(502).json({
-          success: false,
-          message:
-            'Unable to send LINE OA message'
-        });
+        if (!telegramResponse.ok || telegramData?.ok === false) {
+          const telegramError =
+            telegramData?.description ||
+            'Unable to send Telegram message';
+
+          console.error(
+            'Member Telegram message failed:',
+            telegramResponse.status,
+            telegramData
+          );
+
+          await saveCommunication({
+            supabaseUrl,
+            secretKey:
+              supabaseSecretKey,
+            memberId:
+              cleanMemberId,
+            adminMemberId:
+              session.memberId,
+            messageText:
+              cleanMessage,
+            status:
+              'failed',
+            errorMessage:
+              telegramError
+          });
+
+          return res.status(502).json({
+            success: false,
+            message:
+              telegramError
+          });
+        }
       }
 
       const sentAt =
         new Date().toISOString();
 
-      await saveCommunication({
-        supabaseUrl,
-        secretKey:
-          supabaseSecretKey,
-        memberId:
-          cleanMemberId,
-        adminMemberId:
-          session.memberId,
-        messageText:
-          cleanMessage,
-        status:
-          'success',
-        sentAt
-      });
+      // Save successful delivery in the same timeline.
+      const communicationResponse = await fetch(
+        `${supabaseUrl}/rest/v1/member_communications`,
+        {
+          method: 'POST',
+          headers: supabaseHeaders(
+            supabaseSecretKey,
+            {
+              Prefer: 'return=representation'
+            }
+          ),
+          body: JSON.stringify({
+            member_id: cleanMemberId,
+            channel: cleanChannel,
+            direction: 'outbound',
+            message_text: cleanMessage,
+            status: 'success',
+            sent_at: sentAt,
+            sent_by_member_id:
+              session.memberId || null,
+            error_message: null
+          })
+        }
+      );
+
+      const communicationData =
+        await readJson(communicationResponse);
+
+      if (!communicationResponse.ok) {
+        console.error(
+          'Unable to save successful member communication:',
+          communicationData
+        );
+      }
 
       return res.status(200).json({
         success: true,
+        channel:
+          cleanChannel,
         message:
-          'LINE OA member message sent',
+          cleanChannel === 'telegram'
+            ? 'Telegram member message sent'
+            : 'LINE OA member message sent',
         recipientName:
           member.full_name ||
           member.display_name ||
+          member.telegram_username ||
           ''
       });
     }
@@ -430,6 +591,14 @@ export default async function handler(req, res) {
     // Existing stay notification flow.
     // Kept compatible with the current booking screens.
     // =====================================================
+    if (!lineMessagingAccessToken) {
+      return res.status(500).json({
+        success: false,
+        message:
+          'LINE Messaging API configuration is missing'
+      });
+    }
+
     if (!cleanBookingId) {
       return res.status(400).json({
         success: false,
