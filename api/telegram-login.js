@@ -5,6 +5,158 @@ import {
   getSessionFromRequest
 } from '../lib/_auth.js';
 
+
+const TELEGRAM_ISSUER =
+  'https://oauth.telegram.org';
+
+const TELEGRAM_TOKEN_URL =
+  'https://oauth.telegram.org/token';
+
+const TELEGRAM_JWKS_URL =
+  'https://oauth.telegram.org/.well-known/jwks.json';
+
+function decodeBase64UrlJson(value) {
+  let base64 = value
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  return JSON.parse(
+    Buffer.from(base64, 'base64').toString('utf8')
+  );
+}
+
+function decodeBase64UrlBuffer(value) {
+  let base64 = value
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  return Buffer.from(base64, 'base64');
+}
+
+async function verifyTelegramIdToken(
+  idToken,
+  clientId
+) {
+  const parts = idToken.split('.');
+
+  if (parts.length !== 3) {
+    throw new Error('Invalid Telegram ID token');
+  }
+
+  const header =
+    decodeBase64UrlJson(parts[0]);
+
+  const claims =
+    decodeBase64UrlJson(parts[1]);
+
+  if (header.alg !== 'RS256') {
+    throw new Error(
+      'Unsupported Telegram ID token algorithm'
+    );
+  }
+
+  if (!header.kid) {
+    throw new Error(
+      'Telegram ID token key ID is missing'
+    );
+  }
+
+  const jwksResponse =
+    await fetch(TELEGRAM_JWKS_URL);
+
+  if (!jwksResponse.ok) {
+    throw new Error(
+      'Unable to retrieve Telegram signing keys'
+    );
+  }
+
+  const jwks =
+    await jwksResponse.json();
+
+  const jwk =
+    Array.isArray(jwks.keys)
+      ? jwks.keys.find(
+          (key) => key.kid === header.kid
+        )
+      : null;
+
+  if (!jwk) {
+    throw new Error(
+      'Telegram signing key was not found'
+    );
+  }
+
+  const publicKey =
+    crypto.createPublicKey({
+      key: jwk,
+      format: 'jwk'
+    });
+
+  const signingInput =
+    Buffer.from(parts[0] + '.' + parts[1]);
+
+  const signature =
+    decodeBase64UrlBuffer(parts[2]);
+
+  const signatureValid =
+    crypto.verify(
+      'RSA-SHA256',
+      signingInput,
+      publicKey,
+      signature
+    );
+
+  if (!signatureValid) {
+    throw new Error(
+      'Telegram ID token signature is invalid'
+    );
+  }
+
+  if (claims.iss !== TELEGRAM_ISSUER) {
+    throw new Error(
+      'Telegram ID token issuer is invalid'
+    );
+  }
+
+  const audiences =
+    Array.isArray(claims.aud)
+      ? claims.aud.map(String)
+      : [String(claims.aud || '')];
+
+  if (!audiences.includes(String(clientId))) {
+    throw new Error(
+      'Telegram ID token audience is invalid'
+    );
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+
+  if (!claims.exp || claims.exp <= now) {
+    throw new Error(
+      'Telegram ID token has expired'
+    );
+  }
+
+  if (
+    claims.iat &&
+    claims.iat > now + 60
+  ) {
+    throw new Error(
+      'Telegram ID token issued-at time is invalid'
+    );
+  }
+
+  return claims;
+}
+
 async function mergeMembersForAccountLink(
   supabaseUrl,
   supabaseSecretKey,
@@ -232,7 +384,7 @@ export default async function handler(req, res) {
     // =====================================================
     // Account linking mode
     // Link this Telegram identity to the member already signed in.
-    // Never merge two existing member records automatically.
+    // If the verified Telegram identity belongs to another member, merge safely via the server-only RPC.
     // =====================================================
     if (linkMode) {
       const session = getSessionFromRequest(req);
