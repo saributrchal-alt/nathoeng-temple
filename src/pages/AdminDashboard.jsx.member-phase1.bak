@@ -3,7 +3,6 @@ import AdminDonationPanel from './AdminDonationPanel';
 import StudentAdminPanel from '../components/StudentAdminPanel';
 import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
 import AdminRetreatReviewPanel from '../components/AdminRetreatReviewPanel';
-import AdminMembersPanel from '../components/AdminMembersPanel';
 
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
@@ -43,7 +42,6 @@ function AdminDashboard({ lang, goToPage }) {
       studentTab: '👤 Temple Students',
       practiceMessageTab: '📖 Practice Messages',
       reviewTab: '⭐ Retreat Reviews',
-      memberTab: '👥 Members',
       adminMenuTitle: 'Choose a management area',
       adminMenuHelp: 'Data is loaded only after you open a section.',
       studentTitle: 'Temple Student Management',
@@ -166,7 +164,6 @@ function AdminDashboard({ lang, goToPage }) {
       studentTab: '👤 เด็กวัด',
       practiceMessageTab: '📖 เนื้อหาปฏิบัติถึงฉัน',
       reviewTab: '⭐ รีวิวผู้เข้าปฏิบัติธรรม',
-      memberTab: '👥 สมาชิก',
       adminMenuTitle: 'เลือกเมนูที่ต้องการจัดการ',
       adminMenuHelp: 'ระบบจะโหลดข้อมูลเมื่อกดเข้าแต่ละเมนูเท่านั้น',
       studentTitle: 'จัดการข้อมูลเด็กวัด',
@@ -485,8 +482,7 @@ function AdminDashboard({ lang, goToPage }) {
     if (
       section === 'students' ||
       section === 'practice-messages' ||
-      section === 'reviews' ||
-      section === 'members'
+      section === 'reviews'
     ) {
       return;
     }
@@ -1528,15 +1524,6 @@ function AdminDashboard({ lang, goToPage }) {
   if (activeTab === 'menu') {
     const menuItems = [
       {
-        key: 'members',
-        icon: '/icons/profile.svg',
-        title: t.memberTab,
-        text:
-          lang === 'en'
-            ? 'Member directory and connected LINE / Telegram accounts.'
-            : 'รายชื่อสมาชิกและบัญชี LINE / Telegram ที่เชื่อมต่อ'
-      },
-      {
         key: 'bookings',
         icon: '/icons/stay.svg',
         title: t.bookingTab,
@@ -1727,34 +1714,6 @@ function AdminDashboard({ lang, goToPage }) {
               </button>
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeTab === 'members') {
-    return (
-      <div className="guidePage">
-        <div
-          className="guideContainer"
-          style={{
-            maxWidth: '980px',
-            paddingBottom: '70px'
-          }}
-        >
-          <button
-            type="button"
-            className="backButton"
-            onClick={() =>
-              setActiveTab('menu')
-            }
-          >
-            {t.backMenu}
-          </button>
-
-          <AdminMembersPanel
-            lang={lang}
-          />
         </div>
       </div>
     );

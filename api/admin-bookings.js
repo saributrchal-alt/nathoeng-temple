@@ -76,6 +76,40 @@ async function enrichReviews(supabaseUrl, secretKey, reviews) {
   });
 }
 
+async function handleMembers(req, res, supabaseUrl, secretKey) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({
+      success: false,
+      message: 'Method not allowed'
+    });
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/members?select=*&order=created_at.desc`,
+    {
+      method: 'GET',
+      headers: supabaseHeaders(secretKey),
+      cache: 'no-store'
+    }
+  );
+
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    console.error('Admin members lookup failed:', data);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to load members',
+      databaseError: data
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    members: Array.isArray(data) ? data : []
+  });
+}
+
 async function handleReviews(req, res, session, supabaseUrl, secretKey) {
   if (req.method === 'GET') {
     const response = await fetch(
@@ -194,6 +228,19 @@ export default async function handler(req, res) {
   }
 
   const route = String(req.query?.route || '').trim();
+
+  if (route === 'members') {
+    try {
+      return await handleMembers(req, res, supabaseUrl, supabaseSecretKey);
+    } catch (error) {
+      console.error('Admin members server error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Admin members server error'
+      });
+    }
+  }
+
   if (route === 'reviews') {
     try {
       return await handleReviews(
