@@ -84,7 +84,7 @@ async function handleMembers(req, res, supabaseUrl, secretKey) {
     });
   }
 
-  const response = await fetch(
+  const memberResponse = await fetch(
     `${supabaseUrl}/rest/v1/members?select=*&order=created_at.desc`,
     {
       method: 'GET',
@@ -93,20 +93,54 @@ async function handleMembers(req, res, supabaseUrl, secretKey) {
     }
   );
 
-  const data = await readJson(response);
+  const membersData = await readJson(memberResponse);
 
-  if (!response.ok) {
-    console.error('Admin members lookup failed:', data);
+  if (!memberResponse.ok) {
+    console.error('Admin members lookup failed:', membersData);
     return res.status(500).json({
       success: false,
       message: 'Unable to load members',
-      databaseError: data
+      databaseError: membersData
     });
   }
 
+  const bookingResponse = await fetch(
+    `${supabaseUrl}/rest/v1/bookings?select=*&order=created_at.desc`,
+    {
+      method: 'GET',
+      headers: supabaseHeaders(secretKey),
+      cache: 'no-store'
+    }
+  );
+
+  const bookingsData = await readJson(bookingResponse);
+
+  if (!bookingResponse.ok) {
+    console.error('Admin member booking history lookup failed:', bookingsData);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to load member stay history',
+      databaseError: bookingsData
+    });
+  }
+
+  const bookingsByMember = new Map();
+
+  (Array.isArray(bookingsData) ? bookingsData : []).forEach((booking) => {
+    if (!booking?.member_id) return;
+    const key = String(booking.member_id);
+    if (!bookingsByMember.has(key)) bookingsByMember.set(key, []);
+    bookingsByMember.get(key).push(booking);
+  });
+
+  const members = (Array.isArray(membersData) ? membersData : []).map((member) => ({
+    ...member,
+    stay_history: bookingsByMember.get(String(member.id)) || []
+  }));
+
   return res.status(200).json({
     success: true,
-    members: Array.isArray(data) ? data : []
+    members
   });
 }
 

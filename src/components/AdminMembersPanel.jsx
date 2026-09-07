@@ -37,9 +37,17 @@ function AdminMembersPanel({ lang }) {
     member: th ? 'สมาชิก' : 'Member',
     connected: th ? 'เชื่อมต่อแล้ว' : 'Connected',
     notConnected: th ? 'ยังไม่เชื่อมต่อ' : 'Not connected',
-    phase2: th
-      ? 'ประวัติการเข้าพัก การทำบุญ และการติดต่อ จะเชื่อมเข้าหน้านี้ในขั้นต่อไป'
-      : 'Stay, donation and communication history will be connected here in the next phase.'
+    stayHistory: th ? 'ประวัติการเข้าพักปฏิบัติธรรม' : 'Retreat stay history',
+    noStayHistory: th ? 'ยังไม่มีประวัติการเข้าพักปฏิบัติธรรม' : 'No retreat stay history yet.',
+    stayPeriod: th ? 'ช่วงเข้าพัก' : 'Stay period',
+    status: th ? 'สถานะ' : 'Status',
+    phone: th ? 'โทรศัพท์' : 'Phone',
+    purpose: th ? 'วัตถุประสงค์' : 'Purpose',
+    accommodation: th ? 'ที่พัก' : 'Accommodation',
+    bookingId: th ? 'รหัสการเข้าพัก' : 'Booking ID',
+    nextPhase: th
+      ? 'ประวัติการทำบุญและการติดต่อ จะเชื่อมเข้าหน้านี้ในขั้นต่อไป'
+      : 'Donation and communication history will be connected here in the next phase.'
   };
 
   const loadMembers = async () => {
@@ -97,7 +105,7 @@ function AdminMembersPanel({ lang }) {
     return '—';
   };
 
-  const formatDate = (raw) => {
+  const formatDateTime = (raw) => {
     if (!raw) return '—';
     const date = new Date(raw);
     if (Number.isNaN(date.getTime())) return String(raw);
@@ -111,6 +119,45 @@ function AdminMembersPanel({ lang }) {
       timeZone: 'Asia/Bangkok'
     }).format(date);
   };
+
+  const formatDateOnly = (raw) => {
+    if (!raw) return '—';
+    const rawText = String(raw);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(rawText)
+      ? new Date(`${rawText}T12:00:00+07:00`)
+      : new Date(rawText);
+    if (Number.isNaN(date.getTime())) return rawText;
+
+    return new Intl.DateTimeFormat(th ? 'th-TH' : 'en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'Asia/Bangkok'
+    }).format(date);
+  };
+
+  const statusLabel = (status) => {
+    const labels = {
+      pending: th ? 'รอการอนุมัติ' : 'Pending approval',
+      approved: th ? 'อนุมัติแล้ว' : 'Approved',
+      checked_in: th ? 'ลงทะเบียนเข้าพักแล้ว' : 'Registered',
+      accommodated: th ? 'เข้าที่พักแล้ว' : 'Accommodation assigned',
+      in_retreat: th ? 'อยู่ระหว่างปฏิบัติธรรม' : 'In retreat',
+      checked_out: th ? 'คืนอุปกรณ์ / ส่งคืนห้องแล้ว' : 'Checked out / returned items',
+      completed: th ? 'การเข้าพักเสร็จสิ้น' : 'Completed',
+      rejected: th ? 'ไม่อนุมัติ' : 'Rejected',
+      cancelled: th ? 'ยกเลิกแล้ว' : 'Cancelled'
+    };
+    return labels[status] || status || '—';
+  };
+
+  const accommodationName = (booking) =>
+    booking?.accommodation_name ||
+    booking?.accommodationName ||
+    booking?.assigned_accommodation ||
+    booking?.room_name ||
+    booking?.room ||
+    '';
 
   const stats = useMemo(() => {
     let both = 0;
@@ -238,6 +285,9 @@ function AdminMembersPanel({ lang }) {
                   <div style={{ marginTop: '4px', fontSize: '12px', color: '#756c60' }}>
                     {providerLabel(member)}
                     {member?.role === 'admin' ? ` · ${text.admin}` : ''}
+                    {Array.isArray(member?.stay_history) && member.stay_history.length
+                      ? ` · ${text.stayHistory} ${member.stay_history.length}`
+                      : ''}
                   </div>
                 </div>
                 <div style={{ color: '#9b7226', fontWeight: 800 }}>›</div>
@@ -256,7 +306,7 @@ function AdminMembersPanel({ lang }) {
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            style={{ width: 'min(560px, 100%)', maxHeight: '88vh', overflowY: 'auto', background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
+            style={{ width: 'min(620px, 100%)', maxHeight: '88vh', overflowY: 'auto', background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
           >
             <h2 style={{ marginTop: 0 }}>{memberName(selectedMember)}</h2>
 
@@ -272,15 +322,53 @@ function AdminMembersPanel({ lang }) {
             </div>
 
             <h3>{text.memberDetail}</h3>
-            <div style={{ display: 'grid', gap: '9px', fontSize: '14px' }}>
+            <div style={{ display: 'grid', gap: '9px', fontSize: '14px', marginBottom: '20px' }}>
               <div><strong>{text.memberId}:</strong> {selectedMember.id}</div>
               <div><strong>{text.role}:</strong> {selectedMember?.role === 'admin' ? text.admin : text.member}</div>
-              <div><strong>{text.joined}:</strong> {formatDate(selectedMember.created_at)}</div>
-              <div><strong>{text.lastLogin}:</strong> {formatDate(selectedMember.last_login_at)}</div>
+              <div><strong>{text.joined}:</strong> {formatDateTime(selectedMember.created_at)}</div>
+              <div><strong>{text.lastLogin}:</strong> {formatDateTime(selectedMember.last_login_at)}</div>
             </div>
 
-            <div style={{ marginTop: '18px', padding: '12px', borderRadius: '10px', background: '#fbf8f2', color: '#756c60', fontSize: '13px', lineHeight: 1.55 }}>
-              {text.phase2}
+            <h3 style={{ marginBottom: '10px' }}>
+              {text.stayHistory}
+              {Array.isArray(selectedMember?.stay_history)
+                ? ` (${selectedMember.stay_history.length})`
+                : ''}
+            </h3>
+
+            {!Array.isArray(selectedMember?.stay_history) || selectedMember.stay_history.length === 0 ? (
+              <div style={{ padding: '16px', borderRadius: '12px', background: '#f8f6f1', color: '#756c60', marginBottom: '18px' }}>
+                {text.noStayHistory}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
+                {selectedMember.stay_history.map((booking, index) => (
+                  <div
+                    key={booking?.id || index}
+                    style={{ border: '1px solid #e2d8c8', borderRadius: '13px', padding: '13px 14px', background: '#fffdf9' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                      <strong style={{ color: '#332f29' }}>
+                        {formatDateOnly(booking?.start_date)} – {formatDateOnly(booking?.end_date)}
+                      </strong>
+                      <span style={{ fontSize: '12px', fontWeight: 700, padding: '4px 8px', borderRadius: '999px', background: '#f2ede4', color: '#665c4e' }}>
+                        {statusLabel(booking?.status)}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gap: '5px', fontSize: '13px', color: '#5f584f', lineHeight: 1.5 }}>
+                      {booking?.phone ? <div><strong>{text.phone}:</strong> {booking.phone}</div> : null}
+                      {booking?.purpose ? <div><strong>{text.purpose}:</strong> {booking.purpose}</div> : null}
+                      {accommodationName(booking) ? <div><strong>{text.accommodation}:</strong> {accommodationName(booking)}</div> : null}
+                      {booking?.id ? <div style={{ color: '#8a8176' }}><strong>{text.bookingId}:</strong> {booking.id}</div> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ padding: '12px', borderRadius: '10px', background: '#fbf8f2', color: '#756c60', fontSize: '13px', lineHeight: 1.55 }}>
+              {text.nextPhase}
             </div>
 
             <button
