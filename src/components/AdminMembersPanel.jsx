@@ -364,7 +364,15 @@ function AdminMembersPanel({ lang }) {
       const data = await response.json();
 
       if (!response.ok || !data?.success) {
-        throw new Error(data?.message || 'Unable to load communication history');
+        const diagnostic =
+          data?.diagnostic?.detail
+            ? ` (${data.diagnostic.detail})`
+            : '';
+
+        throw new Error(
+          (data?.message || 'Unable to load communication history') +
+          diagnostic
+        );
       }
 
       setCommunications(
@@ -431,9 +439,15 @@ function AdminMembersPanel({ lang }) {
       const data = await response.json();
 
       if (!response.ok || !data?.success) {
+        const diagnostic =
+          data?.diagnostic?.detail
+            ? `\nDiagnostic: ${data.diagnostic.detail}`
+            : '';
+
         throw new Error(
-          data?.message ||
-          `Unable to send ${channelName} message`
+          (data?.message ||
+            `Unable to send ${channelName} message`) +
+          diagnostic
         );
       }
 

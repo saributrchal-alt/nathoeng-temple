@@ -65,6 +65,20 @@ async function saveCommunication({
   errorMessage = null,
   sentAt = null
 }) {
+  const payload = {
+    member_id: memberId,
+    channel:
+      channel === 'telegram'
+        ? 'telegram'
+        : 'line',
+    direction: 'outbound',
+    message_text: messageText,
+    status,
+    sent_at: sentAt,
+    sent_by_member_id: adminMemberId || null,
+    error_message: errorMessage
+  };
+
   const response = await fetch(
     `${supabaseUrl}/rest/v1/member_communications`,
     {
@@ -75,32 +89,42 @@ async function saveCommunication({
           Prefer: 'return=representation'
         }
       ),
-      body: JSON.stringify({
-        member_id: memberId,
-        channel:
-          channel === 'telegram'
-            ? 'telegram'
-            : 'line',
-        direction: 'outbound',
-        message_text: messageText,
-        status,
-        sent_at: sentAt,
-        sent_by_member_id: adminMemberId || null,
-        error_message: errorMessage
-      })
+      body: JSON.stringify(payload)
     }
   );
 
-  const data = await readJson(response);
+  const rawText = await response.text();
+
+  let data = null;
+
+  try {
+    data = rawText
+      ? JSON.parse(rawText)
+      : null;
+  } catch {
+    data = rawText || null;
+  }
 
   if (!response.ok) {
     console.error(
       'Unable to save member communication:',
-      data
+      {
+        status: response.status,
+        data,
+        payload: {
+          ...payload,
+          message_text:
+            `[${String(messageText || '').length} chars]`
+        }
+      }
     );
   }
 
-  return data;
+  return {
+    ok: response.ok,
+    status: response.status,
+    data
+  };
 }
 
 async function sendLinePush({
@@ -223,7 +247,16 @@ export default async function handler(req, res) {
         return res.status(500).json({
           success: false,
           message:
-            'Unable to load communication history'
+            'Unable to load communication history',
+          diagnostic: {
+            httpStatus:
+              response.status,
+            detail:
+              data?.message ||
+              data?.hint ||
+              data?.details ||
+              JSON.stringify(data || {})
+          }
         });
       }
 
@@ -550,7 +583,7 @@ export default async function handler(req, res) {
       const sentAt =
         new Date().toISOString();
 
-      const communicationData =
+      const communicationResult =
         await saveCommunication({
           supabaseUrl,
           secretKey:
@@ -569,17 +602,40 @@ export default async function handler(req, res) {
         });
 
       const savedCommunication =
-        Array.isArray(communicationData)
-          ? communicationData[0]
-          : communicationData;
+        Array.isArray(
+          communicationResult?.data
+        )
+          ? communicationResult.data[0]
+          : communicationResult?.data;
 
-      if (!savedCommunication?.id) {
+      if (
+        !communicationResult?.ok ||
+        !savedCommunication?.id
+      ) {
+        const detail =
+          typeof communicationResult?.data === 'string'
+            ? communicationResult.data
+            : (
+                communicationResult?.data?.message ||
+                communicationResult?.data?.hint ||
+                communicationResult?.data?.details ||
+                JSON.stringify(
+                  communicationResult?.data || {}
+                )
+              );
+
         return res.status(500).json({
           success: false,
           code:
             'COMMUNICATION_LOG_FAILED',
           message:
-            'Message was sent, but the communication history could not be saved'
+            'Message was sent, but the communication history could not be saved',
+          diagnostic: {
+            httpStatus:
+              communicationResult?.status || null,
+            detail:
+              detail || 'No Supabase error detail returned'
+          }
         });
       }
 
