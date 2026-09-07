@@ -8,6 +8,10 @@ function AdminMembersPanel({ lang }) {
   const [selectedMember, setSelectedMember] = useState(null);
   const [composeChannel, setComposeChannel] = useState(null);
   const [composeText, setComposeText] = useState('');
+  const [communications, setCommunications] = useState([]);
+  const [communicationLoading, setCommunicationLoading] = useState(false);
+  const [communicationBusy, setCommunicationBusy] = useState(false);
+  const [communicationResult, setCommunicationResult] = useState('');
   const [detailTab, setDetailTab] = useState('stays');
   const [search, setSearch] = useState('');
   const [providerFilter, setProviderFilter] = useState('all');
@@ -59,6 +63,15 @@ function AdminMembersPanel({ lang }) {
     messagePlaceholder: th ? 'พิมพ์ข้อความที่ต้องการส่ง...' : 'Type the message...',
     notConnectedChannel: th ? 'สมาชิกยังไม่ได้เชื่อมต่อช่องทางนี้' : 'This member has not connected this channel.',
     closeComposer: th ? 'ปิดหน้าร่าง' : 'Close composer',
+    confirmSendLine: th ? 'ยืนยันส่งผ่าน LINE' : 'Confirm send via LINE',
+    sendingLine: th ? 'กำลังส่งผ่าน LINE...' : 'Sending via LINE...',
+    sendSuccess: th ? 'ส่งข้อความผ่าน LINE เรียบร้อยแล้ว' : 'LINE message sent successfully.',
+    sent: th ? 'ส่งสำเร็จ' : 'Sent',
+    failed: th ? 'ส่งไม่สำเร็จ' : 'Failed',
+    communicationLog: th ? 'ประวัติการส่งข้อความ' : 'Delivery history',
+    noCommunicationLog: th ? 'ยังไม่มีประวัติการส่ง LINE / Telegram' : 'No LINE / Telegram delivery history yet.',
+    channel: th ? 'ช่องทาง' : 'Channel',
+    sentBy: th ? 'ส่งโดย' : 'Sent by',
 
     stayHistory: th ? 'ประวัติการเข้าพักปฏิบัติธรรม' : 'Retreat stay history',
     noStayHistory: th ? 'ยังไม่มีประวัติการเข้าพักปฏิบัติธรรม' : 'No retreat stay history yet.',
@@ -327,9 +340,97 @@ function AdminMembersPanel({ lang }) {
     );
   }, [messages, selectedMember]);
 
+  const loadCommunications = async (memberId) => {
+    if (!memberId) {
+      setCommunications([]);
+      return;
+    }
+
+    setCommunicationLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/stay-line-notify?memberId=${encodeURIComponent(memberId)}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'Unable to load communication history');
+      }
+
+      setCommunications(
+        Array.isArray(data.communications)
+          ? data.communications
+          : []
+      );
+    } catch (err) {
+      console.error('Member communications load error:', err);
+      setCommunications([]);
+    } finally {
+      setCommunicationLoading(false);
+    }
+  };
+
   const openComposer = (channel) => {
     setComposeChannel(channel);
     setComposeText('');
+    setCommunicationResult('');
+  };
+
+  const sendLineMessage = async () => {
+    const messageText = composeText.trim();
+
+    if (!selectedMember?.id || !messageText) {
+      return;
+    }
+
+    if (!window.confirm(
+      th
+        ? 'ยืนยันส่งข้อความนี้ผ่าน LINE ถึงสมาชิกหรือไม่?'
+        : 'Send this message to the member via LINE?'
+    )) {
+      return;
+    }
+
+    setCommunicationBusy(true);
+    setCommunicationResult('');
+
+    try {
+      const response = await fetch('/api/stay-line-notify', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'member_message',
+          memberId: selectedMember.id,
+          messageText
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'Unable to send LINE message');
+      }
+
+      setCommunicationResult(text.sendSuccess);
+      setComposeText('');
+      setComposeChannel(null);
+      await loadCommunications(selectedMember.id);
+    } catch (err) {
+      setCommunicationResult(err.message);
+      await loadCommunications(selectedMember.id);
+    } finally {
+      setCommunicationBusy(false);
+    }
   };
 
   if (loading) {
@@ -405,6 +506,10 @@ function AdminMembersPanel({ lang }) {
                 onClick={() => {
                   setSelectedMember(member);
                   setDetailTab('stays');
+                  setComposeChannel(null);
+                  setComposeText('');
+                  setCommunicationResult('');
+                  loadCommunications(member.id);
                 }}
                 style={{ width: '100%', border: '1px solid #e2d8c8', borderRadius: '14px', background: '#fff', padding: '14px', cursor: 'pointer', textAlign: 'left' }}
               >
@@ -671,13 +776,59 @@ function AdminMembersPanel({ lang }) {
                   </div>
                 )}
 
+                <h3 style={{ marginBottom: '10px' }}>{text.communicationLog}</h3>
+
+                {communicationLoading ? (
+                  <div style={{ padding: '14px', color: '#756c60' }}>
+                    {th ? 'กำลังโหลดประวัติการส่ง...' : 'Loading delivery history...'}
+                  </div>
+                ) : communications.length === 0 ? (
+                  <div style={{ padding: '16px', borderRadius: '12px', background: '#f8f6f1', color: '#756c60', marginBottom: '18px' }}>
+                    {text.noCommunicationLog}
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
+                    {communications.map((item, index) => (
+                      <div key={item?.id || index} style={{ border: '1px solid #e2d8c8', borderRadius: '13px', padding: '13px 14px', background: '#fff' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '7px' }}>
+                          <strong>{String(item?.channel || '').toUpperCase() || '—'}</strong>
+                          <span style={{ fontSize: '12px', fontWeight: 800, padding: '4px 8px', borderRadius: '999px', background: item?.status === 'success' ? '#eef8f0' : '#fff1ef', color: item?.status === 'success' ? '#2f7b43' : '#a0463d' }}>
+                            {item?.status === 'success' ? text.sent : text.failed}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#81786d', marginBottom: '8px' }}>
+                          {formatDateTime(item?.sent_at || item?.created_at)}
+                        </div>
+                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, color: '#514b43', fontSize: '14px' }}>
+                          {item?.message_text || '—'}
+                        </div>
+                        {item?.error_message ? (
+                          <div style={{ marginTop: '8px', fontSize: '12px', color: '#a0463d' }}>
+                            {item.error_message}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {communicationResult ? (
+                  <div style={{ padding: '11px 12px', borderRadius: '10px', marginBottom: '12px', background: communicationResult === text.sendSuccess ? '#eef8f0' : '#fff1ef', color: communicationResult === text.sendSuccess ? '#2f7b43' : '#a0463d' }}>
+                    {communicationResult}
+                  </div>
+                ) : null}
+
                 {composeChannel ? (
                   <div style={{ border: '1px solid #d8c9b5', borderRadius: '14px', padding: '14px', background: '#fbf8f2', marginBottom: '18px' }}>
                     <strong style={{ display: 'block', marginBottom: '5px' }}>
                       {text.composeTitle} · {composeChannel}
                     </strong>
                     <div style={{ fontSize: '12px', color: '#756c60', lineHeight: 1.5, marginBottom: '10px' }}>
-                      {text.composeHelp}
+                      {composeChannel === 'LINE'
+                        ? (th
+                            ? 'ตรวจข้อความให้เรียบร้อย แล้วกด “ยืนยันส่งผ่าน LINE” เพื่อส่งจริง'
+                            : 'Review the message, then confirm to send it through LINE.')
+                        : text.composeHelp}
                     </div>
                     <textarea
                       value={composeText}
@@ -686,13 +837,28 @@ function AdminMembersPanel({ lang }) {
                       rows={6}
                       style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', border: '1px solid #d8c9b5', borderRadius: '10px', padding: '11px', fontFamily: 'inherit', fontSize: '14px' }}
                     />
-                    <button
-                      type="button"
-                      onClick={() => { setComposeChannel(null); setComposeText(''); }}
-                      style={{ marginTop: '9px', border: '1px solid #d8c9b5', borderRadius: '9px', background: '#fff', padding: '9px 12px', cursor: 'pointer' }}
-                    >
-                      {text.closeComposer}
-                    </button>
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '9px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setComposeChannel(null); setComposeText(''); setCommunicationResult(''); }}
+                        disabled={communicationBusy}
+                        style={{ border: '1px solid #d8c9b5', borderRadius: '9px', background: '#fff', padding: '9px 12px', cursor: communicationBusy ? 'not-allowed' : 'pointer' }}
+                      >
+                        {text.closeComposer}
+                      </button>
+
+                      {composeChannel === 'LINE' ? (
+                        <button
+                          type="button"
+                          onClick={sendLineMessage}
+                          disabled={communicationBusy || !composeText.trim()}
+                          style={{ border: 'none', borderRadius: '9px', background: '#2a9b45', color: '#fff', padding: '9px 14px', fontWeight: 800, cursor: communicationBusy || !composeText.trim() ? 'not-allowed' : 'pointer', opacity: communicationBusy || !composeText.trim() ? 0.6 : 1 }}
+                        >
+                          {communicationBusy ? text.sendingLine : text.confirmSendLine}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 ) : null}
               </>
@@ -700,8 +866,8 @@ function AdminMembersPanel({ lang }) {
 
             <div style={{ padding: '12px', borderRadius: '10px', background: '#fbf8f2', color: '#756c60', fontSize: '13px', lineHeight: 1.55 }}>
               {th
-                ? 'Phase 4A: แสดงประวัติข้อความและเตรียมข้อความ LINE / Telegram โดยยังไม่ส่งจริง'
-                : 'Phase 4A: communication history and LINE / Telegram message preparation; delivery is not enabled yet.'}
+                ? 'Phase 4B: ส่ง LINE จริงและบันทึกประวัติการส่งแล้ว · Telegram จะต่อใน Phase 4C'
+                : 'Phase 4B: LINE delivery and communication logging are enabled. Telegram follows in Phase 4C.'}
             </div>
 
             <button
