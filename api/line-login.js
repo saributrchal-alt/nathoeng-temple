@@ -1,6 +1,7 @@
 import {
   createSessionToken,
-  setSessionCookie
+  setSessionCookie,
+  getSessionFromRequest
 } from '../lib/_auth.js';
 
 export default async function handler(req, res) {
@@ -11,7 +12,8 @@ export default async function handler(req, res) {
     });
   }
 
-  const { code, redirectUri } = req.body || {};
+  const { code, redirectUri, mode } = req.body || {};
+  const linkMode = mode === 'link';
 
   if (!code || !redirectUri) {
     return res.status(400).json({
@@ -205,6 +207,136 @@ export default async function handler(req, res) {
       new Date().toISOString();
 
     // =====================================================
+    // Account linking mode
+    // Link this LINE identity to the member already signed in.
+    // Never merge two existing member records automatically.
+    // =====================================================
+    if (linkMode) {
+      const session = getSessionFromRequest(req);
+
+      if (!session?.memberId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Please sign in before linking LINE'
+        });
+      }
+
+      const existingResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/members?line_uid=eq.' +
+          encodeURIComponent(profile.userId) +
+          '&select=id,line_uid,telegram_uid,display_name,picture_url,role&limit=1',
+        {
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization: 'Bearer ' + supabaseSecretKey
+          }
+        }
+      );
+
+      const existingRows = await existingResponse.json();
+
+      if (!existingResponse.ok) {
+        console.error('Unable to check existing LINE link:', existingRows);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to check LINE account link'
+        });
+      }
+
+      const existingOwner =
+        Array.isArray(existingRows) && existingRows.length > 0
+          ? existingRows[0]
+          : null;
+
+      if (
+        existingOwner &&
+        String(existingOwner.id) !== String(session.memberId)
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: 'PROVIDER_ALREADY_LINKED',
+          message: 'This LINE account is already linked to another member'
+        });
+      }
+
+      const patchData = {
+        line_uid: profile.userId,
+        last_login_at: now,
+        line_oa_checked_at: now
+      };
+
+      if (lineOaFriend !== null) {
+        patchData.line_oa_friend = lineOaFriend;
+      }
+
+      const linkResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/members?id=eq.' +
+          encodeURIComponent(session.memberId),
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization: 'Bearer ' + supabaseSecretKey,
+            'Content-Type': 'application/json',
+            Prefer: 'return=representation'
+          },
+          body: JSON.stringify(patchData)
+        }
+      );
+
+      const linkResult = await linkResponse.json();
+
+      if (!linkResponse.ok) {
+        console.error('LINE account link failed:', linkResult);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to link LINE account'
+        });
+      }
+
+      const linkedMember =
+        Array.isArray(linkResult) && linkResult.length > 0
+          ? linkResult[0]
+          : null;
+
+      if (!linkedMember) {
+        return res.status(404).json({
+          success: false,
+          message: 'Signed-in member was not found'
+        });
+      }
+
+      const sessionToken = createSessionToken({
+        memberId: linkedMember.id,
+        lineUid: linkedMember.line_uid,
+        telegramUid: linkedMember.telegram_uid || null,
+        authProvider: session.authProvider || 'line',
+        role: linkedMember.role
+      });
+
+      setSessionCookie(res, sessionToken);
+
+      return res.status(200).json({
+        success: true,
+        linked: true,
+        user: {
+          memberId: linkedMember.id,
+          name: linkedMember.display_name,
+          lineUid: linkedMember.line_uid,
+          telegramUid: linkedMember.telegram_uid || null,
+          picture: linkedMember.picture_url || '',
+          role: linkedMember.role,
+          isAdmin: linkedMember.role === 'admin',
+          authProvider: session.authProvider || 'line',
+          lineOaFriend: linkedMember.line_oa_friend === true,
+          lineOaCheckedAt: linkedMember.line_oa_checked_at || null
+        }
+      });
+    }
+
+    // =====================================================
     // 5. Prepare member data
     // =====================================================
     const memberData = {
@@ -345,6 +477,10 @@ export default async function handler(req, res) {
 
         lineUid:
           savedMember.line_uid,
+
+        telegramUid:
+          savedMember.telegram_uid ||
+          null,
 
         picture:
           savedMember.picture_url ||

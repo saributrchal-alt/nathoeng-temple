@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 import {
   createSessionToken,
-  setSessionCookie
+  setSessionCookie,
+  getSessionFromRequest
 } from '../lib/_auth.js';
 
 const TELEGRAM_ISSUER =
@@ -166,8 +167,11 @@ export default async function handler(req, res) {
   const {
     code,
     codeVerifier,
-    redirectUri
+    redirectUri,
+    mode
   } = req.body || {};
+
+  const linkMode = mode === 'link';
 
   if (
     !code ||
@@ -324,6 +328,129 @@ export default async function handler(req, res) {
       claims.given_name ||
       claims.preferred_username ||
       'Telegram Member';
+
+    // =====================================================
+    // Account linking mode
+    // Link this Telegram identity to the member already signed in.
+    // Never merge two existing member records automatically.
+    // =====================================================
+    if (linkMode) {
+      const session = getSessionFromRequest(req);
+
+      if (!session?.memberId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Please sign in before linking Telegram'
+        });
+      }
+
+      const existingResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/members?telegram_uid=eq.' +
+          encodeURIComponent(telegramUid) +
+          '&select=id,line_uid,telegram_uid,telegram_username,display_name,picture_url,role&limit=1',
+        {
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization: 'Bearer ' + supabaseSecretKey
+          }
+        }
+      );
+
+      const existingRows = await existingResponse.json();
+
+      if (!existingResponse.ok) {
+        console.error('Unable to check existing Telegram link:', existingRows);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to check Telegram account link'
+        });
+      }
+
+      const existingOwner =
+        Array.isArray(existingRows) && existingRows.length > 0
+          ? existingRows[0]
+          : null;
+
+      if (
+        existingOwner &&
+        String(existingOwner.id) !== String(session.memberId)
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: 'PROVIDER_ALREADY_LINKED',
+          message: 'This Telegram account is already linked to another member'
+        });
+      }
+
+      const linkResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/members?id=eq.' +
+          encodeURIComponent(session.memberId),
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization: 'Bearer ' + supabaseSecretKey,
+            'Content-Type': 'application/json',
+            Prefer: 'return=representation'
+          },
+          body: JSON.stringify({
+            telegram_uid: telegramUid,
+            telegram_username: claims.preferred_username || null,
+            last_login_at: now
+          })
+        }
+      );
+
+      const linkResult = await linkResponse.json();
+
+      if (!linkResponse.ok) {
+        console.error('Telegram account link failed:', linkResult);
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to link Telegram account'
+        });
+      }
+
+      const linkedMember =
+        Array.isArray(linkResult) && linkResult.length > 0
+          ? linkResult[0]
+          : null;
+
+      if (!linkedMember) {
+        return res.status(404).json({
+          success: false,
+          message: 'Signed-in member was not found'
+        });
+      }
+
+      const sessionToken = createSessionToken({
+        memberId: linkedMember.id,
+        lineUid: linkedMember.line_uid || null,
+        telegramUid: linkedMember.telegram_uid,
+        authProvider: session.authProvider || 'telegram',
+        role: linkedMember.role
+      });
+
+      setSessionCookie(res, sessionToken);
+
+      return res.status(200).json({
+        success: true,
+        linked: true,
+        user: {
+          memberId: linkedMember.id,
+          name: linkedMember.display_name,
+          lineUid: linkedMember.line_uid || null,
+          telegramUid: linkedMember.telegram_uid,
+          telegramUsername: linkedMember.telegram_username || '',
+          picture: linkedMember.picture_url || '',
+          role: linkedMember.role,
+          authProvider: session.authProvider || 'telegram',
+          isAdmin: linkedMember.role === 'admin'
+        }
+      });
+    }
 
     const memberData = {
       telegram_uid:

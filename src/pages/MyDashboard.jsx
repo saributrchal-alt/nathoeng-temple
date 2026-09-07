@@ -4,7 +4,9 @@ function MyDashboard({
   lang,
   goToPage,
   user,
-  handleLogout
+  handleLogout,
+  handleLineLogin,
+  handleTelegramLogin
 }) {
   const th = lang === 'th';
   const [profileImageError, setProfileImageError] = useState(false);
@@ -268,14 +270,68 @@ function MyDashboard({
                   (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}
             </strong>
             <span>
-              {verifiedFullName
-                ? (th
-                    ? '✓ ข้อมูลยืนยันตัวตนจาก Nathoeng Connect'
-                    : '✓ Verified identity from Nathoeng Connect')
-                : user?.authProvider === 'telegram'
+              {user?.lineUid && user?.telegramUid
+                ? `✓ ${th ? 'เชื่อมต่อ LINE และ Telegram แล้ว' : 'LINE and Telegram connected'}`
+                : user?.telegramUid
                   ? `✓ ${th ? 'เชื่อมต่อบัญชี Telegram แล้ว' : 'Telegram connected'}`
                   : `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`}
             </span>
+          </div>
+        </section>
+
+        <section
+          className="compactSummaryCard"
+          style={{ marginTop: '16px' }}
+        >
+          <div className="compactCardHead">
+            <div>
+              <span className="compactEyebrow">
+                {th ? 'ช่องทางสมาชิก' : 'MEMBER CHANNELS'}
+              </span>
+              <h2>{th ? 'บัญชีที่เชื่อมต่อ' : 'Connected Accounts'}</h2>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: '12px' }}>
+            <div className="compactStayAction" style={{ cursor: 'default' }}>
+              <span className="compactStayActionText">
+                <strong>LINE</strong>
+                <small>
+                  {user?.lineUid
+                    ? (th ? '✓ เชื่อมต่อแล้ว' : '✓ Connected')
+                    : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}
+                </small>
+              </span>
+              {!user?.lineUid && (
+                <button
+                  type="button"
+                  className="compactViewButton"
+                  onClick={() => handleLineLogin?.('link')}
+                >
+                  {th ? 'เชื่อมต่อ' : 'Connect'}
+                </button>
+              )}
+            </div>
+
+            <div className="compactStayAction" style={{ cursor: 'default' }}>
+              <span className="compactStayActionText">
+                <strong>Telegram</strong>
+                <small>
+                  {user?.telegramUid
+                    ? (th ? '✓ เชื่อมต่อแล้ว' : '✓ Connected')
+                    : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}
+                </small>
+              </span>
+              {!user?.telegramUid && (
+                <button
+                  type="button"
+                  className="compactViewButton"
+                  onClick={() => handleTelegramLogin?.('link')}
+                >
+                  {th ? 'เชื่อมต่อ' : 'Connect'}
+                </button>
+              )}
+            </div>
           </div>
         </section>
 

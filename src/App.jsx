@@ -377,7 +377,11 @@ useEffect(() => {
         },
         body: JSON.stringify({
           code: code,
-          redirectUri: 'https://watt.nathoeng.com/line-callback'
+          redirectUri: 'https://watt.nathoeng.com/line-callback',
+          mode:
+            sessionStorage.getItem('line_oauth_mode') ||
+            localStorage.getItem('line_oauth_mode') ||
+            'login'
         })
       });
 
@@ -391,8 +395,8 @@ useEffect(() => {
         memberId: data.user.memberId,
         name: data.user.name,
         lineUid: data.user.lineUid,
-        telegramUid: null,
-        authProvider: 'line',
+        telegramUid: data.user.telegramUid || null,
+        authProvider: data.user.authProvider || 'line',
         picture: data.user.picture || '',
         role: data.user.role || (data.user.isAdmin ? 'admin' : 'member'),
         isAdmin: data.user.isAdmin === true
@@ -411,6 +415,8 @@ useEffect(() => {
 
       sessionStorage.removeItem('line_oauth_state');
       localStorage.removeItem('line_oauth_state');
+      sessionStorage.removeItem('line_oauth_mode');
+      localStorage.removeItem('line_oauth_mode');
 
       setUser(lineUser);
 
@@ -551,7 +557,11 @@ useEffect(() => {
         body: JSON.stringify({
           code,
           codeVerifier,
-          redirectUri: 'https://watt.nathoeng.com/telegram-callback'
+          redirectUri: 'https://watt.nathoeng.com/telegram-callback',
+          mode:
+            sessionStorage.getItem('telegram_oauth_mode') ||
+            localStorage.getItem('telegram_oauth_mode') ||
+            'login'
         })
       });
 
@@ -567,7 +577,7 @@ useEffect(() => {
         lineUid: data.user.lineUid || null,
         telegramUid: data.user.telegramUid,
         telegramUsername: data.user.telegramUsername || '',
-        authProvider: 'telegram',
+        authProvider: data.user.authProvider || 'telegram',
         picture: data.user.picture || '',
         role: data.user.role || (data.user.isAdmin ? 'admin' : 'member'),
         isAdmin: data.user.isAdmin === true
@@ -589,6 +599,8 @@ useEffect(() => {
       localStorage.removeItem('telegram_oauth_state');
       sessionStorage.removeItem('telegram_pkce_verifier');
       localStorage.removeItem('telegram_pkce_verifier');
+      sessionStorage.removeItem('telegram_oauth_mode');
+      localStorage.removeItem('telegram_oauth_mode');
 
       setUser(telegramUser);
 
@@ -677,7 +689,7 @@ const createTelegramPkce = async () => {
   };
 };
 
-const handleTelegramLogin = async () => {
+const handleTelegramLogin = async (mode = 'login') => {
   try {
     const telegramClientId = '8612828517';
 
@@ -695,6 +707,9 @@ const handleTelegramLogin = async () => {
       state
     );
 
+    sessionStorage.setItem('telegram_oauth_mode', mode);
+    localStorage.setItem('telegram_oauth_mode', mode);
+
     sessionStorage.setItem(
       'telegram_pkce_verifier',
       verifier
@@ -710,11 +725,13 @@ const handleTelegramLogin = async () => {
       localStorage.getItem('after_login_page');
 
     const pageToReturn =
-      existingAfterLoginPage ||
-      (currentPage === 'login-page'
+      mode === 'link'
         ? 'my-dashboard'
-        : currentPage) ||
-      'home';
+        : existingAfterLoginPage ||
+          (currentPage === 'login-page'
+            ? 'my-dashboard'
+            : currentPage) ||
+          'home';
 
     sessionStorage.setItem(
       'after_login_page',
@@ -772,7 +789,7 @@ const handleTelegramLogin = async () => {
   }
 };
 
-const handleLineLogin = () => {
+const handleLineLogin = (mode = 'login') => {
   const channelId = '2011258009';
   const redirectUri = 'https://watt.nathoeng.com/line-callback';
 
@@ -788,6 +805,9 @@ const handleLineLogin = () => {
     state
   );
 
+  sessionStorage.setItem('line_oauth_mode', mode);
+  localStorage.setItem('line_oauth_mode', mode);
+
   // Remember where the visitor should return after LINE Login.
   // Keep a destination already set by a special flow (for example QR check-in).
   const existingAfterLoginPage =
@@ -795,11 +815,13 @@ const handleLineLogin = () => {
     localStorage.getItem('after_login_page');
 
   const pageToReturn =
-    existingAfterLoginPage ||
-    (currentPage === 'login-page'
+    mode === 'link'
       ? 'my-dashboard'
-      : currentPage) ||
-    'home';
+      : existingAfterLoginPage ||
+        (currentPage === 'login-page'
+          ? 'my-dashboard'
+          : currentPage) ||
+        'home';
 
   sessionStorage.setItem(
     'after_login_page',
@@ -1376,6 +1398,8 @@ const handleLineLogin = () => {
               goToPage={goToPage}
               user={user}
               handleLogout={handleLogout}
+              handleLineLogin={handleLineLogin}
+              handleTelegramLogin={handleTelegramLogin}
             />
           ) : (
             <LoginPage
