@@ -577,15 +577,34 @@ useEffect(() => {
         })
       });
 
-      const data = await response.json();
+      let data = null;
+      let rawResponseText = '';
 
-      if (!response.ok || !data.success) {
+      try {
+        rawResponseText = await response.text();
+        data = rawResponseText
+          ? JSON.parse(rawResponseText)
+          : null;
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok || !data?.success) {
+        const apiCode =
+          data?.code ? ` · ${data.code}` : '';
+
+        const apiMessage =
+          data?.message ||
+          rawResponseText?.slice(0, 220) ||
+          'LINE login failed';
+
         const apiError =
           new Error(
-            data.message || 'LINE login failed'
+            `HTTP ${response.status}${apiCode} · ${apiMessage}`
           );
 
-        apiError.code = data.code || '';
+        apiError.code = data?.code || '';
+        apiError.httpStatus = response.status;
         throw apiError;
       }
 
@@ -600,22 +619,48 @@ useEffect(() => {
         }
       );
 
-      const sessionData =
-        await sessionResponse.json();
+      let sessionData = null;
+      let sessionRawText = '';
+
+      try {
+        sessionRawText =
+          await sessionResponse.text();
+
+        sessionData =
+          sessionRawText
+            ? JSON.parse(sessionRawText)
+            : null;
+      } catch {
+        sessionData = null;
+      }
 
       if (
         !sessionResponse.ok ||
         !sessionData?.success ||
         !sessionData?.user
       ) {
+        const serverCode =
+          sessionData?.code ||
+          'SESSION_COOKIE_NOT_PRESERVED';
+
+        const serverMessage =
+          sessionData?.message ||
+          sessionRawText?.slice(0, 220) ||
+          'The secure website session was not preserved';
+
         const sessionError =
           new Error(
-            sessionData?.message ||
-            'The secure website session was not preserved'
+            `HTTP ${sessionResponse.status} · ${serverCode} · ${serverMessage}`
           );
 
         sessionError.code =
           'SESSION_COOKIE_NOT_PRESERVED';
+
+        sessionError.serverCode =
+          serverCode;
+
+        sessionError.httpStatus =
+          sessionResponse.status;
 
         throw sessionError;
       }
@@ -712,18 +757,23 @@ useEffect(() => {
       const cookieNotPreserved =
         error?.code === 'SESSION_COOKIE_NOT_PRESERVED';
 
+      const diagnosticDetail =
+        error instanceof Error && error.message
+          ? error.message
+          : String(error || 'Unknown error');
+
       alert(
         accountMergeFailed
           ? (lang === 'en'
-              ? 'This LINE account belongs to an existing member, but the accounts could not be merged safely. Please contact the administrator.'
-              : 'LINE นี้เชื่อมกับสมาชิกเดิมอยู่แล้ว แต่ระบบยังรวมบัญชีให้อัตโนมัติไม่ได้ กรุณาติดต่อผู้ดูแลระบบ')
+              ? `LINE account merge failed\n\n${diagnosticDetail}`
+              : `รวมบัญชี LINE ไม่สำเร็จ\n\n${diagnosticDetail}`)
           : cookieNotPreserved
             ? (lang === 'en'
-                ? 'This in-app browser could not preserve the secure login session. Please choose Open in browser and continue in Chrome or Safari.'
-                : 'เบราว์เซอร์ภายในแอปไม่สามารถเก็บเซสชันที่ปลอดภัยได้ กรุณาเลือก “เปิดในเบราว์เซอร์” แล้วใช้งานต่อใน Chrome หรือ Safari')
+                ? `Secure login session was not preserved.\n\n${diagnosticDetail}\n\nPlease choose Open in browser and continue in Chrome or Safari.`
+                : `เบราว์เซอร์ไม่สามารถเก็บเซสชันการเข้าสู่ระบบได้\n\n${diagnosticDetail}\n\nกรุณาเลือก “เปิดในเบราว์เซอร์” แล้วใช้งานต่อใน Chrome หรือ Safari`)
             : (lang === 'en'
-                ? 'LINE login failed. Please try again.'
-                : 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
+                ? `LINE login failed\n\n${diagnosticDetail}`
+                : `เข้าสู่ระบบ LINE ไม่สำเร็จ\n\n${diagnosticDetail}`)
       );
     }
   };
@@ -1146,10 +1196,15 @@ const handleLineLogin = async (mode = 'login') => {
       error
     );
 
+    const diagnosticDetail =
+      error instanceof Error && error.message
+        ? error.message
+        : String(error || 'Unknown error');
+
     alert(
       lang === 'en'
-        ? 'LINE Login could not be started. Please try again.'
-        : 'ไม่สามารถเริ่มการเข้าสู่ระบบ LINE ได้ กรุณาลองใหม่อีกครั้ง'
+        ? `LINE Login could not be started.\n\n${diagnosticDetail}`
+        : `ไม่สามารถเริ่มการเข้าสู่ระบบ LINE ได้\n\n${diagnosticDetail}`
     );
   }
 };
