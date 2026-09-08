@@ -208,7 +208,214 @@ async function mergeMembersForAccountLink(
   return String(mergedMemberId);
 }
 
+
+
+// =====================================================
+// Telegram Inbox Webhook
+// Kept in this file so the /api folder stays within the
+// project's 12-file .js limit.
+// Telegram webhook URL:
+//   /api/telegram-login?route=webhook
+// =====================================================
+function telegramWebhookSupabaseHeaders(secretKey, extra = {}) {
+  return {
+    apikey: secretKey,
+    Authorization: `Bearer ${secretKey}`,
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    ...extra
+  };
+}
+
+async function telegramWebhookReadJson(response) {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+async function handleTelegramWebhook(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({
+      success: false,
+      message: 'Method not allowed'
+    });
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+
+  if (!supabaseUrl || !supabaseSecretKey) {
+    return res.status(500).json({
+      success: false,
+      message: 'Database configuration is missing'
+    });
+  }
+
+  if (webhookSecret) {
+    const receivedSecret = String(
+      req.headers['x-telegram-bot-api-secret-token'] || ''
+    );
+
+    if (receivedSecret !== webhookSecret) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid webhook secret'
+      });
+    }
+  }
+
+  const update = req.body || {};
+  const message =
+    update.message ||
+    update.edited_message ||
+    null;
+
+  // Telegram expects HTTP 200 for updates we intentionally ignore.
+  if (!message?.from?.id) {
+    return res.status(200).json({
+      success: true,
+      ignored: true
+    });
+  }
+
+  const telegramUid = String(message.from.id);
+  const messageText = String(
+    message.text ||
+      message.caption ||
+      '[ข้อความ Telegram ที่ไม่ใช่ข้อความตัวอักษร / Non-text Telegram message]'
+  ).trim();
+
+  try {
+    const memberResponse = await fetch(
+      `${supabaseUrl}/rest/v1/members` +
+        `?telegram_uid=eq.${encodeURIComponent(telegramUid)}` +
+        '&select=id,telegram_uid&limit=1',
+      {
+        method: 'GET',
+        headers: telegramWebhookSupabaseHeaders(
+          supabaseSecretKey
+        ),
+        cache: 'no-store'
+      }
+    );
+
+    const members =
+      await telegramWebhookReadJson(memberResponse);
+
+    if (!memberResponse.ok) {
+      console.error(
+        'Telegram webhook member lookup failed:',
+        members
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: 'Member lookup failed'
+      });
+    }
+
+    const member =
+      Array.isArray(members) && members.length > 0
+        ? members[0]
+        : null;
+
+    // Do not create conversations for Telegram users who
+    // have not linked their account to a monastery member.
+    if (!member?.id) {
+      console.warn(
+        'Telegram webhook received message from unlinked user:',
+        telegramUid
+      );
+
+      return res.status(200).json({
+        success: true,
+        ignored: true,
+        reason: 'unlinked_member'
+      });
+    }
+
+    const sentAt = message.date
+      ? new Date(Number(message.date) * 1000).toISOString()
+      : new Date().toISOString();
+
+    const payload = {
+      member_id: member.id,
+      channel: 'telegram',
+      direction: 'inbound',
+      message_text: messageText,
+      status: 'received',
+      sent_at: sentAt,
+      sent_by_member_id: null,
+      error_message: null,
+      telegram_update_id:
+        update.update_id != null
+          ? String(update.update_id)
+          : null,
+      telegram_message_id:
+        message.message_id != null
+          ? String(message.message_id)
+          : null
+    };
+
+    const insertResponse = await fetch(
+      `${supabaseUrl}/rest/v1/member_communications`,
+      {
+        method: 'POST',
+        headers: telegramWebhookSupabaseHeaders(
+          supabaseSecretKey,
+          {
+            Prefer:
+              'return=minimal,resolution=ignore-duplicates'
+          }
+        ),
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!insertResponse.ok) {
+      const insertError =
+        await telegramWebhookReadJson(insertResponse);
+
+      console.error(
+        'Telegram webhook communication insert failed:',
+        insertError
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: 'Unable to save Telegram reply'
+      });
+    }
+
+    return res.status(200).json({
+      success: true
+    });
+  } catch (error) {
+    console.error(
+      'Telegram webhook error:',
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: 'Telegram webhook failed'
+    });
+  }
+}
+
 export default async function handler(req, res) {
+  if (String(req.query?.route || '') === 'webhook') {
+    return handleTelegramWebhook(req, res);
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({
       success: false,

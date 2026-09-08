@@ -75,6 +75,10 @@ function AdminMembersPanel({ lang }) {
     noCommunicationLog: th ? 'ยังไม่มีประวัติการส่ง LINE / Telegram' : 'No LINE / Telegram delivery history yet.',
     channel: th ? 'ช่องทาง' : 'Channel',
     sentBy: th ? 'ส่งโดย' : 'Sent by',
+    incoming: th ? 'สมาชิกตอบกลับ' : 'Member reply',
+    outgoing: th ? 'ส่งจากวัด' : 'Sent by monastery',
+    received: th ? 'รับแล้ว' : 'Received',
+    inboxHelp: th ? 'ข้อความ Telegram ที่สมาชิกตอบกลับจะเข้ามาแสดงในหน้านี้อัตโนมัติ' : 'Telegram replies from members appear here automatically.',
 
     stayHistory: th ? 'ประวัติการเข้าพักปฏิบัติธรรม' : 'Retreat stay history',
     noStayHistory: th ? 'ยังไม่มีประวัติการเข้าพักปฏิบัติธรรม' : 'No retreat stay history yet.',
@@ -387,6 +391,18 @@ function AdminMembersPanel({ lang }) {
       setCommunicationLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (detailTab !== 'communication' || !selectedMember?.id) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      loadCommunications(selectedMember.id);
+    }, 8000);
+
+    return () => window.clearInterval(timer);
+  }, [detailTab, selectedMember?.id]);
 
   const openComposer = (channel) => {
     setComposeChannel(channel);
@@ -819,7 +835,10 @@ function AdminMembersPanel({ lang }) {
                   </div>
                 )}
 
-                <h3 style={{ marginBottom: '10px' }}>{text.communicationLog}</h3>
+                <h3 style={{ marginBottom: '6px' }}>{text.communicationLog}</h3>
+                <div style={{ fontSize: '12px', color: '#756c60', lineHeight: 1.5, marginBottom: '10px' }}>
+                  {text.inboxHelp}
+                </div>
 
                 {communicationLoading ? (
                   <div style={{ padding: '14px', color: '#756c60' }}>
@@ -831,27 +850,44 @@ function AdminMembersPanel({ lang }) {
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gap: '10px', marginBottom: '18px' }}>
-                    {communications.map((item, index) => (
-                      <div key={item?.id || index} style={{ border: '1px solid #e2d8c8', borderRadius: '13px', padding: '13px 14px', background: '#fff' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '7px' }}>
-                          <strong>{String(item?.channel || '').toUpperCase() || '—'}</strong>
-                          <span style={{ fontSize: '12px', fontWeight: 800, padding: '4px 8px', borderRadius: '999px', background: item?.status === 'success' ? '#eef8f0' : '#fff1ef', color: item?.status === 'success' ? '#2f7b43' : '#a0463d' }}>
-                            {item?.status === 'success' ? text.sent : text.failed}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#81786d', marginBottom: '8px' }}>
-                          {formatDateTime(item?.sent_at || item?.created_at)}
-                        </div>
-                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, color: '#514b43', fontSize: '14px' }}>
-                          {item?.message_text || '—'}
-                        </div>
-                        {item?.error_message ? (
-                          <div style={{ marginTop: '8px', fontSize: '12px', color: '#a0463d' }}>
-                            {item.error_message}
+                    {communications.map((item, index) => {
+                      const inbound = item?.direction === 'inbound';
+                      const ok = item?.status === 'success' || item?.status === 'received';
+
+                      return (
+                        <div
+                          key={item?.id || index}
+                          style={{
+                            border: '1px solid #e2d8c8',
+                            borderRadius: '13px',
+                            padding: '13px 14px',
+                            background: inbound ? '#edf7fd' : '#fffdf9',
+                            marginLeft: inbound ? 0 : '24px',
+                            marginRight: inbound ? '24px' : 0
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '7px' }}>
+                            <strong>
+                              {String(item?.channel || '').toUpperCase() || '—'} · {inbound ? text.incoming : text.outgoing}
+                            </strong>
+                            <span style={{ fontSize: '12px', fontWeight: 800, padding: '4px 8px', borderRadius: '999px', background: ok ? '#eef8f0' : '#fff1ef', color: ok ? '#2f7b43' : '#a0463d' }}>
+                              {inbound ? text.received : (ok ? text.sent : text.failed)}
+                            </span>
                           </div>
-                        ) : null}
-                      </div>
-                    ))}
+                          <div style={{ fontSize: '12px', color: '#81786d', marginBottom: '8px' }}>
+                            {formatDateTime(item?.sent_at || item?.created_at)}
+                          </div>
+                          <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65, color: '#514b43', fontSize: '14px' }}>
+                            {item?.message_text || '—'}
+                          </div>
+                          {item?.error_message ? (
+                            <div style={{ marginTop: '8px', fontSize: '12px', color: '#a0463d' }}>
+                              {item.error_message}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
