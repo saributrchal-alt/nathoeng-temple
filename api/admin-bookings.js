@@ -130,14 +130,11 @@ async function handlePublicTeam(req, res, supabaseUrl, secretKey) {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
 
-  const select = [
-    'id', 'full_name', 'display_name', 'name', 'line_display_name',
-    'picture_url', 'profile_image_url', 'line_picture_url', 'avatar_url',
-    'team_group', 'team_role_th', 'team_role_en', 'team_order'
-  ].join(',');
-
+  // Read the opted-in rows without naming optional profile-image columns.
+  // This avoids PostgREST failing the whole request if an older deployment
+  // does not have one of those optional columns yet.
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/members?public_team_enabled=eq.true&select=${encodeURIComponent(select)}&order=${encodeURIComponent('team_order.asc.nullslast,created_at.asc')}`,
+    `${supabaseUrl}/rest/v1/members?public_team_enabled=eq.true&select=*`,
     { method: 'GET', headers: supabaseHeaders(secretKey), cache: 'no-store' }
   );
   const rows = await readJson(response);
@@ -147,14 +144,21 @@ async function handlePublicTeam(req, res, supabaseUrl, secretKey) {
     return res.status(500).json({ success: false, message: 'Unable to load public team' });
   }
 
-  const team = (Array.isArray(rows) ? rows : []).map((member) => ({
-    name: member.full_name || member.display_name || member.name || member.line_display_name || '',
-    picture_url: member.picture_url || member.profile_image_url || member.line_picture_url || member.avatar_url || '',
-    team_group: member.team_group || 'volunteer',
-    team_role_th: member.team_role_th || '',
-    team_role_en: member.team_role_en || '',
-    team_order: Number.isFinite(Number(member.team_order)) ? Number(member.team_order) : 999
-  }));
+  const team = (Array.isArray(rows) ? rows : [])
+    .map((member) => ({
+      name: member.full_name || member.display_name || member.name || member.line_display_name || '',
+      picture_url: member.picture_url || member.profile_image_url || member.line_picture_url || member.avatar_url || '',
+      team_group: member.team_group || 'volunteer',
+      team_role_th: member.team_role_th || '',
+      team_role_en: member.team_role_en || '',
+      team_order: Number.isFinite(Number(member.team_order)) ? Number(member.team_order) : 999,
+      _created_at: member.created_at || ''
+    }))
+    .sort((a, b) =>
+      a.team_order - b.team_order ||
+      String(a._created_at).localeCompare(String(b._created_at))
+    )
+    .map(({ _created_at, ...member }) => member);
 
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   return res.status(200).json({ success: true, team });
