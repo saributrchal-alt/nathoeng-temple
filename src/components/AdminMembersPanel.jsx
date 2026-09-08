@@ -41,6 +41,7 @@ function AdminMembersPanel({ lang }) {
     role: th ? 'สิทธิ์' : 'Role',
     joined: th ? 'สมัครสมาชิกเมื่อ' : 'Joined',
     lastLogin: th ? 'เข้าใช้ล่าสุด' : 'Last login',
+    country: th ? 'ประเทศ' : 'Country',
     close: th ? 'ปิด' : 'Close',
     admin: th ? 'ผู้ดูแลระบบ' : 'Admin',
     member: th ? 'สมาชิก' : 'Member',
@@ -200,6 +201,24 @@ function AdminMembersPanel({ lang }) {
     if (hasLine(member)) return text.line;
     if (hasTelegram(member)) return text.telegram;
     return '—';
+  };
+
+  const countryFlag = (code) => {
+    const clean = String(code || '').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(clean)) return '';
+    return String.fromCodePoint(...[...clean].map((char) => 127397 + char.charCodeAt(0)));
+  };
+
+  const countryLabel = (member) => {
+    const code = String(member?.country_code || '').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) return '—';
+
+    try {
+      const names = new Intl.DisplayNames([th ? 'th' : 'en'], { type: 'region' });
+      return `${countryFlag(code)} ${names.of(code) || code}`;
+    } catch {
+      return `${countryFlag(code)} ${code}`;
+    }
   };
 
   const formatDateTime = (raw) => {
@@ -587,6 +606,7 @@ function AdminMembersPanel({ lang }) {
                     </strong>
                     <div style={{ marginTop: '4px', fontSize: '12px', color: '#756c60' }}>
                       {providerLabel(member)}
+                      {member?.country_code ? ` · ${countryLabel(member)}` : ''}
                       {member?.role === 'admin' ? ` · ${text.admin}` : ''}
                       {Array.isArray(member?.stay_history) && member.stay_history.length
                         ? ` · ${text.staysTab} ${member.stay_history.length}`
@@ -630,6 +650,7 @@ function AdminMembersPanel({ lang }) {
             <div style={{ display: 'grid', gap: '9px', fontSize: '14px', marginBottom: '20px' }}>
               <div><strong>{text.memberId}:</strong> {selectedMember.id}</div>
               <div><strong>{text.role}:</strong> {selectedMember?.role === 'admin' ? text.admin : text.member}</div>
+              <div><strong>{text.country}:</strong> {countryLabel(selectedMember)}</div>
               <div><strong>{text.joined}:</strong> {formatDateTime(selectedMember.created_at)}</div>
               <div><strong>{text.lastLogin}:</strong> {formatDateTime(selectedMember.last_login_at)}</div>
             </div>

@@ -5,6 +5,18 @@ import {
   getSessionFromRequest
 } from '../lib/_auth.js';
 
+function getRequestCountryCode(req) {
+  const raw =
+    req.headers['x-vercel-ip-country'] ||
+    req.headers['cf-ipcountry'] ||
+    '';
+
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const code = String(value || '').trim().toUpperCase();
+
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
 
 const TELEGRAM_ISSUER =
   'https://oauth.telegram.org';
@@ -431,6 +443,7 @@ export default async function handler(req, res) {
   } = req.body || {};
 
   const linkMode = mode === 'link';
+  const countryCode = getRequestCountryCode(req);
 
   if (
     !code ||
@@ -672,7 +685,8 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             telegram_uid: telegramUid,
             telegram_username: claims.preferred_username || null,
-            last_login_at: now
+            last_login_at: now,
+            ...(countryCode ? { country_code: countryCode } : {})
           })
         }
       );
@@ -780,6 +794,10 @@ export default async function handler(req, res) {
       last_login_at:
         now
     };
+
+    if (countryCode) {
+      memberData.country_code = countryCode;
+    }
 
     const memberResponse =
       await fetch(

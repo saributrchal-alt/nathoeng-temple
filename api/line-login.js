@@ -4,6 +4,18 @@ import {
   getSessionFromRequest
 } from '../lib/_auth.js';
 
+function getRequestCountryCode(req) {
+  const raw =
+    req.headers['x-vercel-ip-country'] ||
+    req.headers['cf-ipcountry'] ||
+    '';
+
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const code = String(value || '').trim().toUpperCase();
+
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
 async function mergeMembersForAccountLink(
   supabaseUrl,
   supabaseSecretKey,
@@ -65,6 +77,7 @@ export default async function handler(req, res) {
 
   const { code, redirectUri, mode } = req.body || {};
   const linkMode = mode === 'link';
+  const countryCode = getRequestCountryCode(req);
 
   if (!code || !redirectUri) {
     return res.status(400).json({
@@ -335,6 +348,10 @@ export default async function handler(req, res) {
         patchData.line_oa_friend = lineOaFriend;
       }
 
+      if (countryCode) {
+        patchData.country_code = countryCode;
+      }
+
       const linkResponse = await fetch(
         supabaseUrl +
           '/rest/v1/members?id=eq.' +
@@ -464,6 +481,10 @@ export default async function handler(req, res) {
     if (lineOaFriend !== null) {
       memberData.line_oa_friend =
         lineOaFriend;
+    }
+
+    if (countryCode) {
+      memberData.country_code = countryCode;
     }
 
     // =====================================================
