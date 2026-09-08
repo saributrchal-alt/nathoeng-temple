@@ -467,31 +467,73 @@ useEffect(() => {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  // Restore the signed-in monastery member.
-  // Keep the legacy "line_user" key for compatibility with existing pages.
+  // Restore the signed-in monastery member from the server session.
+  // localStorage is only a display cache; it is never the authority for login.
 useEffect(() => {
-  const savedUser =
-    localStorage.getItem('nathoeng_user') ||
-    localStorage.getItem('line_user');
+  let cancelled = false;
 
-  if (!savedUser) {
-    return;
-  }
+  const restoreServerSession = async () => {
+    try {
+      const response = await fetch(
+        '/api/line-login?route=session',
+        {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        }
+      );
 
-  try {
-    const parsedUser = JSON.parse(savedUser);
-    setUser(parsedUser);
+      const data = await response.json();
 
-    localStorage.setItem(
-      'nathoeng_user',
-      JSON.stringify(parsedUser)
-    );
-  } catch (error) {
-    console.error('Error parsing saved member:', error);
-    localStorage.removeItem('nathoeng_user');
-    localStorage.removeItem('line_user');
-    setUser(null);
-  }
+      if (!response.ok || !data?.success || !data?.user) {
+        throw new Error(
+          data?.message || 'No valid server session'
+        );
+      }
+
+      if (cancelled) return;
+
+      const verifiedUser = {
+        memberId: data.user.memberId,
+        name: data.user.name,
+        lineUid: data.user.lineUid || null,
+        telegramUid: data.user.telegramUid || null,
+        telegramUsername:
+          data.user.telegramUsername || '',
+        authProvider:
+          data.user.authProvider || 'line',
+        picture: data.user.picture || '',
+        role:
+          data.user.role ||
+          (data.user.isAdmin ? 'admin' : 'member'),
+        isAdmin: data.user.isAdmin === true
+      };
+
+      setUser(verifiedUser);
+
+      localStorage.setItem(
+        'nathoeng_user',
+        JSON.stringify(verifiedUser)
+      );
+
+      localStorage.setItem(
+        'line_user',
+        JSON.stringify(verifiedUser)
+      );
+    } catch (error) {
+      if (cancelled) return;
+
+      localStorage.removeItem('nathoeng_user');
+      localStorage.removeItem('line_user');
+      setUser(null);
+    }
+  };
+
+  restoreServerSession();
+
+  return () => {
+    cancelled = true;
+  };
 }, []);
 useEffect(() => {
   const handleLineCallback = async () => {
@@ -499,7 +541,8 @@ useEffect(() => {
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
+    const params =
+      new URLSearchParams(window.location.search);
 
     const code = params.get('code');
     const returnedState = params.get('state');
@@ -517,78 +560,86 @@ useEffect(() => {
       return;
     }
 
-    if (!code) {
-      return;
-    }
-
-    const sessionState =
-      sessionStorage.getItem('line_oauth_state');
-
-    const localState =
-      localStorage.getItem('line_oauth_state');
-
-    const stateMatched =
-      (sessionState && sessionState === returnedState) ||
-      (localState && localState === returnedState);
-
-    if (!stateMatched) {
-      console.warn('LINE OAuth state mismatch', {
-        returnedState,
-        hasSessionState: !!sessionState,
-        hasLocalState: !!localState
-      });
-
-      sessionStorage.removeItem('line_oauth_state');
-      localStorage.removeItem('line_oauth_state');
-
-      window.history.replaceState(
-        {},
-        document.title,
-        '/#login-page'
-      );
-
-      alert(
-        lang === 'en'
-          ? 'LINE login session expired. Please try again.'
-          : 'เซสชันการเข้าสู่ระบบ LINE หมดอายุ กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง'
-      );
-
+    if (!code || !returnedState) {
       return;
     }
 
     try {
       const response = await fetch('/api/line-login', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          code: code,
-          redirectUri: 'https://watt.nathoeng.com/line-callback',
-          mode:
-            sessionStorage.getItem('line_oauth_mode') ||
-            localStorage.getItem('line_oauth_mode') ||
-            'login'
+          code,
+          state: returnedState
         })
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        const apiError = new Error(data.message || 'LINE login failed');
+        const apiError =
+          new Error(
+            data.message || 'LINE login failed'
+          );
+
         apiError.code = data.code || '';
         throw apiError;
       }
 
+      // Confirm that this browser really stored the secure HttpOnly
+      // session cookie before the UI considers the user signed in.
+      const sessionResponse = await fetch(
+        '/api/line-login?route=session',
+        {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        }
+      );
+
+      const sessionData =
+        await sessionResponse.json();
+
+      if (
+        !sessionResponse.ok ||
+        !sessionData?.success ||
+        !sessionData?.user
+      ) {
+        const sessionError =
+          new Error(
+            sessionData?.message ||
+            'The secure website session was not preserved'
+          );
+
+        sessionError.code =
+          'SESSION_COOKIE_NOT_PRESERVED';
+
+        throw sessionError;
+      }
+
       const lineUser = {
-        memberId: data.user.memberId,
-        name: data.user.name,
-        lineUid: data.user.lineUid,
-        telegramUid: data.user.telegramUid || null,
-        authProvider: data.user.authProvider || 'line',
-        picture: data.user.picture || '',
-        role: data.user.role || (data.user.isAdmin ? 'admin' : 'member'),
-        isAdmin: data.user.isAdmin === true
+        memberId: sessionData.user.memberId,
+        name: sessionData.user.name,
+        lineUid:
+          sessionData.user.lineUid || null,
+        telegramUid:
+          sessionData.user.telegramUid || null,
+        telegramUsername:
+          sessionData.user.telegramUsername || '',
+        authProvider:
+          sessionData.user.authProvider || 'line',
+        picture:
+          sessionData.user.picture || '',
+        role:
+          sessionData.user.role ||
+          (sessionData.user.isAdmin
+            ? 'admin'
+            : 'member'),
+        isAdmin:
+          sessionData.user.isAdmin === true
       };
 
       localStorage.setItem(
@@ -596,26 +647,25 @@ useEffect(() => {
         JSON.stringify(lineUser)
       );
 
-      // Keep legacy storage for existing pages that still read "line_user".
       localStorage.setItem(
         'line_user',
         JSON.stringify(lineUser)
       );
 
+      setUser(lineUser);
+
+      const afterLoginPage =
+        data.returnPage ||
+        sessionStorage.getItem('after_login_page') ||
+        localStorage.getItem('after_login_page') ||
+        'my-dashboard';
+
+      sessionStorage.removeItem('after_login_page');
+      localStorage.removeItem('after_login_page');
       sessionStorage.removeItem('line_oauth_state');
       localStorage.removeItem('line_oauth_state');
       sessionStorage.removeItem('line_oauth_mode');
       localStorage.removeItem('line_oauth_mode');
-
-      setUser(lineUser);
-
-      const afterLoginPage =
-        sessionStorage.getItem('after_login_page') ||
-        localStorage.getItem('after_login_page') ||
-        'home';
-
-      sessionStorage.removeItem('after_login_page');
-      localStorage.removeItem('after_login_page');
 
       window.history.replaceState(
         {},
@@ -646,8 +696,9 @@ useEffect(() => {
     } catch (error) {
       console.error('LINE callback error:', error);
 
-      sessionStorage.removeItem('line_oauth_state');
-      localStorage.removeItem('line_oauth_state');
+      localStorage.removeItem('nathoeng_user');
+      localStorage.removeItem('line_user');
+      setUser(null);
 
       window.history.replaceState(
         {},
@@ -658,14 +709,21 @@ useEffect(() => {
       const accountMergeFailed =
         error?.code === 'ACCOUNT_MERGE_FAILED';
 
+      const cookieNotPreserved =
+        error?.code === 'SESSION_COOKIE_NOT_PRESERVED';
+
       alert(
         accountMergeFailed
           ? (lang === 'en'
               ? 'This LINE account belongs to an existing member, but the accounts could not be merged safely. Please contact the administrator.'
               : 'LINE นี้เชื่อมกับสมาชิกเดิมอยู่แล้ว แต่ระบบยังรวมบัญชีให้อัตโนมัติไม่ได้ กรุณาติดต่อผู้ดูแลระบบ')
-          : (lang === 'en'
-              ? 'LINE login failed. Please try again.'
-              : 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
+          : cookieNotPreserved
+            ? (lang === 'en'
+                ? 'This in-app browser could not preserve the secure login session. Please choose Open in browser and continue in Chrome or Safari.'
+                : 'เบราว์เซอร์ภายในแอปไม่สามารถเก็บเซสชันที่ปลอดภัยได้ กรุณาเลือก “เปิดในเบราว์เซอร์” แล้วใช้งานต่อใน Chrome หรือ Safari')
+            : (lang === 'en'
+                ? 'LINE login failed. Please try again.'
+                : 'เข้าสู่ระบบ LINE ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
       );
     }
   };
@@ -755,6 +813,7 @@ useEffect(() => {
     try {
       const response = await fetch('/api/telegram-login', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -1010,75 +1069,101 @@ const handleTelegramLogin = async (mode = 'login') => {
   }
 };
 
-const handleLineLogin = (mode = 'login') => {
-  const channelId = '2011258009';
-  const redirectUri = 'https://watt.nathoeng.com/line-callback';
+const handleLineLogin = async (mode = 'login') => {
+  try {
+    const existingAfterLoginPage =
+      sessionStorage.getItem('after_login_page') ||
+      localStorage.getItem('after_login_page');
 
-  const state = crypto.randomUUID();
+    const pageToReturn =
+      mode === 'link'
+        ? 'my-dashboard'
+        : existingAfterLoginPage ||
+          (currentPage === 'login-page'
+            ? 'my-dashboard'
+            : currentPage) ||
+          'home';
 
-  sessionStorage.setItem(
-    'line_oauth_state',
-    state
-  );
+    sessionStorage.setItem(
+      'after_login_page',
+      pageToReturn
+    );
 
-  localStorage.setItem(
-    'line_oauth_state',
-    state
-  );
-
-  sessionStorage.setItem('line_oauth_mode', mode);
-  localStorage.setItem('line_oauth_mode', mode);
-
-  // Remember where the visitor should return after LINE Login.
-  // Keep a destination already set by a special flow (for example QR check-in).
-  const existingAfterLoginPage =
-    sessionStorage.getItem('after_login_page') ||
-    localStorage.getItem('after_login_page');
-
-  const pageToReturn =
-    mode === 'link'
-      ? 'my-dashboard'
-      : existingAfterLoginPage ||
-        (currentPage === 'login-page'
-          ? 'my-dashboard'
-          : currentPage) ||
-        'home';
-
-  sessionStorage.setItem(
-    'after_login_page',
-    pageToReturn
-  );
-
-  localStorage.setItem(
-    'after_login_page',
-    pageToReturn
-  );
-
-  // Mobile browsers can lose sessionStorage when LINE opens and returns.
-  // Preserve the QR check-in token in localStorage as well.
-  const pendingCheckinToken =
-    sessionStorage.getItem('pending_checkin_token');
-
-  if (pendingCheckinToken) {
     localStorage.setItem(
-      'pending_checkin_token',
-      pendingCheckinToken
+      'after_login_page',
+      pageToReturn
+    );
+
+    const pendingCheckinToken =
+      sessionStorage.getItem('pending_checkin_token');
+
+    if (pendingCheckinToken) {
+      localStorage.setItem(
+        'pending_checkin_token',
+        pendingCheckinToken
+      );
+    }
+
+    const startResponse = await fetch(
+      '/api/line-login?route=start' +
+        '&mode=' +
+          encodeURIComponent(mode) +
+        '&returnPage=' +
+          encodeURIComponent(pageToReturn),
+      {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store'
+      }
+    );
+
+    const startData =
+      await startResponse.json();
+
+    if (
+      !startResponse.ok ||
+      !startData?.success ||
+      !startData?.authUrl
+    ) {
+      const startError =
+        new Error(
+          startData?.message ||
+          'Unable to start LINE Login'
+        );
+
+      startError.code =
+        startData?.code || '';
+
+      throw startError;
+    }
+
+    window.location.assign(
+      startData.authUrl
+    );
+  } catch (error) {
+    console.error(
+      'Unable to start LINE Login:',
+      error
+    );
+
+    alert(
+      lang === 'en'
+        ? 'LINE Login could not be started. Please try again.'
+        : 'ไม่สามารถเริ่มการเข้าสู่ระบบ LINE ได้ กรุณาลองใหม่อีกครั้ง'
     );
   }
-
-  const lineAuthUrl =
-    'https://access.line.me/oauth2/v2.1/authorize' +
-    '?response_type=code' +
-    '&client_id=' + encodeURIComponent(channelId) +
-    '&redirect_uri=' + encodeURIComponent(redirectUri) +
-    '&state=' + encodeURIComponent(state) +
-    '&scope=' + encodeURIComponent('profile openid email') +
-    '&bot_prompt=aggressive';
-
-  window.location.href = lineAuthUrl;
 };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/line-login?route=logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.warn('Unable to clear server session:', error);
+    }
+
     setUser(null)
     localStorage.removeItem('nathoeng_user')
     localStorage.removeItem('line_user')
