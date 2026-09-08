@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { geoGraticule10, geoNaturalEarth1, geoPath } from 'd3-geo';
+import { feature } from 'topojson-client';
+import worldTopology from 'world-atlas/countries-110m.json';
 import AdminDonationPanel from './AdminDonationPanel';
 import StudentAdminPanel from '../components/StudentAdminPanel';
 import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
@@ -1725,33 +1728,69 @@ function AdminDashboard({ lang, goToPage }) {
               </div>
             </div>
 
-            <div style={{ position: 'relative', width: '100%', aspectRatio: '2 / 1', minHeight: '210px', overflow: 'hidden', borderRadius: '14px', background: '#f7f4ed', border: '1px solid #eee5d7' }}>
-              <svg viewBox="0 0 1000 500" width="100%" height="100%" role="img" aria-label="World member map" style={{ display: 'block' }}>
-                <g fill="#e4dccd" stroke="#cfc3af" strokeWidth="2">
-                  <path d="M70 120 L115 78 190 66 248 91 280 128 250 158 210 166 185 201 139 188 102 160Z" />
-                  <path d="M245 205 L286 222 307 270 294 326 270 390 247 430 229 370 218 310 222 252Z" />
-                  <path d="M438 93 L478 66 531 75 559 104 538 130 500 128 482 154 452 145Z" />
-                  <path d="M468 160 L530 151 568 190 576 250 550 320 506 354 472 308 452 240Z" />
-                  <path d="M545 98 L616 64 704 71 770 94 844 128 899 170 875 209 818 207 779 184 728 204 682 187 650 213 604 193 565 160Z" />
-                  <path d="M785 300 L838 280 890 302 909 344 878 379 825 370 790 340Z" />
-                  <path d="M915 220 L934 206 946 223 932 244Z" />
-                </g>
-                {memberCountries.map((item) => {
-                  const point = COUNTRY_POINTS[item.code];
-                  if (!point) return null;
-                  const [lon, lat] = point;
-                  const x = ((lon + 180) / 360) * 1000;
-                  const y = ((90 - lat) / 180) * 500;
-                  const r = Math.min(22, 7 + Math.sqrt(item.count) * 4);
-                  return (
-                    <g key={item.code}>
-                      <circle cx={x} cy={y} r={r} fill="#9b7226" fillOpacity="0.82" stroke="#fff" strokeWidth="3" />
-                      <text x={x} y={y + 4} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">{item.count}</text>
-                      <title>{`${countryName(item.code, lang)}: ${item.count}`}</title>
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '2 / 1', minHeight: '230px', overflow: 'hidden', borderRadius: '16px', background: 'linear-gradient(180deg, #eef6f7 0%, #f7f4ed 100%)', border: '1px solid #e3ded3', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45)' }}>
+              {(() => {
+                const world = feature(worldTopology, worldTopology.objects.countries);
+                const projection = geoNaturalEarth1().fitExtent(
+                  [[28, 26], [972, 474]],
+                  world
+                );
+                const path = geoPath(projection);
+                const graticule = geoGraticule10();
+
+                return (
+                  <svg viewBox="0 0 1000 500" width="100%" height="100%" role="img" aria-label="World member map" style={{ display: 'block' }}>
+                    <defs>
+                      <filter id="memberMapShadow" x="-40%" y="-40%" width="180%" height="180%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.22" />
+                      </filter>
+                      <radialGradient id="memberMapOcean" cx="50%" cy="42%" r="72%">
+                        <stop offset="0%" stopColor="#f7fbfb" />
+                        <stop offset="100%" stopColor="#e8f1f1" />
+                      </radialGradient>
+                    </defs>
+
+                    <rect x="0" y="0" width="1000" height="500" fill="url(#memberMapOcean)" />
+                    <path d={path({ type: 'Sphere' })} fill="none" stroke="#d9e4e3" strokeWidth="1.25" />
+                    <path d={path(graticule)} fill="none" stroke="#dfe9e8" strokeWidth="0.7" opacity="0.8" />
+
+                    <g>
+                      {world.features.map((country, index) => (
+                        <path
+                          key={country.id || index}
+                          d={path(country)}
+                          fill="#e7dfd0"
+                          stroke="#c9bea9"
+                          strokeWidth="0.85"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      ))}
                     </g>
-                  );
-                })}
-              </svg>
+
+                    {memberCountries.map((item) => {
+                      const point = COUNTRY_POINTS[item.code];
+                      if (!point) return null;
+                      const projected = projection(point);
+                      if (!projected) return null;
+                      const [x, y] = projected;
+                      const r = Math.min(24, 8 + Math.sqrt(item.count) * 4.2);
+
+                      return (
+                        <g key={item.code} filter="url(#memberMapShadow)">
+                          <circle cx={x} cy={y} r={r + 5} fill="#9b7226" opacity="0.13" />
+                          <circle cx={x} cy={y} r={r} fill="#9b7226" fillOpacity="0.92" stroke="#fff" strokeWidth="3" />
+                          <text x={x} y={y + 4.5} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">{item.count}</text>
+                          <title>{`${countryName(item.code, lang)}: ${item.count}`}</title>
+                        </g>
+                      );
+                    })}
+
+                    <text x="24" y="480" fontSize="10" fill="#8d857a" opacity="0.8">
+                      Natural Earth · country-level member locations
+                    </text>
+                  </svg>
+                );
+              })()}
             </div>
 
             {memberCountries.length > 0 ? (
