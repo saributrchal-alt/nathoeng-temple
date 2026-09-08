@@ -256,10 +256,20 @@ function MyDashboard({
         })
       });
 
-      const data = await response.json();
+      let data = null;
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Unable to update profile');
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok || !data?.success) {
+        const apiMessage =
+          data?.message ||
+          (th ? 'เซิร์ฟเวอร์ไม่ได้ส่งรายละเอียดข้อผิดพลาด' : 'The server did not return an error message.');
+        const apiCode = data?.code ? ` · ${data.code}` : '';
+        throw new Error(`HTTP ${response.status}${apiCode} · ${apiMessage}`);
       }
 
       setVerifiedFullName(String(data.fullName || cleanFullName).trim());
@@ -269,10 +279,15 @@ function MyDashboard({
       setEditIdentityNumber('');
     } catch (error) {
       console.error('MyDashboard profile update error:', error);
+      const detail =
+        error instanceof Error && error.message
+          ? error.message
+          : String(error || '');
+
       setProfileError(
         th
-          ? 'บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่อีกครั้ง'
-          : 'Unable to save your profile. Please check the information and try again.'
+          ? `บันทึกข้อมูลไม่สำเร็จ — ${detail || 'ไม่ทราบสาเหตุ'}`
+          : `Unable to save profile — ${detail || 'Unknown error'}`
       );
     } finally {
       setProfileSaving(false);
