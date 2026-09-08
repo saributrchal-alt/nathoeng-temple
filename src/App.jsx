@@ -395,6 +395,82 @@ function PublicWorldMemberMap({ lang }) {
   );
 }
 
+function PublicSupportingTeam({ lang }) {
+  const th = lang === 'th';
+  const [team, setTeam] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const response = await fetch('/api/admin-bookings?route=public-team', { method: 'GET', cache: 'no-store' });
+        const data = await response.json();
+        if (active) setTeam(response.ok && data?.success && Array.isArray(data.team) ? data.team : []);
+      } catch {
+        if (active) setTeam([]);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
+
+  if (!team.length) return null;
+
+  const groups = [
+    ['welcome', th ? 'ฝ่ายต้อนรับและประสานงาน' : 'Welcome & Coordination'],
+    ['service', th ? 'ฝ่ายบริการและกิจกรรม' : 'Service & Activities'],
+    ['communications', th ? 'ฝ่ายประชาสัมพันธ์และสื่อสาร' : 'Communications'],
+    ['tech', 'Nathoeng Community Tech Team'],
+    ['volunteer', th ? 'อาสาสมัคร' : 'Volunteers']
+  ];
+
+  return (
+    <section aria-labelledby="supporting-team-title" style={{ padding: '72px 20px', background: '#fbf8f2', borderTop: '1px solid #eadfce' }}>
+      <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 34px' }}>
+          <div className="sectionOrnament" aria-hidden="true" style={{ marginBottom: '12px' }}>
+            <span></span><img src="/icons/lotus.svg" alt="" /><span></span>
+          </div>
+          <p className="eyebrow" style={{ marginBottom: '8px' }}>{th ? 'ผู้ร่วมสนับสนุนงานของวัด' : 'PEOPLE WHO SUPPORT THE MONASTERY'}</p>
+          <h2 id="supporting-team-title" style={{ margin: '0 0 12px', fontSize: 'clamp(28px, 4vw, 44px)' }}>
+            {th ? 'ทีมผู้สนับสนุนและอาสาสมัคร' : 'Supporting Team & Volunteers'}
+          </h2>
+          <p style={{ margin: '0 auto', maxWidth: '760px', color: '#6c645a', lineHeight: 1.8 }}>
+            {th
+              ? 'งานต้อนรับ การประสานงาน งานบริการ และระบบดิจิทัลของวัด ได้รับการเกื้อกูลจากคณะศรัทธาและอาสาสมัครที่ร่วมกันสนับสนุนงานของวัดด้วยจิตอาสา'
+              : 'The monastery’s welcome, coordination, service and digital work is supported by lay supporters and volunteers who generously contribute their time and skills.'}
+          </p>
+        </div>
+
+        {groups.map(([key, label]) => {
+          const people = team.filter((item) => item.team_group === key);
+          if (!people.length) return null;
+          return (
+            <div key={key} style={{ marginTop: '30px' }}>
+              <h3 style={{ textAlign: 'center', margin: '0 0 16px', color: '#6f5526', fontSize: '18px' }}>{label}</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 240px))', justifyContent: 'center', gap: '18px' }}>
+                {people.map((person, index) => (
+                  <article key={`${key}-${person.name}-${index}`} style={{ background: '#fff', border: '1px solid #e4d8c7', borderRadius: '18px', padding: '20px 16px', textAlign: 'center', boxShadow: '0 8px 28px rgba(80,63,37,0.06)' }}>
+                    {person.picture_url ? (
+                      <img src={person.picture_url} alt={person.name || ''} loading="lazy" referrerPolicy="no-referrer" style={{ width: '104px', height: '104px', borderRadius: '50%', objectFit: 'cover', border: '4px solid #f3ede3', marginBottom: '12px' }} onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+                    ) : (
+                      <div aria-hidden="true" style={{ width: '104px', height: '104px', borderRadius: '50%', margin: '0 auto 12px', background: '#f1ece3', display: 'grid', placeItems: 'center', fontSize: '36px' }}>👤</div>
+                    )}
+                    <strong style={{ display: 'block', color: '#332f29', fontSize: '16px', lineHeight: 1.4 }}>{person.name || (th ? 'สมาชิกอาสาสมัคร' : 'Volunteer')}</strong>
+                    {(th ? person.team_role_th : person.team_role_en) ? (
+                      <div style={{ marginTop: '6px', color: '#786f63', fontSize: '13px', lineHeight: 1.55 }}>{th ? person.team_role_th : person.team_role_en}</div>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function App() {
   const [lang, setLang] = useState('th')
   const [currentPage, setCurrentPage] = useState('home')
@@ -1624,6 +1700,9 @@ const handleLineLogin = async (mode = 'login') => {
                 {lang === 'en' ? 'View Map & Contact Details →' : 'ดูแผนที่และช่องทางการติดต่อ →'}
               </button>
             </section>
+
+            {/* SUPPORTING TEAM & VOLUNTEERS */}
+            <PublicSupportingTeam lang={lang} />
           </>
         ) : currentPage === 'teachings-page' ? (
           /* ================= PAGE: TEACHINGS (หลวงปู่มั่น) ================= */

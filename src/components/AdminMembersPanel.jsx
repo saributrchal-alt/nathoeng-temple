@@ -17,6 +17,9 @@ function AdminMembersPanel({ lang }) {
   const [providerFilter, setProviderFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [teamForm, setTeamForm] = useState({ enabled: false, group: 'volunteer', roleTh: '', roleEn: '', order: 999 });
+  const [teamSaving, setTeamSaving] = useState(false);
+  const [teamResult, setTeamResult] = useState('');
 
   const text = {
     title: th ? 'สมาชิก' : 'Members',
@@ -113,6 +116,17 @@ function AdminMembersPanel({ lang }) {
     verified: th ? 'ตรวจสอบแล้ว' : 'Verified',
     pendingVerify: th ? 'รอตรวจสอบ' : 'Pending verification',
     rejectedVerify: th ? 'ไม่ผ่านการตรวจสอบ' : 'Verification rejected',
+    publicTeamTitle: th ? 'การแสดงบนเว็บไซต์' : 'Public website profile',
+    publicTeamHelp: th ? 'เลือกเฉพาะสมาชิกที่ต้องการแสดงในส่วนทีมผู้สนับสนุนและอาสาสมัคร' : 'Select only members who should appear in Supporting Team & Volunteers.',
+    publicTeamEnabled: th ? 'แสดงสมาชิกคนนี้บนเว็บไซต์' : 'Show this member on the public website',
+    teamGroup: th ? 'ฝ่ายงาน' : 'Team group',
+    teamRoleTh: 'หน้าที่ (ภาษาไทย)',
+    teamRoleEn: 'Role (English)',
+    teamOrder: th ? 'ลำดับการแสดง' : 'Display order',
+    saveTeam: th ? 'บันทึกการแสดงบนเว็บไซต์' : 'Save public profile',
+    teamSaved: th ? 'บันทึกเรียบร้อยแล้ว' : 'Public profile saved.',
+    teamSaveError: th ? 'ไม่สามารถบันทึกข้อมูลได้' : 'Unable to save public profile.',
+
     nextPhase: th
       ? 'ประวัติการติดต่อ LINE / Telegram จะเชื่อมเข้าหน้านี้ในขั้นต่อไป'
       : 'LINE / Telegram communication history will be connected here in the next phase.'
@@ -508,6 +522,55 @@ function AdminMembersPanel({ lang }) {
   const sendTelegramMessage = () =>
     sendMemberMessage('telegram');
 
+  const openMember = (member) => {
+    setSelectedMember(member);
+    setDetailTab('stays');
+    setComposeChannel(null);
+    setComposeText('');
+    setCommunicationResult('');
+    setTeamResult('');
+    setTeamForm({
+      enabled: member?.public_team_enabled === true,
+      group: member?.team_group || 'volunteer',
+      roleTh: member?.team_role_th || '',
+      roleEn: member?.team_role_en || '',
+      order: Number.isFinite(Number(member?.team_order)) ? Number(member.team_order) : 999
+    });
+    loadCommunications(member.id);
+  };
+
+  const savePublicTeamProfile = async () => {
+    if (!selectedMember?.id || teamSaving) return;
+    setTeamSaving(true);
+    setTeamResult('');
+    try {
+      const response = await fetch('/api/admin-bookings?route=member-team', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: selectedMember.id,
+          publicTeamEnabled: teamForm.enabled,
+          teamGroup: teamForm.group,
+          teamRoleTh: teamForm.roleTh,
+          teamRoleEn: teamForm.roleEn,
+          teamOrder: teamForm.order
+        })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success || !data?.member) {
+        throw new Error(data?.message || text.teamSaveError);
+      }
+      setMembers((current) => current.map((item) => String(item.id) === String(data.member.id) ? { ...item, ...data.member } : item));
+      setSelectedMember((current) => current ? { ...current, ...data.member } : current);
+      setTeamResult(text.teamSaved);
+    } catch (err) {
+      setTeamResult(err?.message || text.teamSaveError);
+    } finally {
+      setTeamSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '30px 0', textAlign: 'center', color: '#756c60' }}>
@@ -578,14 +641,7 @@ function AdminMembersPanel({ lang }) {
               <button
                 type="button"
                 key={member.id}
-                onClick={() => {
-                  setSelectedMember(member);
-                  setDetailTab('stays');
-                  setComposeChannel(null);
-                  setComposeText('');
-                  setCommunicationResult('');
-                  loadCommunications(member.id);
-                }}
+                onClick={() => openMember(member)}
                 style={{ width: '100%', border: '1px solid #e2d8c8', borderRadius: '14px', background: '#fff', padding: '14px', cursor: 'pointer', textAlign: 'left' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -653,6 +709,51 @@ function AdminMembersPanel({ lang }) {
               <div><strong>{text.country}:</strong> {countryLabel(selectedMember)}</div>
               <div><strong>{text.joined}:</strong> {formatDateTime(selectedMember.created_at)}</div>
               <div><strong>{text.lastLogin}:</strong> {formatDateTime(selectedMember.last_login_at)}</div>
+            </div>
+
+            <div style={{ border: '1px solid #dfd3c2', borderRadius: '14px', padding: '15px', background: '#fbf8f2', marginBottom: '18px' }}>
+              <h3 style={{ margin: '0 0 5px' }}>{text.publicTeamTitle}</h3>
+              <p style={{ margin: '0 0 13px', color: '#756c60', fontSize: '13px', lineHeight: 1.55 }}>{text.publicTeamHelp}</p>
+
+              <label style={{ display: 'flex', gap: '9px', alignItems: 'center', fontWeight: 800, marginBottom: '13px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={teamForm.enabled}
+                  onChange={(event) => setTeamForm((current) => ({ ...current, enabled: event.target.checked }))}
+                />
+                {text.publicTeamEnabled}
+              </label>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '10px' }}>
+                <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700 }}>
+                  {text.teamGroup}
+                  <select value={teamForm.group} onChange={(event) => setTeamForm((current) => ({ ...current, group: event.target.value }))} style={{ padding: '10px', border: '1px solid #d8c9b5', borderRadius: '9px', background: '#fff' }}>
+                    <option value="welcome">{th ? 'ฝ่ายต้อนรับและประสานงาน' : 'Welcome & Coordination'}</option>
+                    <option value="service">{th ? 'ฝ่ายบริการและกิจกรรม' : 'Service & Activities'}</option>
+                    <option value="communications">{th ? 'ฝ่ายประชาสัมพันธ์และสื่อสาร' : 'Communications'}</option>
+                    <option value="tech">Nathoeng Community Tech Team</option>
+                    <option value="volunteer">{th ? 'อาสาสมัคร' : 'Volunteers'}</option>
+                  </select>
+                </label>
+                <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700 }}>
+                  {text.teamOrder}
+                  <input type="number" min="0" max="9999" value={teamForm.order} onChange={(event) => setTeamForm((current) => ({ ...current, order: event.target.value }))} style={{ padding: '10px', border: '1px solid #d8c9b5', borderRadius: '9px' }} />
+                </label>
+              </div>
+
+              <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, marginTop: '10px' }}>
+                {text.teamRoleTh}
+                <input value={teamForm.roleTh} onChange={(event) => setTeamForm((current) => ({ ...current, roleTh: event.target.value }))} placeholder="เช่น ผู้ประสานงานผู้เข้าปฏิบัติธรรม" maxLength={160} style={{ padding: '10px', border: '1px solid #d8c9b5', borderRadius: '9px' }} />
+              </label>
+              <label style={{ display: 'grid', gap: '5px', fontSize: '13px', fontWeight: 700, marginTop: '10px' }}>
+                {text.teamRoleEn}
+                <input value={teamForm.roleEn} onChange={(event) => setTeamForm((current) => ({ ...current, roleEn: event.target.value }))} placeholder="e.g. Retreat Coordinator" maxLength={160} style={{ padding: '10px', border: '1px solid #d8c9b5', borderRadius: '9px' }} />
+              </label>
+
+              <button type="button" onClick={savePublicTeamProfile} disabled={teamSaving} style={{ marginTop: '12px', border: 'none', borderRadius: '9px', padding: '10px 14px', background: '#7b632f', color: '#fff', fontWeight: 800, cursor: teamSaving ? 'not-allowed' : 'pointer', opacity: teamSaving ? 0.65 : 1 }}>
+                {teamSaving ? (th ? 'กำลังบันทึก...' : 'Saving...') : text.saveTeam}
+              </button>
+              {teamResult ? <div style={{ marginTop: '9px', fontSize: '13px', color: teamResult === text.teamSaved ? '#2f7b43' : '#a0463d' }}>{teamResult}</div> : null}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>

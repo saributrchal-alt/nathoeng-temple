@@ -125,6 +125,86 @@ async function handlePublicCountryStats(req, res, supabaseUrl, secretKey) {
   });
 }
 
+async function handlePublicTeam(req, res, supabaseUrl, secretKey) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+
+  const select = [
+    'id', 'full_name', 'display_name', 'name', 'line_display_name',
+    'picture_url', 'profile_image_url', 'line_picture_url', 'avatar_url',
+    'team_group', 'team_role_th', 'team_role_en', 'team_order'
+  ].join(',');
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/members?public_team_enabled=eq.true&select=${encodeURIComponent(select)}&order=team_order.asc.nullslast&order=created_at.asc`,
+    { method: 'GET', headers: supabaseHeaders(secretKey), cache: 'no-store' }
+  );
+  const rows = await readJson(response);
+
+  if (!response.ok) {
+    console.error('Public team lookup failed:', rows);
+    return res.status(500).json({ success: false, message: 'Unable to load public team' });
+  }
+
+  const team = (Array.isArray(rows) ? rows : []).map((member) => ({
+    name: member.full_name || member.display_name || member.name || member.line_display_name || '',
+    picture_url: member.picture_url || member.profile_image_url || member.line_picture_url || member.avatar_url || '',
+    team_group: member.team_group || 'volunteer',
+    team_role_th: member.team_role_th || '',
+    team_role_en: member.team_role_en || '',
+    team_order: Number.isFinite(Number(member.team_order)) ? Number(member.team_order) : 999
+  }));
+
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  return res.status(200).json({ success: true, team });
+}
+
+async function handleMemberTeam(req, res, supabaseUrl, secretKey) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+
+  const memberId = String(req.body?.memberId || '').trim();
+  const enabled = req.body?.publicTeamEnabled === true;
+  const allowedGroups = ['welcome', 'service', 'communications', 'tech', 'volunteer'];
+  const group = String(req.body?.teamGroup || 'volunteer').trim();
+  const roleTh = String(req.body?.teamRoleTh || '').trim().slice(0, 160);
+  const roleEn = String(req.body?.teamRoleEn || '').trim().slice(0, 160);
+  const rawOrder = Number(req.body?.teamOrder);
+  const teamOrder = Number.isFinite(rawOrder) ? Math.max(0, Math.min(9999, Math.trunc(rawOrder))) : 999;
+
+  if (!memberId) return res.status(400).json({ success: false, message: 'Member ID is required' });
+  if (!allowedGroups.includes(group)) return res.status(400).json({ success: false, message: 'Invalid team group' });
+
+  const patch = {
+    public_team_enabled: enabled,
+    team_group: group,
+    team_role_th: roleTh || null,
+    team_role_en: roleEn || null,
+    team_order: teamOrder
+  };
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}`,
+    {
+      method: 'PATCH',
+      headers: supabaseHeaders(secretKey, { Prefer: 'return=representation' }),
+      body: JSON.stringify(patch)
+    }
+  );
+  const rows = await readJson(response);
+
+  if (!response.ok) {
+    console.error('Admin member team update failed:', rows);
+    return res.status(500).json({ success: false, message: 'Unable to update public team profile', databaseError: rows });
+  }
+
+  const member = Array.isArray(rows) && rows.length ? rows[0] : null;
+  if (!member) return res.status(404).json({ success: false, message: 'Member not found' });
+  return res.status(200).json({ success: true, member });
+}
+
 async function handleMembers(req, res, supabaseUrl, secretKey) {
   if (req.method !== 'GET') {
     return res.status(405).json({
@@ -319,10 +399,28 @@ export default async function handler(req, res) {
     }
   }
 
+  if (route === 'public-team') {
+    try {
+      return await handlePublicTeam(req, res, supabaseUrl, supabaseSecretKey);
+    } catch (error) {
+      console.error('Public team server error:', error);
+      return res.status(500).json({ success: false, message: 'Public team server error' });
+    }
+  }
+
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
   const session = requireAdmin(req, res);
   if (!session) return;
+
+  if (route === 'member-team') {
+    try {
+      return await handleMemberTeam(req, res, supabaseUrl, supabaseSecretKey);
+    } catch (error) {
+      console.error('Admin member team server error:', error);
+      return res.status(500).json({ success: false, message: 'Admin member team server error' });
+    }
+  }
 
   if (route === 'members') {
     try {
