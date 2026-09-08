@@ -1,5 +1,38 @@
 import React, { useEffect, useState } from 'react';
 
+
+const ISO_COUNTRY_CODES = [
+  'AD','AE','AF','AG','AI','AL','AM','AO','AQ','AR','AS','AT','AU','AW','AX','AZ',
+  'BA','BB','BD','BE','BF','BG','BH','BI','BJ','BL','BM','BN','BO','BQ','BR','BS','BT','BV','BW','BY','BZ',
+  'CA','CC','CD','CF','CG','CH','CI','CK','CL','CM','CN','CO','CR','CU','CV','CW','CX','CY','CZ',
+  'DE','DJ','DK','DM','DO','DZ','EC','EE','EG','EH','ER','ES','ET','FI','FJ','FK','FM','FO','FR',
+  'GA','GB','GD','GE','GF','GG','GH','GI','GL','GM','GN','GP','GQ','GR','GS','GT','GU','GW','GY',
+  'HK','HM','HN','HR','HT','HU','ID','IE','IL','IM','IN','IO','IQ','IR','IS','IT','JE','JM','JO','JP',
+  'KE','KG','KH','KI','KM','KN','KP','KR','KW','KY','KZ','LA','LB','LC','LI','LK','LR','LS','LT','LU','LV','LY',
+  'MA','MC','MD','ME','MF','MG','MH','MK','ML','MM','MN','MO','MP','MQ','MR','MS','MT','MU','MV','MW','MX','MY','MZ',
+  'NA','NC','NE','NF','NG','NI','NL','NO','NP','NR','NU','NZ','OM','PA','PE','PF','PG','PH','PK','PL','PM','PN','PR','PS','PT','PW','PY',
+  'QA','RE','RO','RS','RU','RW','SA','SB','SC','SD','SE','SG','SH','SI','SJ','SK','SL','SM','SN','SO','SR','SS','ST','SV','SX','SY','SZ',
+  'TC','TD','TF','TG','TH','TJ','TK','TL','TM','TN','TO','TR','TT','TV','TW','TZ','UA','UG','UM','US','UY','UZ',
+  'VA','VC','VE','VG','VI','VN','VU','WF','WS','YE','YT','ZA','ZM','ZW'
+];
+
+function countryFlag(code) {
+  const value = String(code || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(value)) return '🌐';
+  return String.fromCodePoint(...[...value].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+function countryName(code, lang) {
+  const value = String(code || '').trim().toUpperCase();
+  if (!value) return '';
+  try {
+    const displayNames = new Intl.DisplayNames([lang === 'th' ? 'th' : 'en'], { type: 'region' });
+    return displayNames.of(value) || value;
+  } catch {
+    return value;
+  }
+}
+
 function MyDashboard({
   lang,
   goToPage,
@@ -11,7 +44,15 @@ function MyDashboard({
   const th = lang === 'th';
   const [profileImageError, setProfileImageError] = useState(false);
   const [verifiedFullName, setVerifiedFullName] = useState('');
+  const [countryCode, setCountryCode] = useState('');
+  const [hasIdentityNumber, setHasIdentityNumber] = useState(false);
   const [identityLoading, setIdentityLoading] = useState(Boolean(user));
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [editFullName, setEditFullName] = useState('');
+  const [editCountryCode, setEditCountryCode] = useState('');
+  const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [donationLoading, setDonationLoading] = useState(true);
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -23,6 +64,8 @@ function MyDashboard({
   useEffect(() => {
     if (!user) {
       setVerifiedFullName('');
+      setCountryCode('');
+      setHasIdentityNumber(false);
       setIdentityLoading(false);
       return;
     }
@@ -49,16 +92,13 @@ function MyDashboard({
 
         if (cancelled) return;
 
-        if (
-          data.donationProfileComplete === true &&
-          data.fullName
-        ) {
-          setVerifiedFullName(
-            String(data.fullName).trim()
-          );
-        } else {
-          setVerifiedFullName('');
-        }
+        setVerifiedFullName(
+          data.fullName ? String(data.fullName).trim() : ''
+        );
+        setCountryCode(
+          String(data.countryCode || '').trim().toUpperCase()
+        );
+        setHasIdentityNumber(data.hasIdentityNumber === true);
       } catch (error) {
         console.error(
           'MyDashboard identity profile error:',
@@ -67,6 +107,8 @@ function MyDashboard({
 
         if (!cancelled) {
           setVerifiedFullName('');
+          setCountryCode('');
+          setHasIdentityNumber(false);
         }
       } finally {
         if (!cancelled) {
@@ -164,6 +206,82 @@ function MyDashboard({
       cancelled = true;
     };
   }, [user?.memberId]);
+
+  const openProfileEditor = () => {
+    setEditFullName(verifiedFullName || user?.name || '');
+    setEditCountryCode(countryCode || 'TH');
+    setEditIdentityNumber('');
+    setProfileError('');
+    setProfileEditorOpen(true);
+  };
+
+  const saveProfile = async () => {
+    const cleanFullName = String(editFullName || '').trim();
+    const cleanCountryCode = String(editCountryCode || '').trim().toUpperCase();
+    const cleanIdentityNumber = String(editIdentityNumber || '').trim();
+
+    if (!cleanFullName) {
+      setProfileError(th ? 'กรุณาระบุชื่อและนามสกุล' : 'Please enter your full name.');
+      return;
+    }
+
+    if (!/^[A-Z]{2}$/.test(cleanCountryCode)) {
+      setProfileError(th ? 'กรุณาเลือกประเทศ' : 'Please select your country.');
+      return;
+    }
+
+    if (!hasIdentityNumber && !cleanIdentityNumber) {
+      setProfileError(
+        th
+          ? 'กรุณาระบุเลขประจำตัวประชาชน 13 หลัก หรือหมายเลขพาสปอร์ต'
+          : 'Please enter a 13-digit national ID or passport number.'
+      );
+      return;
+    }
+
+    setProfileSaving(true);
+    setProfileError('');
+
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fullName: cleanFullName,
+          countryCode: cleanCountryCode,
+          ...(cleanIdentityNumber ? { taxId: cleanIdentityNumber } : {})
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to update profile');
+      }
+
+      setVerifiedFullName(String(data.fullName || cleanFullName).trim());
+      setCountryCode(String(data.countryCode || cleanCountryCode).trim().toUpperCase());
+      setHasIdentityNumber(data.hasIdentityNumber === true || hasIdentityNumber || Boolean(cleanIdentityNumber));
+      setProfileEditorOpen(false);
+      setEditIdentityNumber('');
+    } catch (error) {
+      console.error('MyDashboard profile update error:', error);
+      setProfileError(
+        th
+          ? 'บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่อีกครั้ง'
+          : 'Unable to save your profile. Please check the information and try again.'
+      );
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const sortedCountryCodes = [...ISO_COUNTRY_CODES].sort((a, b) =>
+    countryName(a, lang).localeCompare(countryName(b, lang), th ? 'th' : 'en')
+  );
 
   const moneyTotalText = donationLoading
     ? '—'
@@ -269,6 +387,27 @@ function MyDashboard({
                   user?.name ||
                   (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}
             </strong>
+
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginTop: '6px',
+                fontWeight: 800,
+                color: '#7f5f27'
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: '21px' }}>
+                {countryCode ? countryFlag(countryCode) : '🌐'}
+              </span>
+              <span>
+                {countryCode
+                  ? `${countryName(countryCode, lang)} (${countryCode})`
+                  : (th ? 'ยังไม่ได้ระบุประเทศ' : 'Country not set')}
+              </span>
+            </span>
+
             <span>
               {user?.lineUid && user?.telegramUid
                 ? `✓ ${th ? 'เชื่อมต่อ LINE และ Telegram แล้ว' : 'LINE and Telegram connected'}`
@@ -276,6 +415,15 @@ function MyDashboard({
                   ? `✓ ${th ? 'เชื่อมต่อบัญชี Telegram แล้ว' : 'Telegram connected'}`
                   : `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`}
             </span>
+
+            <button
+              type="button"
+              className="compactViewButton"
+              onClick={openProfileEditor}
+              style={{ marginTop: '10px', alignSelf: 'flex-start' }}
+            >
+              {th ? 'แก้ไขโปรไฟล์' : 'Update Profile'}
+            </button>
           </div>
         </section>
 
@@ -512,6 +660,197 @@ function MyDashboard({
             LINE
           </a>
         </section>
+
+        {profileEditorOpen && (
+          <div
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !profileSaving) {
+                setProfileEditorOpen(false);
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              background: 'rgba(34, 28, 18, 0.52)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+          >
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-editor-title"
+              style={{
+                width: 'min(100%, 520px)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                background: '#fffdf8',
+                border: '1px solid #ddcfb8',
+                borderRadius: '22px',
+                boxShadow: '0 24px 70px rgba(32, 25, 15, 0.28)',
+                padding: '24px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+                <div>
+                  <span className="compactEyebrow">{th ? 'ข้อมูลสมาชิก' : 'MEMBER PROFILE'}</span>
+                  <h2 id="profile-editor-title" style={{ margin: '5px 0 6px' }}>
+                    {th ? 'แก้ไขโปรไฟล์' : 'Update Profile'}
+                  </h2>
+                  <p style={{ margin: 0, color: '#746a5f', lineHeight: 1.6, fontSize: '14px' }}>
+                    {th
+                      ? 'ประเทศที่เลือกจะเป็นข้อมูลเดียวกับที่ใช้แสดงสถิติสมาชิกของวัดบนแผนที่โลก'
+                      : 'Your selected country is the same country record used in the monastery world member map.'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => !profileSaving && setProfileEditorOpen(false)}
+                  aria-label={th ? 'ปิด' : 'Close'}
+                  style={{
+                    border: 0,
+                    background: 'transparent',
+                    fontSize: '25px',
+                    lineHeight: 1,
+                    cursor: profileSaving ? 'default' : 'pointer',
+                    color: '#6d6257'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gap: '16px', marginTop: '22px' }}>
+                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                  <span>{th ? 'ชื่อและนามสกุล' : 'Full name'}</span>
+                  <input
+                    type="text"
+                    value={editFullName}
+                    onChange={(event) => setEditFullName(event.target.value)}
+                    autoComplete="name"
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: '1px solid #d8cbb8',
+                      background: '#fff',
+                      padding: '0 13px',
+                      fontSize: '15px'
+                    }}
+                  />
+                </label>
+
+                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                  <span>{th ? 'ประเทศ' : 'Country'}</span>
+                  <select
+                    value={editCountryCode}
+                    onChange={(event) => setEditCountryCode(event.target.value)}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: '1px solid #d8cbb8',
+                      background: '#fff',
+                      padding: '0 13px',
+                      fontSize: '15px'
+                    }}
+                  >
+                    <option value="">{th ? '— เลือกประเทศ —' : '— Select country —'}</option>
+                    {sortedCountryCodes.map((code) => (
+                      <option key={code} value={code}>
+                        {countryFlag(code)} {countryName(code, lang)} ({code})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                  <span>
+                    {th
+                      ? 'เลขประจำตัวประชาชน 13 หลัก หรือหมายเลขพาสปอร์ต'
+                      : '13-digit National ID or Passport Number'}
+                  </span>
+                  <input
+                    type="text"
+                    value={editIdentityNumber}
+                    onChange={(event) => setEditIdentityNumber(event.target.value)}
+                    autoComplete="off"
+                    placeholder={
+                      hasIdentityNumber
+                        ? (th ? 'กรอกเฉพาะเมื่อต้องการเปลี่ยนข้อมูลนี้' : 'Enter only if you want to change it')
+                        : (th ? 'กรอกเลข 13 หลัก หรือหมายเลขพาสปอร์ต' : 'Enter national ID or passport number')
+                    }
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: '1px solid #d8cbb8',
+                      background: '#fff',
+                      padding: '0 13px',
+                      fontSize: '15px'
+                    }}
+                  />
+                  <small style={{ fontWeight: 400, color: '#807568', lineHeight: 1.55 }}>
+                    {hasIdentityNumber
+                      ? (th
+                          ? 'ระบบมีข้อมูลยืนยันตัวตนอยู่แล้ว จึงไม่แสดงหมายเลขเดิมเพื่อความเป็นส่วนตัว'
+                          : 'An identity number is already on file. The saved number is not displayed for privacy.')
+                      : (th
+                          ? 'ผู้ใช้ชาวไทยใช้เลขประจำตัวประชาชน 13 หลัก ส่วนผู้ใช้ต่างชาติสามารถใช้หมายเลขพาสปอร์ตได้'
+                          : 'Thai members may use a 13-digit national ID; international members may use a passport number.')}
+                  </small>
+                </label>
+
+                {profileError && (
+                  <div
+                    role="alert"
+                    style={{
+                      borderRadius: '12px',
+                      background: '#fff3f0',
+                      border: '1px solid #efc7bf',
+                      color: '#9a3f32',
+                      padding: '11px 13px',
+                      fontSize: '14px',
+                      lineHeight: 1.55
+                    }}
+                  >
+                    {profileError}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={saveProfile}
+                  disabled={profileSaving}
+                  style={{
+                    width: '100%',
+                    minHeight: '50px',
+                    border: 0,
+                    borderRadius: '14px',
+                    background: '#9b7226',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '15px',
+                    cursor: profileSaving ? 'wait' : 'pointer',
+                    opacity: profileSaving ? 0.7 : 1
+                  }}
+                >
+                  {profileSaving
+                    ? (th ? 'กำลังบันทึก…' : 'Saving…')
+                    : (th ? 'บันทึกข้อมูลโปรไฟล์' : 'Save Profile')}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
 
         <div className="compactLogoutWrap">
           <button type="button" className="dashboardLogoutBtn" onClick={handleLogout}>
