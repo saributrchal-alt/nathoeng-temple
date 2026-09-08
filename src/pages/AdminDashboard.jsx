@@ -5,6 +5,32 @@ import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
 import AdminRetreatReviewPanel from '../components/AdminRetreatReviewPanel';
 import AdminMembersPanel from '../components/AdminMembersPanel';
 
+
+const COUNTRY_POINTS = {
+  TH:[100.5,15.9], SG:[103.8,1.35], MY:[102.0,4.2], ID:[117.3,-2.2], PH:[122.7,12.7], VN:[108.3,14.1], LA:[102.6,19.9], KH:[104.9,12.6], MM:[96.1,21.9], BN:[114.7,4.5], TL:[125.7,-8.8],
+  CN:[104.2,35.9], JP:[138.3,36.2], KR:[127.8,36.4], KP:[127.5,40.3], TW:[121.0,23.7], HK:[114.2,22.3], MN:[103.8,46.9], IN:[78.9,20.6], LK:[80.8,7.9], NP:[84.1,28.4], BD:[90.4,23.7], PK:[69.3,30.4], BT:[90.4,27.5], MV:[73.2,3.2],
+  AU:[133.8,-25.3], NZ:[174.9,-40.9], PG:[143.9,-6.3], FJ:[178.1,-17.7],
+  GB:[-3.4,55.4], IE:[-8.2,53.1], FR:[2.2,46.2], DE:[10.5,51.2], IT:[12.6,41.9], ES:[-3.7,40.5], PT:[-8.2,39.4], NL:[5.3,52.1], BE:[4.5,50.5], CH:[8.2,46.8], AT:[14.6,47.5], DK:[9.5,56.3], NO:[8.5,60.5], SE:[18.6,60.1], FI:[25.7,61.9], PL:[19.1,51.9], CZ:[15.5,49.8], GR:[21.8,39.1], UA:[31.2,48.4], RO:[24.9,45.9], HU:[19.5,47.2], RU:[90.0,61.5],
+  US:[-98.6,39.8], CA:[-106.3,56.1], MX:[-102.6,23.6], BR:[-51.9,-14.2], AR:[-63.6,-38.4], CL:[-71.5,-35.7], PE:[-75.0,-9.2], CO:[-74.3,4.6], VE:[-66.6,6.4], EC:[-78.2,-1.8], BO:[-63.6,-16.3], UY:[-55.8,-32.5], PY:[-58.4,-23.4],
+  ZA:[22.9,-30.6], EG:[30.8,26.8], MA:[-7.1,31.8], KE:[37.9,0.0], TZ:[34.9,-6.4], NG:[8.7,9.1], GH:[-1.0,7.9], ET:[40.5,9.1], UG:[32.3,1.4], RW:[29.9,-1.9],
+  AE:[53.8,23.4], SA:[45.1,23.9], QA:[51.2,25.4], IL:[34.9,31.0], TR:[35.2,39.0], IR:[53.7,32.4]
+};
+
+function countryFlag(code) {
+  const value = String(code || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(value)) return '🌐';
+  return String.fromCodePoint(...[...value].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+function countryName(code, lang) {
+  try {
+    const display = new Intl.DisplayNames([lang === 'th' ? 'th' : 'en'], { type: 'region' });
+    return display.of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
 function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
@@ -31,6 +57,9 @@ function AdminDashboard({ lang, goToPage }) {
   const [selectedAccommodation, setSelectedAccommodation] = useState('');
   const [accommodationSaving, setAccommodationSaving] = useState(false);
   const [accommodationError, setAccommodationError] = useState('');
+  const [memberCountries, setMemberCountries] = useState([]);
+  const [memberMapLoading, setMemberMapLoading] = useState(false);
+
 
   const t = {
     en: {
@@ -491,6 +520,47 @@ function AdminDashboard({ lang, goToPage }) {
       return;
     }
   };
+
+  useEffect(() => {
+    if (activeTab !== 'menu') return;
+
+    let cancelled = false;
+
+    const loadMemberCountries = async () => {
+      setMemberMapLoading(true);
+      try {
+        const response = await fetch('/api/admin-bookings?route=members', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load members');
+
+        const counts = new Map();
+        (Array.isArray(data.members) ? data.members : []).forEach((member) => {
+          const code = String(member?.country_code || '').trim().toUpperCase();
+          if (/^[A-Z]{2}$/.test(code)) counts.set(code, (counts.get(code) || 0) + 1);
+        });
+
+        if (!cancelled) {
+          setMemberCountries(
+            [...counts.entries()]
+              .map(([code, count]) => ({ code, count }))
+              .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code))
+          );
+        }
+      } catch (err) {
+        console.error('Member country map load error:', err);
+        if (!cancelled) setMemberCountries([]);
+      } finally {
+        if (!cancelled) setMemberMapLoading(false);
+      }
+    };
+
+    loadMemberCountries();
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   const totalDonationAmount = useMemo(() => {
     return donations.reduce(
@@ -1627,6 +1697,76 @@ function AdminDashboard({ lang, goToPage }) {
             >
               {t.adminMenuHelp}
             </p>
+          </div>
+
+          <div
+            style={{
+              marginBottom: '18px',
+              padding: '18px',
+              border: '1px solid #e1d8ca',
+              borderRadius: '18px',
+              background: '#fff',
+              boxShadow: '0 4px 14px rgba(73,59,39,0.05)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '18px', color: '#332f29' }}>
+                  {lang === 'th' ? '🌍 สมาชิกของวัดจากทั่วโลก' : '🌍 Members around the world'}
+                </strong>
+                <span style={{ fontSize: '12px', color: '#756c60' }}>
+                  {lang === 'th' ? 'แสดงจากประเทศที่ตรวจพบเมื่อสมาชิกเข้าสู่ระบบ โดยไม่เก็บ IP' : 'Based on country detected at login; IP addresses are not stored.'}
+                </span>
+              </div>
+              <div style={{ fontSize: '12px', color: '#756c60' }}>
+                {memberMapLoading
+                  ? (lang === 'th' ? 'กำลังโหลด…' : 'Loading…')
+                  : `${memberCountries.reduce((sum, item) => sum + item.count, 0)} ${lang === 'th' ? 'สมาชิกที่ระบุประเทศแล้ว' : 'members with country data'}`}
+              </div>
+            </div>
+
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '2 / 1', minHeight: '210px', overflow: 'hidden', borderRadius: '14px', background: '#f7f4ed', border: '1px solid #eee5d7' }}>
+              <svg viewBox="0 0 1000 500" width="100%" height="100%" role="img" aria-label="World member map" style={{ display: 'block' }}>
+                <g fill="#e4dccd" stroke="#cfc3af" strokeWidth="2">
+                  <path d="M70 120 L115 78 190 66 248 91 280 128 250 158 210 166 185 201 139 188 102 160Z" />
+                  <path d="M245 205 L286 222 307 270 294 326 270 390 247 430 229 370 218 310 222 252Z" />
+                  <path d="M438 93 L478 66 531 75 559 104 538 130 500 128 482 154 452 145Z" />
+                  <path d="M468 160 L530 151 568 190 576 250 550 320 506 354 472 308 452 240Z" />
+                  <path d="M545 98 L616 64 704 71 770 94 844 128 899 170 875 209 818 207 779 184 728 204 682 187 650 213 604 193 565 160Z" />
+                  <path d="M785 300 L838 280 890 302 909 344 878 379 825 370 790 340Z" />
+                  <path d="M915 220 L934 206 946 223 932 244Z" />
+                </g>
+                {memberCountries.map((item) => {
+                  const point = COUNTRY_POINTS[item.code];
+                  if (!point) return null;
+                  const [lon, lat] = point;
+                  const x = ((lon + 180) / 360) * 1000;
+                  const y = ((90 - lat) / 180) * 500;
+                  const r = Math.min(22, 7 + Math.sqrt(item.count) * 4);
+                  return (
+                    <g key={item.code}>
+                      <circle cx={x} cy={y} r={r} fill="#9b7226" fillOpacity="0.82" stroke="#fff" strokeWidth="3" />
+                      <text x={x} y={y + 4} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">{item.count}</text>
+                      <title>{`${countryName(item.code, lang)}: ${item.count}`}</title>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {memberCountries.length > 0 ? (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                {memberCountries.slice(0, 8).map((item) => (
+                  <span key={item.code} style={{ padding: '6px 9px', borderRadius: '999px', background: '#f6f1e7', color: '#51483d', fontSize: '12px', fontWeight: 700 }}>
+                    {countryFlag(item.code)} {countryName(item.code, lang)} · {item.count}
+                  </span>
+                ))}
+              </div>
+            ) : !memberMapLoading ? (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#8b8174' }}>
+                {lang === 'th' ? 'ยังไม่มีสมาชิกที่มีข้อมูลประเทศ' : 'No members have country data yet.'}
+              </div>
+            ) : null}
           </div>
 
           <div
