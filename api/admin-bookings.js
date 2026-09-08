@@ -137,7 +137,7 @@ async function handlePublicTeam(req, res, supabaseUrl, secretKey) {
   ].join(',');
 
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/members?public_team_enabled=eq.true&select=${encodeURIComponent(select)}&order=team_order.asc.nullslast&order=created_at.asc`,
+    `${supabaseUrl}/rest/v1/members?public_team_enabled=eq.true&select=${encodeURIComponent(select)}&order=${encodeURIComponent('team_order.asc.nullslast,created_at.asc')}`,
     { method: 'GET', headers: supabaseHeaders(secretKey), cache: 'no-store' }
   );
   const rows = await readJson(response);
