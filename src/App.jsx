@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { geoGraticule10, geoNaturalEarth1, geoPath } from 'd3-geo'
+import { feature } from 'topojson-client'
+import worldTopology from 'world-atlas/countries-110m.json'
 import './App.css'
 import BookingPage from './pages/BookingPage'
 import CalendarPage from './pages/CalendarPage'
@@ -206,6 +209,190 @@ const content = {
     contactPageAddress: '231 หมู่ 2 ตำบลธาตุ อำเภอวานรนิวาส จังหวัดสกลนคร 47120 ประเทศไทย',
     mapOpenBtn: 'เปิดใน Google Maps เพื่อนำทาง →'
   }
+}
+
+
+const PUBLIC_COUNTRY_POINTS = {
+  TH:[100.5,15.9], SG:[103.8,1.35], MY:[102.0,4.2], ID:[117.3,-2.2], PH:[122.7,12.7], VN:[108.3,14.1], LA:[102.6,19.9], KH:[104.9,12.6], MM:[96.1,21.9], BN:[114.7,4.5], TL:[125.7,-8.8],
+  CN:[104.2,35.9], JP:[138.3,36.2], KR:[127.8,36.4], KP:[127.5,40.3], TW:[121.0,23.7], HK:[114.2,22.3], MN:[103.8,46.9], IN:[78.9,20.6], LK:[80.8,7.9], NP:[84.1,28.4], BD:[90.4,23.7], PK:[69.3,30.4], BT:[90.4,27.5], MV:[73.2,3.2],
+  AU:[133.8,-25.3], NZ:[174.9,-40.9], PG:[143.9,-6.3], FJ:[178.1,-17.7],
+  GB:[-3.4,55.4], IE:[-8.2,53.1], FR:[2.2,46.2], DE:[10.5,51.2], IT:[12.6,41.9], ES:[-3.7,40.5], PT:[-8.2,39.4], NL:[5.3,52.1], BE:[4.5,50.5], CH:[8.2,46.8], AT:[14.6,47.5], DK:[9.5,56.3], NO:[8.5,60.5], SE:[18.6,60.1], FI:[25.7,61.9], PL:[19.1,51.9], CZ:[15.5,49.8], GR:[21.8,39.1], UA:[31.2,48.4], RO:[24.9,45.9], HU:[19.5,47.2], RU:[90.0,61.5],
+  US:[-98.6,39.8], CA:[-106.3,56.1], MX:[-102.6,23.6], BR:[-51.9,-14.2], AR:[-63.6,-38.4], CL:[-71.5,-35.7], PE:[-75.0,-9.2], CO:[-74.3,4.6], VE:[-66.6,6.4], EC:[-78.2,-1.8], BO:[-63.6,-16.3], UY:[-55.8,-32.5], PY:[-58.4,-23.4],
+  ZA:[22.9,-30.6], EG:[30.8,26.8], MA:[-7.1,31.8], KE:[37.9,0.0], TZ:[34.9,-6.4], NG:[8.7,9.1], GH:[-1.0,7.9], ET:[40.5,9.1], UG:[32.3,1.4], RW:[29.9,-1.9],
+  AE:[53.8,23.4], SA:[45.1,23.9], QA:[51.2,25.4], IL:[34.9,31.0], TR:[35.2,39.0], IR:[53.7,32.4]
+};
+
+function publicCountryFlag(code) {
+  const value = String(code || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(value)) return '🌐';
+  return String.fromCodePoint(...[...value].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+function publicCountryName(code, lang) {
+  try {
+    const display = new Intl.DisplayNames([lang === 'th' ? 'th' : 'en'], { type: 'region' });
+    return display.of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
+function PublicWorldMemberMap({ lang }) {
+  const th = lang === 'th';
+  const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      try {
+        const response = await fetch('/api/admin-bookings?route=public-country-stats', {
+          method: 'GET',
+          cache: 'no-store'
+        });
+        const data = await response.json();
+        if (!active) return;
+        setCountries(response.ok && data?.success && Array.isArray(data.countries) ? data.countries : []);
+      } catch {
+        if (active) setCountries([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const map = useMemo(() => {
+    const width = 960;
+    const height = 430;
+    const projection = geoNaturalEarth1().fitExtent([[20, 18], [width - 20, height - 18]], { type: 'Sphere' });
+    const path = geoPath(projection);
+    const countriesGeo = feature(worldTopology, worldTopology.objects.countries).features;
+    return { width, height, projection, path, countriesGeo, graticule: geoGraticule10() };
+  }, []);
+
+  const totalMembers = countries.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
+  const mappedCountries = countries.filter((item) => PUBLIC_COUNTRY_POINTS[item.country_code]);
+
+  return (
+    <section
+      aria-labelledby="world-dhamma-title"
+      style={{
+        padding: '72px 20px',
+        background: 'linear-gradient(180deg, #fbf8f1 0%, #f6f0e5 100%)',
+        borderTop: '1px solid #eadfce',
+        borderBottom: '1px solid #eadfce'
+      }}
+    >
+      <div style={{ maxWidth: '1180px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', maxWidth: '860px', margin: '0 auto 28px' }}>
+          <div className="sectionOrnament" aria-hidden="true" style={{ marginBottom: '12px' }}>
+            <span></span>
+            <img src="/icons/lotus.svg" alt="" />
+            <span></span>
+          </div>
+
+          <p className="eyebrow" style={{ marginBottom: '8px' }}>
+            {th ? 'กัลยาณมิตรจากทั่วโลก' : 'DHAMMA FRIENDS AROUND THE WORLD'}
+          </p>
+
+          <h2 id="world-dhamma-title" style={{ margin: '0 0 14px', fontSize: 'clamp(30px, 4vw, 48px)', lineHeight: 1.18 }}>
+            {th ? 'ยินดีต้อนรับผู้ศรัทธาและผู้สนใจในพระพุทธศาสนาจากทั่วโลก' : 'Welcoming Dhamma Friends from Around the World'}
+          </h2>
+
+          <p style={{ margin: '0 auto', color: '#665f55', lineHeight: 1.9, fontSize: '16px', maxWidth: '820px' }}>
+            {th
+              ? 'วัดพุทธอุทยานนาเทิงยินดีต้อนรับพุทธศาสนิกชนและผู้สนใจในการศึกษาและปฏิบัติธรรมจากทุกประเทศ โดยไม่จำกัดเพศ เชื้อชาติ ชาติพันธุ์ สัญชาติ วรรณะ หรือภูมิหลังทางสังคม ทุกท่านสามารถมาร่วมเรียนรู้พระธรรม เจริญสติ ภาวนา และสัมผัสวิถีชีวิตอันเรียบง่ายตามแนวทางพระพุทธศาสนา ภายใต้บรรยากาศแห่งความสงบ ความเคารพซึ่งกันและกัน และความเป็นกัลยาณมิตร'
+              : 'Buddhist Park Monastery of Nathoeng warmly welcomes Buddhists and sincere seekers from every part of the world, regardless of gender, nationality, race, ethnicity, social background, or status. Everyone is welcome to learn the Dhamma, cultivate mindfulness, practice meditation, and experience a simple way of life grounded in Buddhist teachings, in an atmosphere of peace, mutual respect, and spiritual friendship.'}
+          </p>
+
+          <p style={{ margin: '18px auto 0', fontWeight: 800, color: '#7f5f27', fontSize: '17px' }}>
+            {th
+              ? 'ธรรมะเป็นสากล และประตูของวัดเปิดต้อนรับผู้ที่มาด้วยความเคารพและความตั้งใจอันดีเสมอ'
+              : 'The Dhamma is universal, and our monastery welcomes all who come with respect and sincere intention.'}
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: '12px',
+            margin: '0 auto 22px',
+            maxWidth: '760px'
+          }}
+        >
+          <div style={{ background: '#fff', border: '1px solid #e2d6c5', borderRadius: '18px', padding: '18px 20px', textAlign: 'center', boxShadow: '0 8px 28px rgba(80,63,37,0.05)' }}>
+            <div style={{ fontSize: '30px', fontWeight: 900, color: '#8f6828', lineHeight: 1 }}>2555</div>
+            <div style={{ marginTop: '7px', fontWeight: 800 }}>{th ? 'ปีที่ก่อตั้งวัด' : 'Monastery founded'}</div>
+            <div style={{ marginTop: '3px', color: '#7d7469', fontSize: '13px' }}>{th ? 'พ.ศ. 2555 · ค.ศ. 2012' : 'B.E. 2555 · 2012'}</div>
+          </div>
+
+          <div style={{ background: '#fff', border: '1px solid #e2d6c5', borderRadius: '18px', padding: '18px 20px', textAlign: 'center', boxShadow: '0 8px 28px rgba(80,63,37,0.05)' }}>
+            <div style={{ fontSize: '30px', fontWeight: 900, color: '#8f6828', lineHeight: 1 }}>{loading ? '…' : totalMembers}</div>
+            <div style={{ marginTop: '7px', fontWeight: 800 }}>{th ? 'สมาชิกที่ระบุประเทศแล้ว' : 'Members with country records'}</div>
+            <div style={{ marginTop: '3px', color: '#7d7469', fontSize: '13px' }}>{th ? 'เริ่มบันทึก ก.ย. 2569' : 'Records since Sep 2026'}</div>
+          </div>
+
+          <div style={{ background: '#fff', border: '1px solid #e2d6c5', borderRadius: '18px', padding: '18px 20px', textAlign: 'center', boxShadow: '0 8px 28px rgba(80,63,37,0.05)' }}>
+            <div style={{ fontSize: '30px', fontWeight: 900, color: '#8f6828', lineHeight: 1 }}>{loading ? '…' : countries.length}</div>
+            <div style={{ marginTop: '7px', fontWeight: 800 }}>{th ? 'ประเทศที่มีสมาชิก' : 'Countries represented'}</div>
+            <div style={{ marginTop: '3px', color: '#7d7469', fontSize: '13px' }}>{th ? 'ข้อมูลจากสมาชิกที่เข้าสู่ระบบ' : 'Based on signed-in members'}</div>
+          </div>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #dfd2bf', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 16px 45px rgba(78,61,35,0.08)' }}>
+          <div style={{ padding: '18px 18px 0' }}>
+            <div style={{ borderRadius: '18px', overflow: 'hidden', background: '#edf4f5', border: '1px solid #d7e1df' }}>
+              <svg viewBox={`0 0 ${map.width} ${map.height}`} role="img" aria-label={th ? 'แผนที่โลกแสดงประเทศของสมาชิกวัด' : 'World map showing countries represented by monastery members'} style={{ display: 'block', width: '100%', height: 'auto' }}>
+                <path d={map.path({ type: 'Sphere' }) || ''} fill="#edf4f5" />
+                <path d={map.path(map.graticule) || ''} fill="none" stroke="#cbd9d8" strokeWidth="0.7" opacity="0.75" />
+                {map.countriesGeo.map((geo, index) => (
+                  <path key={geo.id || index} d={map.path(geo) || ''} fill="#e8dfcf" stroke="#c7b89f" strokeWidth="0.65" />
+                ))}
+                {mappedCountries.map((item) => {
+                  const point = map.projection(PUBLIC_COUNTRY_POINTS[item.country_code]);
+                  if (!point) return null;
+                  const count = Number(item.count) || 0;
+                  const radius = Math.min(16, 7 + Math.sqrt(Math.max(count, 1)) * 2.2);
+                  return (
+                    <g key={item.country_code} transform={`translate(${point[0]},${point[1]})`}>
+                      <circle r={radius + 5} fill="#b78a42" opacity="0.16" />
+                      <circle r={radius} fill="#9b7226" stroke="#fff" strokeWidth="2.2" />
+                      <text textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={count > 99 ? 9 : 11} fontWeight="800">{count}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '14px 18px 18px' }}>
+            {countries.length ? countries.map((item) => (
+              <span key={item.country_code} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 10px', borderRadius: '999px', background: '#f7f2e9', color: '#554d42', fontSize: '13px', fontWeight: 700 }}>
+                <span>{publicCountryFlag(item.country_code)}</span>
+                <span>{publicCountryName(item.country_code, lang)}</span>
+                <strong>· {item.count}</strong>
+              </span>
+            )) : (
+              <span style={{ color: '#7a7268', fontSize: '13px' }}>
+                {loading ? (th ? 'กำลังโหลดข้อมูลสมาชิก…' : 'Loading member data…') : (th ? 'ข้อมูลประเทศจะปรากฏเมื่อสมาชิกเข้าสู่ระบบ' : 'Country data appears as members sign in.')}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <p style={{ margin: '14px auto 0', maxWidth: '900px', textAlign: 'center', color: '#7a7268', fontSize: '12px', lineHeight: 1.7 }}>
+          {th
+            ? 'หมายเหตุ: แผนที่แสดงประเทศของสมาชิกที่เข้าสู่ระบบและได้รับการบันทึกตั้งแต่เดือนกันยายน พ.ศ. 2569 เป็นต้นไป จึงไม่ได้แสดงจำนวนผู้ที่เคยมาเยือนหรือปฏิบัติธรรมกับวัดทั้งหมด และไม่มีการแสดงชื่อหรือข้อมูลส่วนบุคคลของสมาชิกบนแผนที่นี้'
+            : 'Note: This map reflects country records for members who have signed in since September 2026. It does not represent all past visitors or practitioners, and no member names or personal information are displayed on this public map.'}
+        </p>
+      </div>
+    </section>
+  );
 }
 
 function App() {
@@ -1146,6 +1333,9 @@ const handleLineLogin = (mode = 'login') => {
                 </button>
               </div>
             </section>
+
+            {/* GLOBAL DHAMMA COMMUNITY */}
+            <PublicWorldMemberMap lang={lang} />
 
             {/* MAIN FEATURES */}
             <section className="featureSection">

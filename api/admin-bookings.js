@@ -76,6 +76,55 @@ async function enrichReviews(supabaseUrl, secretKey, reviews) {
   });
 }
 
+
+async function handlePublicCountryStats(req, res, supabaseUrl, secretKey) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({
+      success: false,
+      message: 'Method not allowed'
+    });
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/members?country_code=not.is.null&select=country_code`,
+    {
+      method: 'GET',
+      headers: supabaseHeaders(secretKey),
+      cache: 'no-store'
+    }
+  );
+
+  const rows = await readJson(response);
+
+  if (!response.ok) {
+    console.error('Public member country stats lookup failed:', rows);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to load public member country statistics'
+    });
+  }
+
+  const counts = new Map();
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const code = String(row?.country_code || '').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) return;
+    counts.set(code, (counts.get(code) || 0) + 1);
+  });
+
+  const countries = [...counts.entries()]
+    .map(([country_code, count]) => ({ country_code, count }))
+    .sort((a, b) => b.count - a.count || a.country_code.localeCompare(b.country_code));
+
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+
+  return res.status(200).json({
+    success: true,
+    countries,
+    total_members_with_country: countries.reduce((sum, item) => sum + item.count, 0)
+  });
+}
+
 async function handleMembers(req, res, supabaseUrl, secretKey) {
   if (req.method !== 'GET') {
     return res.status(405).json({
@@ -246,11 +295,6 @@ async function handleReviews(req, res, session, supabaseUrl, secretKey) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-
-  const session = requireAdmin(req, res);
-  if (!session) return;
-
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
@@ -262,6 +306,23 @@ export default async function handler(req, res) {
   }
 
   const route = String(req.query?.route || '').trim();
+
+  if (route === 'public-country-stats') {
+    try {
+      return await handlePublicCountryStats(req, res, supabaseUrl, supabaseSecretKey);
+    } catch (error) {
+      console.error('Public member country stats server error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Public member country stats server error'
+      });
+    }
+  }
+
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
+  const session = requireAdmin(req, res);
+  if (!session) return;
 
   if (route === 'members') {
     try {
