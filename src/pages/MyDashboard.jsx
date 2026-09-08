@@ -659,23 +659,184 @@ function MyDashboard({
           <span aria-hidden="true">›</span>
         </button>
 
-        <section className="compactContactStrip">
-          <div className="compactContactLeft">
-            <span className="compactContactIcon">LINE</span>
-            <div>
-              <strong>{th ? 'ติดต่อวัด' : 'Contact the Monastery'}</strong>
-              <small>LINE OA @nathoeng</small>
-            </div>
+        <section
+          style={{
+            marginTop: '16px',
+            padding: '18px',
+            borderRadius: '18px',
+            border: '1px solid #d8e2d8',
+            background: '#fffdf8'
+          }}
+        >
+          <div style={{ marginBottom: '14px' }}>
+            <strong
+              style={{
+                display: 'block',
+                color: '#315f47',
+                fontSize: '17px',
+                marginBottom: '3px'
+              }}
+            >
+              {th ? 'ติดต่อวัด' : 'Contact the Monastery'}
+            </strong>
+
+            <span
+              style={{
+                color: '#746f67',
+                fontSize: '13px'
+              }}
+            >
+              {th
+                ? 'สามารถติดต่อวัดผ่านช่องทางต่อไปนี้'
+                : 'Contact the monastery through the following channels'}
+            </span>
           </div>
 
-          <a
-            className="compactLineButton"
-            href="https://line.me/R/ti/p/@nathoeng"
-            target="_blank"
-            rel="noreferrer"
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+              gap: '12px'
+            }}
           >
-            LINE
-          </a>
+            <a
+              href="https://line.me/R/ti/p/@nathoeng"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                minHeight: '66px',
+                borderRadius: '14px',
+                background: '#06c755',
+                color: '#ffffff',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                padding: '10px 16px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <span
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  color: '#06c755',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 900,
+                  flexShrink: 0
+                }}
+              >
+                LINE
+              </span>
+
+              <span style={{ textAlign: 'left' }}>
+                <strong
+                  style={{
+                    display: 'block',
+                    fontSize: '15px',
+                    lineHeight: 1.3
+                  }}
+                >
+                  LINE OA @nathoeng
+                </strong>
+
+                <small
+                  style={{
+                    display: 'block',
+                    marginTop: '3px',
+                    color: 'rgba(255,255,255,0.9)'
+                  }}
+                >
+                  {th ? 'แชทกับวัดผ่าน LINE' : 'Chat with us on LINE'}
+                </small>
+              </span>
+            </a>
+
+            <a
+              href="https://t.me/NathoengConnectBot"
+              target="_blank"
+              rel="noreferrer"
+              onClick={(event) => {
+                if (typeof window === 'undefined') return;
+
+                const isMobile =
+                  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+
+                if (!isMobile) return;
+
+                event.preventDefault();
+
+                window.location.href =
+                  'tg://resolve?domain=NathoengConnectBot';
+
+                window.setTimeout(() => {
+                  window.location.href =
+                    'https://t.me/NathoengConnectBot';
+                }, 900);
+              }}
+              style={{
+                minHeight: '66px',
+                borderRadius: '14px',
+                background: '#229ED9',
+                color: '#ffffff',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                padding: '10px 16px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <span
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  color: '#229ED9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '21px',
+                  fontWeight: 900,
+                  flexShrink: 0
+                }}
+              >
+                ➤
+              </span>
+
+              <span style={{ textAlign: 'left' }}>
+                <strong
+                  style={{
+                    display: 'block',
+                    fontSize: '15px',
+                    lineHeight: 1.3
+                  }}
+                >
+                  Telegram @NathoengConnectBot
+                </strong>
+
+                <small
+                  style={{
+                    display: 'block',
+                    marginTop: '3px',
+                    color: 'rgba(255,255,255,0.9)'
+                  }}
+                >
+                  {th
+                    ? 'แชทกับวัดผ่าน Telegram'
+                    : 'Chat with us on Telegram'}
+                </small>
+              </span>
+            </a>
+          </div>
         </section>
 
         {profileEditorOpen && (
