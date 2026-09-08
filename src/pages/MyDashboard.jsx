@@ -388,25 +388,42 @@ function MyDashboard({
                   (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member')}
             </strong>
 
-            <span
+            <div
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                marginTop: '6px',
-                fontWeight: 800,
-                color: '#7f5f27'
+                gap: '10px',
+                width: '100%',
+                marginTop: '8px',
+                marginBottom: '2px',
+                color: '#2f6b4f'
               }}
             >
-              <span aria-hidden="true" style={{ fontSize: '21px' }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: '28px',
+                  lineHeight: 1,
+                  flex: '0 0 auto'
+                }}
+              >
                 {countryCode ? countryFlag(countryCode) : '🌐'}
               </span>
-              <span>
+
+              <strong
+                style={{
+                  display: 'block',
+                  fontSize: '15px',
+                  lineHeight: 1.35,
+                  fontWeight: 800,
+                  whiteSpace: 'normal'
+                }}
+              >
                 {countryCode
                   ? `${countryName(countryCode, lang)} (${countryCode})`
                   : (th ? 'ยังไม่ได้ระบุประเทศ' : 'Country not set')}
-              </span>
-            </span>
+              </strong>
+            </div>
 
             <span>
               {user?.lineUid && user?.telegramUid
