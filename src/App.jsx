@@ -1402,6 +1402,8 @@ const handleLineLogin = async (mode = 'login') => {
                       goToPage('contact-page')
                     } else if (item.href === '#teachings') {
                       goToPage('teachings-page')
+                    } else if (item.href === '#dhamma-live') {
+                      goToPage('dhamma-live')
                     } else if (item.href === '#events') {
                       goToPage('event-kathina')
                     } else if (item.href === '#visit') {
@@ -1415,7 +1417,9 @@ const handleLineLogin = async (mode = 'login') => {
                     }
                   }}
                 >
-                  {item.label}
+                  {lang === 'th' && item.href === '#dhamma-live' ? (
+                    <>ธรรมะ <span style={{ color: '#d32f2f' }}>Live</span></>
+                  ) : item.label}
                 </a>
               ))}
           </nav>
@@ -1583,14 +1587,14 @@ const handleLineLogin = async (mode = 'login') => {
                     {lang === 'th' ? 'NATHOENG GLOBAL DHAMMA COMMUNITY' : 'NATHOENG GLOBAL DHAMMA COMMUNITY'}
                   </div>
                   <h2 style={{ margin: '8px 0', color: '#fff', fontSize: 'clamp(25px, 4vw, 38px)' }}>
-                    {lang === 'th' ? 'ธรรมะ Live เชื่อมใจทั่วโลก' : 'Live Dhamma, Connecting Hearts Worldwide'}
+                    {lang === 'th' ? <>ธรรมะ <span style={{ color: '#e53935' }}>Live</span> เชื่อมใจทั่วโลก</> : 'Live Dhamma, Connecting Hearts Worldwide'}
                   </h2>
                   <p style={{ margin: 0, color: 'rgba(255,255,255,.82)', lineHeight: 1.7 }}>
                     {lang === 'th' ? 'ร่วมภาวนาและฟังธรรมออนไลน์ พร้อมแสดงเวลาอัตโนมัติตามประเทศของผู้เข้าร่วม' : 'Join online meditation and Dhamma sessions, automatically shown in your local time.'}
                   </p>
                 </div>
                 <button type="button" onClick={() => goToPage('dhamma-live')} style={{ border: '1px solid rgba(255,255,255,.45)', borderRadius: '999px', padding: '13px 22px', background: '#fff', color: '#664b1e', fontWeight: 850, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {lang === 'th' ? 'เข้าสู่ธรรมะ Live →' : 'Explore Dhamma Live →'}
+                  {lang === 'th' ? <>เข้าสู่ธรรมะ <span style={{ color: '#d32f2f' }}>Live</span> →</> : 'Explore Dhamma Live →'}
                 </button>
               </div>
             </section>
