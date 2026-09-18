@@ -22,6 +22,10 @@ function formatLocalDate(iso, lang) {
   }).format(new Date(iso))
 }
 
+function RedLiveText({ before = '', after = '' }) {
+  return <>{before}<span style={{ color: '#e53935' }}>Live</span>{after}</>
+}
+
 function GlobeMark() {
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -95,7 +99,7 @@ export default function DhammaLivePage({ lang = 'th', goToPage, user }) {
         <div className="dlHeroInner">
           <div className="dlGlobe"><GlobeMark /></div>
           <div className="dlEyebrow">{th ? 'ชุมชนธรรมะนานาชาติ' : 'NATHOENG GLOBAL DHAMMA COMMUNITY'}</div>
-          <h1>{th ? 'ธรรมะ Live เชื่อมใจทั่วโลก' : 'Live Dhamma, Connecting Hearts Worldwide'}</h1>
+          <h1>{th ? <RedLiveText before="ธรรมะ " after=" เชื่อมใจทั่วโลก" /> : 'Live Dhamma, Connecting Hearts Worldwide'}</h1>
           <p>{th
             ? 'ร่วมภาวนา ฟังธรรม และพบกัลยาณมิตรจากทุกมุมโลก ผ่านกิจกรรมออนไลน์ของวัดพุทธอุทยานนาเทิง'
             : 'Meditate, listen to the Dhamma and meet spiritual friends worldwide through online sessions from Buddhist Park Monastery of Nathoeng.'}</p>
@@ -143,11 +147,11 @@ export default function DhammaLivePage({ lang = 'th', goToPage, user }) {
           {[
             [th ? 'ดูตารางกิจกรรม' : 'View the schedule', th ? 'วันและเวลาจะแปลงตามเขตเวลาของอุปกรณ์โดยอัตโนมัติ' : 'Dates and times automatically display in your device’s local timezone.'],
             [th ? 'เข้าสู่ระบบสมาชิก' : 'Sign in as a member', th ? 'ใช้บัญชี LINE หรือ Telegram ของวัดเพื่อยืนยันตัวตน' : 'Use the monastery’s LINE or Telegram sign-in to confirm your identity.'],
-            [th ? 'เข้าห้องธรรมะสด' : 'Enter the live room', th ? 'ปุ่มเข้าร่วมจะเปิดเมื่อกิจกรรมพร้อม และนำเข้าสู่ Zoom โดยตรง' : 'The join button activates when the session is ready and opens Zoom directly.']
+            [th ? 'เข้าห้องธรรมะ Live' : 'Enter the live room', th ? 'ปุ่มเข้าร่วมจะเปิดเมื่อกิจกรรมพร้อม และนำเข้าสู่ Zoom โดยตรง' : 'The join button activates when the session is ready and opens Zoom directly.']
           ].map(([title, body], index) => (
             <article className="dlInfo" key={title}>
               <span className="dlNumber">{index + 1}</span>
-              <h3>{title}</h3>
+              <h3>{th && title.includes('Live') ? <RedLiveText before={title.split('Live')[0]} after={title.split('Live')[1]} /> : title}</h3>
               <p>{body}</p>
             </article>
           ))}
