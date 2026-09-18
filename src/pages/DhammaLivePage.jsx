@@ -95,7 +95,7 @@ export default function DhammaLivePage({ lang = 'th', goToPage, user }) {
         <div className="dlHeroInner">
           <div className="dlGlobe"><GlobeMark /></div>
           <div className="dlEyebrow">{th ? 'ชุมชนธรรมะนานาชาติ' : 'NATHOENG GLOBAL DHAMMA COMMUNITY'}</div>
-          <h1>{th ? 'ธรรมะสด เชื่อมใจทั่วโลก' : 'Live Dhamma, Connecting Hearts Worldwide'}</h1>
+          <h1>{th ? 'ธรรมะ Live เชื่อมใจทั่วโลก' : 'Live Dhamma, Connecting Hearts Worldwide'}</h1>
           <p>{th
             ? 'ร่วมภาวนา ฟังธรรม และพบกัลยาณมิตรจากทุกมุมโลก ผ่านกิจกรรมออนไลน์ของวัดพุทธอุทยานนาเทิง'
             : 'Meditate, listen to the Dhamma and meet spiritual friends worldwide through online sessions from Buddhist Park Monastery of Nathoeng.'}</p>
