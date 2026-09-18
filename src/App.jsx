@@ -123,7 +123,7 @@ const content = {
       { label: 'หน้าแรก', href: '#home' },
       { label: 'เกี่ยวกับวัด', href: '#about' },
       { label: 'ธรรมะ', href: '#teachings' },
-      { label: 'ธรรมะสด', href: '#dhamma-live' },
+      { label: 'ธรรมะ Live', href: '#dhamma-live' },
       { label: 'ข่าวและกิจกรรม', href: '#events' },
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
