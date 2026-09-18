@@ -20,6 +20,7 @@ import StudentDashboard from './pages/StudentDashboard'
 import PublicRetreatReviews from './components/PublicRetreatReviews'
 import StayProcessPage from './pages/StayProcessPage'
 import StayPreparationPage from './pages/StayPreparationPage'
+import DhammaLivePage from './pages/DhammaLivePage'
 
 const content = {
   en: {
@@ -27,6 +28,7 @@ const content = {
       { label: 'Home', href: '#home' },
       { label: 'About', href: '#about' },
       { label: 'Teachings', href: '#teachings' },
+      { label: 'Dhamma Live', href: '#dhamma-live' },
       { label: 'News & Events', href: '#events' },
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Support', href: '#support' },
@@ -121,6 +123,7 @@ const content = {
       { label: 'หน้าแรก', href: '#home' },
       { label: 'เกี่ยวกับวัด', href: '#about' },
       { label: 'ธรรมะ', href: '#teachings' },
+      { label: 'ธรรมะสด', href: '#dhamma-live' },
       { label: 'ข่าวและกิจกรรม', href: '#events' },
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
@@ -512,6 +515,7 @@ useEffect(() => {
       const hash = window.location.hash.replace('#', '')
       if (
         hash === 'event-kathina' || 
+        hash === 'dhamma-live' ||
         hash === 'teachings-page' || 
         hash === 'visit-guide' || 
         hash === 'contact-page' || 
@@ -1571,6 +1575,26 @@ const handleLineLogin = async (mode = 'login') => {
               </div>
             </section>
 
+            {/* GLOBAL DHAMMA LIVE */}
+            <section style={{ padding: '24px 20px 0', background: '#fbf8f1' }}>
+              <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '28px clamp(22px, 5vw, 48px)', borderRadius: '24px', background: 'linear-gradient(135deg, #31493d 0%, #6b5837 100%)', color: '#fff', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '24px', boxShadow: '0 16px 42px rgba(58, 48, 31, 0.16)' }}>
+                <div>
+                  <div style={{ color: '#efd394', fontWeight: 850, fontSize: '12px', letterSpacing: '.14em' }}>
+                    {lang === 'th' ? 'NATHOENG GLOBAL DHAMMA COMMUNITY' : 'NATHOENG GLOBAL DHAMMA COMMUNITY'}
+                  </div>
+                  <h2 style={{ margin: '8px 0', color: '#fff', fontSize: 'clamp(25px, 4vw, 38px)' }}>
+                    {lang === 'th' ? 'ธรรมะสด เชื่อมใจทั่วโลก' : 'Live Dhamma, Connecting Hearts Worldwide'}
+                  </h2>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,.82)', lineHeight: 1.7 }}>
+                    {lang === 'th' ? 'ร่วมภาวนาและฟังธรรมออนไลน์ พร้อมแสดงเวลาอัตโนมัติตามประเทศของผู้เข้าร่วม' : 'Join online meditation and Dhamma sessions, automatically shown in your local time.'}
+                  </p>
+                </div>
+                <button type="button" onClick={() => goToPage('dhamma-live')} style={{ border: '1px solid rgba(255,255,255,.45)', borderRadius: '999px', padding: '13px 22px', background: '#fff', color: '#664b1e', fontWeight: 850, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {lang === 'th' ? 'เข้าสู่ธรรมะสด →' : 'Explore Dhamma Live →'}
+                </button>
+              </div>
+            </section>
+
             {/* GLOBAL DHAMMA COMMUNITY */}
             <PublicWorldMemberMap lang={lang} />
 
@@ -1838,6 +1862,8 @@ const handleLineLogin = async (mode = 'login') => {
               <PublicRetreatReviews lang={lang} />
             </div>
           </div>
+        ) : currentPage === 'dhamma-live' ? (
+          <DhammaLivePage lang={lang} goToPage={goToPage} user={user} />
         ) : currentPage === 'stay-process' ? (
           <StayProcessPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'prepare-stay' ? (
