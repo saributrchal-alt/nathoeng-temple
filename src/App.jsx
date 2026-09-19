@@ -28,7 +28,7 @@ const content = {
       { label: 'Home', href: '#home' },
       { label: 'About', href: '#about' },
       { label: 'Teachings', href: '#teachings' },
-      { label: 'Dhamma Live', href: '#dhamma-live' },
+      { label: 'Dhamma Radio', href: '#dhamma-live' },
       { label: 'News & Events', href: '#events' },
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Support', href: '#support' },
@@ -123,7 +123,7 @@ const content = {
       { label: 'หน้าแรก', href: '#home' },
       { label: 'เกี่ยวกับวัด', href: '#about' },
       { label: 'ธรรมะ', href: '#teachings' },
-      { label: 'ธรรมะ Live', href: '#dhamma-live' },
+      { label: 'Dhamma Radio', href: '#dhamma-live' },
       { label: 'ข่าวและกิจกรรม', href: '#events' },
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
@@ -1417,9 +1417,7 @@ const handleLineLogin = async (mode = 'login') => {
                     }
                   }}
                 >
-                  {lang === 'th' && item.href === '#dhamma-live' ? (
-                    <>ธรรมะ <span style={{ color: '#d32f2f' }}>Live</span></>
-                  ) : item.label}
+                  {item.label}
                 </a>
               ))}
           </nav>
@@ -1594,7 +1592,7 @@ const handleLineLogin = async (mode = 'login') => {
                   </p>
                 </div>
                 <button type="button" onClick={() => goToPage('dhamma-live')} style={{ border: '1px solid rgba(255,255,255,.45)', borderRadius: '999px', padding: '13px 22px', background: '#fff', color: '#664b1e', fontWeight: 850, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {lang === 'th' ? <>เข้าสู่ธรรมะ <span style={{ color: '#d32f2f' }}>Live</span> →</> : 'Explore Dhamma Live →'}
+                  {lang === 'th' ? 'ฟัง Dhamma Radio →' : 'Explore Dhamma Radio →'}
                 </button>
               </div>
             </section>
