@@ -1577,24 +1577,25 @@ const handleLineLogin = async (mode = 'login') => {
               </div>
             </section>
 
-            {/* GLOBAL DHAMMA LIVE */}
-            <section style={{ padding: '24px 20px 0', background: '#fbf8f1' }}>
-              <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '28px clamp(22px, 5vw, 48px)', borderRadius: '24px', background: 'linear-gradient(135deg, #31493d 0%, #6b5837 100%)', color: '#fff', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '24px', boxShadow: '0 16px 42px rgba(58, 48, 31, 0.16)' }}>
-                <div>
-                  <div style={{ color: '#efd394', fontWeight: 850, fontSize: '12px', letterSpacing: '.14em' }}>
-                    {lang === 'th' ? 'NATHOENG GLOBAL DHAMMA COMMUNITY' : 'NATHOENG GLOBAL DHAMMA COMMUNITY'}
-                  </div>
-                  <h2 style={{ margin: '8px 0', color: '#fff', fontSize: 'clamp(25px, 4vw, 38px)' }}>
-                    {lang === 'th' ? <>ธรรมะ <span style={{ color: '#e53935' }}>Live</span> เชื่อมใจทั่วโลก</> : 'Live Dhamma, Connecting Hearts Worldwide'}
-                  </h2>
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,.82)', lineHeight: 1.7 }}>
-                    {lang === 'th' ? 'ร่วมภาวนาและฟังธรรมออนไลน์ พร้อมแสดงเวลาอัตโนมัติตามประเทศของผู้เข้าร่วม' : 'Join online meditation and Dhamma sessions, automatically shown in your local time.'}
-                  </p>
-                </div>
-                <button type="button" onClick={() => goToPage('dhamma-live')} style={{ border: '1px solid rgba(255,255,255,.45)', borderRadius: '999px', padding: '13px 22px', background: '#fff', color: '#664b1e', fontWeight: 850, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {lang === 'th' ? 'ฟัง Dhamma Radio →' : 'Explore Dhamma Radio →'}
-                </button>
-              </div>
+            {/* DHAMMA RADIO QUICK LINK */}
+            <section style={{ padding: '28px 20px', background: '#fbf8f1', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => goToPage('dhamma-live')}
+                style={{
+                  border: '1px solid #d7c29a',
+                  borderRadius: '999px',
+                  padding: '15px 30px',
+                  background: '#fff',
+                  color: '#664b1e',
+                  fontSize: '16px',
+                  fontWeight: 850,
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 24px rgba(86, 65, 30, 0.10)'
+                }}
+              >
+                {lang === 'th' ? 'ฟัง Dhamma Radio →' : 'Listen to Dhamma Radio →'}
+              </button>
             </section>
 
             {/* GLOBAL DHAMMA COMMUNITY */}
