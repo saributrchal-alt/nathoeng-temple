@@ -28,7 +28,7 @@ const content = {
       { label: 'Home', href: '#home' },
       { label: 'About', href: '#about' },
       { label: 'Teachings', href: '#teachings' },
-      { label: 'Dhamma Radio', href: '#dhamma-live' },
+      { label: 'Dhamma Live', href: '#dhamma-live' },
       { label: 'News & Events', href: '#events' },
       { label: 'Visit & Stay', href: '#visit' },
       { label: 'Support', href: '#support' },
@@ -123,7 +123,7 @@ const content = {
       { label: 'หน้าแรก', href: '#home' },
       { label: 'เกี่ยวกับวัด', href: '#about' },
       { label: 'ธรรมะ', href: '#teachings' },
-      { label: 'Dhamma Radio', href: '#dhamma-live' },
+      { label: 'Dhamma Live', href: '#dhamma-live' },
       { label: 'ข่าวและกิจกรรม', href: '#events' },
       { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
       { label: 'สนับสนุนวัด', href: '#support' },
@@ -1577,7 +1577,7 @@ const handleLineLogin = async (mode = 'login') => {
               </div>
             </section>
 
-            {/* DHAMMA RADIO QUICK LINK */}
+            {/* DHAMMA LIVE QUICK LINK */}
             <section style={{ padding: '28px 20px', background: '#fbf8f1', textAlign: 'center' }}>
               <button
                 type="button"
@@ -1594,7 +1594,7 @@ const handleLineLogin = async (mode = 'login') => {
                   boxShadow: '0 8px 24px rgba(86, 65, 30, 0.10)'
                 }}
               >
-                {lang === 'th' ? 'ฟัง Dhamma Radio →' : 'Listen to Dhamma Radio →'}
+                {lang === 'th' ? 'Dhamma Live · ฟังวิทยุ / ชม SBT TV →' : 'Dhamma Live · Radio / SBT TV →'}
               </button>
             </section>
 
