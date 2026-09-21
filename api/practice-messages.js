@@ -302,6 +302,57 @@ export default async function handler(req, res) {
         });
       }
 
+      if (scope === 'admin-push-status') {
+        const admin = requireAdmin(req, res);
+        if (!admin) return;
+
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/push_subscriptions` +
+            '?is_active=eq.true&select=member_id,updated_at',
+          {
+            method: 'GET',
+            headers: supabaseHeaders(supabaseSecretKey),
+            cache: 'no-store'
+          }
+        );
+
+        const data = await readJson(response);
+
+        if (!response.ok) {
+          return res.status(500).json({
+            success: false,
+            message: 'Unable to load Push registration status'
+          });
+        }
+
+        const byMember = {};
+        (Array.isArray(data) ? data : []).forEach((item) => {
+          const memberId = String(item?.member_id || '').trim();
+          if (!memberId) return;
+
+          if (!byMember[memberId]) {
+            byMember[memberId] = {
+              deviceCount: 0,
+              updatedAt: null
+            };
+          }
+
+          byMember[memberId].deviceCount += 1;
+          if (
+            item?.updated_at &&
+            (!byMember[memberId].updatedAt ||
+              String(item.updated_at) > String(byMember[memberId].updatedAt))
+          ) {
+            byMember[memberId].updatedAt = item.updated_at;
+          }
+        });
+
+        return res.status(200).json({
+          success: true,
+          byMember
+        });
+      }
+
       if (scope === 'members') {
         const admin =
           requireAdmin(req, res);
