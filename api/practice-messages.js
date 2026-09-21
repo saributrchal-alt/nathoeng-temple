@@ -745,12 +745,114 @@ export default async function handler(req, res) {
           });
         }
 
+        const createdMessage =
+          Array.isArray(data)
+            ? data[0]
+            : data;
+
+        let push = {
+          subscriptions: 0,
+          delivered: 0,
+          failed: 0
+        };
+
+        if (isPublished) {
+          try {
+            const publicKey = String(process.env.VAPID_PUBLIC_KEY || '').trim();
+            const privateKey = String(process.env.VAPID_PRIVATE_KEY || '').trim();
+            const subject = String(
+              process.env.VAPID_SUBJECT || 'mailto:admin@nathoeng.com'
+            ).trim();
+
+            if (publicKey && privateKey) {
+              const memberFilter =
+                audience === 'member' && targetMemberId
+                  ? `&member_id=eq.${encodeURIComponent(targetMemberId)}`
+                  : '';
+
+              const subscriptionsResponse = await fetch(
+                `${supabaseUrl}/rest/v1/push_subscriptions` +
+                  '?is_active=eq.true' +
+                  memberFilter +
+                  '&select=id,endpoint,p256dh,auth',
+                {
+                  headers: supabaseHeaders(supabaseSecretKey)
+                }
+              );
+              const subscriptions = await readJson(subscriptionsResponse);
+
+              if (subscriptionsResponse.ok && Array.isArray(subscriptions)) {
+                push.subscriptions = subscriptions.length;
+                webpush.setVapidDetails(subject, publicKey, privateKey);
+
+                const payload = JSON.stringify({
+                  title,
+                  body: messageBody,
+                  tag: createdMessage?.id
+                    ? `nathoeng-connect-${createdMessage.id}`
+                    : 'nathoeng-connect',
+                  url: '/#practice-messages'
+                });
+
+                const results = await Promise.all(
+                  subscriptions.map(async (device) => {
+                    try {
+                      await webpush.sendNotification(
+                        {
+                          endpoint: device.endpoint,
+                          keys: {
+                            p256dh: device.p256dh,
+                            auth: device.auth
+                          }
+                        },
+                        payload,
+                        { TTL: 86400 }
+                      );
+                      return { ok: true };
+                    } catch (error) {
+                      const statusCode = Number(error?.statusCode || 0);
+
+                      if (statusCode === 404 || statusCode === 410) {
+                        try {
+                          await fetch(
+                            `${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${encodeURIComponent(device.id)}`,
+                            {
+                              method: 'PATCH',
+                              headers: supabaseHeaders(supabaseSecretKey),
+                              body: JSON.stringify({
+                                is_active: false,
+                                updated_at: new Date().toISOString()
+                              })
+                            }
+                          );
+                        } catch {
+                          // Message delivery must not fail because cleanup failed.
+                        }
+                      }
+
+                      return { ok: false };
+                    }
+                  })
+                );
+
+                push.delivered =
+                  results.filter((item) => item.ok).length;
+                push.failed =
+                  results.length - push.delivered;
+              }
+            }
+          } catch (error) {
+            console.error(
+              'Nathoeng Connect Push fan-out error:',
+              error
+            );
+          }
+        }
+
         return res.status(200).json({
           success: true,
-          message:
-            Array.isArray(data)
-              ? data[0]
-              : data
+          message: createdMessage,
+          push
         });
       }
 
