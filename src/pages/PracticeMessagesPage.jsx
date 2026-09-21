@@ -91,13 +91,6 @@ function PracticeMessagesPage({
           : [];
 
       setMessages(rows);
-
-      if (
-        rows.length > 0 &&
-        !openId
-      ) {
-        setOpenId(rows[0].id);
-      }
     } catch (err) {
       console.error(
         'Practice messages load error:',
@@ -106,8 +99,8 @@ function PracticeMessagesPage({
 
       setError(
         th
-          ? 'ไม่สามารถโหลดเนื้อหาปฏิบัติได้ กรุณาลองใหม่'
-          : 'Unable to load practice messages. Please try again.'
+          ? 'ไม่สามารถโหลดข้อความ Nathoeng Connect ได้ กรุณาลองใหม่'
+          : 'Unable to load Nathoeng Connect messages. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -149,6 +142,30 @@ function PracticeMessagesPage({
       () => messages[0] || null,
       [messages]
     );
+
+  const unreadCount =
+    useMemo(
+      () =>
+        messages.filter(
+          (item) => !readIds.includes(item.id)
+        ).length,
+      [messages, readIds]
+    );
+
+  const markAllRead = () => {
+    const next = messages.map((item) => item.id);
+    setReadIds(next);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(next)
+      );
+      window.dispatchEvent(
+        new CustomEvent('nathoeng-connect-read')
+      );
+    }
+  };
 
   return (
     <div className="guidePage">
@@ -203,6 +220,58 @@ function PracticeMessagesPage({
               : 'Messages, news and monastery announcements for members are collected here in Nathoeng Connect.'}
           </p>
         </div>
+
+        {!loading && !error && messages.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              marginBottom: '14px',
+              padding: '12px 14px',
+              border: '1px solid #e2dacd',
+              borderRadius: '14px',
+              background: '#fff'
+            }}
+          >
+            <span
+              style={{
+                color: '#625a51',
+                fontSize: '13px',
+                fontWeight: 700
+              }}
+            >
+              {unreadCount > 0
+                ? (th
+                    ? `ยังไม่ได้อ่าน ${unreadCount} ข้อความ`
+                    : `${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`)
+                : (th
+                    ? 'อ่านข้อความทั้งหมดแล้ว'
+                    : 'All messages read')}
+            </span>
+
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                style={{
+                  minHeight: '34px',
+                  padding: '0 11px',
+                  border: '1px solid #d8c9b5',
+                  borderRadius: '9px',
+                  background: '#fffaf0',
+                  color: '#8a611d',
+                  cursor: 'pointer',
+                  fontWeight: 800,
+                  fontSize: '12px'
+                }}
+              >
+                {th ? 'อ่านทั้งหมด' : 'Mark all read'}
+              </button>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div
