@@ -425,7 +425,11 @@ function MyDashboard({
             body: JSON.stringify({
               action: 'subscribe_push',
               endpoint:
-                subscription.endpoint
+                subscription.endpoint,
+              p256dh:
+                subscription.toJSON()?.keys?.p256dh || '',
+              auth:
+                subscription.toJSON()?.keys?.auth || ''
             })
           }
         );
