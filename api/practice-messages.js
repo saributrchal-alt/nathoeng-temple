@@ -345,107 +345,9 @@ function createVapidAuthorization(endpoint) {
   return `vapid t=${token}, k=${publicKey}`;
 }
 
-function hkdfExtract(salt, ikm) {
-  return crypto.createHmac('sha256', salt).update(ikm).digest();
-}
-
-function hkdfExpand(prk, info, length) {
-  const chunks = [];
-  let previous = Buffer.alloc(0);
-  let counter = 1;
-  let total = 0;
-
-  while (total < length) {
-    previous = crypto
-      .createHmac('sha256', prk)
-      .update(Buffer.concat([
-        previous,
-        Buffer.from(info),
-        Buffer.from([counter])
-      ]))
-      .digest();
-    chunks.push(previous);
-    total += previous.length;
-    counter += 1;
-  }
-
-  return Buffer.concat(chunks).subarray(0, length);
-}
-
-function createEncryptedPushBody({ p256dh, auth, payload }) {
-  const userPublicKey = base64UrlToBuffer(p256dh);
-  const authSecret = base64UrlToBuffer(auth);
-
-  if (userPublicKey.length !== 65 || userPublicKey[0] !== 4) {
-    throw new Error('Invalid subscriber p256dh key');
-  }
-
-  if (!authSecret.length) {
-    throw new Error('Invalid subscriber auth secret');
-  }
-
-  const serverECDH = crypto.createECDH('prime256v1');
-  serverECDH.generateKeys();
-
-  const serverPublicKey = serverECDH.getPublicKey();
-  const sharedSecret = serverECDH.computeSecret(userPublicKey);
-
-  const authPrk = hkdfExtract(authSecret, sharedSecret);
-  const keyInfo = Buffer.concat([
-    Buffer.from('WebPush: info'),
-    Buffer.from([0]),
-    userPublicKey,
-    serverPublicKey
-  ]);
-  const ikm = hkdfExpand(authPrk, keyInfo, 32);
-
-  const salt = crypto.randomBytes(16);
-  const prk = hkdfExtract(salt, ikm);
-  const cek = hkdfExpand(
-    prk,
-    Buffer.concat([
-      Buffer.from('Content-Encoding: aes128gcm'),
-      Buffer.from([0])
-    ]),
-    16
-  );
-  const nonce = hkdfExpand(
-    prk,
-    Buffer.concat([
-      Buffer.from('Content-Encoding: nonce'),
-      Buffer.from([0])
-    ]),
-    12
-  );
-
-  const plaintext = Buffer.concat([
-    Buffer.from(JSON.stringify(payload), 'utf8'),
-    Buffer.from([2])
-  ]);
-
-  const cipher = crypto.createCipheriv('aes-128-gcm', cek, nonce);
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext),
-    cipher.final()
-  ]);
-  const tag = cipher.getAuthTag();
-  const ciphertext = Buffer.concat([encrypted, tag]);
-
-  const recordSize = Buffer.alloc(4);
-  recordSize.writeUInt32BE(4096, 0);
-
-  return Buffer.concat([
-    salt,
-    recordSize,
-    Buffer.from([serverPublicKey.length]),
-    serverPublicKey,
-    ciphertext
-  ]);
-}
-
-async function sendPushNotification(subscription, message) {
+async function sendPushNotification(endpoint) {
   const authorization =
-    createVapidAuthorization(subscription.endpoint);
+    createVapidAuthorization(endpoint);
 
   if (!authorization) {
     return {
@@ -455,40 +357,18 @@ async function sendPushNotification(subscription, message) {
     };
   }
 
-  if (!subscription.p256dh || !subscription.auth) {
-    return {
-      ok: false,
-      skipped: true,
-      status: 0
-    };
-  }
-
-  const body = createEncryptedPushBody({
-    p256dh: subscription.p256dh,
-    auth: subscription.auth,
-    payload: {
-      title: message?.title || 'Nathoeng Connect',
-      body: message?.body || 'มีข้อความใหม่จากวัดพุทธอุทยานนาเทิง',
-      tag: message?.id
-        ? `nathoeng-connect-${message.id}`
-        : 'nathoeng-connect',
-      url: '/#practice-messages'
-    }
+  // Empty Web Push needs no payload encryption. The service worker
+  // displays the notification and refreshes the inbox when opened.
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: authorization,
+      TTL: '86400',
+      Urgency: 'high',
+      'Content-Length': '0'
+    },
+    body: null
   });
-
-  const response =
-    await fetch(subscription.endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: authorization,
-        TTL: '86400',
-        Urgency: 'high',
-        'Content-Encoding': 'aes128gcm',
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': String(body.length)
-      },
-      body
-    });
 
   return {
     ok: response.ok,
@@ -513,7 +393,7 @@ async function notifySubscribers({
   const response =
     await fetch(
       `${supabaseUrl}/rest/v1/push_subscriptions` +
-        '?select=id,endpoint,member_id,p256dh,auth' +
+        '?select=id,endpoint,member_id' +
         '&is_active=eq.true' +
         filter,
       {
@@ -548,8 +428,7 @@ async function notifySubscribers({
     try {
       const result =
         await sendPushNotification(
-          item,
-          message
+          item.endpoint
         );
 
       summary.statuses.push(result.status);
