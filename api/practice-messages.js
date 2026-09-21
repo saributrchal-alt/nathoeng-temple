@@ -392,7 +392,8 @@ function createEncryptedPushBody({ p256dh, auth, payload }) {
 
   const authPrk = hkdfExtract(authSecret, sharedSecret);
   const keyInfo = Buffer.concat([
-    Buffer.from('WebPush: info\\0', 'binary'),
+    Buffer.from('WebPush: info'),
+    Buffer.from([0]),
     userPublicKey,
     serverPublicKey
   ]);
@@ -402,12 +403,18 @@ function createEncryptedPushBody({ p256dh, auth, payload }) {
   const prk = hkdfExtract(salt, ikm);
   const cek = hkdfExpand(
     prk,
-    Buffer.from('Content-Encoding: aes128gcm\\0', 'binary'),
+    Buffer.concat([
+      Buffer.from('Content-Encoding: aes128gcm'),
+      Buffer.from([0])
+    ]),
     16
   );
   const nonce = hkdfExpand(
     prk,
-    Buffer.from('Content-Encoding: nonce\\0', 'binary'),
+    Buffer.concat([
+      Buffer.from('Content-Encoding: nonce'),
+      Buffer.from([0])
+    ]),
     12
   );
 
