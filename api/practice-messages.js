@@ -254,6 +254,18 @@ export default async function handler(req, res) {
       String(req.query?.scope || '').trim();
 
     try {
+      if (scope === 'push-config') {
+        const publicKey = String(
+          process.env.VAPID_PUBLIC_KEY || ''
+        ).trim();
+
+        return res.status(200).json({
+          success: true,
+          configured: Boolean(publicKey),
+          publicKey
+        });
+      }
+
       if (scope === 'admin') {
         const admin =
           requireAdmin(req, res);
