@@ -413,7 +413,7 @@ function AdminPracticeMessagePanel({
       >
         {th
           ? 'กำลังโหลดเนื้อหาปฏิบัติ...'
-          : 'Loading practice messages...'}
+          : 'Loading Nathoeng Connect...'}
       </div>
     );
   }
@@ -427,8 +427,8 @@ function AdminPracticeMessagePanel({
       >
         <span className="eyebrow">
           {th
-            ? 'ข้อความแบบทางเดียว'
-            : 'ONE-WAY PRACTICE MESSAGES'}
+            ? 'Nathoeng Connect'
+            : 'NATHOENG CONNECT'}
         </span>
 
         <h1
@@ -438,7 +438,7 @@ function AdminPracticeMessagePanel({
         >
           {th
             ? 'จัดการ “เนื้อหาปฏิบัติถึงฉัน”'
-            : 'Manage Practice Messages'}
+            : 'Manage Nathoeng Connect'}
         </h1>
 
         <p
@@ -449,8 +449,8 @@ function AdminPracticeMessagePanel({
           }}
         >
           {th
-            ? 'พระอาจารย์ฝากข้อความ แนวทาง หรือข้อปฏิบัติให้ผู้ปฏิบัติอ่านได้อย่างเดียว เลือกส่งถึงทุกคนหรือเฉพาะสมาชิกได้'
-            : 'Publish one-way practice guidance for all practitioners or a selected member.'}
+            ? 'ส่งข้อความจากวัดถึงสมาชิกแบบทางเดียว เลือกส่งถึงสมาชิกทุกคนหรือเฉพาะสมาชิกได้'
+            : 'Send one-way monastery messages to all members or a selected member.'}
         </p>
       </div>
 
@@ -502,7 +502,7 @@ function AdminPracticeMessagePanel({
                   : 'Edit message')
               : (th
                   ? 'ฝากเนื้อหาปฏิบัติใหม่'
-                  : 'New practice message')}
+                  : 'New Nathoeng Connect message')}
           </h2>
 
           {editingId && (
@@ -576,7 +576,7 @@ function AdminPracticeMessagePanel({
                 }}
               >
                 {th
-                  ? 'ผู้ปฏิบัติทุกคน'
+                  ? 'สมาชิกทุกคน'
                   : 'All practitioners'}
               </button>
 
@@ -684,7 +684,7 @@ function AdminPracticeMessagePanel({
               placeholder={
                 th
                   ? 'เช่น ข้อปฏิบัติสำหรับคืนนี้'
-                  : 'e.g. Practice guidance for tonight'
+                  : 'e.g. Dhamma Live begins at 19:00'
               }
               style={inputStyle}
             />
@@ -693,8 +693,8 @@ function AdminPracticeMessagePanel({
           <div>
             <label style={labelStyle}>
               {th
-                ? 'ข้อความ / แนวทางปฏิบัติ'
-                : 'Message / Guidance'}
+                ? 'ข้อความ'
+                : 'Message'}
             </label>
 
             <textarea
@@ -710,8 +710,8 @@ function AdminPracticeMessagePanel({
               }
               placeholder={
                 th
-                  ? 'พิมพ์ข้อความที่ต้องการฝากถึงผู้ปฏิบัติ...'
-                  : 'Write the practice guidance...'
+                  ? 'พิมพ์ข้อความที่ต้องการส่งถึงสมาชิก...'
+                  : 'Write a message to members...'
               }
               style={{
                 ...inputStyle,
@@ -758,7 +758,7 @@ function AdminPracticeMessagePanel({
             />
 
             {th
-              ? 'เผยแพร่ให้ผู้ปฏิบัติเห็นทันที'
+              ? 'ส่งให้สมาชิกเห็นทันที'
               : 'Publish immediately'}
           </label>
 
@@ -788,8 +788,8 @@ function AdminPracticeMessagePanel({
                     ? 'บันทึกการแก้ไข'
                     : 'Save changes')
                 : (th
-                    ? 'ฝากข้อความถึงผู้ปฏิบัติ'
-                    : 'Publish practice message')}
+                    ? 'ส่งข้อความ'
+                    : 'Send message')}
           </button>
         </div>
       </section>
@@ -812,7 +812,7 @@ function AdminPracticeMessagePanel({
             }}
           >
             {th
-              ? 'ข้อความที่ฝากไว้'
+              ? 'ข้อความ Nathoeng Connect'
               : 'Published & Draft Messages'}
           </h2>
 
@@ -950,7 +950,7 @@ function AdminPracticeMessagePanel({
                                 : 'Individual recipient')
                             )
                             : (th
-                                ? 'ผู้ปฏิบัติทุกคน'
+                                ? 'สมาชิกทุกคน'
                                 : 'All practitioners')}
                         </span>
                       </div>
@@ -1067,7 +1067,7 @@ function AdminPracticeMessagePanel({
                     >
                       {item.is_published
                         ? (th
-                            ? 'ซ่อนจากผู้ปฏิบัติ'
+                            ? 'ซ่อนจากสมาชิก'
                             : 'Unpublish')
                         : (th
                             ? 'เผยแพร่'
