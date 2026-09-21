@@ -54,6 +54,7 @@ function MyDashboard({
   const [editCountryCode, setEditCountryCode] = useState('');
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [donationLoading, setDonationLoading] = useState(true);
+  const [connectUnreadCount, setConnectUnreadCount] = useState(0);
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
     moneyCount: 0,
@@ -204,6 +205,63 @@ function MyDashboard({
 
     return () => {
       cancelled = true;
+    };
+  }, [user?.memberId]);
+
+  useEffect(() => {
+    if (!user) {
+      setConnectUnreadCount(0);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadConnectUnread = async () => {
+      try {
+        const response = await fetch('/api/practice-messages', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success || cancelled) return;
+
+        let readIds = [];
+
+        try {
+          readIds = JSON.parse(
+            window.localStorage.getItem('nathoeng_connect_read_ids') || '[]'
+          );
+        } catch {
+          readIds = [];
+        }
+
+        const readSet = new Set(
+          Array.isArray(readIds) ? readIds : []
+        );
+
+        const rows = Array.isArray(data.messages)
+          ? data.messages
+          : [];
+
+        setConnectUnreadCount(
+          rows.filter((item) => !readSet.has(item.id)).length
+        );
+      } catch (error) {
+        console.error('Nathoeng Connect unread count error:', error);
+      }
+    };
+
+    loadConnectUnread();
+    window.addEventListener('nathoeng-connect-read', loadConnectUnread);
+    window.addEventListener('focus', loadConnectUnread);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('nathoeng-connect-read', loadConnectUnread);
+      window.removeEventListener('focus', loadConnectUnread);
     };
   }, [user?.memberId]);
 
@@ -661,9 +719,28 @@ function MyDashboard({
           <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
           <span>
             <strong>
-              {th
-                ? 'เนื้อหาปฏิบัติถึงฉัน'
-                : 'Nathoeng Connect'}
+              Nathoeng Connect
+              {connectUnreadCount > 0 && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    minWidth: '20px',
+                    height: '20px',
+                    marginLeft: '8px',
+                    padding: '0 6px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '999px',
+                    background: '#b23a2f',
+                    color: '#fff',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    verticalAlign: 'middle'
+                  }}
+                >
+                  {connectUnreadCount > 99 ? '99+' : connectUnreadCount}
+                </span>
+              )}
             </strong>
             <small>
               {th
