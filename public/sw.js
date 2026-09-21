@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nathoeng-connect-v1';
+const CACHE_NAME = 'nathoeng-connect-v2';
 const APP_SHELL = ['/', '/index.html', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
