@@ -434,16 +434,33 @@ function MyDashboard({
           }
         );
 
-      const saveResult =
-        await saveResponse.json();
+      const saveText =
+        await saveResponse.text();
+
+      let saveResult = null;
+
+      try {
+        saveResult =
+          saveText
+            ? JSON.parse(saveText)
+            : null;
+      } catch {
+        throw new Error(
+          `HTTP ${saveResponse.status} · ${saveText.slice(0, 180) || 'Server returned an invalid response'}`
+        );
+      }
 
       if (
         !saveResponse.ok ||
-        !saveResult.success
+        !saveResult?.success
       ) {
+        const databaseDetail =
+          saveResult?.databaseError
+            ? ` · ${saveResult.databaseError}`
+            : '';
+
         throw new Error(
-          saveResult.message ||
-          'Unable to save push subscription'
+          `HTTP ${saveResponse.status} · ${saveResult?.message || 'Unable to save push subscription'}${databaseDetail}`
         );
       }
 
