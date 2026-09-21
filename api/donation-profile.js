@@ -369,16 +369,25 @@ export default async function handler(req, res) {
 
       const historyResponse = await fetch(supabaseUrl + '/rest/v1/membership_cancellations', {
         method: 'POST',
-        headers: supabaseHeaders(supabaseSecretKey),
+        headers: supabaseHeaders(
+          supabaseSecretKey,
+          { Prefer: 'return=minimal' }
+        ),
         body: JSON.stringify({
-          member_id: memberId,
+          member_id: String(memberId),
           reason,
           reason_detail: reasonDetail || null,
           cancelled_at: now
         })
       });
       if (!historyResponse.ok) {
-        const historyData = await historyResponse.json();
+        const historyText = await historyResponse.text();
+        let historyData = null;
+        try {
+          historyData = historyText ? JSON.parse(historyText) : null;
+        } catch {
+          historyData = { message: historyText };
+        }
         console.error('Membership cancellation history insert failed:', historyData);
         await fetch(
           supabaseUrl + '/rest/v1/members?id=eq.' + encodeURIComponent(memberId),
@@ -388,7 +397,11 @@ export default async function handler(req, res) {
             body: JSON.stringify({ membership_status: 'active', membership_cancelled_at: null })
           }
         );
-        return res.status(500).json({ success: false, message: 'Unable to save cancellation reason', databaseError: historyData });
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to save cancellation reason',
+          databaseError: historyData
+        });
       }
 
       await fetch(
