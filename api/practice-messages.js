@@ -875,30 +875,58 @@ export default async function handler(req, res) {
       const now =
         new Date().toISOString();
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/push_subscriptions`,
+      // endpoint is the unique device identity. PATCH first so this
+      // works even when the table has no PostgREST upsert constraint.
+      const existingResponse = await fetch(
+        `${supabaseUrl}/rest/v1/push_subscriptions` +
+          `?endpoint=eq.${encodeURIComponent(endpoint)}`,
         {
-          method: 'POST',
+          method: 'PATCH',
           headers:
             supabaseHeaders(
               supabaseSecretKey,
-              {
-                Prefer:
-                  'resolution=merge-duplicates,return=representation'
-              }
+              { Prefer: 'return=representation' }
             ),
           body: JSON.stringify({
-            member_id:
-              memberSession.memberId,
-            endpoint,
+            member_id: memberSession.memberId,
             p256dh,
             auth,
             is_active: true,
-            created_at: now,
             updated_at: now
           })
         }
       );
+
+      let response = existingResponse;
+      let data = await readJson(existingResponse);
+
+      if (
+        existingResponse.ok &&
+        Array.isArray(data) &&
+        data.length === 0
+      ) {
+        response = await fetch(
+          `${supabaseUrl}/rest/v1/push_subscriptions`,
+          {
+            method: 'POST',
+            headers:
+              supabaseHeaders(
+                supabaseSecretKey,
+                { Prefer: 'return=representation' }
+              ),
+            body: JSON.stringify({
+              member_id: memberSession.memberId,
+              endpoint,
+              p256dh,
+              auth,
+              is_active: true,
+              created_at: now,
+              updated_at: now
+            })
+          }
+        );
+        data = await readJson(response);
+      }
 
       const data =
         await readJson(response);
@@ -912,7 +940,9 @@ export default async function handler(req, res) {
         return res.status(500).json({
           success: false,
           message:
-            'Unable to save push subscription'
+            'Unable to save push subscription',
+          databaseError:
+            data?.message || data?.details || data?.hint || null
         });
       }
 
