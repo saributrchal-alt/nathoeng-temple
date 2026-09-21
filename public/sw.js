@@ -6,5 +6,63 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Phase 2A only: service worker is installed so the browser can create
-// a PushSubscription. No push handler is enabled in this phase.
+self.addEventListener('push', (event) => {
+  let data = {};
+
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {
+      body: event.data ? event.data.text() : ''
+    };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(
+      data.title || 'Nathoeng Connect',
+      {
+        body:
+          data.body ||
+          'มีข้อความใหม่จากวัดพุทธอุทยานนาเทิง',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
+        tag:
+          data.tag ||
+          'nathoeng-connect-test',
+        data: {
+          url:
+            data.url ||
+            '/#practice-messages'
+        }
+      }
+    )
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const targetUrl = new URL(
+    event.notification.data?.url ||
+      '/#practice-messages',
+    self.location.origin
+  ).href;
+
+  event.waitUntil(
+    self.clients
+      .matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      })
+      .then((clients) => {
+        for (const client of clients) {
+          if ('focus' in client) {
+            client.navigate(targetUrl);
+            return client.focus();
+          }
+        }
+
+        return self.clients.openWindow(targetUrl);
+      })
+  );
+});
