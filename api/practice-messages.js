@@ -363,8 +363,10 @@ async function sendPushNotification(endpoint) {
       headers: {
         Authorization: authorization,
         TTL: '86400',
-        Urgency: 'normal'
-      }
+        Urgency: 'high',
+        'Content-Length': '0'
+      },
+      body: null
     });
 
   return {
