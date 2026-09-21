@@ -923,6 +923,67 @@ function MyDashboard({
 
         <section
           style={{
+            marginTop: '10px',
+            padding: '14px 16px',
+            borderRadius: '18px',
+            border: '1px solid #d8e2d8',
+            background: '#fffdf8'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <strong
+                style={{
+                  display: 'block',
+                  color: '#315f47',
+                  fontSize: '15px',
+                  marginBottom: '4px'
+                }}
+              >
+                🔔 {th ? 'การแจ้งเตือน Nathoeng Connect' : 'Nathoeng Connect notifications'}
+              </strong>
+              <small
+                style={{
+                  display: 'block',
+                  color: '#777',
+                  lineHeight: 1.5
+                }}
+              >
+                {notificationPermission === 'granted'
+                  ? (th ? '✓ เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว' : '✓ Notifications are enabled on this device')
+                  : notificationPermission === 'denied'
+                    ? (th ? 'การแจ้งเตือนถูกปิด กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์' : 'Notifications are blocked. Allow them in browser settings.')
+                    : notificationPermission === 'unsupported'
+                      ? (th ? 'เบราว์เซอร์นี้ยังไม่รองรับการแจ้งเตือน' : 'This browser does not support notifications.')
+                      : (th ? 'รับข้อความและประกาศจากวัดบนโทรศัพท์' : 'Receive monastery messages and announcements on your phone')}
+              </small>
+            </div>
+
+            {notificationPermission === 'default' && (
+              <button
+                type="button"
+                className="compactViewButton"
+                onClick={enableNotifications}
+                style={{
+                  flex: '0 0 auto',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {th ? 'เปิดแจ้งเตือน' : 'Enable'}
+              </button>
+            )}
+          </div>
+        </section>
+
+        <section
+          style={{
             marginTop: '16px',
             padding: '18px',
             borderRadius: '18px',
