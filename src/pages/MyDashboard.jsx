@@ -322,14 +322,29 @@ function MyDashboard({
           },
           body: JSON.stringify({
             action: 'subscribe_push',
-            endpoint: subscription.endpoint
+            endpoint: subscription.endpoint,
+            p256dh: subscription.toJSON()?.keys?.p256dh || '',
+            auth: subscription.toJSON()?.keys?.auth || ''
           })
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = null;
 
-        if (!response.ok || !data.success) {
-          throw new Error(data.message || 'Unable to sync push subscription');
+        try {
+          data = responseText ? JSON.parse(responseText) : null;
+        } catch {
+          throw new Error(
+            `HTTP ${response.status} · ${responseText.slice(0, 180) || 'Server returned a non-JSON response'}`
+          );
+        }
+
+        if (!response.ok || !data?.success) {
+          const databaseDetail =
+            data?.databaseError ? ` · ${data.databaseError}` : '';
+          throw new Error(
+            `HTTP ${response.status} · ${data?.message || 'Unable to sync push subscription'}${databaseDetail}`
+          );
         }
 
         if (!cancelled) {
