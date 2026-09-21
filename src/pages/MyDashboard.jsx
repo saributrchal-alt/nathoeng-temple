@@ -57,7 +57,7 @@ function MyDashboard({
   const [connectUnreadCount, setConnectUnreadCount] = useState(0);
   const [pushDeviceStatus, setPushDeviceStatus] = useState('idle');
   const [pushDeviceMessage, setPushDeviceMessage] = useState('');
-  const [pushTestStatus, setPushTestStatus] = useState('idle');
+
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
     moneyCount: 0,
@@ -268,6 +268,56 @@ function MyDashboard({
     };
   }, [user?.memberId]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const restorePushStatus = async () => {
+      if (
+        typeof window === 'undefined' ||
+        !('Notification' in window) ||
+        !('serviceWorker' in navigator) ||
+        !('PushManager' in window) ||
+        Notification.permission !== 'granted'
+      ) {
+        return;
+      }
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription =
+          await registration.pushManager.getSubscription();
+
+        if (!cancelled && subscription) {
+          setPushDeviceStatus('registered');
+          setPushDeviceMessage(
+            th
+              ? '✓ เครื่องนี้เปิดรับข่าวจากวัดแล้ว'
+              : '✓ This device receives monastery news'
+          );
+          try {
+            window.localStorage.setItem(
+              'nathoeng_connect_push_enabled',
+              '1'
+            );
+          } catch {
+            // Ignore localStorage restrictions.
+          }
+        }
+      } catch (error) {
+        console.warn(
+          'Unable to restore Nathoeng Connect Push status:',
+          error
+        );
+      }
+    };
+
+    restorePushStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [th]);
+
   const registerPushDevice = async () => {
     setPushDeviceMessage('');
 
@@ -364,10 +414,18 @@ function MyDashboard({
       }
 
       setPushDeviceStatus('registered');
+      try {
+        window.localStorage.setItem(
+          'nathoeng_connect_push_enabled',
+          '1'
+        );
+      } catch {
+        // localStorage is optional; browser subscription remains the source of truth.
+      }
       setPushDeviceMessage(
         th
-          ? '✓ ลงทะเบียนอุปกรณ์สำเร็จ'
-          : '✓ Device registered successfully'
+          ? '✓ เครื่องนี้เปิดรับข่าวจากวัดแล้ว'
+          : '✓ This device receives monastery news'
       );
     } catch (error) {
       console.error('Nathoeng Connect Phase 2A registration error:', error);
@@ -376,46 +434,6 @@ function MyDashboard({
     }
   };
 
-  const testPushDevice = async () => {
-    setPushTestStatus('working');
-    setPushDeviceMessage('');
-
-    try {
-      const response = await fetch('/api/practice-messages', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'test_push_device'
-        })
-      });
-
-      const responseText = await response.text();
-      let result = null;
-      try {
-        result = responseText ? JSON.parse(responseText) : null;
-      } catch {
-        throw new Error(`HTTP ${response.status} · ${responseText.slice(0, 160)}`);
-      }
-
-      if (!response.ok || !result?.success) {
-        throw new Error(
-          `HTTP ${response.status} · ${result?.message || 'Test Push failed'}${result?.detail ? ` · ${result.detail}` : ''}`
-        );
-      }
-
-      setPushTestStatus('sent');
-      setPushDeviceMessage(
-        th
-          ? '✓ เซิร์ฟเวอร์ส่ง Push ทดสอบแล้ว — ตรวจแถบแจ้งเตือนของอุปกรณ์'
-          : '✓ Test Push sent — check this device notifications.'
-      );
-    } catch (error) {
-      console.error('Nathoeng Connect Phase 2B test error:', error);
-      setPushTestStatus('error');
-      setPushDeviceMessage(String(error?.message || error));
-    }
-  };
 
   const openProfileEditor = () => {
     setEditFullName(verifiedFullName || user?.name || '');
@@ -931,37 +949,14 @@ function MyDashboard({
             {pushDeviceStatus === 'working'
               ? (th ? 'กำลังลงทะเบียนอุปกรณ์...' : 'Registering device...')
               : pushDeviceStatus === 'registered'
-                ? (th ? '✓ ลงทะเบียนอุปกรณ์สำเร็จ' : '✓ Device registered')
-                : (th ? '🔔 ขั้นที่ 1: ลงทะเบียนอุปกรณ์' : '🔔 Step 1: Register this device')}
+                ? (th ? '✓ เปิดรับข่าวจากวัดแล้ว' : '✓ Monastery news enabled')
+                : (th ? '🔔 เปิดรับข่าวและประกาศจากวัด' : '🔔 Receive monastery news & announcements')}
           </button>
-          {pushDeviceStatus === 'registered' && (
-            <button
-              type="button"
-              onClick={testPushDevice}
-              disabled={pushTestStatus === 'working'}
-              style={{
-                width: '100%',
-                marginTop: '10px',
-                border: '1px solid #315f47',
-                borderRadius: '12px',
-                padding: '12px 16px',
-                background: '#ffffff',
-                color: '#315f47',
-                fontWeight: 800,
-                fontSize: '14px',
-                cursor: pushTestStatus === 'working' ? 'wait' : 'pointer'
-              }}
-            >
-              {pushTestStatus === 'working'
-                ? (th ? 'กำลังส่ง Push ทดสอบ...' : 'Sending test Push...')
-                : (th ? '🔔 ขั้นที่ 2: ทดสอบ Push เครื่องนี้' : '🔔 Step 2: Test Push on this device')}
-            </button>
-          )}
           <div
             style={{
               marginTop: '8px',
               color:
-                pushDeviceStatus === 'error' || pushTestStatus === 'error'
+                pushDeviceStatus === 'error'
                   ? '#a12b22'
                   : '#6f6a5f',
               fontSize: '12px',
@@ -969,8 +964,8 @@ function MyDashboard({
             }}
           >
             {pushDeviceMessage || (th
-              ? 'ขั้นนี้ทดสอบเฉพาะการลงทะเบียน ยังไม่มีการส่งแจ้งเตือน'
-              : 'This step only tests registration. No notification will be sent yet.')}
+              ? 'เปิดรับข่าวสารและประกาศสำคัญจากวัดบนอุปกรณ์เครื่องนี้'
+              : 'Receive important monastery news and announcements on this device.')}
           </div>
         </section>
 
