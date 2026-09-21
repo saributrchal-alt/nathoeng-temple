@@ -433,7 +433,7 @@ function PracticeMessagesPage({
                           if (nextOpen) {
                             markRead(item.id);
                           }
-                        }
+                        }}
                         style={{
                           width: '100%',
                           border: 0,
