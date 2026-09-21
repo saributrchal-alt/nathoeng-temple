@@ -451,22 +451,31 @@ function PracticeMessagesPage({
                         }}
                       >
                         <span style={{ minWidth: 0 }}>
-                          {!readIds.includes(item.id) && (
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                marginBottom: '7px',
-                                padding: '3px 8px',
-                                borderRadius: '999px',
-                                background: '#9b7226',
-                                color: '#fff',
-                                fontSize: '10px',
-                                fontWeight: 800
-                              }}
-                            >
-                              {th ? 'ใหม่' : 'NEW'}
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              marginBottom: '7px',
+                              padding: '4px 9px',
+                              borderRadius: '999px',
+                              background: readIds.includes(item.id)
+                                ? '#d9f4e4'
+                                : '#ffe27a',
+                              color: readIds.includes(item.id)
+                                ? '#17613f'
+                                : '#704d00',
+                              fontSize: '11px',
+                              fontWeight: 800
+                            }}
+                          >
+                            <span aria-hidden="true">
+                              {readIds.includes(item.id) ? '✓' : '●'}
                             </span>
-                          )}
+                            {readIds.includes(item.id)
+                              ? (th ? 'อ่านแล้ว' : 'Read')
+                              : (th ? 'ยังไม่ได้อ่าน' : 'Unread')}
+                          </span>
 
                           <span
                             style={{
