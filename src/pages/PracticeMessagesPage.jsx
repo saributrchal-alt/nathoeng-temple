@@ -22,6 +22,42 @@ function PracticeMessagesPage({
   const [openId, setOpenId] =
     useState(null);
 
+  const storageKey = 'nathoeng_connect_read_ids';
+
+  const getReadIds = () => {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      const value = JSON.parse(
+        window.localStorage.getItem(storageKey) || '[]'
+      );
+
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [readIds, setReadIds] =
+    useState(() => getReadIds());
+
+  const markRead = (messageId) => {
+    if (!messageId || readIds.includes(messageId)) return;
+
+    const next = [...readIds, messageId];
+    setReadIds(next);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(next)
+      );
+      window.dispatchEvent(
+        new CustomEvent('nathoeng-connect-read')
+      );
+    }
+  };
+
   const loadMessages = async () => {
     setLoading(true);
     setError('');
@@ -150,9 +186,7 @@ function PracticeMessagesPage({
               marginBottom: '10px'
             }}
           >
-            {th
-              ? 'เนื้อหาปฏิบัติถึงฉัน'
-              : 'Nathoeng Connect'}
+            Nathoeng Connect
           </h1>
 
           <p
@@ -179,7 +213,7 @@ function PracticeMessagesPage({
             }}
           >
             {th
-              ? 'กำลังโหลดเนื้อหาปฏิบัติ...'
+              ? 'กำลังโหลด Nathoeng Connect...'
               : 'Loading Nathoeng Connect...'}
           </div>
         ) : error ? (
@@ -244,7 +278,7 @@ function PracticeMessagesPage({
               }}
             >
               {th
-                ? 'ยังไม่มีเนื้อหาปฏิบัติใหม่'
+                ? 'ยังไม่มีข้อความ'
                 : 'No messages yet'}
             </strong>
 
@@ -279,7 +313,7 @@ function PracticeMessagesPage({
                 <strong>
                   {th
                     ? 'ข้อความล่าสุด'
-                    : 'Latest from the teacher'}
+                    : 'Latest message'}
                 </strong>
 
                 <div
@@ -320,12 +354,15 @@ function PracticeMessagesPage({
                     >
                       <button
                         type="button"
-                        onClick={() =>
-                          setOpenId(
-                            open
-                              ? null
-                              : item.id
-                          )
+                        onClick={() => {
+                          const nextOpen =
+                            open ? null : item.id;
+
+                          setOpenId(nextOpen);
+
+                          if (nextOpen) {
+                            markRead(item.id);
+                          }
                         }
                         style={{
                           width: '100%',
@@ -343,7 +380,24 @@ function PracticeMessagesPage({
                             'flex-start'
                         }}
                       >
-                        <span>
+                        <span style={{ minWidth: 0 }}>
+                          {!readIds.includes(item.id) && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                marginBottom: '7px',
+                                padding: '3px 8px',
+                                borderRadius: '999px',
+                                background: '#9b7226',
+                                color: '#fff',
+                                fontSize: '10px',
+                                fontWeight: 800
+                              }}
+                            >
+                              {th ? 'ใหม่' : 'NEW'}
+                            </span>
+                          )}
+
                           <span
                             style={{
                               display:
@@ -395,7 +449,7 @@ function PracticeMessagesPage({
                                   : 'A message for you')
                               : (th
                                   ? 'ถึงสมาชิกทุกคน'
-                                  : 'For practitioners')}
+                                  : 'For all members')}
                           </small>
                         </span>
 
