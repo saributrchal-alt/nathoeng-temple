@@ -225,6 +225,231 @@ async function loadMessage({
   return data[0];
 }
 
+
+function base64UrlToBuffer(value) {
+  let base64 = String(value || '')
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  return Buffer.from(base64, 'base64');
+}
+
+function base64UrlEncodeBuffer(value) {
+  return Buffer.from(value)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+}
+
+function createVapidAuthorization(endpoint) {
+  const publicKey =
+    String(process.env.VAPID_PUBLIC_KEY || '').trim();
+
+  const privateKey =
+    String(process.env.VAPID_PRIVATE_KEY || '').trim();
+
+  const subject =
+    String(
+      process.env.VAPID_SUBJECT ||
+      'mailto:admin@nathoeng.com'
+    ).trim();
+
+  if (!publicKey || !privateKey) {
+    return null;
+  }
+
+  const publicBytes =
+    base64UrlToBuffer(publicKey);
+
+  if (
+    publicBytes.length !== 65 ||
+    publicBytes[0] !== 4
+  ) {
+    throw new Error(
+      'Invalid VAPID public key'
+    );
+  }
+
+  const x = base64UrlEncodeBuffer(
+    publicBytes.subarray(1, 33)
+  );
+
+  const y = base64UrlEncodeBuffer(
+    publicBytes.subarray(33, 65)
+  );
+
+  const d = base64UrlEncodeBuffer(
+    base64UrlToBuffer(privateKey)
+  );
+
+  const privateKeyObject =
+    crypto.createPrivateKey({
+      key: {
+        kty: 'EC',
+        crv: 'P-256',
+        x,
+        y,
+        d
+      },
+      format: 'jwk'
+    });
+
+  const audience =
+    new URL(endpoint).origin;
+
+  const now =
+    Math.floor(Date.now() / 1000);
+
+  const header =
+    base64UrlEncodeBuffer(
+      Buffer.from(
+        JSON.stringify({
+          typ: 'JWT',
+          alg: 'ES256'
+        })
+      )
+    );
+
+  const payload =
+    base64UrlEncodeBuffer(
+      Buffer.from(
+        JSON.stringify({
+          aud: audience,
+          exp: now + 60 * 60 * 12,
+          sub: subject
+        })
+      )
+    );
+
+  const unsignedToken =
+    `${header}.${payload}`;
+
+  const signature =
+    crypto.sign(
+      'sha256',
+      Buffer.from(unsignedToken),
+      {
+        key: privateKeyObject,
+        dsaEncoding: 'ieee-p1363'
+      }
+    );
+
+  const token =
+    `${unsignedToken}.${base64UrlEncodeBuffer(signature)}`;
+
+  return `vapid t=${token}, k=${publicKey}`;
+}
+
+async function sendPushNotification(endpoint) {
+  const authorization =
+    createVapidAuthorization(endpoint);
+
+  if (!authorization) {
+    return {
+      ok: false,
+      skipped: true,
+      status: 0
+    };
+  }
+
+  const response =
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: authorization,
+        TTL: '86400',
+        Urgency: 'normal'
+      }
+    });
+
+  return {
+    ok: response.ok,
+    skipped: false,
+    status: response.status
+  };
+}
+
+async function notifySubscribers({
+  supabaseUrl,
+  secretKey,
+  audience,
+  targetMemberId
+}) {
+  const filter =
+    audience === 'member' &&
+    targetMemberId
+      ? `&member_id=eq.${encodeURIComponent(targetMemberId)}`
+      : '';
+
+  const response =
+    await fetch(
+      `${supabaseUrl}/rest/v1/push_subscriptions` +
+        '?select=id,endpoint,member_id' +
+        '&is_active=eq.true' +
+        filter,
+      {
+        method: 'GET',
+        headers:
+          supabaseHeaders(secretKey)
+      }
+    );
+
+  const rows =
+    await readJson(response);
+
+  if (!response.ok) {
+    console.error(
+      'Push subscription lookup failed:',
+      rows
+    );
+    return;
+  }
+
+  for (const item of (
+    Array.isArray(rows) ? rows : []
+  )) {
+    try {
+      const result =
+        await sendPushNotification(
+          item.endpoint
+        );
+
+      if (
+        !result.skipped &&
+        (
+          result.status === 404 ||
+          result.status === 410
+        )
+      ) {
+        await fetch(
+          `${supabaseUrl}/rest/v1/push_subscriptions` +
+            `?id=eq.${encodeURIComponent(item.id)}`,
+          {
+            method: 'PATCH',
+            headers:
+              supabaseHeaders(secretKey),
+            body: JSON.stringify({
+              is_active: false,
+              updated_at:
+                new Date().toISOString()
+            })
+          }
+        );
+      }
+    } catch (error) {
+      console.error(
+        'Push delivery failed:',
+        error
+      );
+    }
+  }
+}
+
 export default async function handler(req, res) {
   const supabaseUrl =
     process.env.SUPABASE_URL;
@@ -254,6 +479,21 @@ export default async function handler(req, res) {
       String(req.query?.scope || '').trim();
 
     try {
+      if (scope === 'push-config') {
+        return res.status(200).json({
+          success: true,
+          publicKey:
+            String(
+              process.env.VAPID_PUBLIC_KEY || ''
+            ).trim(),
+          configured:
+            Boolean(
+              process.env.VAPID_PUBLIC_KEY &&
+              process.env.VAPID_PRIVATE_KEY
+            )
+        });
+      }
+
       if (scope === 'admin') {
         const admin =
           requireAdmin(req, res);
@@ -415,14 +655,128 @@ export default async function handler(req, res) {
     });
   }
 
+  const body = req.body || {};
+  const action =
+    String(body.action || '').trim();
+
+  if (
+    action === 'subscribe_push' ||
+    action === 'unsubscribe_push'
+  ) {
+    const memberSession =
+      getSessionFromRequest(req);
+
+    if (!memberSession?.memberId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Login required'
+      });
+    }
+
+    const endpoint =
+      String(body.endpoint || '').trim();
+
+    if (!endpoint) {
+      return res.status(400).json({
+        success: false,
+        message: 'Push endpoint is required'
+      });
+    }
+
+    try {
+      if (action === 'unsubscribe_push') {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/push_subscriptions` +
+            `?endpoint=eq.${encodeURIComponent(endpoint)}` +
+            `&member_id=eq.${encodeURIComponent(memberSession.memberId)}`,
+          {
+            method: 'PATCH',
+            headers:
+              supabaseHeaders(supabaseSecretKey),
+            body: JSON.stringify({
+              is_active: false,
+              updated_at:
+                new Date().toISOString()
+            })
+          }
+        );
+
+        if (!response.ok) {
+          return res.status(500).json({
+            success: false,
+            message:
+              'Unable to disable push notifications'
+          });
+        }
+
+        return res.status(200).json({
+          success: true
+        });
+      }
+
+      const now =
+        new Date().toISOString();
+
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/push_subscriptions`,
+        {
+          method: 'POST',
+          headers:
+            supabaseHeaders(
+              supabaseSecretKey,
+              {
+                Prefer:
+                  'resolution=merge-duplicates,return=representation'
+              }
+            ),
+          body: JSON.stringify({
+            member_id:
+              memberSession.memberId,
+            endpoint,
+            is_active: true,
+            created_at: now,
+            updated_at: now
+          })
+        }
+      );
+
+      const data =
+        await readJson(response);
+
+      if (!response.ok) {
+        console.error(
+          'Push subscription save failed:',
+          data
+        );
+
+        return res.status(500).json({
+          success: false,
+          message:
+            'Unable to save push subscription'
+        });
+      }
+
+      return res.status(200).json({
+        success: true
+      });
+    } catch (error) {
+      console.error(
+        'Push subscription error:',
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          'Push subscription server error'
+      });
+    }
+  }
+
   const session =
     requireAdmin(req, res);
 
   if (!session) return;
-
-  const body = req.body || {};
-  const action =
-    String(body.action || '').trim();
 
   try {
     if (
@@ -544,6 +898,21 @@ export default async function handler(req, res) {
             success: false,
             message:
               'Unable to create practice message'
+          });
+        }
+
+        if (isPublished) {
+          notifySubscribers({
+            supabaseUrl,
+            secretKey:
+              supabaseSecretKey,
+            audience,
+            targetMemberId
+          }).catch((error) => {
+            console.error(
+              'Nathoeng Connect push error:',
+              error
+            );
           });
         }
 
