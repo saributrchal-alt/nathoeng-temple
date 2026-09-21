@@ -33,6 +33,26 @@ function countryName(code, lang) {
   }
 }
 
+function urlBase64ToUint8Array(value) {
+  const padding =
+    '='.repeat((4 - value.length % 4) % 4);
+
+  const base64 =
+    (value + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+  const rawData =
+    window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(
+      (character) =>
+        character.charCodeAt(0)
+    )
+  );
+}
+
 function MyDashboard({
   lang,
   goToPage,
@@ -272,30 +292,121 @@ function MyDashboard({
     if (
       typeof window === 'undefined' ||
       !('Notification' in window) ||
-      !('serviceWorker' in navigator)
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window)
     ) {
       setNotificationPermission('unsupported');
       return;
     }
 
     try {
-      const permission = await Notification.requestPermission();
+      const permission =
+        await Notification.requestPermission();
+
       setNotificationPermission(permission);
 
-      if (permission === 'granted') {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification('Nathoeng Connect', {
+      if (permission !== 'granted') {
+        return;
+      }
+
+      const configResponse =
+        await fetch(
+          '/api/practice-messages?scope=push-config',
+          {
+            credentials: 'include',
+            cache: 'no-store'
+          }
+        );
+
+      const config =
+        await configResponse.json();
+
+      if (
+        !configResponse.ok ||
+        !config.success ||
+        !config.configured ||
+        !config.publicKey
+      ) {
+        throw new Error(
+          'Push notification service is not configured'
+        );
+      }
+
+      const registration =
+        await navigator.serviceWorker.ready;
+
+      let subscription =
+        await registration.pushManager
+          .getSubscription();
+
+      if (!subscription) {
+        subscription =
+          await registration.pushManager
+            .subscribe({
+              userVisibleOnly: true,
+              applicationServerKey:
+                urlBase64ToUint8Array(
+                  config.publicKey
+                )
+            });
+      }
+
+      const saveResponse =
+        await fetch(
+          '/api/practice-messages',
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type':
+                'application/json'
+            },
+            body: JSON.stringify({
+              action: 'subscribe_push',
+              endpoint:
+                subscription.endpoint
+            })
+          }
+        );
+
+      const saveResult =
+        await saveResponse.json();
+
+      if (
+        !saveResponse.ok ||
+        !saveResult.success
+      ) {
+        throw new Error(
+          saveResult.message ||
+          'Unable to save push subscription'
+        );
+      }
+
+      await registration.showNotification(
+        'Nathoeng Connect',
+        {
           body: th
             ? 'เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว'
             : 'Notifications are enabled on this device.',
           icon: '/favicon.svg',
           badge: '/favicon.svg',
           tag: 'nathoeng-connect-enabled',
-          data: { url: '/#practice-messages' }
-        });
-      }
+          data: {
+            url: '/#practice-messages'
+          }
+        }
+      );
     } catch (error) {
-      console.error('Nathoeng Connect notification permission error:', error);
+      console.error(
+        'Nathoeng Connect notification setup error:',
+        error
+      );
+      setNotificationPermission('default');
+      window.alert(
+        th
+          ? 'ยังเปิดการแจ้งเตือนไม่สำเร็จ กรุณาลองอีกครั้งหลังจากระบบ Push พร้อมใช้งาน'
+          : 'Notifications could not be enabled yet. Please try again after Push is configured.'
+      );
     }
   };
 
