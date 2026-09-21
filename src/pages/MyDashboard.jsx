@@ -55,6 +55,9 @@ function MyDashboard({
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [donationLoading, setDonationLoading] = useState(true);
   const [connectUnreadCount, setConnectUnreadCount] = useState(0);
+  const [notificationPermission, setNotificationPermission] = useState(
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+  );
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
     moneyCount: 0,
@@ -264,6 +267,37 @@ function MyDashboard({
       window.removeEventListener('focus', loadConnectUnread);
     };
   }, [user?.memberId]);
+
+  const enableNotifications = async () => {
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window) ||
+      !('serviceWorker' in navigator)
+    ) {
+      setNotificationPermission('unsupported');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+
+      if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('Nathoeng Connect', {
+          body: th
+            ? 'เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว'
+            : 'Notifications are enabled on this device.',
+          icon: '/favicon.svg',
+          badge: '/favicon.svg',
+          tag: 'nathoeng-connect-enabled',
+          data: { url: '/#practice-messages' }
+        });
+      }
+    } catch (error) {
+      console.error('Nathoeng Connect notification permission error:', error);
+    }
+  };
 
   const openProfileEditor = () => {
     setEditFullName(verifiedFullName || user?.name || '');
@@ -567,6 +601,31 @@ function MyDashboard({
                   onClick={() => handleTelegramLogin?.('link')}
                 >
                   {th ? 'เชื่อมต่อ' : 'Connect'}
+                </button>
+              )}
+            </div>
+
+            <div className="compactStayAction" style={{ cursor: 'default' }}>
+              <span className="compactStayActionText">
+                <strong>Nathoeng Connect</strong>
+                <small>
+                  {notificationPermission === 'granted'
+                    ? (th ? '✓ อนุญาตการแจ้งเตือนบนอุปกรณ์นี้แล้ว' : '✓ Notifications allowed on this device')
+                    : notificationPermission === 'denied'
+                      ? (th ? 'การแจ้งเตือนถูกปิดในการตั้งค่าเบราว์เซอร์' : 'Notifications are blocked in browser settings')
+                      : notificationPermission === 'unsupported'
+                        ? (th ? 'อุปกรณ์หรือเบราว์เซอร์นี้ยังไม่รองรับ' : 'Notifications are not supported here')
+                        : (th ? 'เปิดรับการแจ้งเตือนจากวัดบนโทรศัพท์' : 'Enable monastery notifications on this device')}
+                </small>
+              </span>
+
+              {notificationPermission === 'default' && (
+                <button
+                  type="button"
+                  className="compactViewButton"
+                  onClick={enableNotifications}
+                >
+                  {th ? 'เปิดแจ้งเตือน' : 'Enable'}
                 </button>
               )}
             </div>
