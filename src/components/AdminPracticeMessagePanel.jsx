@@ -29,6 +29,9 @@ function AdminPracticeMessagePanel({
   const [error, setError] =
     useState('');
 
+  const [pushResult, setPushResult] =
+    useState(null);
+
   const [busy, setBusy] =
     useState(false);
 
@@ -264,9 +267,10 @@ function AdminPracticeMessagePanel({
 
     setBusy(true);
     setError('');
+    setPushResult(null);
 
     try {
-      await post({
+      const result = await post({
         action:
           editingId
             ? 'update'
@@ -285,6 +289,10 @@ function AdminPracticeMessagePanel({
         isPublished:
           form.isPublished
       });
+
+      if (!editingId && form.isPublished && result?.push) {
+        setPushResult(result.push);
+      }
 
       resetForm();
       await loadAll();
@@ -467,6 +475,25 @@ function AdminPracticeMessagePanel({
           }}
         >
           {error}
+        </div>
+      )}
+
+      {pushResult && (
+        <div
+          style={{
+            marginBottom: '14px',
+            padding: '12px 14px',
+            borderRadius: '12px',
+            background: '#eef8f0',
+            border: '1px solid #cfe4d4',
+            color: '#315f47',
+            fontWeight: 700,
+            lineHeight: 1.55
+          }}
+        >
+          {th
+            ? `ส่ง Push: พบอุปกรณ์ ${pushResult.subscriptions} เครื่อง · สำเร็จ ${pushResult.delivered} เครื่อง · ไม่สำเร็จ ${pushResult.failed} เครื่อง`
+            : `Push delivery: ${pushResult.subscriptions} device(s) · ${pushResult.delivered} delivered · ${pushResult.failed} failed`}
         </div>
       )}
 
