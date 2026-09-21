@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import webpush from 'web-push';
 
 const COOKIE_NAME = 'nathoeng_session';
 
@@ -524,6 +525,94 @@ export default async function handler(req, res) {
         success: false,
         message: 'Device registration server error',
         detail: String(error?.message || error)
+      });
+    }
+  }
+
+  if (action === 'test_push_device') {
+    const memberSession = getSessionFromRequest(req);
+
+    if (!memberSession?.memberId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Login required'
+      });
+    }
+
+    const publicKey = String(process.env.VAPID_PUBLIC_KEY || '').trim();
+    const privateKey = String(process.env.VAPID_PRIVATE_KEY || '').trim();
+    const subject = String(
+      process.env.VAPID_SUBJECT || 'mailto:admin@nathoeng.com'
+    ).trim();
+
+    if (!publicKey || !privateKey) {
+      return res.status(500).json({
+        success: false,
+        message: 'VAPID configuration is incomplete'
+      });
+    }
+
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/push_subscriptions` +
+          `?member_id=eq.${encodeURIComponent(memberSession.memberId)}` +
+          '&is_active=eq.true&select=id,endpoint,p256dh,auth&order=updated_at.desc&limit=1',
+        { headers: supabaseHeaders(supabaseSecretKey) }
+      );
+      const rows = await readJson(response);
+
+      if (!response.ok) {
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to load registered device',
+          detail: rows?.message || null
+        });
+      }
+
+      const device = Array.isArray(rows) ? rows[0] : null;
+      if (!device?.endpoint || !device?.p256dh || !device?.auth) {
+        return res.status(404).json({
+          success: false,
+          message: 'No registered Push device found'
+        });
+      }
+
+      webpush.setVapidDetails(subject, publicKey, privateKey);
+      await webpush.sendNotification(
+        {
+          endpoint: device.endpoint,
+          keys: {
+            p256dh: device.p256dh,
+            auth: device.auth
+          }
+        },
+        JSON.stringify({
+          title: 'Nathoeng Connect',
+          body: 'ทดสอบการแจ้งเตือนจากวัดพุทธอุทยานนาเทิง',
+          tag: 'nathoeng-connect-test',
+          url: '/#practice-messages'
+        }),
+        { TTL: 60 }
+      );
+
+      return res.status(200).json({
+        success: true,
+        delivered: true
+      });
+    } catch (error) {
+      const statusCode = Number(error?.statusCode || 0);
+
+      if (statusCode === 404 || statusCode === 410) {
+        return res.status(410).json({
+          success: false,
+          message: 'Push subscription has expired. Please register this device again.'
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Test Push delivery failed',
+        detail: String(error?.body || error?.message || error)
       });
     }
   }
