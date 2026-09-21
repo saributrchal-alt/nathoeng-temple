@@ -933,12 +933,18 @@ function MyDashboard({
           <div
             style={{
               display: 'flex',
-              gap: '12px',
+              gap: '14px',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              flexWrap: 'wrap'
             }}
           >
-            <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                minWidth: '220px',
+                flex: '1 1 260px'
+              }}
+            >
               <strong
                 style={{
                   display: 'block',
@@ -947,7 +953,8 @@ function MyDashboard({
                   marginBottom: '4px'
                 }}
               >
-                🔔 {th ? 'การแจ้งเตือน Nathoeng Connect' : 'Nathoeng Connect notifications'}
+                {notificationPermission === 'granted' ? '✓' : '🔔'}{' '}
+                {th ? 'การแจ้งเตือน Nathoeng Connect' : 'Nathoeng Connect notifications'}
               </strong>
               <small
                 style={{
@@ -957,27 +964,58 @@ function MyDashboard({
                 }}
               >
                 {notificationPermission === 'granted'
-                  ? (th ? '✓ เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว' : '✓ Notifications are enabled on this device')
+                  ? (th ? 'คุณจะได้รับข่าวสารและประกาศจากวัดบนอุปกรณ์นี้' : 'You will receive monastery news and announcements on this device.')
                   : notificationPermission === 'denied'
                     ? (th ? 'การแจ้งเตือนถูกปิด กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์' : 'Notifications are blocked. Allow them in browser settings.')
                     : notificationPermission === 'unsupported'
                       ? (th ? 'เบราว์เซอร์นี้ยังไม่รองรับการแจ้งเตือน' : 'This browser does not support notifications.')
-                      : (th ? 'รับข้อความและประกาศจากวัดบนโทรศัพท์' : 'Receive monastery messages and announcements on your phone')}
+                      : (th ? 'รับข้อความ ข่าวสาร และประกาศจากวัดบนโทรศัพท์' : 'Receive monastery messages, news and announcements on your phone.')}
               </small>
             </div>
 
             {notificationPermission === 'default' && (
               <button
                 type="button"
-                className="compactViewButton"
                 onClick={enableNotifications}
                 style={{
-                  flex: '0 0 auto',
-                  whiteSpace: 'nowrap'
+                  flex: '1 1 220px',
+                  minHeight: '54px',
+                  borderRadius: '14px',
+                  border: '2px solid #e7a400',
+                  background: '#ffd91a',
+                  color: '#d82416',
+                  fontSize: '18px',
+                  fontWeight: 900,
+                  padding: '12px 20px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 0 rgba(155, 111, 0, 0.12)'
                 }}
               >
-                {th ? 'เปิดแจ้งเตือน' : 'Enable'}
+                🔔 {th ? 'กดเปิดรับข่าววัด' : 'Enable monastery news'}
               </button>
+            )}
+
+            {notificationPermission === 'granted' && (
+              <div
+                role="status"
+                style={{
+                  flex: '1 1 220px',
+                  minHeight: '54px',
+                  borderRadius: '14px',
+                  background: '#e5f5e9',
+                  color: '#176b3a',
+                  fontSize: '18px',
+                  fontWeight: 900,
+                  padding: '12px 20px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                ✓ {th ? 'ดำเนินการแล้ว' : 'Enabled'}
+              </div>
             )}
           </div>
         </section>
