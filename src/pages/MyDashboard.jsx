@@ -462,7 +462,13 @@ function MyDashboard({
       });
       const data = await response.json().catch(() => null);
       if (!response.ok || !data?.success) {
-        throw new Error(data?.message || 'Unable to cancel membership');
+        const db = data?.databaseError || {};
+        const detail = db?.message || db?.details || db?.hint || db?.code || '';
+        throw new Error(
+          detail
+            ? (data?.message || 'Unable to cancel membership') + ' — ' + detail
+            : (data?.message || 'Unable to cancel membership')
+        );
       }
       try {
         const registration = await navigator.serviceWorker?.ready;
