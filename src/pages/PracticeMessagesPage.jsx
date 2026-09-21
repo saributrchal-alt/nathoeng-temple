@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useState
@@ -58,7 +59,7 @@ function PracticeMessagesPage({
     }
   };
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -105,11 +106,11 @@ function PracticeMessagesPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [th]);
 
   useEffect(() => {
     loadMessages();
-  }, [lang]);
+  }, [loadMessages]);
 
   const formatDate =
     (value) => {
