@@ -687,6 +687,47 @@ function MyDashboard({
           </div>
         </section>
 
+        <button
+          type="button"
+          className="compactDhammaStrip"
+          onClick={() => goToPage('practice-messages')}
+        >
+          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
+          <span>
+            <strong>
+              Nathoeng Connect
+              {connectUnreadCount > 0 && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    minWidth: '20px',
+                    height: '20px',
+                    marginLeft: '8px',
+                    padding: '0 6px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '999px',
+                    background: '#b23a2f',
+                    color: '#fff',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    verticalAlign: 'middle'
+                  }}
+                >
+                  {connectUnreadCount > 99 ? '99+' : connectUnreadCount}
+                </span>
+              )}
+            </strong>
+            <small>
+              {th
+                ? 'ข้อความ ข่าวสาร และประกาศจากวัด'
+                : 'Messages, news and announcements from the monastery'}
+            </small>
+          </span>
+          <span aria-hidden="true">›</span>
+        </button>
+
+
         <section
           className="compactSummaryCard"
           style={{ marginTop: '16px' }}
@@ -880,46 +921,6 @@ function MyDashboard({
             ))}
           </div>
         </section>
-
-        <button
-          type="button"
-          className="compactDhammaStrip"
-          onClick={() => goToPage('practice-messages')}
-        >
-          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-          <span>
-            <strong>
-              Nathoeng Connect
-              {connectUnreadCount > 0 && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    minWidth: '20px',
-                    height: '20px',
-                    marginLeft: '8px',
-                    padding: '0 6px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '999px',
-                    background: '#b23a2f',
-                    color: '#fff',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    verticalAlign: 'middle'
-                  }}
-                >
-                  {connectUnreadCount > 99 ? '99+' : connectUnreadCount}
-                </span>
-              )}
-            </strong>
-            <small>
-              {th
-                ? 'ข้อความ ข่าวสาร และประกาศจากวัด'
-                : 'Messages, news and announcements from the monastery'}
-            </small>
-          </span>
-          <span aria-hidden="true">›</span>
-        </button>
 
         <section
           style={{
