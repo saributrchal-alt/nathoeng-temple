@@ -78,6 +78,7 @@ function MyDashboard({
   const [notificationPermission, setNotificationPermission] = useState(
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
   );
+  const [pushRegistered, setPushRegistered] = useState(false);
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
     moneyCount: 0,
@@ -288,6 +289,66 @@ function MyDashboard({
     };
   }, [user?.memberId]);
 
+  useEffect(() => {
+    if (
+      !user ||
+      typeof window === 'undefined' ||
+      !('Notification' in window) ||
+      Notification.permission !== 'granted' ||
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window)
+    ) {
+      setPushRegistered(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncExistingPushSubscription = async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+          if (!cancelled) setPushRegistered(false);
+          return;
+        }
+
+        const response = await fetch('/api/practice-messages', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'subscribe_push',
+            endpoint: subscription.endpoint
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Unable to sync push subscription');
+        }
+
+        if (!cancelled) {
+          setNotificationPermission('granted');
+          setPushRegistered(true);
+        }
+      } catch (error) {
+        console.error('Nathoeng Connect push sync error:', error);
+        if (!cancelled) setPushRegistered(false);
+      }
+    };
+
+    syncExistingPushSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.memberId]);
+
   const enableNotifications = async () => {
     if (
       typeof window === 'undefined' ||
@@ -381,6 +442,8 @@ function MyDashboard({
           'Unable to save push subscription'
         );
       }
+
+      setPushRegistered(true);
 
       await registration.showNotification(
         'Nathoeng Connect',
@@ -733,7 +796,7 @@ function MyDashboard({
                 </small>
               </span>
 
-              {notificationPermission === 'default' && (
+              {(notificationPermission === 'default' || (notificationPermission === 'granted' && !pushRegistered)) && (
                 <button
                   type="button"
                   className="compactViewButton"
@@ -956,7 +1019,7 @@ function MyDashboard({
                   marginBottom: '4px'
                 }}
               >
-                {notificationPermission === 'granted' ? '✓' : '🔔'}{' '}
+                {notificationPermission === 'granted' && pushRegistered ? '✓' : '🔔'}{' '}
                 {th ? 'การแจ้งเตือน Nathoeng Connect' : 'Nathoeng Connect notifications'}
               </strong>
               <small
@@ -966,7 +1029,7 @@ function MyDashboard({
                   lineHeight: 1.5
                 }}
               >
-                {notificationPermission === 'granted'
+                {notificationPermission === 'granted' && pushRegistered
                   ? (th ? 'คุณจะได้รับข่าวสารและประกาศจากวัดบนอุปกรณ์นี้' : 'You will receive monastery news and announcements on this device.')
                   : notificationPermission === 'denied'
                     ? (th ? 'การแจ้งเตือนถูกปิด กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์' : 'Notifications are blocked. Allow them in browser settings.')
@@ -976,7 +1039,7 @@ function MyDashboard({
               </small>
             </div>
 
-            {notificationPermission === 'default' && (
+            {(notificationPermission === 'default' || (notificationPermission === 'granted' && !pushRegistered)) && (
               <button
                 type="button"
                 onClick={enableNotifications}
@@ -998,7 +1061,7 @@ function MyDashboard({
               </button>
             )}
 
-            {notificationPermission === 'granted' && (
+            {notificationPermission === 'granted' && pushRegistered && (
               <div
                 role="status"
                 style={{
