@@ -161,8 +161,8 @@ function AdminPracticeMessagePanel({
 
       setError(
         th
-          ? 'ไม่สามารถโหลดระบบเนื้อหาปฏิบัติได้'
-          : 'Unable to load practice message management.'
+          ? 'ไม่สามารถโหลด Nathoeng Connect ได้'
+          : 'Unable to load Nathoeng Connect.'
       );
     } finally {
       setLoading(false);
@@ -501,7 +501,7 @@ function AdminPracticeMessagePanel({
                   ? 'แก้ไขข้อความ'
                   : 'Edit message')
               : (th
-                  ? 'ฝากเนื้อหาปฏิบัติใหม่'
+                  ? 'ข้อความใหม่'
                   : 'New Nathoeng Connect message')}
           </h2>
 
@@ -577,7 +577,7 @@ function AdminPracticeMessagePanel({
               >
                 {th
                   ? 'สมาชิกทุกคน'
-                  : 'All practitioners'}
+                  : 'All members'}
               </button>
 
               <button
@@ -683,7 +683,7 @@ function AdminPracticeMessagePanel({
               }
               placeholder={
                 th
-                  ? 'เช่น ข้อปฏิบัติสำหรับคืนนี้'
+                  ? 'เช่น Dhamma Live เริ่มเวลา 19.00 น.'
                   : 'e.g. Dhamma Live begins at 19:00'
               }
               style={inputStyle}
@@ -759,7 +759,7 @@ function AdminPracticeMessagePanel({
 
             {th
               ? 'ส่งให้สมาชิกเห็นทันที'
-              : 'Publish immediately'}
+              : 'Send immediately'}
           </label>
 
           <button
@@ -813,7 +813,7 @@ function AdminPracticeMessagePanel({
           >
             {th
               ? 'ข้อความ Nathoeng Connect'
-              : 'Published & Draft Messages'}
+              : 'Nathoeng Connect Messages'}
           </h2>
 
           <button
@@ -951,7 +951,7 @@ function AdminPracticeMessagePanel({
                             )
                             : (th
                                 ? 'สมาชิกทุกคน'
-                                : 'All practitioners')}
+                                : 'All members')}
                         </span>
                       </div>
 
