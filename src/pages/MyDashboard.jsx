@@ -55,6 +55,8 @@ function MyDashboard({
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [donationLoading, setDonationLoading] = useState(true);
   const [connectUnreadCount, setConnectUnreadCount] = useState(0);
+  const [pushDeviceStatus, setPushDeviceStatus] = useState('idle');
+  const [pushDeviceMessage, setPushDeviceMessage] = useState('');
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
     moneyCount: 0,
@@ -264,6 +266,114 @@ function MyDashboard({
       window.removeEventListener('focus', loadConnectUnread);
     };
   }, [user?.memberId]);
+
+  const registerPushDevice = async () => {
+    setPushDeviceMessage('');
+
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window) ||
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window)
+    ) {
+      setPushDeviceStatus('error');
+      setPushDeviceMessage(
+        th
+          ? 'อุปกรณ์หรือเบราว์เซอร์นี้ยังไม่รองรับ Web Push'
+          : 'This device or browser does not support Web Push.'
+      );
+      return;
+    }
+
+    setPushDeviceStatus('working');
+
+    try {
+      const permission = await Notification.requestPermission();
+
+      if (permission !== 'granted') {
+        throw new Error(
+          th ? 'ยังไม่ได้อนุญาตการแจ้งเตือน' : 'Notification permission was not granted'
+        );
+      }
+
+      // Phase 2A uses the VAPID public key only to create a browser
+      // subscription. No notification is sent in this phase.
+      const configResponse = await fetch(
+        '/api/practice-messages?scope=push-config',
+        { credentials: 'include', cache: 'no-store' }
+      );
+      const configText = await configResponse.text();
+      let config = null;
+      try {
+        config = configText ? JSON.parse(configText) : null;
+      } catch {
+        throw new Error(`HTTP ${configResponse.status} · ${configText.slice(0, 160)}`);
+      }
+
+      if (!configResponse.ok || !config?.success || !config?.publicKey) {
+        throw new Error(
+          config?.message || 'Push public key is unavailable'
+        );
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        const padding = '='.repeat((4 - (config.publicKey.length % 4)) % 4);
+        const base64 = (config.publicKey + padding)
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+        const raw = window.atob(base64);
+        const applicationServerKey = Uint8Array.from(
+          [...raw].map((char) => char.charCodeAt(0))
+        );
+
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+      }
+
+      const json = subscription.toJSON();
+      const response = await fetch('/api/practice-messages', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register_push_device',
+          endpoint: subscription.endpoint,
+          p256dh: json?.keys?.p256dh || '',
+          auth: json?.keys?.auth || ''
+        })
+      });
+
+      const responseText = await response.text();
+      let result = null;
+      try {
+        result = responseText ? JSON.parse(responseText) : null;
+      } catch {
+        throw new Error(`HTTP ${response.status} · ${responseText.slice(0, 160)}`);
+      }
+
+      if (!response.ok || !result?.success) {
+        throw new Error(
+          `HTTP ${response.status} · ${result?.message || 'Device registration failed'}${result?.detail ? ` · ${result.detail}` : ''}`
+        );
+      }
+
+      setPushDeviceStatus('registered');
+      setPushDeviceMessage(
+        th
+          ? '✓ ลงทะเบียนอุปกรณ์สำเร็จ'
+          : '✓ Device registered successfully'
+      );
+    } catch (error) {
+      console.error('Nathoeng Connect Phase 2A registration error:', error);
+      setPushDeviceStatus('error');
+      setPushDeviceMessage(String(error?.message || error));
+    }
+  };
 
   const openProfileEditor = () => {
     setEditFullName(verifiedFullName || user?.name || '');
@@ -750,6 +860,51 @@ function MyDashboard({
           </span>
           <span aria-hidden="true">›</span>
         </button>
+
+        <section
+          style={{
+            marginTop: '12px',
+            padding: '14px',
+            borderRadius: '16px',
+            border: '1px solid #eadca0',
+            background: '#fffdf0'
+          }}
+        >
+          <button
+            type="button"
+            onClick={registerPushDevice}
+            disabled={pushDeviceStatus === 'working'}
+            style={{
+              width: '100%',
+              border: 0,
+              borderRadius: '12px',
+              padding: '13px 16px',
+              background: pushDeviceStatus === 'registered' ? '#dff3e5' : '#ffd91a',
+              color: pushDeviceStatus === 'registered' ? '#176b3a' : '#d82416',
+              fontWeight: 800,
+              fontSize: '15px',
+              cursor: pushDeviceStatus === 'working' ? 'wait' : 'pointer'
+            }}
+          >
+            {pushDeviceStatus === 'working'
+              ? (th ? 'กำลังลงทะเบียนอุปกรณ์...' : 'Registering device...')
+              : pushDeviceStatus === 'registered'
+                ? (th ? '✓ ลงทะเบียนอุปกรณ์สำเร็จ' : '✓ Device registered')
+                : (th ? '🔔 ขั้นที่ 1: ลงทะเบียนอุปกรณ์' : '🔔 Step 1: Register this device')}
+          </button>
+          <div
+            style={{
+              marginTop: '8px',
+              color: pushDeviceStatus === 'error' ? '#a12b22' : '#6f6a5f',
+              fontSize: '12px',
+              lineHeight: 1.5
+            }}
+          >
+            {pushDeviceMessage || (th
+              ? 'ขั้นนี้ทดสอบเฉพาะการลงทะเบียน ยังไม่มีการส่งแจ้งเตือน'
+              : 'This step only tests registration. No notification will be sent yet.')}
+          </div>
+        </section>
 
         <section
           style={{
