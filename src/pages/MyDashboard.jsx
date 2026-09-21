@@ -727,6 +727,95 @@ function MyDashboard({
           <span aria-hidden="true">›</span>
         </button>
 
+        <section
+          style={{
+            marginTop: '10px',
+            padding: pushDeviceStatus === 'registered' ? '0' : '10px',
+            borderRadius: '16px',
+            border: pushDeviceStatus === 'registered'
+              ? '1px solid #cfe5d6'
+              : '1px solid #f0b400',
+            background: pushDeviceStatus === 'registered'
+              ? '#e4f5e9'
+              : '#fff3a6'
+          }}
+        >
+          <button
+            type="button"
+            onClick={registerPushDevice}
+            disabled={
+              pushDeviceStatus === 'working' ||
+              pushDeviceStatus === 'registered'
+            }
+            style={{
+              width: '100%',
+              border: 0,
+              borderRadius: '12px',
+              padding: pushDeviceStatus === 'registered'
+                ? '12px 14px'
+                : '14px 16px',
+              background: pushDeviceStatus === 'registered'
+                ? '#e4f5e9'
+                : '#ffd91a',
+              color: pushDeviceStatus === 'registered'
+                ? '#176b3a'
+                : '#d82416',
+              fontWeight: 900,
+              fontSize: pushDeviceStatus === 'registered'
+                ? '15px'
+                : '17px',
+              cursor: pushDeviceStatus === 'working'
+                ? 'wait'
+                : pushDeviceStatus === 'registered'
+                  ? 'default'
+                  : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '9px'
+            }}
+          >
+            {pushDeviceStatus === 'working'
+              ? (th ? 'กำลังเปิดรับข่าว...' : 'Enabling notifications...')
+              : pushDeviceStatus === 'registered'
+                ? (th ? '✓ เปิดรับข่าวจากวัดแล้ว' : '✓ Monastery news enabled')
+                : (
+                  <>
+                    <span aria-hidden="true">🔔</span>
+                    <span>
+                      {th
+                        ? 'เปิดรับข่าวจากวัด'
+                        : 'Receive monastery news'}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      style={{ fontSize: '22px' }}
+                    >
+                      👆
+                    </span>
+                  </>
+                )}
+          </button>
+
+          {pushDeviceStatus !== 'registered' && (
+            <div
+              style={{
+                marginTop: '7px',
+                color: pushDeviceStatus === 'error'
+                  ? '#a12b22'
+                  : '#7b4b00',
+                fontSize: '12px',
+                lineHeight: 1.5,
+                textAlign: 'center',
+                fontWeight: 700
+              }}
+            >
+              {pushDeviceMessage || (th
+                ? 'กดที่นี่เพื่อรับข่าวสาร กิจกรรม และประกาศสำคัญจากวัด'
+                : 'Tap here to receive important monastery news and announcements.')}
+            </div>
+          )}
+        </section>
 
         <section
           className="compactSummaryCard"
@@ -919,54 +1008,6 @@ function MyDashboard({
                 <span>{th ? service.titleTh : service.titleEn}</span>
               </button>
             ))}
-          </div>
-        </section>
-
-        <section
-          style={{
-            marginTop: '12px',
-            padding: '14px',
-            borderRadius: '16px',
-            border: '1px solid #eadca0',
-            background: '#fffdf0'
-          }}
-        >
-          <button
-            type="button"
-            onClick={registerPushDevice}
-            disabled={pushDeviceStatus === 'working'}
-            style={{
-              width: '100%',
-              border: 0,
-              borderRadius: '12px',
-              padding: '13px 16px',
-              background: pushDeviceStatus === 'registered' ? '#dff3e5' : '#ffd91a',
-              color: pushDeviceStatus === 'registered' ? '#176b3a' : '#d82416',
-              fontWeight: 800,
-              fontSize: '15px',
-              cursor: pushDeviceStatus === 'working' ? 'wait' : 'pointer'
-            }}
-          >
-            {pushDeviceStatus === 'working'
-              ? (th ? 'กำลังลงทะเบียนอุปกรณ์...' : 'Registering device...')
-              : pushDeviceStatus === 'registered'
-                ? (th ? '✓ เปิดรับข่าวจากวัดแล้ว' : '✓ Monastery news enabled')
-                : (th ? '🔔 เปิดรับข่าวและประกาศจากวัด' : '🔔 Receive monastery news & announcements')}
-          </button>
-          <div
-            style={{
-              marginTop: '8px',
-              color:
-                pushDeviceStatus === 'error'
-                  ? '#a12b22'
-                  : '#6f6a5f',
-              fontSize: '12px',
-              lineHeight: 1.5
-            }}
-          >
-            {pushDeviceMessage || (th
-              ? 'เปิดรับข่าวสารและประกาศสำคัญจากวัดบนอุปกรณ์เครื่องนี้'
-              : 'Receive important monastery news and announcements on this device.')}
           </div>
         </section>
 
