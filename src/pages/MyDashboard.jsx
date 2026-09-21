@@ -402,10 +402,13 @@ function MyDashboard({
         error
       );
       setNotificationPermission('default');
+      const detail =
+        String(error?.message || '').trim();
+
       window.alert(
         th
-          ? 'ยังเปิดการแจ้งเตือนไม่สำเร็จ กรุณาลองอีกครั้งหลังจากระบบ Push พร้อมใช้งาน'
-          : 'Notifications could not be enabled yet. Please try again after Push is configured.'
+          ? `ยังเปิดการแจ้งเตือนไม่สำเร็จ\n\nรายละเอียด: ${detail || 'ไม่ทราบสาเหตุ'}`
+          : `Notifications could not be enabled.\n\nDetails: ${detail || 'Unknown error'}`
       );
     }
   };
