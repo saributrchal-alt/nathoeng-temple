@@ -415,14 +415,111 @@ export default async function handler(req, res) {
     });
   }
 
+  const body = req.body || {};
+  const action =
+    String(body.action || '').trim();
+
+  // Phase 2A: device registration only. This does not send Push yet.
+  if (action === 'register_push_device') {
+    const memberSession = getSessionFromRequest(req);
+
+    if (!memberSession?.memberId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Login required'
+      });
+    }
+
+    const endpoint = String(body.endpoint || '').trim();
+    const p256dh = String(body.p256dh || '').trim();
+    const auth = String(body.auth || '').trim();
+
+    if (!endpoint || !p256dh || !auth) {
+      return res.status(400).json({
+        success: false,
+        message: 'Push subscription data is incomplete'
+      });
+    }
+
+    try {
+      const now = new Date().toISOString();
+      const lookup = await fetch(
+        `${supabaseUrl}/rest/v1/push_subscriptions` +
+          `?endpoint=eq.${encodeURIComponent(endpoint)}&select=id&limit=1`,
+        { headers: supabaseHeaders(supabaseSecretKey) }
+      );
+      const existing = await readJson(lookup);
+
+      if (!lookup.ok) {
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to check device registration',
+          detail: existing?.message || null
+        });
+      }
+
+      let response;
+      if (Array.isArray(existing) && existing.length > 0) {
+        response = await fetch(
+          `${supabaseUrl}/rest/v1/push_subscriptions?id=eq.${encodeURIComponent(existing[0].id)}`,
+          {
+            method: 'PATCH',
+            headers: supabaseHeaders(supabaseSecretKey, { Prefer: 'return=representation' }),
+            body: JSON.stringify({
+              member_id: memberSession.memberId,
+              endpoint,
+              p256dh,
+              auth,
+              is_active: true,
+              updated_at: now
+            })
+          }
+        );
+      } else {
+        response = await fetch(
+          `${supabaseUrl}/rest/v1/push_subscriptions`,
+          {
+            method: 'POST',
+            headers: supabaseHeaders(supabaseSecretKey, { Prefer: 'return=representation' }),
+            body: JSON.stringify({
+              member_id: memberSession.memberId,
+              endpoint,
+              p256dh,
+              auth,
+              is_active: true,
+              created_at: now,
+              updated_at: now
+            })
+          }
+        );
+      }
+
+      const saved = await readJson(response);
+      if (!response.ok) {
+        return res.status(500).json({
+          success: false,
+          message: 'Unable to register this device',
+          detail: saved?.message || saved?.details || null
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        registered: true
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Device registration server error',
+        detail: String(error?.message || error)
+      });
+    }
+  }
+
   const session =
     requireAdmin(req, res);
 
   if (!session) return;
-
-  const body = req.body || {};
-  const action =
-    String(body.action || '').trim();
 
   try {
     if (
