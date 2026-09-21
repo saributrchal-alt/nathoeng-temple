@@ -412,6 +412,14 @@ async function notifySubscribers({
     return;
   }
 
+  const summary = {
+    subscriptions: Array.isArray(rows) ? rows.length : 0,
+    delivered: 0,
+    failed: 0,
+    skipped: 0,
+    statuses: []
+  };
+
   for (const item of (
     Array.isArray(rows) ? rows : []
   )) {
@@ -420,6 +428,11 @@ async function notifySubscribers({
         await sendPushNotification(
           item.endpoint
         );
+
+      summary.statuses.push(result.status);
+      if (result.skipped) summary.skipped += 1;
+      else if (result.ok) summary.delivered += 1;
+      else summary.failed += 1;
 
       if (
         !result.skipped &&
@@ -444,12 +457,16 @@ async function notifySubscribers({
         );
       }
     } catch (error) {
+      summary.failed += 1;
       console.error(
         'Push delivery failed:',
         error
       );
     }
   }
+
+  console.log('Nathoeng Connect push summary:', summary);
+  return summary;
 }
 
 export default async function handler(req, res) {
@@ -903,19 +920,31 @@ export default async function handler(req, res) {
           });
         }
 
+        let push = null;
+
         if (isPublished) {
-          notifySubscribers({
-            supabaseUrl,
-            secretKey:
-              supabaseSecretKey,
-            audience,
-            targetMemberId
-          }).catch((error) => {
+          try {
+            push = await notifySubscribers({
+              supabaseUrl,
+              secretKey:
+                supabaseSecretKey,
+              audience,
+              targetMemberId
+            });
+          } catch (error) {
             console.error(
               'Nathoeng Connect push error:',
               error
             );
-          });
+            push = {
+              subscriptions: 0,
+              delivered: 0,
+              failed: 1,
+              skipped: 0,
+              statuses: [],
+              error: String(error?.message || error)
+            };
+          }
         }
 
         return res.status(200).json({
@@ -923,7 +952,8 @@ export default async function handler(req, res) {
           message:
             Array.isArray(data)
               ? data[0]
-              : data
+              : data,
+          push
         });
       }
 
