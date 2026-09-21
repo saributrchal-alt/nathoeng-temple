@@ -663,12 +663,12 @@ function MyDashboard({
             <strong>
               {th
                 ? 'เนื้อหาปฏิบัติถึงฉัน'
-                : 'Practice Messages for Me'}
+                : 'Nathoeng Connect'}
             </strong>
             <small>
               {th
-                ? 'อ่านข้อความและแนวทางปฏิบัติจากพระอาจารย์'
-                : 'Read one-way practice guidance from the teacher'}
+                ? 'ข้อความ ข่าวสาร และประกาศจากวัด'
+                : 'Messages, news and announcements from the monastery'}
             </small>
           </span>
           <span aria-hidden="true">›</span>
