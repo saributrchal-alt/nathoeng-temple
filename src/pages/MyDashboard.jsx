@@ -57,6 +57,12 @@ function MyDashboard({
   const [connectUnreadCount, setConnectUnreadCount] = useState(0);
   const [pushDeviceStatus, setPushDeviceStatus] = useState('idle');
   const [pushDeviceMessage, setPushDeviceMessage] = useState('');
+  const [cancelMembershipOpen, setCancelMembershipOpen] = useState(false);
+  const [cancelMembershipReason, setCancelMembershipReason] = useState('');
+  const [cancelMembershipDetail, setCancelMembershipDetail] = useState('');
+  const [cancelMembershipConfirmed, setCancelMembershipConfirmed] = useState(false);
+  const [cancelMembershipWorking, setCancelMembershipWorking] = useState(false);
+  const [cancelMembershipError, setCancelMembershipError] = useState('');
 
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -434,6 +440,45 @@ function MyDashboard({
     }
   };
 
+
+
+  const cancelMembership = async () => {
+    if (!cancelMembershipReason || !cancelMembershipConfirmed) return;
+    if (cancelMembershipReason === 'other' && !cancelMembershipDetail.trim()) {
+      setCancelMembershipError(th ? 'กรุณาระบุเหตุผลเพิ่มเติม' : 'Please provide a reason.');
+      return;
+    }
+    setCancelMembershipWorking(true);
+    setCancelMembershipError('');
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: cancelMembershipReason,
+          reasonDetail: cancelMembershipDetail.trim()
+        })
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'Unable to cancel membership');
+      }
+      try {
+        const registration = await navigator.serviceWorker?.ready;
+        const subscription = await registration?.pushManager?.getSubscription();
+        if (subscription) await subscription.unsubscribe();
+        window.localStorage.removeItem('nathoeng_connect_push_enabled');
+        window.localStorage.removeItem('nathoeng_connect_read_ids');
+      } catch (error) {
+        console.warn('Local Push cleanup after membership cancellation:', error);
+      }
+      window.location.href = '/';
+    } catch (error) {
+      setCancelMembershipError(String(error?.message || error));
+      setCancelMembershipWorking(false);
+    }
+  };
 
   const openProfileEditor = () => {
     setEditFullName(verifiedFullName || user?.name || '');
@@ -1190,6 +1235,55 @@ function MyDashboard({
             </a>
           </div>
         </section>
+
+
+        <section style={{ marginTop: '22px', padding: '18px', borderRadius: '18px', border: '1px solid #ead6d2', background: '#fffafa' }}>
+          <strong style={{ display: 'block', color: '#7f3f38', marginBottom: '5px' }}>
+            {th ? 'การเป็นสมาชิก' : 'Membership'}
+          </strong>
+          <p style={{ margin: '0 0 13px', color: '#786b68', fontSize: '13px', lineHeight: 1.6 }}>
+            {th ? 'หากไม่ประสงค์เป็นสมาชิกของวัดต่อ สามารถยกเลิกได้จากที่นี่' : 'If you no longer wish to remain a monastery member, you can cancel here.'}
+          </p>
+          <button type="button" onClick={() => { setCancelMembershipOpen(true); setCancelMembershipError(''); }} style={{ width: '100%', minHeight: '46px', borderRadius: '13px', border: '1px solid #c9675b', background: '#fff', color: '#a23f34', fontWeight: 800, cursor: 'pointer' }}>
+            {th ? 'ยกเลิกการเป็นสมาชิกวัดพุทธอุทยานนาเทิง' : 'Cancel Nathoeng Monastery Membership'}
+          </button>
+        </section>
+
+        {cancelMembershipOpen && (
+          <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(34,28,18,.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
+            <section role="dialog" aria-modal="true" aria-labelledby="cancel-membership-title" style={{ width: 'min(100%, 520px)', maxHeight: '90vh', overflowY: 'auto', background: '#fffdf8', borderRadius: '22px', padding: '23px', boxShadow: '0 24px 70px rgba(32,25,15,.3)' }}>
+              <h2 id="cancel-membership-title" style={{ margin: '0 0 8px', color: '#8f3e34' }}>{th ? 'ยกเลิกการเป็นสมาชิก' : 'Cancel Membership'}</h2>
+              <p style={{ color: '#6f655d', lineHeight: 1.65, fontSize: '14px' }}>{th ? 'กรุณาเลือกเหตุผลก่อนยืนยัน การยกเลิกจะปิดการรับ Push และการใช้งานบริการสำหรับสมาชิก แต่ประวัติการเข้าพักและการร่วมบุญที่จำเป็นจะไม่ถูกลบโดยอัตโนมัติ' : 'Please select a reason. Cancellation disables Push and member services, while necessary stay and donation records are not automatically deleted.'}</p>
+              <div style={{ display: 'grid', gap: '9px', margin: '17px 0' }}>
+                {[
+                  ['not_using', th ? 'ไม่ได้ใช้งานแล้ว' : 'I no longer use the service'],
+                  ['no_news', th ? 'ไม่ประสงค์รับข่าวสารหรือกิจกรรมของวัด' : 'I do not wish to receive monastery news'],
+                  ['duplicate_account', th ? 'สมัครบัญชีซ้ำ' : 'Duplicate account'],
+                  ['use_another_account', th ? 'ต้องการใช้บัญชีอื่น' : 'I want to use another account'],
+                  ['privacy', th ? 'เหตุผลด้านความเป็นส่วนตัว' : 'Privacy reasons'],
+                  ['other', th ? 'อื่น ๆ' : 'Other']
+                ].map(([value, label]) => (
+                  <label key={value} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px 12px', border: '1px solid #e2d8ca', borderRadius: '12px', cursor: 'pointer' }}>
+                    <input type="radio" name="cancel-membership-reason" value={value} checked={cancelMembershipReason === value} onChange={() => setCancelMembershipReason(value)} />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              {cancelMembershipReason === 'other' && (
+                <textarea value={cancelMembershipDetail} onChange={(e) => setCancelMembershipDetail(e.target.value)} maxLength={500} placeholder={th ? 'กรุณาระบุเหตุผลเพิ่มเติม…' : 'Please tell us more…'} style={{ width: '100%', minHeight: '88px', boxSizing: 'border-box', borderRadius: '12px', border: '1px solid #d8cbb8', padding: '11px', marginBottom: '13px' }} />
+              )}
+              <label style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '12px', background: '#fff3f0', borderRadius: '12px', color: '#743c35', fontWeight: 700 }}>
+                <input type="checkbox" checked={cancelMembershipConfirmed} onChange={(e) => setCancelMembershipConfirmed(e.target.checked)} />
+                <span>{th ? 'ข้าพเจ้ายืนยันว่าต้องการยกเลิกการเป็นสมาชิก' : 'I confirm that I want to cancel my membership.'}</span>
+              </label>
+              {cancelMembershipError && <div role="alert" style={{ marginTop: '12px', color: '#a23f34', fontSize: '13px' }}>{cancelMembershipError}</div>}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '17px' }}>
+                <button type="button" disabled={cancelMembershipWorking} onClick={() => setCancelMembershipOpen(false)} style={{ minHeight: '48px', borderRadius: '13px', border: '1px solid #cfc3b4', background: '#fff', fontWeight: 800 }}>{th ? 'ยังไม่ยกเลิก' : 'Keep Membership'}</button>
+                <button type="button" disabled={cancelMembershipWorking || !cancelMembershipReason || !cancelMembershipConfirmed || (cancelMembershipReason === 'other' && !cancelMembershipDetail.trim())} onClick={cancelMembership} style={{ minHeight: '48px', borderRadius: '13px', border: 0, background: '#a23f34', color: '#fff', fontWeight: 800, opacity: (cancelMembershipWorking || !cancelMembershipReason || !cancelMembershipConfirmed) ? .55 : 1 }}>{cancelMembershipWorking ? (th ? 'กำลังยกเลิก…' : 'Cancelling…') : (th ? 'ยืนยันยกเลิกสมาชิก' : 'Confirm Cancellation')}</button>
+              </div>
+            </section>
+          </div>
+        )}
 
         {profileEditorOpen && (
           <div
