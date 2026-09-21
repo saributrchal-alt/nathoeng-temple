@@ -1,5 +1,6 @@
 import {
-  getSessionFromRequest
+  getSessionFromRequest,
+  clearSessionCookie
 } from '../lib/_auth.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
@@ -329,6 +330,81 @@ export default async function handler(req, res) {
         message:
           'Unable to save donation profile'
       });
+    }
+  }
+
+  // =====================================================
+  // DELETE - soft-cancel membership and keep historical records
+  // =====================================================
+  if (req.method === 'DELETE') {
+    const allowedReasons = [
+      'not_using', 'no_news', 'duplicate_account',
+      'use_another_account', 'privacy', 'other'
+    ];
+    const reason = String(req.body?.reason || '').trim();
+    const reasonDetail = String(req.body?.reasonDetail || '').trim().slice(0, 500);
+
+    if (!allowedReasons.includes(reason)) {
+      return res.status(400).json({ success: false, message: 'Please select a cancellation reason' });
+    }
+    if (reason === 'other' && !reasonDetail) {
+      return res.status(400).json({ success: false, message: 'Please provide the cancellation reason' });
+    }
+
+    const now = new Date().toISOString();
+    try {
+      const memberResponse = await fetch(
+        supabaseUrl + '/rest/v1/members?id=eq.' + encodeURIComponent(memberId),
+        {
+          method: 'PATCH',
+          headers: supabaseHeaders(supabaseSecretKey, { Prefer: 'return=representation' }),
+          body: JSON.stringify({ membership_status: 'inactive', membership_cancelled_at: now })
+        }
+      );
+      const memberData = await memberResponse.json();
+      if (!memberResponse.ok) {
+        console.error('Membership cancellation member update failed:', memberData);
+        return res.status(500).json({ success: false, message: 'Unable to cancel membership', databaseError: memberData });
+      }
+
+      const historyResponse = await fetch(supabaseUrl + '/rest/v1/membership_cancellations', {
+        method: 'POST',
+        headers: supabaseHeaders(supabaseSecretKey),
+        body: JSON.stringify({
+          member_id: memberId,
+          reason,
+          reason_detail: reasonDetail || null,
+          cancelled_at: now
+        })
+      });
+      if (!historyResponse.ok) {
+        const historyData = await historyResponse.json();
+        console.error('Membership cancellation history insert failed:', historyData);
+        await fetch(
+          supabaseUrl + '/rest/v1/members?id=eq.' + encodeURIComponent(memberId),
+          {
+            method: 'PATCH',
+            headers: supabaseHeaders(supabaseSecretKey),
+            body: JSON.stringify({ membership_status: 'active', membership_cancelled_at: null })
+          }
+        );
+        return res.status(500).json({ success: false, message: 'Unable to save cancellation reason', databaseError: historyData });
+      }
+
+      await fetch(
+        supabaseUrl + '/rest/v1/push_subscriptions?member_id=eq.' + encodeURIComponent(memberId) + '&is_active=eq.true',
+        {
+          method: 'PATCH',
+          headers: supabaseHeaders(supabaseSecretKey),
+          body: JSON.stringify({ is_active: false, updated_at: now })
+        }
+      );
+
+      clearSessionCookie(res);
+      return res.status(200).json({ success: true, cancelled: true });
+    } catch (error) {
+      console.error('Membership cancellation error:', error);
+      return res.status(500).json({ success: false, message: 'Unable to cancel membership' });
     }
   }
 
