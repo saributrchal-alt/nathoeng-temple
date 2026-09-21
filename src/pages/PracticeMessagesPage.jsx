@@ -152,7 +152,7 @@ function PracticeMessagesPage({
           >
             {th
               ? 'เนื้อหาปฏิบัติถึงฉัน'
-              : 'Practice Messages for Me'}
+              : 'Nathoeng Connect'}
           </h1>
 
           <p
@@ -165,8 +165,8 @@ function PracticeMessagesPage({
             }}
           >
             {th
-              ? 'ข้อความและแนวทางปฏิบัติที่พระอาจารย์ฝากไว้สำหรับผู้ปฏิบัติ อ่านและรับฟังได้จากหน้านี้'
-              : 'Read one-way practice guidance and messages shared by the teacher for practitioners.'}
+              ? 'ข้อความ ข่าวสาร และประกาศจากวัดสำหรับสมาชิก จะถูกรวบรวมไว้ใน Nathoeng Connect'
+              : 'Messages, news and monastery announcements for members are collected here in Nathoeng Connect.'}
           </p>
         </div>
 
@@ -180,7 +180,7 @@ function PracticeMessagesPage({
           >
             {th
               ? 'กำลังโหลดเนื้อหาปฏิบัติ...'
-              : 'Loading practice messages...'}
+              : 'Loading Nathoeng Connect...'}
           </div>
         ) : error ? (
           <div
@@ -245,7 +245,7 @@ function PracticeMessagesPage({
             >
               {th
                 ? 'ยังไม่มีเนื้อหาปฏิบัติใหม่'
-                : 'No practice messages yet'}
+                : 'No messages yet'}
             </strong>
 
             <span
@@ -257,8 +257,8 @@ function PracticeMessagesPage({
               }}
             >
               {th
-                ? 'เมื่อพระอาจารย์ฝากข้อความหรือแนวทางปฏิบัติไว้ จะปรากฏที่หน้านี้'
-                : 'Messages shared by the teacher will appear here.'}
+                ? 'เมื่อทางวัดส่งข้อความ ข่าวสาร หรือประกาศ จะปรากฏที่หน้านี้'
+                : 'Messages and announcements from the monastery will appear here.'}
             </span>
           </div>
         ) : (
@@ -278,7 +278,7 @@ function PracticeMessagesPage({
               >
                 <strong>
                   {th
-                    ? 'ล่าสุดจากพระอาจารย์'
+                    ? 'ข้อความล่าสุด'
                     : 'Latest from the teacher'}
                 </strong>
 
@@ -394,7 +394,7 @@ function PracticeMessagesPage({
                                   ? 'ข้อความเฉพาะถึงท่าน'
                                   : 'A message for you')
                               : (th
-                                  ? 'ฝากถึงผู้ปฏิบัติ'
+                                  ? 'ถึงสมาชิกทุกคน'
                                   : 'For practitioners')}
                           </small>
                         </span>
@@ -449,8 +449,8 @@ function PracticeMessagesPage({
                             }}
                           >
                             {th
-                              ? '— ข้อความจากพระอาจารย์'
-                              : '— Message from the teacher'}
+                              ? '— Nathoeng Connect'
+                              : '— Nathoeng Connect'}
                           </div>
                         </div>
                       )}
