@@ -5,6 +5,7 @@ function AdminMembersPanel({ lang }) {
   const [members, setMembers] = useState([]);
   const [donations, setDonations] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [pushStatusByMember, setPushStatusByMember] = useState({});
   const [selectedMember, setSelectedMember] = useState(null);
   const [composeChannel, setComposeChannel] = useState(null);
   const [composeText, setComposeText] = useState('');
@@ -137,7 +138,7 @@ function AdminMembersPanel({ lang }) {
     setError('');
 
     try {
-      const [memberResponse, donationResponse, messageResponse] = await Promise.all([
+      const [memberResponse, donationResponse, messageResponse, pushResponse] = await Promise.all([
         fetch('/api/admin-bookings?route=members', {
           method: 'GET',
           credentials: 'include',
@@ -152,12 +153,18 @@ function AdminMembersPanel({ lang }) {
           method: 'GET',
           credentials: 'include',
           cache: 'no-store'
+        }),
+        fetch('/api/practice-messages?scope=admin-push-status', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store'
         })
       ]);
 
       const memberData = await memberResponse.json();
       const donationData = await donationResponse.json();
       const messageData = await messageResponse.json();
+      const pushData = await pushResponse.json();
 
       if (!memberResponse.ok || !memberData?.success) {
         throw new Error(memberData?.message || 'Unable to load members');
@@ -174,6 +181,11 @@ function AdminMembersPanel({ lang }) {
       setMembers(Array.isArray(memberData.members) ? memberData.members : []);
       setDonations(Array.isArray(donationData.donations) ? donationData.donations : []);
       setMessages(Array.isArray(messageData.messages) ? messageData.messages : []);
+      setPushStatusByMember(
+        pushResponse.ok && pushData?.success && pushData?.byMember
+          ? pushData.byMember
+          : {}
+      );
     } catch (err) {
       console.error('Admin members load error:', err);
       setError(
@@ -660,6 +672,50 @@ function AdminMembersPanel({ lang }) {
                     <strong style={{ display: 'block', color: '#332f29', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {memberName(member)}
                     </strong>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '7px',
+                        flexWrap: 'wrap',
+                        marginTop: '5px'
+                      }}
+                    >
+                      {pushStatusByMember[String(member.id)]?.deviceCount > 0 ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '3px 8px',
+                            borderRadius: '999px',
+                            background: '#dff3e5',
+                            color: '#176b3a',
+                            fontSize: '11px',
+                            fontWeight: 800
+                          }}
+                        >
+                          ✓ เปิดรับข่าวแล้ว
+                          {pushStatusByMember[String(member.id)].deviceCount > 1
+                            ? ` · ${pushStatusByMember[String(member.id)].deviceCount} เครื่อง`
+                            : ''}
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '3px 8px',
+                            borderRadius: '999px',
+                            background: '#f4f1eb',
+                            color: '#756c60',
+                            fontSize: '11px',
+                            fontWeight: 700
+                          }}
+                        >
+                          ยังไม่เปิดรับข่าว
+                        </span>
+                      )}
+                    </div>
                     <div style={{ marginTop: '4px', fontSize: '12px', color: '#756c60' }}>
                       {providerLabel(member)}
                       {member?.country_code ? ` · ${countryLabel(member)}` : ''}
@@ -709,6 +765,14 @@ function AdminMembersPanel({ lang }) {
               <div><strong>{text.country}:</strong> {countryLabel(selectedMember)}</div>
               <div><strong>{text.joined}:</strong> {formatDateTime(selectedMember.created_at)}</div>
               <div><strong>{text.lastLogin}:</strong> {formatDateTime(selectedMember.last_login_at)}</div>
+              <div>
+                <strong>Nathoeng Connect:</strong>{' '}
+                {pushStatusByMember[String(selectedMember.id)]?.deviceCount > 0
+                  ? (th
+                    ? `✓ เปิดรับข่าวแล้ว · ${pushStatusByMember[String(selectedMember.id)].deviceCount} อุปกรณ์`
+                    : `✓ Push enabled · ${pushStatusByMember[String(selectedMember.id)].deviceCount} device(s)`)
+                  : (th ? 'ยังไม่เปิดรับข่าว' : 'Push not enabled')}
+              </div>
             </div>
 
             <div style={{ border: '1px solid #dfd3c2', borderRadius: '14px', padding: '15px', background: '#fbf8f2', marginBottom: '18px' }}>
