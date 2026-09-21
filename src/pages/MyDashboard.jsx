@@ -33,6 +33,26 @@ function countryName(code, lang) {
   }
 }
 
+function urlBase64ToUint8Array(value) {
+  const padding =
+    '='.repeat((4 - value.length % 4) % 4);
+
+  const base64 =
+    (value + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+  const rawData =
+    window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(
+      (character) =>
+        character.charCodeAt(0)
+    )
+  );
+}
+
 function MyDashboard({
   lang,
   goToPage,
@@ -55,6 +75,9 @@ function MyDashboard({
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [donationLoading, setDonationLoading] = useState(true);
   const [connectUnreadCount, setConnectUnreadCount] = useState(0);
+  const [notificationPermission, setNotificationPermission] = useState(
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+  );
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
     moneyCount: 0,
@@ -264,6 +287,128 @@ function MyDashboard({
       window.removeEventListener('focus', loadConnectUnread);
     };
   }, [user?.memberId]);
+
+  const enableNotifications = async () => {
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window) ||
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window)
+    ) {
+      setNotificationPermission('unsupported');
+      return;
+    }
+
+    try {
+      const permission =
+        await Notification.requestPermission();
+
+      setNotificationPermission(permission);
+
+      if (permission !== 'granted') {
+        return;
+      }
+
+      const configResponse =
+        await fetch(
+          '/api/practice-messages?scope=push-config',
+          {
+            credentials: 'include',
+            cache: 'no-store'
+          }
+        );
+
+      const config =
+        await configResponse.json();
+
+      if (
+        !configResponse.ok ||
+        !config.success ||
+        !config.configured ||
+        !config.publicKey
+      ) {
+        throw new Error(
+          'Push notification service is not configured'
+        );
+      }
+
+      const registration =
+        await navigator.serviceWorker.ready;
+
+      let subscription =
+        await registration.pushManager
+          .getSubscription();
+
+      if (!subscription) {
+        subscription =
+          await registration.pushManager
+            .subscribe({
+              userVisibleOnly: true,
+              applicationServerKey:
+                urlBase64ToUint8Array(
+                  config.publicKey
+                )
+            });
+      }
+
+      const saveResponse =
+        await fetch(
+          '/api/practice-messages',
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type':
+                'application/json'
+            },
+            body: JSON.stringify({
+              action: 'subscribe_push',
+              endpoint:
+                subscription.endpoint
+            })
+          }
+        );
+
+      const saveResult =
+        await saveResponse.json();
+
+      if (
+        !saveResponse.ok ||
+        !saveResult.success
+      ) {
+        throw new Error(
+          saveResult.message ||
+          'Unable to save push subscription'
+        );
+      }
+
+      await registration.showNotification(
+        'Nathoeng Connect',
+        {
+          body: th
+            ? 'เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว'
+            : 'Notifications are enabled on this device.',
+          icon: '/favicon.svg',
+          badge: '/favicon.svg',
+          tag: 'nathoeng-connect-enabled',
+          data: {
+            url: '/#practice-messages'
+          }
+        }
+      );
+    } catch (error) {
+      console.error(
+        'Nathoeng Connect notification setup error:',
+        error
+      );
+      setNotificationPermission('default');
+      window.alert(
+        th
+          ? 'ยังเปิดการแจ้งเตือนไม่สำเร็จ กรุณาลองอีกครั้งหลังจากระบบ Push พร้อมใช้งาน'
+          : 'Notifications could not be enabled yet. Please try again after Push is configured.'
+      );
+    }
+  };
 
   const openProfileEditor = () => {
     setEditFullName(verifiedFullName || user?.name || '');
@@ -570,6 +715,31 @@ function MyDashboard({
                 </button>
               )}
             </div>
+
+            <div className="compactStayAction" style={{ cursor: 'default' }}>
+              <span className="compactStayActionText">
+                <strong>Nathoeng Connect</strong>
+                <small>
+                  {notificationPermission === 'granted'
+                    ? (th ? '✓ อนุญาตการแจ้งเตือนบนอุปกรณ์นี้แล้ว' : '✓ Notifications allowed on this device')
+                    : notificationPermission === 'denied'
+                      ? (th ? 'การแจ้งเตือนถูกปิดในการตั้งค่าเบราว์เซอร์' : 'Notifications are blocked in browser settings')
+                      : notificationPermission === 'unsupported'
+                        ? (th ? 'อุปกรณ์หรือเบราว์เซอร์นี้ยังไม่รองรับ' : 'Notifications are not supported here')
+                        : (th ? 'เปิดรับการแจ้งเตือนจากวัดบนโทรศัพท์' : 'Enable monastery notifications on this device')}
+                </small>
+              </span>
+
+              {notificationPermission === 'default' && (
+                <button
+                  type="button"
+                  className="compactViewButton"
+                  onClick={enableNotifications}
+                >
+                  {th ? 'เปิดแจ้งเตือน' : 'Enable'}
+                </button>
+              )}
+            </div>
           </div>
         </section>
 
@@ -750,6 +920,67 @@ function MyDashboard({
           </span>
           <span aria-hidden="true">›</span>
         </button>
+
+        <section
+          style={{
+            marginTop: '10px',
+            padding: '14px 16px',
+            borderRadius: '18px',
+            border: '1px solid #d8e2d8',
+            background: '#fffdf8'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <strong
+                style={{
+                  display: 'block',
+                  color: '#315f47',
+                  fontSize: '15px',
+                  marginBottom: '4px'
+                }}
+              >
+                🔔 {th ? 'การแจ้งเตือน Nathoeng Connect' : 'Nathoeng Connect notifications'}
+              </strong>
+              <small
+                style={{
+                  display: 'block',
+                  color: '#777',
+                  lineHeight: 1.5
+                }}
+              >
+                {notificationPermission === 'granted'
+                  ? (th ? '✓ เปิดการแจ้งเตือนบนอุปกรณ์นี้แล้ว' : '✓ Notifications are enabled on this device')
+                  : notificationPermission === 'denied'
+                    ? (th ? 'การแจ้งเตือนถูกปิด กรุณาอนุญาตในการตั้งค่าเบราว์เซอร์' : 'Notifications are blocked. Allow them in browser settings.')
+                    : notificationPermission === 'unsupported'
+                      ? (th ? 'เบราว์เซอร์นี้ยังไม่รองรับการแจ้งเตือน' : 'This browser does not support notifications.')
+                      : (th ? 'รับข้อความและประกาศจากวัดบนโทรศัพท์' : 'Receive monastery messages and announcements on your phone')}
+              </small>
+            </div>
+
+            {notificationPermission === 'default' && (
+              <button
+                type="button"
+                className="compactViewButton"
+                onClick={enableNotifications}
+                style={{
+                  flex: '0 0 auto',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {th ? 'เปิดแจ้งเตือน' : 'Enable'}
+              </button>
+            )}
+          </div>
+        </section>
 
         <section
           style={{
