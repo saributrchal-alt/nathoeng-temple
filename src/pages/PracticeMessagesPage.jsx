@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useState
@@ -22,7 +23,43 @@ function PracticeMessagesPage({
   const [openId, setOpenId] =
     useState(null);
 
-  const loadMessages = async () => {
+  const storageKey = 'nathoeng_connect_read_ids';
+
+  const getReadIds = () => {
+    if (typeof window === 'undefined') return [];
+
+    try {
+      const value = JSON.parse(
+        window.localStorage.getItem(storageKey) || '[]'
+      );
+
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [readIds, setReadIds] =
+    useState(() => getReadIds());
+
+  const markRead = (messageId) => {
+    if (!messageId || readIds.includes(messageId)) return;
+
+    const next = [...readIds, messageId];
+    setReadIds(next);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(next)
+      );
+      window.dispatchEvent(
+        new CustomEvent('nathoeng-connect-read')
+      );
+    }
+  };
+
+  const loadMessages = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -55,13 +92,6 @@ function PracticeMessagesPage({
           : [];
 
       setMessages(rows);
-
-      if (
-        rows.length > 0 &&
-        !openId
-      ) {
-        setOpenId(rows[0].id);
-      }
     } catch (err) {
       console.error(
         'Practice messages load error:',
@@ -70,17 +100,17 @@ function PracticeMessagesPage({
 
       setError(
         th
-          ? 'ไม่สามารถโหลดเนื้อหาปฏิบัติได้ กรุณาลองใหม่'
-          : 'Unable to load practice messages. Please try again.'
+          ? 'ไม่สามารถโหลดข้อความ Nathoeng Connect ได้ กรุณาลองใหม่'
+          : 'Unable to load Nathoeng Connect messages. Please try again.'
       );
     } finally {
       setLoading(false);
     }
-  };
+  }, [th]);
 
   useEffect(() => {
     loadMessages();
-  }, [lang]);
+  }, [loadMessages]);
 
   const formatDate =
     (value) => {
@@ -113,6 +143,30 @@ function PracticeMessagesPage({
       () => messages[0] || null,
       [messages]
     );
+
+  const unreadCount =
+    useMemo(
+      () =>
+        messages.filter(
+          (item) => !readIds.includes(item.id)
+        ).length,
+      [messages, readIds]
+    );
+
+  const markAllRead = () => {
+    const next = messages.map((item) => item.id);
+    setReadIds(next);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(next)
+      );
+      window.dispatchEvent(
+        new CustomEvent('nathoeng-connect-read')
+      );
+    }
+  };
 
   return (
     <div className="guidePage">
@@ -150,9 +204,7 @@ function PracticeMessagesPage({
               marginBottom: '10px'
             }}
           >
-            {th
-              ? 'เนื้อหาปฏิบัติถึงฉัน'
-              : 'Practice Messages for Me'}
+            Nathoeng Connect
           </h1>
 
           <p
@@ -165,10 +217,62 @@ function PracticeMessagesPage({
             }}
           >
             {th
-              ? 'ข้อความและแนวทางปฏิบัติที่พระอาจารย์ฝากไว้สำหรับผู้ปฏิบัติ อ่านและรับฟังได้จากหน้านี้'
-              : 'Read one-way practice guidance and messages shared by the teacher for practitioners.'}
+              ? 'ข้อความ ข่าวสาร และประกาศจากวัดสำหรับสมาชิก จะถูกรวบรวมไว้ใน Nathoeng Connect'
+              : 'Messages, news and monastery announcements for members are collected here in Nathoeng Connect.'}
           </p>
         </div>
+
+        {!loading && !error && messages.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              marginBottom: '14px',
+              padding: '12px 14px',
+              border: '1px solid #e2dacd',
+              borderRadius: '14px',
+              background: '#fff'
+            }}
+          >
+            <span
+              style={{
+                color: '#625a51',
+                fontSize: '13px',
+                fontWeight: 700
+              }}
+            >
+              {unreadCount > 0
+                ? (th
+                    ? `ยังไม่ได้อ่าน ${unreadCount} ข้อความ`
+                    : `${unreadCount} unread message${unreadCount === 1 ? '' : 's'}`)
+                : (th
+                    ? 'อ่านข้อความทั้งหมดแล้ว'
+                    : 'All messages read')}
+            </span>
+
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                style={{
+                  minHeight: '34px',
+                  padding: '0 11px',
+                  border: '1px solid #d8c9b5',
+                  borderRadius: '9px',
+                  background: '#fffaf0',
+                  color: '#8a611d',
+                  cursor: 'pointer',
+                  fontWeight: 800,
+                  fontSize: '12px'
+                }}
+              >
+                {th ? 'อ่านทั้งหมด' : 'Mark all read'}
+              </button>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div
@@ -179,8 +283,8 @@ function PracticeMessagesPage({
             }}
           >
             {th
-              ? 'กำลังโหลดเนื้อหาปฏิบัติ...'
-              : 'Loading practice messages...'}
+              ? 'กำลังโหลด Nathoeng Connect...'
+              : 'Loading Nathoeng Connect...'}
           </div>
         ) : error ? (
           <div
@@ -244,8 +348,8 @@ function PracticeMessagesPage({
               }}
             >
               {th
-                ? 'ยังไม่มีเนื้อหาปฏิบัติใหม่'
-                : 'No practice messages yet'}
+                ? 'ยังไม่มีข้อความ'
+                : 'No messages yet'}
             </strong>
 
             <span
@@ -257,8 +361,8 @@ function PracticeMessagesPage({
               }}
             >
               {th
-                ? 'เมื่อพระอาจารย์ฝากข้อความหรือแนวทางปฏิบัติไว้ จะปรากฏที่หน้านี้'
-                : 'Messages shared by the teacher will appear here.'}
+                ? 'เมื่อทางวัดส่งข้อความ ข่าวสาร หรือประกาศ จะปรากฏที่หน้านี้'
+                : 'Messages and announcements from the monastery will appear here.'}
             </span>
           </div>
         ) : (
@@ -278,8 +382,8 @@ function PracticeMessagesPage({
               >
                 <strong>
                   {th
-                    ? 'ล่าสุดจากพระอาจารย์'
-                    : 'Latest from the teacher'}
+                    ? 'ข้อความล่าสุด'
+                    : 'Latest message'}
                 </strong>
 
                 <div
@@ -320,13 +424,16 @@ function PracticeMessagesPage({
                     >
                       <button
                         type="button"
-                        onClick={() =>
-                          setOpenId(
-                            open
-                              ? null
-                              : item.id
-                          )
-                        }
+                        onClick={() => {
+                          const nextOpen =
+                            open ? null : item.id;
+
+                          setOpenId(nextOpen);
+
+                          if (nextOpen) {
+                            markRead(item.id);
+                          }
+                        }}
                         style={{
                           width: '100%',
                           border: 0,
@@ -343,7 +450,24 @@ function PracticeMessagesPage({
                             'flex-start'
                         }}
                       >
-                        <span>
+                        <span style={{ minWidth: 0 }}>
+                          {!readIds.includes(item.id) && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                marginBottom: '7px',
+                                padding: '3px 8px',
+                                borderRadius: '999px',
+                                background: '#9b7226',
+                                color: '#fff',
+                                fontSize: '10px',
+                                fontWeight: 800
+                              }}
+                            >
+                              {th ? 'ใหม่' : 'NEW'}
+                            </span>
+                          )}
+
                           <span
                             style={{
                               display:
@@ -394,8 +518,8 @@ function PracticeMessagesPage({
                                   ? 'ข้อความเฉพาะถึงท่าน'
                                   : 'A message for you')
                               : (th
-                                  ? 'ฝากถึงผู้ปฏิบัติ'
-                                  : 'For practitioners')}
+                                  ? 'ถึงสมาชิกทุกคน'
+                                  : 'For all members')}
                           </small>
                         </span>
 
@@ -449,8 +573,8 @@ function PracticeMessagesPage({
                             }}
                           >
                             {th
-                              ? '— ข้อความจากพระอาจารย์'
-                              : '— Message from the teacher'}
+                              ? '— Nathoeng Connect'
+                              : '— Nathoeng Connect'}
                           </div>
                         </div>
                       )}
