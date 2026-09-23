@@ -50,6 +50,7 @@ function normalizeReturnPage(value) {
     'stay-process',
     'prepare-stay',
     'contact-page',
+    'dhamma-live',
     'visit-guide',
     'teachings-page',
     'event-kathina'
@@ -222,6 +223,98 @@ export default async function handler(req, res) {
 
   const supabaseSecretKey =
     process.env.SUPABASE_SECRET_KEY;
+
+  // Authorize the protected Dhamma Live player. The password stays server-side.
+  if (req.method === 'POST' && route === 'dhamma-live-access') {
+    res.setHeader('Cache-Control', 'no-store');
+
+    const session = getSessionFromRequest(req);
+    if (!session?.memberId) {
+      return res.status(401).json({
+        success: false,
+        code: 'LOGIN_REQUIRED',
+        message: 'Please sign in with an active membership.'
+      });
+    }
+
+    const livePassword = process.env.DHAMMA_LIVE_PASSWORD;
+    if (!livePassword) {
+      return res.status(503).json({
+        success: false,
+        code: 'LIVE_PASSWORD_NOT_CONFIGURED',
+        message: 'Dhamma Live access is not configured yet.'
+      });
+    }
+
+    if (!supabaseUrl || !supabaseSecretKey) {
+      return res.status(503).json({
+        success: false,
+        code: 'MEMBER_DATABASE_NOT_CONFIGURED',
+        message: 'Member verification is unavailable.'
+      });
+    }
+
+    try {
+      const memberResponse = await fetch(
+        supabaseUrl +
+          '/rest/v1/members?id=eq.' +
+          encodeURIComponent(session.memberId) +
+          '&select=id,role,membership_status&limit=1',
+        {
+          method: 'GET',
+          headers: {
+            apikey: supabaseSecretKey,
+            Authorization: 'Bearer ' + supabaseSecretKey
+          },
+          cache: 'no-store'
+        }
+      );
+      const rows = await memberResponse.json();
+      if (!memberResponse.ok) {
+        console.error('Dhamma Live member lookup failed:', rows);
+        return res.status(503).json({
+          success: false,
+          code: 'MEMBER_CHECK_FAILED',
+          message: 'Unable to verify membership right now.'
+        });
+      }
+
+      const member = Array.isArray(rows) ? rows[0] : null;
+      if (!member || (member.membership_status !== 'active' && member.role !== 'admin')) {
+        return res.status(403).json({
+          success: false,
+          code: 'ACTIVE_MEMBERSHIP_REQUIRED',
+          message: 'An active membership is required to view Dhamma Live.'
+        });
+      }
+
+      const supplied = Buffer.from(String(req.body?.password || ''), 'utf8');
+      const expected = Buffer.from(livePassword, 'utf8');
+      const passwordMatches =
+        supplied.length === expected.length &&
+        crypto.timingSafeEqual(supplied, expected);
+
+      if (!passwordMatches) {
+        return res.status(403).json({
+          success: false,
+          code: 'LIVE_PASSWORD_INVALID',
+          message: 'The Dhamma Live password is incorrect.'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        videoId: 'SEU99EuRC1Y'
+      });
+    } catch (error) {
+      console.error('Dhamma Live access check failed:', error);
+      return res.status(503).json({
+        success: false,
+        code: 'LIVE_ACCESS_CHECK_FAILED',
+        message: 'Unable to verify access right now.'
+      });
+    }
+  }
 
   // -----------------------------------------------------
   // Server-authoritative session check.
