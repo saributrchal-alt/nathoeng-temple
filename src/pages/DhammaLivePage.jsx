@@ -1,7 +1,7 @@
-import { useState } from 'react'
-
 const RADIO_URL = 'http://122.155.12.107/luangta/Siangdham-Radio-Live.html'
 const TV_URL = 'http://122.155.12.107/desktop/sbt_tv_hls.html'
+const YOUTUBE_VIDEO_ID = 'SEU99EuRC1Y'
+const NOW_PLAYING = 'หลวงปู่เทศน์ เทศรังสี'
 
 const styles = [
   '.dhammaLivePage{min-height:70vh;padding:clamp(32px,6vw,78px) 18px 72px;background:#faf7f0;color:#342d24}',
@@ -27,61 +27,9 @@ const styles = [
   '@media(max-width:680px){.dhammaLiveHero{border-radius:20px}.dhammaLiveGrid{grid-template-columns:1fr;gap:14px}.dhammaLiveCard{padding:24px 17px}.dhammaLiveButton{width:100%;max-width:330px}}'
 ].join('')
 
-export default function DhammaLivePage({ lang = 'th', goToPage, user }) {
+
+export default function DhammaLivePage({ lang = 'th', goToPage }) {
   const th = lang === 'th'
-  const [password, setPassword] = useState('')
-  const [videoId, setVideoId] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-
-  const handleUnlock = async (event) => {
-    event.preventDefault()
-    setBusy(true)
-    setError('')
-    try {
-      const response = await fetch('/api/line-login?route=dhamma-live-access', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      })
-      const result = await response.json()
-      if (!response.ok || !result.success) {
-        if (result.code === 'LIVE_PASSWORD_NOT_CONFIGURED') {
-          setError(th
-            ? 'ระบบยังไม่ได้ตั้งค่ารหัส Dhamma Live กรุณาติดต่อวัด'
-            : 'Dhamma Live access has not been configured yet. Please contact the monastery.')
-        } else if (result.code === 'ACTIVE_MEMBERSHIP_REQUIRED') {
-          setError(th
-            ? 'ต้องเป็นสมาชิกที่ยังใช้งานอยู่จึงจะรับชมได้ กรุณาติดต่อวัดเรื่องสถานะสมาชิก'
-            : 'An active membership is required. Please contact the monastery about your membership.')
-        } else if (result.code === 'LOGIN_REQUIRED') {
-          setError(th ? 'กรุณาเข้าสู่ระบบสมาชิกก่อนรับชม' : 'Please sign in before viewing.')
-        } else if (result.code === 'LIVE_PASSWORD_INVALID') {
-          setError(th ? 'รหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง' : 'Incorrect password. Please try again.')
-        } else {
-          setError(th
-            ? 'ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
-            : 'Access could not be verified. Please try again.')
-        }
-        return
-      }
-      setVideoId(result.videoId)
-      setPassword('')
-    } catch {
-      setError(th
-        ? 'เชื่อมต่อระบบตรวจสอบไม่ได้ กรุณาลองใหม่'
-        : 'Could not reach the access checker. Please try again.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const continueToLogin = () => {
-    sessionStorage.setItem('after_login_page', 'dhamma-live')
-    localStorage.setItem('after_login_page', 'dhamma-live')
-    goToPage('login-page')
-  }
 
   return (
     <main className="dhammaLivePage">
@@ -96,91 +44,52 @@ export default function DhammaLivePage({ lang = 'th', goToPage, user }) {
             : 'Listen to Dhamma radio and watch live teachings from Nathoeng Monastery.'}</p>
         </header>
 
-        {!user ? (
-          <section className="dhammaLiveCard" style={{ maxWidth: 650, margin: '22px auto 0' }}>
-            <span className="dhammaLiveCardIcon" aria-hidden="true">🔒</span>
-            <h2>{th ? 'สำหรับสมาชิกเท่านั้น' : 'Members only'}</h2>
-            <p>{th
-              ? 'กรุณาเข้าสู่ระบบสมาชิก หากยังไม่ได้เป็นสมาชิก ระบบจะพาไปยังหน้าสมัครสมาชิก'
-              : 'Please sign in. If you are not yet a member, continue to the membership registration page.'}</p>
-            <button className="dhammaLiveButton" type="button" onClick={continueToLogin}>
-              {th ? 'เข้าสู่ระบบ / สมัครสมาชิก' : 'Sign in / Join'}
-            </button>
+        <div className="dhammaLiveGrid">
+          <section className="dhammaLiveCard" aria-labelledby="nathoeng-radio-heading">
+            <span className="dhammaLiveCardIcon" aria-hidden="true">♫</span>
+            <h2 id="nathoeng-radio-heading">Nathoeng Dhamma Radio</h2>
+            <p style={{ fontSize: 15, color: '#554126', fontWeight: 700 }}>
+              {th ? 'กำลังออกอากาศ: เสียงเทศน์จาก ' : 'Now playing: Dhamma talk by '}
+              {th ? NOW_PLAYING : 'Luang Pu Thet Thesrangsi'}
+            </p>
+            <iframe
+              className="dhammaLivePlayer"
+              src={'https://www.youtube-nocookie.com/embed/' + YOUTUBE_VIDEO_ID + '?playsinline=1'}
+              title="Nathoeng Dhamma Radio Live"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+            <a
+              className="dhammaLiveButton"
+              href={'https://youtube.com/live/' + YOUTUBE_VIDEO_ID}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {th ? 'เปิดใน YouTube ↗' : 'Open in YouTube ↗'}
+            </a>
           </section>
-        ) : (
-          <>
-            <div className="dhammaLiveGrid">
-              <section className="dhammaLiveCard" aria-labelledby="nathoeng-radio-heading">
-                <span className="dhammaLiveCardIcon" aria-hidden="true">♫</span>
-                <h2 id="nathoeng-radio-heading">{th ? 'Nathoeng Dhamma Radio' : 'Nathoeng Dhamma Radio'}</h2>
-                {!videoId ? (
-                  <>
-                    <p>{th
-                      ? 'เข้าสู่ระบบสมาชิกแล้ว กรอกรหัสผ่านเพื่อเปิดรับชมไลฟ์'
-                      : 'Enter the Dhamma Live password to open the stream.'}</p>
-                    <form className="dhammaLiveForm" onSubmit={handleUnlock}>
-                      <input
-                        className="dhammaLiveInput"
-                        type="password"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder={th ? 'รหัสผ่าน Dhamma Live' : 'Dhamma Live password'}
-                        aria-label={th ? 'รหัสผ่าน Dhamma Live' : 'Dhamma Live password'}
-                        required
-                      />
-                      <button className="dhammaLiveButton" type="submit" disabled={busy}>
-                        {busy
-                          ? (th ? 'กำลังตรวจสอบ…' : 'Checking…')
-                          : (th ? 'เปิดไลฟ์' : 'Open live stream')}
-                      </button>
-                    </form>
-                    {error && <p className="dhammaLiveError" role="alert">{error}</p>}
-                  </>
-                ) : (
-                  <>
-                    <iframe
-                      className="dhammaLivePlayer"
-                      src={'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&playsinline=1'}
-                      title="Nathoeng Dhamma Radio Live"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                    />
-                    <a
-                      className="dhammaLiveButton"
-                      href={'https://youtube.com/live/' + videoId}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {th ? 'เปิดใน YouTube ↗' : 'Open in YouTube ↗'}
-                    </a>
-                  </>
-                )}
-              </section>
 
-              <section className="dhammaLiveCard" aria-labelledby="siangdham-radio-heading">
-                <span className="dhammaLiveCardIcon" aria-hidden="true">♫</span>
-                <h2 id="siangdham-radio-heading">{th ? 'วิทยุเสียงธรรม' : 'Dhamma Radio'}</h2>
-                <p>{th ? 'ฟังวิทยุเสียงธรรมเพื่อประชาชน' : 'Listen to Siangdham Radio for the People.'}</p>
-                <a className="dhammaLiveButton" href={RADIO_URL} target="_blank" rel="noopener noreferrer">
-                  {th ? 'เปิดฟังวิทยุ ↗' : 'Listen to Radio ↗'}
-                </a>
-                <p className="dhammaLiveCredit">{th ? 'เสียงโดยวิทยุเสียงธรรมเพื่อประชาชน · เปิดแท็บใหม่' : 'Audio by Siangdham Radio · Opens in a new tab'}</p>
-              </section>
+          <section className="dhammaLiveCard" aria-labelledby="siangdham-radio-heading">
+            <span className="dhammaLiveCardIcon" aria-hidden="true">♫</span>
+            <h2 id="siangdham-radio-heading">{th ? 'วิทยุเสียงธรรม' : 'Dhamma Radio'}</h2>
+            <p>{th ? 'ฟังวิทยุเสียงธรรมเพื่อประชาชน' : 'Listen to Siangdham Radio for the People.'}</p>
+            <a className="dhammaLiveButton" href={RADIO_URL} target="_blank" rel="noopener noreferrer">
+              {th ? 'เปิดฟังวิทยุ ↗' : 'Listen to Radio ↗'}
+            </a>
+            <p className="dhammaLiveCredit">{th ? 'เสียงโดยวิทยุเสียงธรรมเพื่อประชาชน · เปิดแท็บใหม่' : 'Audio by Siangdham Radio · Opens in a new tab'}</p>
+          </section>
 
-              <section className="dhammaLiveCard" aria-labelledby="sbt-tv-heading">
-                <span className="dhammaLiveCardIcon" aria-hidden="true">▶</span>
-                <h2 id="sbt-tv-heading">SBT TV</h2>
-                <p>{th ? 'ชมรายการธรรมะทางโทรทัศน์ SBT' : 'Watch Dhamma programming on SBT TV.'}</p>
-                <a className="dhammaLiveButton" href={TV_URL} target="_blank" rel="noopener noreferrer">
-                  {th ? 'เปิดรับชม SBT TV ↗' : 'Watch SBT TV ↗'}
-                </a>
-                <p className="dhammaLiveCredit">{th ? 'ภาพและเสียงโดย SBT TV · เปิดแท็บใหม่' : 'Video and audio by SBT TV · Opens in a new tab'}</p>
-              </section>
-            </div>
-          </>
-        )}
+          <section className="dhammaLiveCard" aria-labelledby="sbt-tv-heading">
+            <span className="dhammaLiveCardIcon" aria-hidden="true">▶</span>
+            <h2 id="sbt-tv-heading">SBT TV</h2>
+            <p>{th ? 'ชมรายการธรรมะทางโทรทัศน์ SBT' : 'Watch Dhamma programming on SBT TV.'}</p>
+            <a className="dhammaLiveButton" href={TV_URL} target="_blank" rel="noopener noreferrer">
+              {th ? 'เปิดรับชม SBT TV ↗' : 'Watch SBT TV ↗'}
+            </a>
+            <p className="dhammaLiveCredit">{th ? 'ภาพและเสียงโดย SBT TV · เปิดแท็บใหม่' : 'Video and audio by SBT TV · Opens in a new tab'}</p>
+          </section>
+        </div>
 
         <button className="dhammaLiveBack" type="button" onClick={() => goToPage('home')}>
           {th ? '← กลับสู่หน้าหลัก' : '← Back to Home'}
