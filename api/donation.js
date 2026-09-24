@@ -1436,6 +1436,17 @@ export default async function handler(req, res) {
         });
       }
 
+      if (session.actingAdminId) {
+        const adminResponse = await fetch(
+          `${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.actingAdminId)}&select=role&limit=1`,
+          { headers: jsonHeaders(supabaseSecretKey), cache: 'no-store' }
+        );
+        const admins = await adminResponse.json();
+        if (!adminResponse.ok || admins?.[0]?.role !== 'admin') {
+          return res.status(403).json({ success: false, message: 'Administrator permission has expired' });
+        }
+      }
+
       const donationData = {
         donation_type:
           donationType,
@@ -1475,10 +1486,10 @@ export default async function handler(req, res) {
             : null,
 
         source:
-          'member',
+          session.actingAdminId ? 'admin' : 'member',
 
         created_by_member_id:
-          memberId
+          session.actingAdminId || memberId
       };
 
       const insertResponse = await fetch(

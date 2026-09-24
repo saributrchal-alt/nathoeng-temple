@@ -296,13 +296,14 @@ export default async function handler(req, res) {
           telegramUsername:
             member.telegram_username || '',
           picture: member.profile_image_url || member.picture_url || '',
-          role: member.role,
-          isAdmin: member.role === 'admin',
+          role: session.actingAdminId ? 'member' : member.role,
+          isAdmin: !session.actingAdminId && member.role === 'admin',
           authProvider:
             session.authProvider ||
             (member.telegram_uid && !member.line_uid
               ? 'telegram'
               : 'line'),
+          actingAsMember: Boolean(session.actingAdminId),
           lineOaFriend:
             member.line_oa_friend === true,
           lineOaCheckedAt:
@@ -340,7 +341,7 @@ export default async function handler(req, res) {
     if (requestedMode === 'link') {
       const session = getSessionFromRequest(req);
 
-      if (!session?.memberId) {
+      if (!session?.memberId || session.actingAdminId) {
         return res.status(401).json({
           success: false,
           code: 'LINK_SESSION_REQUIRED',
@@ -615,7 +616,7 @@ export default async function handler(req, res) {
     if (linkMode) {
       const session = getSessionFromRequest(req);
 
-      if (!session?.memberId) {
+      if (!session?.memberId || session.actingAdminId) {
         return res.status(401).json({
           success: false,
           message: 'Please sign in before linking LINE'

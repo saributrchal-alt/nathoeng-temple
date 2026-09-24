@@ -589,7 +589,9 @@ function LoginPage({
               </h3>
 
               <p className="loginSuccessText">
-                {user.authProvider === 'password'
+                {user.actingAsMember
+                  ? (th ? 'ผู้ดูแลกำลังดำเนินการในนามสมาชิก' : 'An administrator is acting as this member.')
+                  : user.authProvider === 'password'
                   ? (th ? 'ท่านได้เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านแล้ว' : 'You are signed in with your username and password.')
                   : user.authProvider === 'telegram'
                   ? th
