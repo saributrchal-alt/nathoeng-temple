@@ -1,3 +1,5 @@
+import { hasCompleteDonationIdentity } from '../lib/_donation-identity.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -49,7 +51,7 @@ export default async function handler(req, res) {
       supabaseUrl +
         '/rest/v1/members?line_uid=eq.' +
         encodeURIComponent(lineUid) +
-        '&select=id,line_uid,display_name,full_name,donation_profile_completed_at,role',
+        '&select=id,line_uid,display_name,full_name,tax_id,role',
       {
         method: 'GET',
         headers: {
@@ -74,10 +76,7 @@ export default async function handler(req, res) {
 
     const member = members[0];
 
-    if (
-      !member.full_name ||
-      !member.donation_profile_completed_at
-    ) {
+    if (!hasCompleteDonationIdentity(member)) {
       return res.status(400).json({
         success: false,
         code: 'IDENTITY_PROFILE_REQUIRED',
