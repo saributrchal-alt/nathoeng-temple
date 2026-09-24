@@ -1,5 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+function compressPhoto(canvas) {
+  for (const quality of [0.78, 0.65, 0.5, 0.35, 0.2]) {
+    const photo = canvas.toDataURL('image/jpeg', quality);
+    if (photo.length <= 100000) return photo;
+  }
+  return null;
+}
+
 export default function MemberPhotoEditor({ initialPhoto = '', onChange, lang = 'th' }) {
   const th = lang === 'th';
   const [source, setSource] = useState(null);
@@ -13,6 +21,9 @@ export default function MemberPhotoEditor({ initialPhoto = '', onChange, lang = 
   const stream = useRef(null);
   const canvas = useRef(null);
   const serial = useRef(0);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
   useEffect(() => {
     if (!initialPhoto) return;
@@ -29,7 +40,15 @@ export default function MemberPhotoEditor({ initialPhoto = '', onChange, lang = 
     ctx.fillRect(0, 0, 256, 256);
     ctx.drawImage(source, (source.width - size) * x / 100,
       (source.height - size) * y / 100, size, size, 0, 0, 256, 256);
-  }, [source, zoom, x, y]);
+    const photo = compressPhoto(c);
+    if (photo) {
+      setError('');
+      onChangeRef.current(photo);
+    } else {
+      setError(th ? 'รูปยังใหญ่เกินไป กรุณาเลือกรูปอื่น' : 'Photo is too large. Choose another photo.');
+      onChangeRef.current('');
+    }
+  }, [source, zoom, x, y, th]);
   useEffect(() => () => {
     serial.current += 1;
     stream.current?.getTracks().forEach((track) => track.stop());
@@ -85,8 +104,8 @@ export default function MemberPhotoEditor({ initialPhoto = '', onChange, lang = 
     closeCamera();
   }
   function saveCrop() {
-    const photo = canvas.current.toDataURL('image/jpeg', .78);
-    if (photo.length > 100000) { setError(th ? 'รูปยังใหญ่เกินไป' : 'Image is still too large.'); return; }
+    const photo = compressPhoto(canvas.current);
+    if (!photo) { setError(th ? 'รูปยังใหญ่เกินไป' : 'Image is still too large.'); return; }
     setPreview(photo); onChange(photo); setSource(null);
   }
   const field = { display: 'grid', gap: 5, margin: '9px 0' };
@@ -99,7 +118,7 @@ export default function MemberPhotoEditor({ initialPhoto = '', onChange, lang = 
     {source && <div style={{ marginTop: 12 }}>
       <canvas ref={canvas} width="256" height="256" aria-label={th ? 'ตัวอย่างภาพครอบวงกลม' : 'Circular crop preview'} style={{ width: 200, height: 200, maxWidth: '100%', borderRadius: '50%' }} />
       {[[th ? 'ซูม' : 'Zoom', zoom, setZoom, 1, 3, .01], [th ? 'เลื่อนซ้าย–ขวา' : 'Left/right', x, setX, 0, 100, 1], [th ? 'เลื่อนขึ้น–ลง' : 'Up/down', y, setY, 0, 100, 1]].map(([label, value, setter, min, max, step]) => <label key={label} style={field}>{label}<input type="range" min={min} max={max} step={step} value={value} onChange={(e) => setter(Number(e.target.value))} /></label>)}
-      <button type="button" onClick={saveCrop}>{th ? 'ใช้รูปนี้ (บีบอัด 256 × 256)' : 'Use this photo (256 × 256)'}</button>
+      <button type="button" onClick={saveCrop}>{th ? 'เสร็จสิ้นการปรับรูป' : 'Finish adjusting photo'}</button>
     </div>}
     {error && <p role="alert" style={{ color: '#a23f34' }}>{error}</p>}
   </fieldset>;
