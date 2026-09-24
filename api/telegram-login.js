@@ -729,11 +729,11 @@ export default async function handler(req, res) {
         merged,
         user: {
           memberId: linkedMember.id,
-          name: linkedMember.display_name,
+          name: linkedMember.full_name || linkedMember.display_name,
           lineUid: linkedMember.line_uid || null,
           telegramUid: linkedMember.telegram_uid,
           telegramUsername: linkedMember.telegram_username || '',
-          picture: linkedMember.picture_url || '',
+          picture: linkedMember.profile_image_url || linkedMember.picture_url || '',
           role: linkedMember.role,
           authProvider: session.authProvider || 'telegram',
           isAdmin: linkedMember.role === 'admin'
@@ -888,7 +888,7 @@ export default async function handler(req, res) {
           savedMember.id,
 
         name:
-          savedMember.display_name,
+          savedMember.full_name || savedMember.display_name,
 
         lineUid:
           savedMember.line_uid ||
@@ -902,7 +902,7 @@ export default async function handler(req, res) {
           '',
 
         picture:
-          savedMember.picture_url ||
+          savedMember.profile_image_url || savedMember.picture_url ||
           '',
 
         role:

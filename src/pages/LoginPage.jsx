@@ -15,6 +15,23 @@ function LoginPage({
 
   const [profileImageError, setProfileImageError] =
     useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  async function handlePasswordLogin(event) {
+    event.preventDefault();
+    setPasswordBusy(true); setPasswordError('');
+    try {
+      const response = await fetch('/api/donation-profile', { method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', username, password }) });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to sign in');
+      setPassword('');
+      window.location.assign('/#my-dashboard');
+    } catch (error) { setPasswordError(error.message); setPasswordBusy(false); }
+  }
 
   return (
     <div className="guidePage loginPage">
@@ -506,8 +523,8 @@ function LoginPage({
 
           <p>
             {th
-              ? 'เลือกช่องทางเข้าสู่ระบบสมาชิกของวัด: LINE สำหรับภาษาไทย หรือ Telegram สำหรับ English - ไทย'
-              : 'Choose a member sign-in channel: LINE for Thai or Telegram for English - Thai.'}
+              ? 'เข้าสู่ระบบผ่าน LINE, Telegram หรือชื่อผู้ใช้ที่เจ้าหน้าที่วัดออกให้'
+              : 'Sign in with LINE, Telegram or a username issued by monastery staff.'}
           </p>
         </div>
 
@@ -559,7 +576,9 @@ function LoginPage({
               </h3>
 
               <p className="loginSuccessText">
-                {user.authProvider === 'telegram'
+                {user.authProvider === 'password'
+                  ? (th ? 'ท่านได้เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านแล้ว' : 'You are signed in with your username and password.')
+                  : user.authProvider === 'telegram'
                   ? th
                     ? 'ท่านได้เข้าสู่ระบบสมาชิกของวัดผ่าน Telegram เรียบร้อยแล้ว'
                     : 'You are successfully signed in to the monastery member system with Telegram.'
@@ -665,10 +684,18 @@ function LoginPage({
                 <strong>Telegram:</strong> English + ไทย · bilingual communication
               </div>
 
+              <form onSubmit={handlePasswordLogin} style={{ textAlign: 'left', borderTop: '1px solid #e7dccd', paddingTop: 18, marginTop: 22, display: 'grid', gap: 10 }}>
+                <strong>{th ? 'บัญชีที่สมัครกับเจ้าหน้าที่วัด' : 'Account registered at the monastery'}</strong>
+                <label>{th ? 'ชื่อผู้ใช้' : 'Username'}<input required autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: 46, border: '1px solid #d8c9b5', borderRadius: 9, padding: '8px 12px' }} /></label>
+                <label>{th ? 'รหัสผ่าน' : 'Password'}<input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: 46, border: '1px solid #d8c9b5', borderRadius: 9, padding: '8px 12px' }} /></label>
+                {passwordError && <p role="alert" style={{ color: '#a23f34', margin: 0 }}>{passwordError}</p>}
+                <button className="studentLoginBtn" type="submit" disabled={passwordBusy} style={{ marginTop: 4 }}>{passwordBusy ? (th ? 'กำลังเข้าสู่ระบบ…' : 'Signing in…') : (th ? 'เข้าสู่ระบบด้วยชื่อผู้ใช้' : 'Sign in with username')}</button>
+              </form>
+
               <p className="loginHelpText">
                 {th
-                  ? 'ระบบจะใช้บัญชี LINE หรือ Telegram เพื่อยืนยันตัวตนก่อนทำรายการจองเข้าพักปฏิบัติธรรมและใช้บริการสมาชิกของวัด'
-                  : 'LINE or Telegram is used to verify your identity before retreat booking and access to monastery member services.'}
+                  ? 'สมาชิกที่เจ้าหน้าที่สมัครให้สามารถใช้ชื่อผู้ใช้และรหัสผ่าน โดยไม่ต้องมีอีเมลหรือ LINE'
+                  : 'Staff-registered members can use a username and password without email or LINE.'}
               </p>
 
               <p className="loginPrivacyText">

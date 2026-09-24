@@ -2,6 +2,7 @@ import {
   getSessionFromRequest,
   clearSessionCookie
 } from '../lib/_auth.js';
+import { handleWalkinMemberRequest } from '../lib/_walkin-members.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
   return {
@@ -25,6 +26,11 @@ function isValidIdentityNumber(value) {
 }
 
 export default async function handler(req, res) {
+  // Share an existing Vercel function for member registration and password login.
+  if (req.method === 'POST' && req.body && Object.hasOwn(req.body, 'action')) {
+    return handleWalkinMemberRequest(req, res);
+  }
+
   const session = getSessionFromRequest(req);
 
   if (!session?.memberId) {
@@ -59,7 +65,7 @@ export default async function handler(req, res) {
       const response = await fetch(
         `${supabaseUrl}/rest/v1/members` +
           `?id=eq.${encodeURIComponent(memberId)}` +
-          `&select=id,full_name,tax_id,country_code,donation_profile_completed_at`,
+          `&select=id,full_name,tax_id,country_code,birth_date,profile_image_url,donation_profile_completed_at`,
         {
           method: 'GET',
           headers: supabaseHeaders(supabaseSecretKey),
@@ -108,6 +114,8 @@ export default async function handler(req, res) {
         success: true,
         donationProfileComplete: completed,
         fullName: member.full_name || '',
+        birthDate: member.birth_date || '',
+        picture: member.profile_image_url || '',
         countryCode:
           String(member.country_code || '')
             .trim()
@@ -139,7 +147,9 @@ export default async function handler(req, res) {
     const {
       fullName,
       taxId,
-      countryCode
+      countryCode,
+      birthDate,
+      picture
     } = req.body || {};
 
     const cleanFullName =
@@ -158,6 +168,17 @@ export default async function handler(req, res) {
       String(countryCode || '')
         .trim()
         .toUpperCase();
+
+    const cleanBirthDate = String(birthDate || '').trim();
+    const cleanPicture = String(picture || '');
+    if (cleanBirthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(cleanBirthDate) ||
+      !Number.isFinite(Date.parse(cleanBirthDate)) || new Date(cleanBirthDate).toISOString().slice(0, 10) !== cleanBirthDate ||
+      cleanBirthDate > new Date().toISOString().slice(0, 10))) {
+      return res.status(400).json({ success: false, message: 'Invalid date of birth' });
+    }
+    if (cleanPicture && (cleanPicture.length > 100000 || !/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/.test(cleanPicture))) {
+      return res.status(400).json({ success: false, message: 'Invalid profile picture' });
+    }
 
     if (!cleanFullName) {
       return res.status(400).json({
@@ -259,6 +280,8 @@ export default async function handler(req, res) {
       if (countryWasProvided) {
         patch.country_code = cleanCountryCode;
       }
+      if (cleanBirthDate) patch.birth_date = cleanBirthDate;
+      if (cleanPicture) patch.profile_image_url = cleanPicture;
 
       const response = await fetch(
         `${supabaseUrl}/rest/v1/members` +
@@ -317,7 +340,9 @@ export default async function handler(req, res) {
           )
             .trim()
             .toUpperCase(),
-        hasIdentityNumber: true
+        hasIdentityNumber: true,
+        birthDate: savedMember.birth_date || '',
+        picture: savedMember.profile_image_url || ''
       });
     } catch (error) {
       console.error(

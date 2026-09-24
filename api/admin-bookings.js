@@ -65,8 +65,8 @@ async function enrichReviews(supabaseUrl, secretKey, reviews) {
         member.line_display_name ||
         null,
       picture_url:
-        member.picture_url ||
         member.profile_image_url ||
+        member.picture_url ||
         member.line_picture_url ||
         member.avatar_url ||
         null,
@@ -147,7 +147,7 @@ async function handlePublicTeam(req, res, supabaseUrl, secretKey) {
   const team = (Array.isArray(rows) ? rows : [])
     .map((member) => ({
       name: member.full_name || member.display_name || member.name || member.line_display_name || '',
-      picture_url: member.picture_url || member.profile_image_url || member.line_picture_url || member.avatar_url || '',
+      picture_url: member.profile_image_url || member.picture_url || member.line_picture_url || member.avatar_url || '',
       team_group: member.team_group || 'volunteer',
       team_role_th: member.team_role_th || '',
       team_role_en: member.team_role_en || '',
@@ -266,10 +266,11 @@ async function handleMembers(req, res, supabaseUrl, secretKey) {
     bookingsByMember.get(key).push(booking);
   });
 
-  const members = (Array.isArray(membersData) ? membersData : []).map((member) => ({
-    ...member,
-    stay_history: bookingsByMember.get(String(member.id)) || []
-  }));
+  const members = (Array.isArray(membersData) ? membersData : []).map((member) => {
+    const { tax_id: _privateIdentity, ...safeMember } = member;
+    return { ...safeMember, has_identity_number: Boolean(_privateIdentity),
+      stay_history: bookingsByMember.get(String(member.id)) || [] };
+  });
 
   return res.status(200).json({
     success: true,

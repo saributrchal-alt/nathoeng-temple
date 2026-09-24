@@ -453,6 +453,10 @@ export default async function handler(req, res) {
           ? String(body.ownerMemberId).trim()
           : null;
 
+      if (!ownerMemberId) {
+        return res.status(400).json({ success: false, message: 'Select a registered member before recording a new donation' });
+      }
+
       let donorName =
         String(body.donorName || '').trim();
 

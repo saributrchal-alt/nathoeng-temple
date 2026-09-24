@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import MemberPhotoEditor from '../components/MemberPhotoEditor';
 
 
 const ISO_COUNTRY_CODES = [
@@ -53,6 +54,14 @@ function MyDashboard({
   const [editFullName, setEditFullName] = useState('');
   const [editCountryCode, setEditCountryCode] = useState('');
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [editBirthDate, setEditBirthDate] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
+  const [editPicture, setEditPicture] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
   const [donationLoading, setDonationLoading] = useState(true);
   const [connectUnreadCount, setConnectUnreadCount] = useState(0);
   const [pushDeviceStatus, setPushDeviceStatus] = useState('idle');
@@ -109,6 +118,8 @@ function MyDashboard({
           String(data.countryCode || '').trim().toUpperCase()
         );
         setHasIdentityNumber(data.hasIdentityNumber === true);
+        setBirthDate(data.birthDate || '');
+        setProfilePicture(data.picture || '');
       } catch (error) {
         console.error(
           'MyDashboard identity profile error:',
@@ -490,8 +501,24 @@ function MyDashboard({
     setEditFullName(verifiedFullName || user?.name || '');
     setEditCountryCode(countryCode || 'TH');
     setEditIdentityNumber('');
+    setEditBirthDate(birthDate);
+    setEditPicture('');
     setProfileError('');
     setProfileEditorOpen(true);
+  };
+
+  const changePassword = async (event) => {
+    event.preventDefault(); setPasswordBusy(true); setPasswordMessage('');
+    try {
+      const response = await fetch('/api/donation-profile', { method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'change_password', currentPassword: oldPassword, newPassword }) });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to change password');
+      setOldPassword(''); setNewPassword('');
+      setPasswordMessage(th ? 'เปลี่ยนรหัสผ่านแล้ว' : 'Password changed.');
+    } catch (error) { setPasswordMessage(error.message); }
+    finally { setPasswordBusy(false); }
   };
 
   const saveProfile = async () => {
@@ -531,6 +558,8 @@ function MyDashboard({
         body: JSON.stringify({
           fullName: cleanFullName,
           countryCode: cleanCountryCode,
+          birthDate: editBirthDate,
+          picture: editPicture,
           ...(cleanIdentityNumber ? { taxId: cleanIdentityNumber } : {})
         })
       });
@@ -554,6 +583,8 @@ function MyDashboard({
       setVerifiedFullName(String(data.fullName || cleanFullName).trim());
       setCountryCode(String(data.countryCode || cleanCountryCode).trim().toUpperCase());
       setHasIdentityNumber(data.hasIdentityNumber === true || hasIdentityNumber || Boolean(cleanIdentityNumber));
+      setBirthDate(data.birthDate || editBirthDate);
+      setProfilePicture(data.picture || profilePicture);
       setProfileEditorOpen(false);
       setEditIdentityNumber('');
     } catch (error) {
@@ -655,9 +686,9 @@ function MyDashboard({
 
         <section className="compactProfileCard">
           <div className="compactProfileAvatar">
-            {user?.picture && !profileImageError ? (
+            {(profilePicture || user?.picture) && !profileImageError ? (
               <img
-                src={user.picture}
+                src={profilePicture || user.picture}
                 alt={verifiedFullName || user?.name || ''}
                 referrerPolicy="no-referrer"
                 onError={() => setProfileImageError(true)}
@@ -724,7 +755,9 @@ function MyDashboard({
                 ? `✓ ${th ? 'เชื่อมต่อ LINE และ Telegram แล้ว' : 'LINE and Telegram connected'}`
                 : user?.telegramUid
                   ? `✓ ${th ? 'เชื่อมต่อบัญชี Telegram แล้ว' : 'Telegram connected'}`
-                  : `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`}
+                  : user?.lineUid
+                    ? `✓ ${th ? 'เชื่อมต่อบัญชี LINE แล้ว' : 'LINE connected'}`
+                    : `✓ ${th ? 'สมาชิกที่สมัครกับเจ้าหน้าที่วัด' : 'Registered at the monastery'}`}
             </span>
 
             <button
@@ -737,6 +770,16 @@ function MyDashboard({
             </button>
           </div>
         </section>
+
+        {user?.authProvider === 'password' && <details style={{ maxWidth: 590, margin: '12px auto 20px', padding: 18, background: '#fffdf8', border: '1px solid #e2d8c8', borderRadius: 14 }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{th ? 'เปลี่ยนรหัสผ่าน' : 'Change password'}</summary>
+          <form onSubmit={changePassword} style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+            <label>{th ? 'รหัสผ่านเดิม' : 'Current password'}<input type="password" required autoComplete="current-password" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} style={{ display: 'block', width: '100%', minHeight: 42 }} /></label>
+            <label>{th ? 'รหัสผ่านใหม่อย่างน้อย 12 ตัวอักษร' : 'New password, at least 12 characters'}<input type="password" required minLength={12} maxLength={128} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} style={{ display: 'block', width: '100%', minHeight: 42 }} /></label>
+            <button type="submit" disabled={passwordBusy}>{passwordBusy ? (th ? 'กำลังบันทึก…' : 'Saving…') : (th ? 'บันทึกรหัสผ่านใหม่' : 'Save new password')}</button>
+            {passwordMessage && <p role="status">{passwordMessage}</p>}
+          </form>
+        </details>}
 
         <button
           type="button"
@@ -1356,6 +1399,11 @@ function MyDashboard({
               </div>
 
               <div style={{ display: 'grid', gap: '16px', marginTop: '22px' }}>
+                <MemberPhotoEditor lang={lang} onChange={setEditPicture} />
+                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                  <span>{th ? 'วันเกิด (ค.ศ.)' : 'Date of birth'}</span>
+                  <input type="date" value={editBirthDate} onChange={(event) => setEditBirthDate(event.target.value)} style={{ minHeight: 48, borderRadius: 12, border: '1px solid #d8cbb8', padding: '0 13px' }} />
+                </label>
                 <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
                   <span>{th ? 'ชื่อและนามสกุล' : 'Full name'}</span>
                   <input

@@ -38,6 +38,7 @@ function AdminDashboard({ lang, goToPage }) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
   const [activeTab, setActiveTab] = useState('menu');
+  const [deskDonorId, setDeskDonorId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [processingId, setProcessingId] = useState(null);
@@ -1933,6 +1934,7 @@ function AdminDashboard({ lang, goToPage }) {
 
           <AdminMembersPanel
             lang={lang}
+            onDonation={(id) => { setDeskDonorId(id); setActiveTab('donations'); }}
           />
         </div>
       </div>
@@ -2509,6 +2511,9 @@ function AdminDashboard({ lang, goToPage }) {
         ) : (
           <AdminDonationPanel
             lang={lang}
+            initialMemberId={deskDonorId}
+            onInitialMemberUsed={() => setDeskDonorId(null)}
+            onRegister={() => setActiveTab('members')}
             t={t}
             donationLoading={donationLoading}
             donationError={donationError}
