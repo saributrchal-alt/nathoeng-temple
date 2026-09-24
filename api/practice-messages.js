@@ -117,7 +117,8 @@ function getSessionFromRequest(req) {
     )
   );
 
-  return verifySessionToken(token);
+  const session = verifySessionToken(token);
+  return session?.actingAdminId && req.method !== 'GET' ? null : session;
 }
 
 function requireAdmin(req, res) {

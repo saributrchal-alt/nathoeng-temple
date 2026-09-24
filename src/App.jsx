@@ -480,6 +480,8 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [user, setUser] = useState(null)
+  const [returningToAdmin, setReturningToAdmin] = useState(false)
+  const [actingError, setActingError] = useState('')
 
   const [studentUser, setStudentUser] = useState(() => {
     try {
@@ -586,7 +588,8 @@ useEffect(() => {
         role:
           data.user.role ||
           (data.user.isAdmin ? 'admin' : 'member'),
-        isAdmin: data.user.isAdmin === true
+        isAdmin: data.user.isAdmin === true,
+        actingAsMember: data.user.actingAsMember === true
       };
 
       setUser(verifiedUser);
@@ -1305,6 +1308,26 @@ const handleLineLogin = async (mode = 'login') => {
     goToPage('home')
   }
 
+  const stopActingAsMember = async () => {
+    if (returningToAdmin) return;
+    setReturningToAdmin(true);
+    setActingError('');
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'stop_as_member' })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to return to admin');
+      window.location.hash = 'admin-dashboard';
+      window.location.reload();
+    } catch (error) {
+      setActingError(error.message);
+      setReturningToAdmin(false);
+    }
+  }
+
   const goToPage = (page) => {
     setCurrentPage(page)
     setMenuOpen(false)
@@ -1514,6 +1537,15 @@ const handleLineLogin = async (mode = 'login') => {
         </div>
       </header>
 
+
+      {user?.actingAsMember && <div role="status" style={{ position: 'sticky', top: 0, zIndex: 1000, background: '#fff1cf', borderBottom: '1px solid #c49745', color: '#4c3917', padding: '12px 18px', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <strong>{lang === 'th' ? `Admin กำลังดำเนินการในนาม ${user.name || 'สมาชิก'}` : `Admin acting as ${user.name || 'member'}`}</strong>
+        <span>{lang === 'th' ? 'ดูข้อมูลและบันทึกการบริจาคได้' : 'View records and enter donations.'}</span>
+        <button type="button" onClick={stopActingAsMember} disabled={returningToAdmin} style={{ minHeight: 40, border: 0, borderRadius: 8, background: '#405c4c', color: '#fff', padding: '8px 14px', fontWeight: 700 }}>
+          {returningToAdmin ? (lang === 'th' ? 'กำลังกลับ...' : 'Returning...') : (lang === 'th' ? 'กลับบัญชี Admin' : 'Return to Admin')}
+        </button>
+        {actingError && <span role="alert" style={{ color: '#a23f34' }}>{actingError}</span>}
+      </div>}
 
       <main>
         {currentPage === 'home' ? (

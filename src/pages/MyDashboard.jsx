@@ -760,14 +760,14 @@ function MyDashboard({
                     : `✓ ${th ? 'สมาชิกที่สมัครกับเจ้าหน้าที่วัด' : 'Registered at the monastery'}`}
             </span>
 
-            <button
+            {!user?.actingAsMember && <button
               type="button"
               className="compactViewButton"
               onClick={openProfileEditor}
               style={{ marginTop: '10px', alignSelf: 'flex-start' }}
             >
               {th ? 'แก้ไขโปรไฟล์' : 'Update Profile'}
-            </button>
+            </button>}
           </div>
         </section>
 
@@ -821,7 +821,7 @@ function MyDashboard({
           <span aria-hidden="true">›</span>
         </button>
 
-        <section
+        {!user?.actingAsMember && <section
           style={{
             marginTop: '10px',
             padding: pushDeviceStatus === 'registered' ? '0' : '10px',
@@ -909,7 +909,7 @@ function MyDashboard({
                 : 'Tap here to receive important monastery news and announcements.')}
             </div>
           )}
-        </section>
+        </section>}
 
         <section
           className="compactSummaryCard"
@@ -934,7 +934,7 @@ function MyDashboard({
                     : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}
                 </small>
               </span>
-              {!user?.lineUid && (
+              {!user?.actingAsMember && !user?.lineUid && (
                 <button
                   type="button"
                   className="compactViewButton"
@@ -954,7 +954,7 @@ function MyDashboard({
                     : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}
                 </small>
               </span>
-              {!user?.telegramUid && (
+              {!user?.actingAsMember && !user?.telegramUid && (
                 <button
                   type="button"
                   className="compactViewButton"
@@ -1286,7 +1286,7 @@ function MyDashboard({
         </section>
 
 
-        <section style={{ marginTop: '22px', padding: '18px', borderRadius: '18px', border: '1px solid #ead6d2', background: '#fffafa' }}>
+        {!user?.actingAsMember && <section style={{ marginTop: '22px', padding: '18px', borderRadius: '18px', border: '1px solid #ead6d2', background: '#fffafa' }}>
           <strong style={{ display: 'block', color: '#7f3f38', marginBottom: '5px' }}>
             {th ? 'การเป็นสมาชิก' : 'Membership'}
           </strong>
@@ -1296,7 +1296,7 @@ function MyDashboard({
           <button type="button" onClick={() => { setCancelMembershipOpen(true); setCancelMembershipError(''); }} style={{ width: '100%', minHeight: '46px', borderRadius: '13px', border: '1px solid #c9675b', background: '#fff', color: '#a23f34', fontWeight: 800, cursor: 'pointer' }}>
             {th ? 'ยกเลิกการเป็นสมาชิกวัดพุทธอุทยานนาเทิง' : 'Cancel Nathoeng Monastery Membership'}
           </button>
-        </section>
+        </section>}
 
         {cancelMembershipOpen && (
           <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(34,28,18,.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>

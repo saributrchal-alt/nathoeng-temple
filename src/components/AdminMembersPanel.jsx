@@ -10,6 +10,8 @@ function AdminMembersPanel({ lang, onDonation }) {
   const [pushStatusByMember, setPushStatusByMember] = useState({});
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMemberOpen, setEditMemberOpen] = useState(false);
+  const [actingBusy, setActingBusy] = useState(false);
+  const [actingError, setActingError] = useState('');
   const [composeChannel, setComposeChannel] = useState(null);
   const [composeText, setComposeText] = useState('');
   const [communications, setCommunications] = useState([]);
@@ -541,6 +543,7 @@ function AdminMembersPanel({ lang, onDonation }) {
   const openMember = (member) => {
     setSelectedMember(member);
     setEditMemberOpen(false);
+    setActingError('');
     setDetailTab('stays');
     setComposeChannel(null);
     setComposeText('');
@@ -554,6 +557,26 @@ function AdminMembersPanel({ lang, onDonation }) {
       order: Number.isFinite(Number(member?.team_order)) ? Number(member.team_order) : 999
     });
     loadCommunications(member.id);
+  };
+
+  const startActingAsMember = async () => {
+    if (!selectedMember?.id || actingBusy) return;
+    setActingBusy(true);
+    setActingError('');
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start_as_member', memberId: selectedMember.id })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to open member account');
+      window.location.hash = 'my-dashboard';
+      window.location.reload();
+    } catch (error) {
+      setActingError(error.message);
+      setActingBusy(false);
+    }
   };
 
   const savePublicTeamProfile = async () => {
@@ -787,6 +810,14 @@ function AdminMembersPanel({ lang, onDonation }) {
               style={{ minHeight: 44, marginBottom: 14, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700 }}>
               {editMemberOpen ? (th ? 'ปิดการแก้ไขโปรไฟล์' : 'Close profile editor') : (th ? 'แก้ไขโปรไฟล์ / ชื่อผู้ใช้ / รหัสผ่าน' : 'Edit profile / username / password')}
             </button>
+            {selectedMember.role === 'member' && <div style={{ marginBottom: 16 }}>
+              <button type="button" disabled={actingBusy} onClick={startActingAsMember}
+                style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#956e26', color: '#fff', padding: '9px 15px', fontWeight: 700 }}>
+                {actingBusy ? (th ? 'กำลังเปิดบัญชี...' : 'Opening member account...') : (th ? 'เข้าใช้งานในนามสมาชิก' : 'Act as this member')}
+              </button>
+              <p style={{ fontSize: 13, color: '#665d51' }}>{th ? 'ดูข้อมูลและบันทึกการบริจาคแทนสมาชิกได้ ระบบเก็บชื่อ Admin ผู้ดำเนินการ และกลับบัญชี Admin ได้ทุกเมื่อ' : 'View this account and record donations. The acting admin is recorded; you can return to the admin account.'}</p>
+              {actingError && <p role="alert" style={{ color: '#a23f34' }}>{actingError}</p>}
+            </div>}
             {editMemberOpen && <AdminMemberProfileEditor key={selectedMember.id} memberId={selectedMember.id} lang={lang}
               onSaved={(saved) => {
                 setMembers((current) => current.map((item) => String(item.id) === String(saved.id) ? { ...item, ...saved } : item));
