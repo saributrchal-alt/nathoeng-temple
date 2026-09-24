@@ -23,14 +23,27 @@ function LoginPage({
   async function handlePasswordLogin(event) {
     event.preventDefault();
     setPasswordBusy(true); setPasswordError('');
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20000);
     try {
       const response = await fetch('/api/donation-profile', { method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', username, password }) });
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', username, password }),
+        signal: controller.signal });
       const data = await response.json();
       if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to sign in');
       setPassword('');
-      window.location.assign('/#my-dashboard');
-    } catch (error) { setPasswordError(error.message); setPasswordBusy(false); }
+      // A hash-only navigation keeps App's old (signed-out) user state.
+      // Reload so App restores the new server session before showing the dashboard.
+      window.location.hash = 'my-dashboard';
+      window.location.reload();
+    } catch (error) {
+      setPasswordError(error.name === 'AbortError'
+        ? (th ? 'การเข้าสู่ระบบใช้เวลานานเกินไป กรุณาลองอีกครั้ง' : 'Sign in timed out. Please try again.')
+        : error.message);
+      setPasswordBusy(false);
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }
 
   return (
