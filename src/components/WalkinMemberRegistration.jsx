@@ -25,6 +25,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
   const th = lang === 'th';
   const [form, setForm] = useState({ fullName: '', citizenId: '', birthDate: '', picture: '', username: '', password: '', memberId: '' });
   const [cardPhoto, setCardPhoto] = useState('');
+  const [cardImported, setCardImported] = useState(false);
   const [cardMatched, setCardMatched] = useState(false);
   const [reviewed, setReviewed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -52,13 +53,14 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
   }
   async function importCard(file) {
     if (!file) return;
-    setBusy(true); setError(''); setReviewed(false); setCreated(null);
+    setBusy(true); setError(''); setReviewed(false); setCreated(null); setCardImported(false);
     try {
       if (file.size > 200000) throw Error('ไฟล์ข้อมูลบัตรใหญ่เกินกำหนด');
       const card = parseCardFile(await file.text());
       setForm({ fullName: card.fullName, citizenId: card.citizenId, birthDate: card.birthDate,
         picture: '', username: '', password: '', memberId: '' });
       setCardPhoto(card.photo);
+      setCardImported(true);
       const match = await request({ action: 'lookup', citizenId: card.citizenId });
       setCardMatched(Boolean(match.member));
       if (match.member) update('memberId', match.member.id);
@@ -67,7 +69,14 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
   }
   async function save(event) {
     event.preventDefault();
-    if (!reviewed) return;
+    if (!reviewed) {
+      setError(th ? 'กรุณายืนยันว่าตรวจข้อมูลกับเจ้าของบัตรแล้ว' : 'Please confirm the details with the cardholder.');
+      return;
+    }
+    if (cardPhoto && !form.picture) {
+      setError(th ? 'รูปจากบัตรยังไม่พร้อม กรุณารอสักครู่หรือเลือกรูปใหม่' : 'The card photo is not ready. Wait a moment or choose another photo.');
+      return;
+    }
     setBusy(true); setError('');
     try {
       const result = await request({ action: 'register', ...form });
@@ -79,7 +88,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
   }
   function reset() {
     setForm({ fullName: '', citizenId: '', birthDate: '', picture: '', username: '', password: '', memberId: '' });
-    setCardPhoto(''); setCardMatched(false); setReviewed(false); setCreated(null); setError('');
+    setCardPhoto(''); setCardImported(false); setCardMatched(false); setReviewed(false); setCreated(null); setError('');
   }
   const field = { display: 'grid', gap: 6, margin: '12px 0', fontWeight: 700 };
   const input = { minHeight: 44, border: '1px solid #d8c9b5', borderRadius: 9, padding: '8px 11px', font: 'inherit', maxWidth: '100%', boxSizing: 'border-box' };
@@ -95,6 +104,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
       <label style={field}>{th ? 'ไฟล์จาก Card Reader (.json)' : 'Card Reader file (.json)'}
         <input type="file" accept=".json,application/json" disabled={busy} onChange={(e) => { importCard(e.target.files?.[0]); e.target.value = ''; }} />
       </label>
+      {cardImported && <p role="status" style={{ color: '#405c4c' }}>{th ? 'อ่านข้อมูลจากไฟล์บัตรแล้ว กรุณาตรวจรายละเอียดด้านล่าง' : 'Card data imported. Please review the details below.'}</p>}
       <form onSubmit={save}>
         <label style={field}>{th ? 'ชื่อและนามสกุล' : 'Full name'}<input style={input} value={form.fullName} required maxLength={200} onChange={(e) => { update('fullName', e.target.value); setReviewed(false); }} /></label>
         <label style={field}>{th ? 'เลขบัตรประชาชน 13 หลัก (ถ้ามี)' : '13-digit national ID (optional)'}<input style={input} value={form.citizenId} inputMode="numeric" pattern="[0-9]{13}" maxLength={13} autoComplete="off" onChange={(e) => { update('citizenId', e.target.value.replace(/\D/g, '')); setCardMatched(false); update('memberId', ''); setReviewed(false); }} onBlur={async () => { if (/^\d{13}$/.test(form.citizenId)) { try { await checkCard(form.citizenId); } catch (e) { setError(e.message); } } }} /></label>
@@ -107,13 +117,15 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
           </select>
         </label>}
         <MemberPhotoEditor key={cardPhoto || 'manual'} initialPhoto={cardPhoto} lang={lang} onChange={(picture) => update('picture', picture)} />
-        {cardPhoto && !form.picture && <p style={{ color: '#805a20' }}>{th ? 'เลื่อน/ซูมรูปจากบัตร แล้วกด “ใช้รูปนี้” ก่อนบันทึก' : 'Adjust the card photo and press “Use this photo” before saving.'}</p>}
+        {cardPhoto && <p role="status" style={{ color: '#805a20' }}>{form.picture
+          ? (th ? 'รูปจากบัตรพร้อมบันทึกแล้ว สามารถเลื่อนหรือซูมเพิ่มเติมได้' : 'Card photo is ready. You can still adjust the crop.')
+          : (th ? 'กำลังเตรียมรูปจากบัตร กรุณารอสักครู่' : 'Preparing the card photo. Please wait.')}</p>}
         <label style={field}>{th ? 'ชื่อผู้ใช้ (ไม่ต้องมีอีเมลหรือ LINE)' : 'Username (no email or LINE needed)'}<input style={input} value={form.username} autoComplete="off" pattern="[a-z][a-z0-9._-]{3,31}" placeholder="example.member" onChange={(e) => update('username', e.target.value.toLowerCase())} required={!form.memberId} /></label>
         <label style={field}>{th ? 'รหัสผ่านอย่างน้อย 12 ตัวอักษร' : 'Password, at least 12 characters'}<input style={input} type="password" value={form.password} minLength={12} maxLength={128} autoComplete="new-password" onChange={(e) => update('password', e.target.value)} required={Boolean(form.username)} /></label>
         <p style={{ fontSize: 12, color: '#746a5f' }}>{th ? 'แจ้งเจ้าของข้อมูลว่าระบบเก็บชื่อ วันเกิด รูป และเลขบัตร (ถ้ามี) เพื่อทำบัญชีสมาชิกและประวัติการทำบุญ แล้วให้เจ้าของข้อมูลตรวจทานก่อนบันทึก' : 'Explain the member and donation record purpose, and ask the member to review their details before saving.'}</p>
         <label style={{ display: 'flex', gap: 9, alignItems: 'start', margin: '14px 0' }}><input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} />{th ? 'ตรวจสอบกับเจ้าของข้อมูลและตรวจรายชื่อสมาชิกเดิมแล้ว' : 'I checked these details with the member and reviewed existing records.'}</label>
         {error && <p role="alert" style={{ color: '#a23f34' }}>{error}</p>}
-        <button type="submit" disabled={busy || !reviewed || (cardPhoto && !form.picture) || (form.citizenId && !/^\d{13}$/.test(form.citizenId))} style={{ minHeight: 46, padding: '9px 18px', background: '#405c4c', color: '#fff', border: 0, borderRadius: 10 }}>{busy ? (th ? 'กำลังบันทึก…' : 'Saving…') : (th ? 'บันทึกสมาชิก' : 'Save member')}</button>
+        <button type="submit" disabled={busy} style={{ minHeight: 46, padding: '9px 18px', background: '#405c4c', color: '#fff', border: 0, borderRadius: 10 }}>{busy ? (th ? 'กำลังบันทึก…' : 'Saving…') : (th ? 'บันทึกสมาชิก' : 'Save member')}</button>
       </form>
     </>}
   </section>;
