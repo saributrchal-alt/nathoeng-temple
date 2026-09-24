@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import WalkinMemberRegistration from './WalkinMemberRegistration';
+import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 
 function AdminMembersPanel({ lang, onDonation }) {
   const th = lang === 'th';
@@ -8,6 +9,7 @@ function AdminMembersPanel({ lang, onDonation }) {
   const [messages, setMessages] = useState([]);
   const [pushStatusByMember, setPushStatusByMember] = useState({});
   const [selectedMember, setSelectedMember] = useState(null);
+  const [editMemberOpen, setEditMemberOpen] = useState(false);
   const [composeChannel, setComposeChannel] = useState(null);
   const [composeText, setComposeText] = useState('');
   const [communications, setCommunications] = useState([]);
@@ -538,6 +540,7 @@ function AdminMembersPanel({ lang, onDonation }) {
 
   const openMember = (member) => {
     setSelectedMember(member);
+    setEditMemberOpen(false);
     setDetailTab('stays');
     setComposeChannel(null);
     setComposeText('');
@@ -779,6 +782,16 @@ function AdminMembersPanel({ lang, onDonation }) {
                   : (th ? 'ยังไม่เปิดรับข่าว' : 'Push not enabled')}
               </div>
             </div>
+
+            <button type="button" onClick={() => setEditMemberOpen((open) => !open)}
+              style={{ minHeight: 44, marginBottom: 14, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700 }}>
+              {editMemberOpen ? (th ? 'ปิดการแก้ไขโปรไฟล์' : 'Close profile editor') : (th ? 'แก้ไขโปรไฟล์ / ชื่อผู้ใช้ / รหัสผ่าน' : 'Edit profile / username / password')}
+            </button>
+            {editMemberOpen && <AdminMemberProfileEditor key={selectedMember.id} memberId={selectedMember.id} lang={lang}
+              onSaved={(saved) => {
+                setMembers((current) => current.map((item) => String(item.id) === String(saved.id) ? { ...item, ...saved } : item));
+                setSelectedMember((current) => current ? { ...current, ...saved } : current);
+              }} />}
 
             <div style={{ border: '1px solid #dfd3c2', borderRadius: '14px', padding: '15px', background: '#fbf8f2', marginBottom: '18px' }}>
               <h3 style={{ margin: '0 0 5px' }}>{text.publicTeamTitle}</h3>
