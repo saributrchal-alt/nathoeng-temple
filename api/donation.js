@@ -1,6 +1,7 @@
 import {
   getSessionFromRequest
 } from '../lib/_auth.js';
+import { hasCompleteDonationIdentity } from '../lib/_donation-identity.js';
 
 function jsonHeaders(secretKey) {
   return {
@@ -1391,7 +1392,7 @@ export default async function handler(req, res) {
       const memberResponse = await fetch(
         `${supabaseUrl}/rest/v1/members` +
           `?id=eq.${encodeURIComponent(memberId)}` +
-          `&select=id,full_name,donation_profile_completed_at`,
+          `&select=id,full_name,tax_id`,
         {
           method: 'GET',
           headers: jsonHeaders(supabaseSecretKey),
@@ -1427,10 +1428,7 @@ export default async function handler(req, res) {
         });
       }
 
-      if (
-        !member.full_name ||
-        !member.donation_profile_completed_at
-      ) {
+      if (!hasCompleteDonationIdentity(member)) {
         return res.status(400).json({
           success: false,
           code: 'DONATION_PROFILE_REQUIRED',

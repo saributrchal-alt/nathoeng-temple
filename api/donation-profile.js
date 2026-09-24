@@ -3,6 +3,11 @@ import {
   clearSessionCookie
 } from '../lib/_auth.js';
 import { handleWalkinMemberRequest } from '../lib/_walkin-members.js';
+import {
+  hasCompleteDonationIdentity,
+  isValidIdentityNumber,
+  normalizeIdentityNumber
+} from '../lib/_donation-identity.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
   return {
@@ -11,18 +16,6 @@ function supabaseHeaders(secretKey, extra = {}) {
     'Content-Type': 'application/json',
     ...extra
   };
-}
-
-function normalizeIdentityNumber(value) {
-  return String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/[\s-]+/g, '');
-}
-
-function isValidIdentityNumber(value) {
-  if (/^\d{13}$/.test(value)) return true;
-  return /^[A-Z0-9]{5,20}$/.test(value);
 }
 
 export default async function handler(req, res) {
@@ -65,7 +58,7 @@ export default async function handler(req, res) {
       const response = await fetch(
         `${supabaseUrl}/rest/v1/members` +
           `?id=eq.${encodeURIComponent(memberId)}` +
-          `&select=id,full_name,tax_id,country_code,birth_date,profile_image_url,donation_profile_completed_at`,
+          `&select=id,full_name,tax_id,country_code,birth_date,profile_image_url`,
         {
           method: 'GET',
           headers: supabaseHeaders(supabaseSecretKey),
@@ -101,14 +94,10 @@ export default async function handler(req, res) {
       }
 
       const hasIdentityNumber =
-        Boolean(String(member.tax_id || '').trim());
+        isValidIdentityNumber(normalizeIdentityNumber(member.tax_id));
 
       const completed =
-        Boolean(
-          member.full_name &&
-          hasIdentityNumber &&
-          member.donation_profile_completed_at
-        );
+        hasCompleteDonationIdentity(member);
 
       return res.status(200).json({
         success: true,
