@@ -2,6 +2,7 @@ import {
   getSessionFromRequest,
   clearSessionCookie
 } from '../lib/_auth.js';
+import { handleWalkinMemberRequest } from '../lib/_walkin-members.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
   return {
@@ -25,6 +26,11 @@ function isValidIdentityNumber(value) {
 }
 
 export default async function handler(req, res) {
+  // Share an existing Vercel function for member registration and password login.
+  if (req.method === 'POST' && req.body && Object.hasOwn(req.body, 'action')) {
+    return handleWalkinMemberRequest(req, res);
+  }
+
   const session = getSessionFromRequest(req);
 
   if (!session?.memberId) {

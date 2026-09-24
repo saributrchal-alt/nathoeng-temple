@@ -38,7 +38,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
   }, [members, form.fullName]);
 
   async function request(body) {
-    const response = await fetch('/api/walkin-members', { method: 'POST', credentials: 'include',
+    const response = await fetch('/api/donation-profile', { method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.success) throw Error(result.message || `HTTP ${response.status}`);

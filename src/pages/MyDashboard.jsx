@@ -510,7 +510,7 @@ function MyDashboard({
   const changePassword = async (event) => {
     event.preventDefault(); setPasswordBusy(true); setPasswordMessage('');
     try {
-      const response = await fetch('/api/walkin-members', { method: 'POST', credentials: 'include',
+      const response = await fetch('/api/donation-profile', { method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'change_password', currentPassword: oldPassword, newPassword }) });
       const data = await response.json();

@@ -24,7 +24,7 @@ function LoginPage({
     event.preventDefault();
     setPasswordBusy(true); setPasswordError('');
     try {
-      const response = await fetch('/api/walkin-members', { method: 'POST', credentials: 'include',
+      const response = await fetch('/api/donation-profile', { method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', username, password }) });
       const data = await response.json();
       if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to sign in');
