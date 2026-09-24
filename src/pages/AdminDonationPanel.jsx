@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export default function AdminDonationPanel({
   lang,
+  initialMemberId,
+  onInitialMemberUsed,
+  onRegister,
   t,
   donationLoading,
   donationError,
@@ -29,7 +32,7 @@ export default function AdminDonationPanel({
 
   const freshForm = () => ({
     donationType: 'money',
-    ownerMode: 'general',
+    ownerMode: 'member',
     ownerMemberId: '',
     donorName: '',
     amount: '',
@@ -213,6 +216,14 @@ export default function AdminDonationPanel({
     setMembers(Array.isArray(j.members) ? j.members : []);
     setMembersLoaded(true);
   };
+
+  useEffect(() => {
+    if (!initialMemberId) return;
+    setForm({ ...freshForm(), ownerMode: 'member', ownerMemberId: initialMemberId });
+    setMode('add');
+    loadMembers().catch((error) => setFormError(error.message));
+    onInitialMemberUsed?.();
+  }, [initialMemberId]);
 
   const close = () => {
     setMode('');
@@ -555,6 +566,9 @@ export default function AdminDonationPanel({
         <button type="button" onClick={openAdd} style={{minHeight:44,padding:'0 16px',border:0,borderRadius:12,background:'#9b7226',color:'#fff',fontWeight:800,cursor:'pointer'}}>
           ＋ {th ? 'เพิ่มรายการทำบุญ' : 'Add Donation'}
         </button>
+        <button type="button" onClick={onRegister} style={{minHeight:44,padding:'0 16px',border:'1px solid #bca06e',borderRadius:12,background:'#fff',color:'#715426',fontWeight:800,cursor:'pointer'}}>
+          {th ? 'ลงทะเบียนผู้มาทำบุญใหม่' : 'Register a walk-in donor'}
+        </button>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10,marginBottom:14}}>
@@ -796,9 +810,7 @@ export default function AdminDonationPanel({
               </div>
 
               <label style={label}>{th?'ผู้บริจาค':'Donor'}</label>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-                {[['general',th?'บุคคลทั่วไป':'Guest'],['member',th?'สมาชิกในระบบ':'Member']].map(([v,l])=><button key={v} type="button" onClick={()=>setForm((p)=>({...p,ownerMode:v,ownerMemberId:v==='general'?'':p.ownerMemberId}))} style={{minHeight:44,border:form.ownerMode===v?'2px solid #9b7226':'1px solid #ddd3c6',borderRadius:12,background:form.ownerMode===v?'#fff8e8':'#fff',fontWeight:700,cursor:'pointer'}}>{l}</button>)}
-              </div>
+              <p style={{fontSize:13,color:'#705a38'}}>{th?'รายการใหม่ต้องผูกกับสมาชิกวัด หากยังไม่มีชื่อ ให้ลงทะเบียนผ่านบัตรหรือกรอกกับเจ้าหน้าที่ก่อน':'New donations are linked to a monastery member. Register a new visitor first.'}</p>
 
               {form.ownerMode==='member' ? <>
                 <input type="search" value={memberSearch} onChange={(e)=>setMemberSearch(e.target.value)} style={input} placeholder={th?'ค้นหาชื่อสมาชิก...':'Search member...'} />

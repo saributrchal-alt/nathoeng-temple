@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import WalkinMemberRegistration from './WalkinMemberRegistration';
 
-function AdminMembersPanel({ lang }) {
+function AdminMembersPanel({ lang, onDonation }) {
   const th = lang === 'th';
   const [members, setMembers] = useState([]);
   const [donations, setDonations] = useState([]);
@@ -213,8 +214,8 @@ function AdminMembersPanel({ lang }) {
     (th ? 'ไม่ระบุชื่อ' : 'Unnamed member');
 
   const pictureUrl = (member) =>
-    member?.picture_url ||
     member?.profile_image_url ||
+    member?.picture_url ||
     member?.line_picture_url ||
     member?.avatar_url ||
     '';
@@ -226,7 +227,7 @@ function AdminMembersPanel({ lang }) {
     if (hasLine(member) && hasTelegram(member)) return text.both;
     if (hasLine(member)) return text.line;
     if (hasTelegram(member)) return text.telegram;
-    return '—';
+    return th ? 'ลงทะเบียนที่วัด' : 'Registered at monastery';
   };
 
   const countryFlag = (code) => {
@@ -360,6 +361,7 @@ function AdminMembersPanel({ lang }) {
       if (providerFilter === 'both' && !(line && telegram)) return false;
       if (providerFilter === 'line' && !line) return false;
       if (providerFilter === 'telegram' && !telegram) return false;
+      if (providerFilter === 'walkin' && (line || telegram)) return false;
 
       if (!q) return true;
 
@@ -599,6 +601,8 @@ function AdminMembersPanel({ lang }) {
         <p style={{ margin: 0, color: '#756c60', lineHeight: 1.65 }}>{text.help}</p>
       </div>
 
+      <WalkinMemberRegistration lang={lang} members={members} onSaved={loadMembers} onDonation={onDonation} />
+
       {error ? (
         <div style={{ border: '1px solid #efc7c2', background: '#fff7f6', borderRadius: '12px', padding: '14px', marginBottom: '16px', color: '#9f2f25' }}>
           {error} <button type="button" onClick={loadMembers}>{text.retry}</button>
@@ -635,6 +639,7 @@ function AdminMembersPanel({ lang }) {
           <option value="both">{text.both}</option>
           <option value="line">{text.line}</option>
           <option value="telegram">{text.telegram}</option>
+          <option value="walkin">{th ? 'สมัครที่วัด' : 'Walk-in'}</option>
         </select>
       </div>
 

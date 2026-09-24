@@ -250,7 +250,7 @@ export default async function handler(req, res) {
         supabaseUrl +
           '/rest/v1/members?id=eq.' +
           encodeURIComponent(session.memberId) +
-          '&select=id,line_uid,telegram_uid,telegram_username,display_name,picture_url,role,line_oa_friend,line_oa_checked_at&limit=1',
+          '&select=id,line_uid,telegram_uid,telegram_username,display_name,full_name,picture_url,profile_image_url,role,line_oa_friend,line_oa_checked_at&limit=1',
         {
           method: 'GET',
           headers: {
@@ -290,12 +290,12 @@ export default async function handler(req, res) {
         success: true,
         user: {
           memberId: member.id,
-          name: member.display_name,
+          name: member.full_name || member.display_name,
           lineUid: member.line_uid || null,
           telegramUid: member.telegram_uid || null,
           telegramUsername:
             member.telegram_username || '',
-          picture: member.picture_url || '',
+          picture: member.profile_image_url || member.picture_url || '',
           role: member.role,
           isAdmin: member.role === 'admin',
           authProvider:
@@ -744,10 +744,10 @@ export default async function handler(req, res) {
         returnPage,
         user: {
           memberId: linkedMember.id,
-          name: linkedMember.display_name,
+          name: linkedMember.full_name || linkedMember.display_name,
           lineUid: linkedMember.line_uid,
           telegramUid: linkedMember.telegram_uid || null,
-          picture: linkedMember.picture_url || '',
+          picture: linkedMember.profile_image_url || linkedMember.picture_url || '',
           role: linkedMember.role,
           isAdmin: linkedMember.role === 'admin',
           authProvider: session.authProvider || 'line',
@@ -932,7 +932,7 @@ export default async function handler(req, res) {
           savedMember.id,
 
         name:
-          savedMember.display_name,
+          savedMember.full_name || savedMember.display_name,
 
         lineUid:
           savedMember.line_uid,
@@ -942,7 +942,7 @@ export default async function handler(req, res) {
           null,
 
         picture:
-          savedMember.picture_url ||
+          savedMember.profile_image_url || savedMember.picture_url ||
           '',
 
         role:
