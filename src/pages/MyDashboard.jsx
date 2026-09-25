@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MemberPhotoEditor from '../components/MemberPhotoEditor';
+import MemberCard from '../components/MemberCard';
 
 
 const ISO_COUNTRY_CODES = [
@@ -770,6 +771,13 @@ function MyDashboard({
             </button>}
           </div>
         </section>
+
+        <MemberCard
+          memberId={user?.memberId}
+          fullName={verifiedFullName || user?.name}
+          photo={profilePicture || user?.picture}
+          lang={lang}
+        />
 
         {user?.authProvider === 'password' && <details style={{ maxWidth: 590, margin: '12px auto 20px', padding: 18, background: '#fffdf8', border: '1px solid #e2d8c8', borderRadius: 14 }}>
           <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{th ? 'เปลี่ยนรหัสผ่าน' : 'Change password'}</summary>
