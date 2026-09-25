@@ -15,5 +15,6 @@ export function parseCardFile(text) {
       !Number.isFinite(Date.parse(birthDate)) || new Date(birthDate).toISOString().slice(0, 10) !== birthDate)) throw Error('วันเกิดไม่ถูกต้อง');
   const photo = part('avatar_image', 100000);
   if (photo && !/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/.test(photo)) throw Error('รูปจากบัตรไม่ถูกต้อง');
-  return { citizenId, birthDate, photo, fullName: [part('name_title', 100), part('first_name', 200), part('last_name', 200)].filter(Boolean).join(' ') };
+  return { citizenId, birthDate, photo, fullName: [part('name_title', 100), part('first_name', 200), part('last_name', 200)].filter(Boolean).join(' '),
+    fullNameEn: part('full_name_en', 200), memberAddress: part('card_address', 500) };
 }
