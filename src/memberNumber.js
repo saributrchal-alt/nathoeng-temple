@@ -16,11 +16,17 @@ export function memberIdFromNumber(value) {
   return memberNumber(id) === number ? id : '';
 }
 
-export function isValidShortMemberNumber(value) {
+export function completeShortMemberNumber(value) {
   const number = String(value || '').trim();
-  if (!/^2\d{12}$/.test(number)) return false;
+  if (!/^2\d{11,12}$/.test(number)) return '';
   let sum = 0;
   for (let index = 0; index < 12; index += 1)
     sum += Number(number[index]) * (index % 2 ? 3 : 1);
-  return (10 - sum % 10) % 10 === Number(number[12]);
+  const complete = number.slice(0, 12) + ((10 - sum % 10) % 10);
+  return number.length === 12 || number === complete ? complete : '';
+}
+
+export function isValidShortMemberNumber(value) {
+  const number = String(value || '').trim();
+  return number.length === 13 && completeShortMemberNumber(number) === number;
 }
