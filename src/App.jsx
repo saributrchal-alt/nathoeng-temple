@@ -480,6 +480,22 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [user, setUser] = useState(null)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('library-login') === '1')
+      sessionStorage.setItem('library_login_pending', String(Date.now()));
+  }, []);
+  useEffect(() => {
+    const since = Number(sessionStorage.getItem('library_login_pending'));
+    if (!since) return;
+    if (Date.now() - since > 15 * 60 * 1000) {
+      sessionStorage.removeItem('library_login_pending');
+      return;
+    }
+    if (user?.memberId && !user.actingAsMember) {
+      sessionStorage.removeItem('library_login_pending');
+      window.location.assign('/api/donation-profile?route=library-sso');
+    }
+  }, [user]);
   const [returningToAdmin, setReturningToAdmin] = useState(false)
   const [actingError, setActingError] = useState('')
 
