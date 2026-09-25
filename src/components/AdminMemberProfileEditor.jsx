@@ -101,7 +101,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       const freshData = await freshResponse.json();
       if (!freshResponse.ok || !freshData?.success) throw Error(freshData?.message || 'Unable to check member profile');
       const fresh = freshData.profile;
-      const currentId = String(fresh.identityNumber || '').replace(/[\\s-]+/g, '').toUpperCase();
+      const currentId = String(fresh.identityNumber || '').replace(/[\s-]+/g, '').toUpperCase();
       if (currentId && currentId !== card.citizenId)
         throw Error(th ? 'เลขบัตรไม่ตรงกับสมาชิกที่เปิดอยู่ จึงไม่ได้บันทึกข้อมูล' : 'The card does not match the selected member. Nothing was saved.');
 
@@ -115,9 +115,9 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       if (lookup.member && String(lookup.member.id) !== String(memberId))
         throw Error(th ? 'เลขบัตรนี้ผูกกับสมาชิกบัญชีอื่นอยู่แล้ว จึงไม่ได้บันทึกข้อมูล' : 'This card belongs to another member. Nothing was saved.');
 
-      const approved = window.confirm((th ? 'ตรวจบัตรกับเจ้าของแล้วใช่ไหม?\\nสมาชิก: ' : 'Have you checked the card with its owner?\\nMember: ') +
-        fresh.fullName + '\\n' + (th ? 'ข้อมูลจากบัตร: ' : 'Card name: ') + card.fullName +
-        ' (' + card.citizenId.slice(-4) + ')\\n' +
+      const approved = window.confirm((th ? 'ตรวจบัตรกับเจ้าของแล้วใช่ไหม?\nสมาชิก: ' : 'Have you checked the card with its owner?\nMember: ') +
+        fresh.fullName + '\n' + (th ? 'ข้อมูลจากบัตร: ' : 'Card name: ') + card.fullName +
+        ' (' + card.citizenId.slice(-4) + ')\n' +
         (th ? 'กดตกลงเพื่อนำเข้าและบันทึกทันที' : 'Press OK to import and save now.'));
       if (!approved) return;
 
@@ -152,7 +152,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
 
   async function save(event) {
     event.preventDefault();
-    if (!profile || saving || importingCard) return;
+    if (!profile || saving || importingCard || readerBusy) return;
     setError(''); setSuccess(''); setIssuedPassword('');
     if (cardImported && !cardReviewed) {
       setError(th ? 'กรุณาตรวจข้อมูลบัตรกับเจ้าของก่อนบันทึก' : 'Please review the card details with the member before saving.');
@@ -215,7 +215,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         : 'Requires Saributr Card Reader 1.5 running on this computer. Read the card within two minutes, then check the name before saving.'}</p>
     </div>
     <label style={field}>{th ? 'นำเข้า Card Reader เพื่ออัปเดตสมาชิกเดิม (.json)' : 'Import Card Reader data for this member (.json)'}
-      <input type="file" accept=".json,application/json" disabled={importingCard || saving}
+      <input type="file" accept=".json,application/json" disabled={importingCard || saving || readerBusy}
         onChange={(event) => { importCard(event.target.files?.[0]); event.target.value = ''; }} />
     </label>
     {importingCard && <p role="status">{th ? 'กำลังตรวจเลขบัตรกับสมาชิกในระบบ...' : 'Checking this card against member records...'}</p>}
@@ -264,7 +264,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       <strong>{issuedPassword}</strong>{' '}
       <button type="button" onClick={() => setIssuedPassword('')}>{th ? 'ซ่อนรหัส' : 'Hide password'}</button>
     </p>}
-    <button type="submit" disabled={saving || importingCard || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
+    <button type="submit" disabled={saving || importingCard || readerBusy || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
       {saving ? (th ? 'กำลังบันทึก...' : 'Saving...') : (th ? 'บันทึกโปรไฟล์และบัญชี' : 'Save profile and account')}
     </button>
   </form>;
