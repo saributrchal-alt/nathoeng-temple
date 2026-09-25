@@ -39,7 +39,7 @@ begin
   if v_serial > 99999999999 then raise exception 'Member card number space exhausted'; end if;
   v_base := '2' || pg_catalog.lpad(v_serial::text, 11, '0');
   for v_index in 1..12 loop
-    v_sum := v_sum + pg_catalog.substring(v_base from v_index for 1)::integer
+    v_sum := v_sum + pg_catalog.substr(v_base, v_index, 1)::integer
       * case when v_index % 2 = 0 then 3 else 1 end;
   end loop;
   v_card := v_base || ((10 - v_sum % 10) % 10)::text;
