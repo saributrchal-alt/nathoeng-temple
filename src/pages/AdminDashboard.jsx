@@ -7,6 +7,7 @@ import StudentAdminPanel from '../components/StudentAdminPanel';
 import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
 import AdminRetreatReviewPanel from '../components/AdminRetreatReviewPanel';
 import AdminMembersPanel from '../components/AdminMembersPanel';
+import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
 
 
 const COUNTRY_POINTS = {
@@ -601,6 +602,7 @@ function AdminDashboard({ lang, goToPage, currentMemberId }) {
   };
 
   const donationPurposeLabel = (item) => {
+    if (isKathin2569Donation(item)) return kathin2569Label(lang);
     const purpose = item?.purpose || '';
 
     if (purpose === 'custom') {
