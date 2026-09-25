@@ -4,6 +4,7 @@ import {
 } from '../lib/_auth.js';
 import { handleWalkinMemberRequest } from '../lib/_walkin-members.js';
 import { getMemberProfileDetails } from '../lib/_member-profile-details.js';
+import { validateThaiAddress, formatThaiAddress } from '../src/lib/thaiAddress.js';
 import {
   hasCompleteDonationIdentity,
   isValidIdentityNumber,
@@ -106,6 +107,9 @@ export default async function handler(req, res) {
         donationProfileComplete: completed,
         fullName: member.full_name || '',
         fullNameEn: details.fullNameEn, memberAddress: details.memberAddress,
+        addressHouseNo: details.addressHouseNo || '', addressVillageNo: details.addressVillageNo || '',
+        addressExtra: details.addressExtra || '', addressProvinceId: details.addressProvinceId || null,
+        addressDistrictId: details.addressDistrictId || null, addressSubdistrictId: details.addressSubdistrictId || null,
         birthDate: member.birth_date || '',
         picture: member.profile_image_url || '',
         countryCode:
@@ -148,9 +152,15 @@ export default async function handler(req, res) {
 
     const cleanFullName =
       String(fullName || '').trim();
-    const detailsWereProvided = Object.hasOwn(req.body || {}, 'fullNameEn') || Object.hasOwn(req.body || {}, 'memberAddress');
+    const structuredWasProvided = ['addressHouseNo', 'addressVillageNo', 'addressExtra',
+      'addressProvinceId', 'addressDistrictId', 'addressSubdistrictId']
+      .some((field) => Object.hasOwn(req.body || {}, field));
+    const detailsWereProvided = structuredWasProvided || Object.hasOwn(req.body || {}, 'fullNameEn') || Object.hasOwn(req.body || {}, 'memberAddress');
+    let address = null;
+    try { if (structuredWasProvided) address = validateThaiAddress(req.body); }
+    catch (error) { return res.status(400).json({ success: false, message: error.message }); }
     const cleanFullNameEn = String(fullNameEn || '').trim().replace(/\s+/g, ' ');
-    const cleanMemberAddress = String(memberAddress || '').trim();
+    const cleanMemberAddress = address?.addressProvinceId ? formatThaiAddress(address) : String(memberAddress || '').trim();
     if (cleanFullNameEn.length > 200 || cleanMemberAddress.length > 500)
       return res.status(400).json({ success: false, message: 'English name or address is too long' });
 
@@ -268,6 +278,8 @@ export default async function handler(req, res) {
       let details = { available: false, fullNameEn: '', memberAddress: '' };
       if (detailsWereProvided) {
         details = await getMemberProfileDetails(supabaseUrl, supabaseSecretKey, memberId);
+        if (structuredWasProvided && !details.structuredAvailable && Object.values(address).some(Boolean))
+          return res.status(503).json({ success: false, message: 'Run supabase/member-address-fields.sql before saving the structured address' });
         if (!details.available && (cleanFullNameEn || cleanMemberAddress))
           return res.status(503).json({ success: false, message: 'Run supabase/member-profile-details.sql before saving English name or address' });
       }
@@ -322,7 +334,12 @@ export default async function handler(req, res) {
         const detailResponse = await fetch(`${supabaseUrl}/rest/v1/member_profile_details?on_conflict=member_id`, {
           method: 'POST', headers: supabaseHeaders(supabaseSecretKey, { Prefer: 'resolution=merge-duplicates' }),
           body: JSON.stringify({ member_id: memberId, full_name_en: cleanFullNameEn,
-            member_address: cleanMemberAddress, updated_at: now })
+            member_address: cleanMemberAddress, updated_at: now,
+            ...(structuredWasProvided && details.structuredAvailable ? {
+              address_house_no: address.addressHouseNo, address_village_no: address.addressVillageNo,
+              address_extra: address.addressExtra, address_province_id: address.addressProvinceId,
+              address_district_id: address.addressDistrictId, address_subdistrict_id: address.addressSubdistrictId
+            } : {}) })
         });
         if (!detailResponse.ok) {
           const detailError = await detailResponse.json().catch(() => ({}));
@@ -351,6 +368,12 @@ export default async function handler(req, res) {
           savedMember.full_name || cleanFullName,
         fullNameEn: detailsWereProvided ? cleanFullNameEn : details.fullNameEn,
         memberAddress: detailsWereProvided ? cleanMemberAddress : details.memberAddress,
+        addressHouseNo: structuredWasProvided ? address.addressHouseNo : (details.addressHouseNo ?? ''),
+        addressVillageNo: structuredWasProvided ? address.addressVillageNo : (details.addressVillageNo ?? ''),
+        addressExtra: structuredWasProvided ? address.addressExtra : (details.addressExtra ?? ''),
+        addressProvinceId: structuredWasProvided ? address.addressProvinceId : (details.addressProvinceId ?? null),
+        addressDistrictId: structuredWasProvided ? address.addressDistrictId : (details.addressDistrictId ?? null),
+        addressSubdistrictId: structuredWasProvided ? address.addressSubdistrictId : (details.addressSubdistrictId ?? null),
         countryCode:
           String(
             savedMember.country_code ||
