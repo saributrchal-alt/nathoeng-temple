@@ -34,7 +34,7 @@ function countryName(code, lang) {
   }
 }
 
-function AdminDashboard({ lang, goToPage }) {
+function AdminDashboard({ lang, goToPage, currentMemberId }) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
   const [activeTab, setActiveTab] = useState('menu');
@@ -1934,6 +1934,7 @@ function AdminDashboard({ lang, goToPage }) {
 
           <AdminMembersPanel
             lang={lang}
+            currentMemberId={currentMemberId}
             onDonation={(id) => { setDeskDonorId(id); setActiveTab('donations'); }}
           />
         </div>
