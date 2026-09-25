@@ -5,6 +5,11 @@ on:
     paths:
       - 'card-reader/desktop/**'
       - '.github/workflows/card-reader-windows.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'card-reader/desktop/**'
+      - '.github/workflows/card-reader-windows.yml'
   workflow_dispatch:
 jobs:
   build:
