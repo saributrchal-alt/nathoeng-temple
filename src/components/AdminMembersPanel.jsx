@@ -3,6 +3,8 @@ import WalkinMemberRegistration from './WalkinMemberRegistration';
 import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 import { parseCardFile } from './parseCardFile';
 import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
+import MemberCard from './MemberCard';
+import { memberNumber } from '../memberNumber';
 
 function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const th = lang === 'th';
@@ -38,7 +40,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     help: th
       ? 'รายชื่อสมาชิกทั้งหมดของวัด โดย LINE และ Telegram ของบุคคลเดียวกันจะอยู่ภายใต้บัญชีสมาชิกเดียว'
       : 'All monastery members. LINE and Telegram identities for the same person are kept under one member account.',
-    search: th ? 'ค้นหาชื่อ / Telegram / Member ID' : 'Search name / Telegram / Member ID',
+    search: th ? 'ค้นหาชื่อ / หมายเลขสมาชิก / Telegram' : 'Search name / member number / Telegram',
     all: th ? 'ทั้งหมด' : 'All',
     line: 'LINE',
     telegram: 'Telegram',
@@ -379,10 +381,12 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
       return [
         memberName(member),
         member?.telegram_username,
-        member?.id
+        member?.id,
+        memberNumber(member?.id)
       ]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(q));
+        .some((value) => String(value).toLowerCase().includes(q) ||
+          String(value).toLowerCase().replaceAll('-', '').includes(q.replaceAll('-', '')));
     });
   }, [members, search, providerFilter]);
 
@@ -898,6 +902,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
             <h3>{text.memberDetail}</h3>
             <div style={{ display: 'grid', gap: '9px', fontSize: '14px', marginBottom: '20px' }}>
               <div><strong>{text.memberId}:</strong> {selectedMember.id}</div>
+              <div><strong>{th ? 'หมายเลขสมาชิก' : 'Member number'}:</strong> {memberNumber(selectedMember.id)}</div>
               <div><strong>{text.role}:</strong> {selectedMember?.role === 'admin' ? text.admin : text.member}</div>
               <div><strong>{text.country}:</strong> {countryLabel(selectedMember)}</div>
               <div><strong>{text.joined}:</strong> {formatDateTime(selectedMember.created_at)}</div>
@@ -911,6 +916,13 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                   : (th ? 'ยังไม่เปิดรับข่าว' : 'Push not enabled')}
               </div>
             </div>
+
+            {selectedMember.membership_status !== 'cancelled' && <MemberCard
+              memberId={selectedMember.id}
+              fullName={memberName(selectedMember)}
+              photo={pictureUrl(selectedMember)}
+              lang={lang}
+            />}
 
             <button type="button" onClick={() => setEditMemberOpen((open) => !open)}
               style={{ minHeight: 44, marginBottom: 14, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700 }}>
