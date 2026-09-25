@@ -1,6 +1,6 @@
-# Saributr Card Reader 1.5 bridge (draft)
+# Saributr Card Reader 1.5 bridge
 
-The temple admin page is prepared on branch `feature/card-reader-15-bridge`. The Windows desktop bridge source and Android APK 1.5 have now been implemented. Keep this branch in draft until the Windows binary builds and the flow is tested on the actual reader, Wi-Fi and Chrome.
+The temple admin page now includes the direct import button. Android 1.5 APK and the Windows .exe have been built. The full flow still needs testing with the real reader, phone, Windows PC, Wi-Fi and Chrome before routine use.
 
 ## Windows and Android flow
 
