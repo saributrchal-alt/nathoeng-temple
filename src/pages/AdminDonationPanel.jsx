@@ -40,7 +40,7 @@ export default function AdminDonationPanel({
     itemName: '',
     quantity: '',
     unit: '',
-    purpose: 'general',
+    purpose: '',
     customPurpose: '',
     receiptRequested: false,
     donationDate: today(),
@@ -61,6 +61,9 @@ export default function AdminDonationPanel({
   const [receiptUrl, setReceiptUrl] = useState('');
   const [lineMessage, setLineMessage] = useState('');
   const [lineTarget, setLineTarget] = useState(null);
+  const purposeRequiredMessage = th
+    ? 'กรุณากดเลือกจุดประสงค์การทำบุญก่อนบันทึก'
+    : 'Please select a donation purpose before saving.';
 
   const input = {
     width: '100%',
@@ -293,6 +296,10 @@ export default function AdminDonationPanel({
   };
 
   const save = async () => {
+    if (!form.purpose) {
+      setFormError(purposeRequiredMessage);
+      return;
+    }
     if (mode === 'add' && form.ownerMode === 'member' && !form.ownerMemberId) {
       setFormError(th ? 'กรุณาเลือกสมาชิก' : 'Please select a member');
       return;
@@ -808,7 +815,7 @@ export default function AdminDonationPanel({
             {mode==='add' && <>
               <label style={label}>{th?'ประเภทการทำบุญ':'Donation type'}</label>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
-                {[['money',th?'ทำบุญเป็นเงิน':'Money'],['item',th?'ถวายสิ่งของ':'Items']].map(([v,l])=><button key={v} type="button" onClick={()=>setForm((p)=>({...p,donationType:v,purpose:v==='item'&&p.purpose==='utilities'?'general':p.purpose}))} style={{minHeight:46,border:form.donationType===v?'2px solid #9b7226':'1px solid #ddd3c6',borderRadius:12,background:form.donationType===v?'#fff8e8':'#fff',fontWeight:800,cursor:'pointer'}}>{l}</button>)}
+                {[['money',th?'ทำบุญเป็นเงิน':'Money'],['item',th?'ถวายสิ่งของ':'Items']].map(([v,l])=><button key={v} type="button" onClick={()=>setForm((p)=>({...p,donationType:v,purpose:v==='item'&&p.purpose==='utilities'?'':p.purpose}))} style={{minHeight:46,border:form.donationType===v?'2px solid #9b7226':'1px solid #ddd3c6',borderRadius:12,background:form.donationType===v?'#fff8e8':'#fff',fontWeight:800,cursor:'pointer'}}>{l}</button>)}
               </div>
 
               <label style={label}>{th?'ผู้บริจาค':'Donor'}</label>
@@ -842,10 +849,14 @@ export default function AdminDonationPanel({
             </div>}
 
             <div style={{marginBottom:13}}>
-              <label style={label}>{th?'วัตถุประสงค์':'Purpose'}</label>
-              <select value={form.purpose} onChange={(e)=>setForm((p)=>({...p,purpose:e.target.value}))} style={input}>
+              <label htmlFor="admin-donation-purpose" style={label}>{th?'วัตถุประสงค์ *':'Purpose *'}</label>
+              <select id="admin-donation-purpose" required value={form.purpose}
+                onChange={(e)=>{ setForm((p)=>({...p,purpose:e.target.value})); setFormError(''); }}
+                style={{...input,color:form.purpose?'inherit':'#776f65'}}>
+                <option value="" disabled>{th?'กดเพื่อเลือกจุดประสงค์การทำบุญ':'Tap to select a donation purpose'}</option>
                 {purposeOptions.map(([v,l])=><option key={v} value={v}>{l}</option>)}
               </select>
+              {!form.purpose && formError === purposeRequiredMessage && <p role="alert" style={{color:'#9a3d34',fontSize:13,margin:'6px 0 0'}}>{formError}</p>}
             </div>
 
             {form.purpose==='custom' && <div style={{marginBottom:13}}>
