@@ -4,7 +4,7 @@ import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 import { parseCardFile } from './parseCardFile';
 import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
 import MemberCard from './MemberCard';
-import { memberIdFromNumber, memberNumber } from '../memberNumber';
+import { isValidShortMemberNumber, memberIdFromNumber, memberNumber } from '../memberNumber';
 
 function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const th = lang === 'th';
@@ -399,9 +399,9 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
 
   async function lookupMemberNumber(rawNumber) {
     const number = String(rawNumber || '').trim();
-    if (!memberIdFromNumber(number)) {
+    if (!isValidShortMemberNumber(number) && !memberIdFromNumber(number)) {
       setScannedMember(undefined);
-      setScanError(th ? 'กรุณาสแกนหรือกรอกหมายเลขสมาชิก 39 หลักให้ครบ' : 'Scan or enter a valid 39-digit member number.');
+      setScanError(th ? 'กรุณาสแกนหมายเลขสมาชิก 13 หลัก หรือกรอกเลขบัตรเก่า 39 หลัก' : 'Scan a 13-digit member number or enter a legacy 39-digit number.');
       return;
     }
     if (pendingScanRef.current === number) return;
@@ -777,12 +777,12 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
       <section style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
         <h2 style={{ fontSize: 18, margin: '0 0 6px' }}>{th ? 'สแกนบาร์โค้ดบัตรสมาชิก' : 'Scan a member card barcode'}</h2>
         <p style={{ margin: '0 0 12px', color: '#756c60', fontSize: 13 }}>
-          {th ? 'กดช่องหมายเลขแล้วสแกนบัตรสมาชิก ระบบค้นหาอัตโนมัติเมื่อรับครบ 39 หลัก หรือกด Enter จากเครื่องสแกน' : 'Focus the number field and scan the member card. Search starts after 39 digits or when the scanner sends Enter.'}
+          {th ? 'กดช่องหมายเลขแล้วสแกนบัตรสมาชิก ระบบค้นหาอัตโนมัติเมื่อรับครบ 13 หลัก หรือกด Enter จากเครื่องสแกน บัตรรุ่นเก่า 39 หลักยังใช้ค้นหาได้' : 'Focus the field and scan the card. Search starts after 13 digits or Enter. Older 39-digit cards also work.'}
         </p>
         <form onSubmit={(event) => { event.preventDefault(); lookupMemberNumber(scanInputRef.current?.value); }}
           style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
           <label style={{ display: 'grid', gap: 5, flex: '1 1 260px', minWidth: 0, fontSize: 13, fontWeight: 700 }}>
-            {th ? 'หมายเลขสมาชิกจากบาร์โค้ด 39 หลัก' : '39-digit barcode member number'}
+            {th ? 'หมายเลขสมาชิกจากบาร์โค้ด 13 หลัก' : '13-digit barcode member number'}
             <input ref={scanInputRef} type="text" inputMode="numeric" autoComplete="off" maxLength={39}
               value={scannedNumber} onChange={(event) => {
                 const number = event.target.value.replace(/\D/g, '').slice(0, 39);
@@ -792,7 +792,8 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                 setScannedMember(undefined);
                 setScanError('');
                 setScanBusy(false);
-                if (number.length === 39) lookupMemberNumber(number);
+                if ((number.length === 13 && isValidShortMemberNumber(number)) || number.length === 39)
+                  lookupMemberNumber(number);
               }}
               placeholder={th ? 'คลิกช่องนี้แล้วสแกนบาร์โค้ด' : 'Focus here and scan the barcode'}
               style={{ minHeight: 44, padding: '8px 11px', border: '1px solid #d8c9b5', borderRadius: 9, font: 'inherit', boxSizing: 'border-box', width: '100%' }} />
@@ -989,7 +990,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
             <h3>{text.memberDetail}</h3>
             <div style={{ display: 'grid', gap: '9px', fontSize: '14px', marginBottom: '20px' }}>
               <div><strong>{text.memberId}:</strong> {selectedMember.id}</div>
-              <div><strong>{th ? 'หมายเลขสมาชิก' : 'Member number'}:</strong> {memberNumber(selectedMember.id)}</div>
+              <div><strong>{th ? 'หมายเลขสมาชิกเดิม' : 'Legacy member number'}:</strong> {memberNumber(selectedMember.id)}</div>
               <div><strong>{text.role}:</strong> {selectedMember?.role === 'admin' ? text.admin : text.member}</div>
               <div><strong>{text.country}:</strong> {countryLabel(selectedMember)}</div>
               <div><strong>{text.joined}:</strong> {formatDateTime(selectedMember.created_at)}</div>
