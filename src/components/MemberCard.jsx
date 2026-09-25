@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
-import { memberNumber } from '../memberNumber';
+import { isValidShortMemberNumber } from '../memberNumber';
 import './MemberCard.css';
 
 const PRINT_STYLE = `
@@ -22,7 +22,7 @@ const PRINT_STYLE = `
   .memberCardHeading strong { display:block; font-size: 3.45mm; line-height:1.25; }
   .memberCardHeading span { display:block; font-size: 2.2mm; letter-spacing:.11em; color:#9b752e; }
   .memberCardBody { display:flex; align-items:center; gap:3mm; flex:1; min-height:0; z-index:1; }
-  .memberCardPhoto { display:grid; place-items:center; width:18mm; height:18mm; flex:0 0 18mm;
+  .memberCardPhoto { display:grid; place-items:center; width:16mm; height:16mm; flex:0 0 16mm;
     border-radius:50%; overflow:hidden; background:#efe8d9; border:.6mm solid white; box-shadow:0 1mm 3mm #274a2e22; }
   .memberCardPhoto img { display:block; width:100%; height:100%; object-fit:cover; }
   .memberCardPhoto span { color:#a78036; font-size:8mm; }
@@ -32,30 +32,32 @@ const PRINT_STYLE = `
     overflow:hidden; overflow-wrap:anywhere; }
   .memberCardIdentity span { display:block; font-size:2.2mm; letter-spacing:.05em; margin-top:1.2mm; }
   .memberCardCode { background:white; padding:1mm 2mm 1.5mm; border-radius:2mm; z-index:1; }
-  .memberCardCode svg { display:block; width:100%; height:8mm; }
-  .memberCardCode span { display:block; margin-top:.5mm; text-align:center; font: 2mm/1.2 monospace;
+  .memberCardCode svg { display:block; width:100%; height:15mm; }
+  .memberCardCode span { display:block; margin-top:.5mm; text-align:center; font: 3mm/1.2 monospace;
     letter-spacing:0; color:#283b31; }
 `;
 
 function barcodeBars(value) {
   const data = {};
-  JsBarcode(data, value, { format: 'CODE128', displayValue: false });
+  JsBarcode(data, value, { format: 'EAN13', displayValue: false, flat: true });
   const bits = data.encodings.map((part) => part.data).join('');
   const bars = [];
   let start = -1;
   for (let index = 0; index <= bits.length; index += 1) {
     if (bits[index] === '1' && start === -1) start = index;
     if (bits[index] !== '1' && start !== -1) {
-      bars.push({ x: start + 10, width: index - start });
+      bars.push({ x: start + 12, width: index - start });
       start = -1;
     }
   }
-  return { bars, width: bits.length + 20 };
+  return { bars, width: bits.length + 24 };
 }
 
 export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
   const th = lang === 'th';
-  const number = useMemo(() => memberNumber(memberId), [memberId]);
+  const [cardResult, setCardResult] = useState({ memberId: '', number: '', error: '' });
+  const number = cardResult.memberId === memberId ? cardResult.number : '';
+  const cardError = cardResult.memberId === memberId ? cardResult.error : '';
   const barcode = useMemo(() => number ? barcodeBars(number) : null, [number]);
   const [photoError, setPhotoError] = useState(false);
   const [printError, setPrintError] = useState('');
@@ -63,7 +65,29 @@ export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
 
   useEffect(() => { setPhotoError(false); }, [photo]);
 
-  if (!number || !barcode) return null;
+  useEffect(() => {
+    if (!memberId) return;
+    const controller = new AbortController();
+    fetch('/api/donation-profile', {
+      method: 'POST', credentials: 'include', cache: 'no-store', signal: controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'member_card_number', memberId })
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok || !data?.success || !isValidShortMemberNumber(data.cardNumber))
+        throw Error(data?.message || 'Unable to load member card number');
+      if (!controller.signal.aborted) setCardResult({ memberId, number: data.cardNumber, error: '' });
+    }).catch((error) => {
+      if (controller.signal.aborted) return;
+      setCardResult({ memberId, number: '', error: error.message || 'Unable to load member card number' });
+    });
+    return () => controller.abort();
+  }, [memberId]);
+
+  if (!memberId) return null;
+  if (!number || !barcode) return <p role="status" style={{ margin: 16, color: cardError ? '#a23f34' : '#665d51' }}>
+    {cardError || (th ? 'กำลังเตรียมบัตรสมาชิก...' : 'Preparing member card...')}
+  </p>;
 
   const printCard = () => {
     const popup = window.open('', '_blank', 'width=600,height=460');
