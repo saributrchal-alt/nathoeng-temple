@@ -41,7 +41,7 @@ internal sealed class BridgeForm : Form
 
     public BridgeForm()
     {
-        Text = "สาริบุตร · อ่านบัตร 1.5.1";
+        Text = "สาริบุตร · อ่านบัตร 1.5.2";
         Width = 560; Height = 400;
         var panel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(16), AutoScroll = true };
         Controls.Add(panel);
@@ -96,7 +96,7 @@ internal sealed class BridgeForm : Form
     {
         if (IsDisposed) return;
         if (InvokeRequired) { BeginInvoke(() => SetStatus(message)); return; }
-        Text = "สาริบุตร 1.5.1 · " + message;
+        Text = "สาริบุตร 1.5.2 · " + message;
         connection.Text = message;
         connection.ForeColor = message.Contains("ไม่") || message.Contains("ปิด") || message.Contains("ผิด")
             ? System.Drawing.Color.DarkRed : System.Drawing.Color.DarkGreen;

@@ -53,6 +53,10 @@ function MyDashboard({
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [editFullName, setEditFullName] = useState('');
+  const [fullNameEn, setFullNameEn] = useState('');
+  const [editFullNameEn, setEditFullNameEn] = useState('');
+  const [memberAddress, setMemberAddress] = useState('');
+  const [editMemberAddress, setEditMemberAddress] = useState('');
   const [editCountryCode, setEditCountryCode] = useState('');
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -120,6 +124,8 @@ function MyDashboard({
         );
         setHasIdentityNumber(data.hasIdentityNumber === true);
         setBirthDate(data.birthDate || '');
+        setFullNameEn(data.fullNameEn || '');
+        setMemberAddress(data.memberAddress || '');
         setProfilePicture(data.picture || '');
       } catch (error) {
         console.error(
@@ -500,6 +506,8 @@ function MyDashboard({
 
   const openProfileEditor = () => {
     setEditFullName(verifiedFullName || user?.name || '');
+    setEditFullNameEn(fullNameEn);
+    setEditMemberAddress(memberAddress);
     setEditCountryCode(countryCode || 'TH');
     setEditIdentityNumber('');
     setEditBirthDate(birthDate);
@@ -558,6 +566,8 @@ function MyDashboard({
         },
         body: JSON.stringify({
           fullName: cleanFullName,
+          fullNameEn: editFullNameEn,
+          memberAddress: editMemberAddress,
           countryCode: cleanCountryCode,
           birthDate: editBirthDate,
           picture: editPicture,
@@ -582,6 +592,8 @@ function MyDashboard({
       }
 
       setVerifiedFullName(String(data.fullName || cleanFullName).trim());
+      setFullNameEn(data.fullNameEn ?? editFullNameEn.trim());
+      setMemberAddress(data.memberAddress ?? editMemberAddress.trim());
       setCountryCode(String(data.countryCode || cleanCountryCode).trim().toUpperCase());
       setHasIdentityNumber(data.hasIdentityNumber === true || hasIdentityNumber || Boolean(cleanIdentityNumber));
       setBirthDate(data.birthDate || editBirthDate);
@@ -1432,6 +1444,14 @@ function MyDashboard({
                   />
                 </label>
 
+                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                  <span>{th ? 'ชื่อและนามสกุลภาษาอังกฤษ' : 'English full name'}</span>
+                  <input type="text" maxLength={200} value={editFullNameEn} onChange={(event) => setEditFullNameEn(event.target.value)} style={{ minHeight: 48, borderRadius: 12, border: '1px solid #d8cbb8', padding: '0 13px' }} />
+                </label>
+                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                  <span>{th ? 'ที่อยู่' : 'Address'}</span>
+                  <textarea rows={3} maxLength={500} value={editMemberAddress} onChange={(event) => setEditMemberAddress(event.target.value)} style={{ borderRadius: 12, border: '1px solid #d8cbb8', padding: 13, font: 'inherit' }} />
+                </label>
                 <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
                   <span>{th ? 'ประเทศ' : 'Country'}</span>
                   <select
