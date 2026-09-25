@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { KATHIN_2569, kathin2569Label, purposeForSave } from '../donationPurpose'
 
 export default function DonationPage({ lang, goToPage }) {
   // ดึงข้อมูลผู้ใช้ที่ล็อกอินผ่าน LINE จาก localStorage
@@ -35,6 +36,10 @@ export default function DonationPage({ lang, goToPage }) {
           value: 'development',
           label:
             'Monastery Development & Maintenance (พัฒนาทำนุบำรุงเสนาสนะ)'
+        },
+        {
+          value: KATHIN_2569,
+          label: kathin2569Label('en')
         },
         {
           value: 'custom',
@@ -88,6 +93,10 @@ export default function DonationPage({ lang, goToPage }) {
           value: 'development',
           label:
             'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ'
+        },
+        {
+          value: KATHIN_2569,
+          label: kathin2569Label('th')
         },
         {
           value: 'custom',
@@ -437,11 +446,7 @@ export default function DonationPage({ lang, goToPage }) {
             donationType === 'item'
               ? formData.unit.trim()
               : null,
-          purpose: formData.purpose,
-          customPurpose:
-            formData.purpose === 'custom'
-              ? formData.customPurpose.trim()
-              : null,
+          ...purposeForSave(formData.purpose, formData.customPurpose),
           receiptRequested:
             donationType === 'money'
               ? formData.taxReceipt === 'yes'

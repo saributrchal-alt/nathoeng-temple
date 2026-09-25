@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import WalkinMemberRegistration from './WalkinMemberRegistration';
 import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 import { parseCardFile } from './parseCardFile';
+import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
 
 function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const th = lang === 'th';
@@ -324,6 +325,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   };
 
   const donationPurposeLabel = (donation) => {
+    if (isKathin2569Donation(donation)) return kathin2569Label(lang);
     if (donation?.purpose === 'custom') {
       return donation?.custom_purpose || text.custom;
     }
