@@ -1,0 +1,22 @@
+name: Build Saributr Card Reader for Windows
+on:
+  push:
+    branches: [feature/card-reader-15-bridge]
+    paths:
+      - 'card-reader/desktop/**'
+      - '.github/workflows/card-reader-windows.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Publish single-file exe
+        run: dotnet publish card-reader/desktop/SaributrCardBridge/SaributrCardBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o card-reader/desktop/publish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Saributr-Card-Reader-1.5-Windows
+          path: card-reader/desktop/publish/Saributr-Card-Reader-1.5.exe
