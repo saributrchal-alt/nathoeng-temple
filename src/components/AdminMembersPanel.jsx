@@ -4,7 +4,7 @@ import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 import { parseCardFile } from './parseCardFile';
 import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
 import MemberCard from './MemberCard';
-import { isValidShortMemberNumber, memberIdFromNumber, memberNumber } from '../memberNumber';
+import { completeShortMemberNumber, isValidShortMemberNumber, memberIdFromNumber, memberNumber } from '../memberNumber';
 
 function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const th = lang === 'th';
@@ -399,7 +399,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
 
   async function lookupMemberNumber(rawNumber) {
     const number = String(rawNumber || '').trim();
-    if (!isValidShortMemberNumber(number) && !memberIdFromNumber(number)) {
+    if (!completeShortMemberNumber(number) && !memberIdFromNumber(number)) {
       setScannedMember(undefined);
       setScanError(th ? 'กรุณาสแกนหมายเลขสมาชิก 13 หลัก หรือกรอกเลขบัตรเก่า 39 หลัก' : 'Scan a 13-digit member number or enter a legacy 39-digit number.');
       return;
