@@ -16,6 +16,12 @@ internal sealed class CardData
     public string birth_date { get; set; } = "";
     public string kinship_gender { get; set; } = "";
     public string card_address { get; set; } = "";
+    public string address_house_no { get; set; } = "";
+    public string address_village_no { get; set; } = "";
+    public string address_extra { get; set; } = "";
+    public string address_subdistrict { get; set; } = "";
+    public string address_district { get; set; } = "";
+    public string address_province { get; set; } = "";
     public string avatar_image { get; set; } = "";
 }
 
@@ -92,7 +98,18 @@ internal static class CardReader
                         data.birth_date = new DateTime(year, month, day).ToString("yyyy-MM-dd");
                 }
                 data.kinship_gender = Encoding.ASCII.GetString(session.Read(0xE1, 1)) switch { "1" => "male", "2" => "female", _ => "" };
-                data.card_address = thai.GetString(session.Read(0x1579, 100)).Replace('\0', ' ').Replace('#', ' ').Trim();
+                string rawAddress = thai.GetString(session.Read(0x1579, 100)).Replace('\0', ' ').Trim();
+                data.card_address = rawAddress.Replace('#', ' ');
+                string[] addressParts = rawAddress.Split('#');
+                if (addressParts.Length >= 8)
+                {
+                    data.address_house_no = addressParts[0].Trim();
+                    data.address_village_no = addressParts[1].Trim();
+                    data.address_extra = string.Join(' ', addressParts.Skip(2).Take(3).Select(part => part.Trim()).Where(part => part.Length > 0));
+                    data.address_subdistrict = addressParts[5].Trim();
+                    data.address_district = addressParts[6].Trim();
+                    data.address_province = addressParts[7].Trim();
+                }
                 progress("กำลังอ่านรูปจากบัตร");
                 try
                 {
