@@ -4,6 +4,7 @@ import { parseCardFile } from './parseCardFile';
 import { readLatestDesktopCard } from '../lib/cardReaderBridge';
 import { structuredAddress } from '../lib/thaiAddress.js';
 import ThaiAddressFields from './ThaiAddressFields.jsx';
+import './AdminMemberProfileEditor.css';
 
 export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const th = lang === 'th';
@@ -52,8 +53,6 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     setProfile((current) => ({ ...current, [field]: value }));
     if (cardImported) setCardReviewed(false);
   };
-  const field = { display: 'grid', gap: 6, margin: '12px 0', fontWeight: 700, fontSize: 14 };
-  const input = { width: '100%', minHeight: 44, boxSizing: 'border-box', border: '1px solid #d8c9b5', borderRadius: 9, padding: '8px 11px', font: 'inherit' };
 
   async function importCard(file) {
     if (!file || !profile || importingCard) return;
@@ -226,83 +225,157 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   if (loading) return <p role="status">{th ? 'กำลังโหลดโปรไฟล์...' : 'Loading profile...'}</p>;
   if (!profile) return <p role="alert" style={{ color: '#a23f34' }}>{error || (th ? 'เปิดข้อมูลสมาชิกไม่ได้' : 'Unable to open member profile.')}</p>;
 
-  return <form onSubmit={save} style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
-    <h3 style={{ marginTop: 0 }}>{th ? 'แก้ไขโปรไฟล์และบัญชีเข้าสู่ระบบ' : 'Edit profile and login account'}</h3>
-    <div style={{ margin: '12px 0', padding: 12, borderRadius: 9, background: '#eef5ed' }}>
-      <button type="button" disabled={readerBusy || saving || importingCard} onClick={importAndSaveFromReader}
-        style={{ minHeight: 44, padding: '9px 15px', border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', fontWeight: 700 }}>
-        {readerBusy ? (th ? 'กำลังอ่านและตรวจบัตร...' : 'Reading and checking card...') : (th ? 'นำเข้าและบันทึกจาก Card Reader' : 'Import and save from Card Reader')}
-      </button>
-      <p style={{ margin: '8px 0 0', fontSize: 12, color: '#665d51' }}>{th
-        ? 'เปิดแอปสาริบุตรบนคอมพิวเตอร์ก่อน หากอ่านบัตรด้วยมือถือ ให้กดส่งข้อมูลจนมือถือแจ้งว่าสำเร็จ แล้วกดปุ่มนี้ภายใน 2 นาที'
-        : 'Run Saributr Card Reader on this computer. If reading with a phone, send the card to the desktop app first, then click here within two minutes.'}</p>
-      {readerError && <p role="alert" style={{ margin: '8px 0 0', color: '#a23f34', fontWeight: 700 }}>{readerError}</p>}
-      {readerSuccess && <p role="status" style={{ margin: '8px 0 0', color: '#245635', fontWeight: 700 }}>{readerSuccess}</p>}
+  return <form onSubmit={save} className="admin-profile-form">
+    <div className="admin-profile-grid">
+      <div className="admin-profile-primary">
+        <section className="admin-profile-card" aria-labelledby="admin-profile-personal-title">
+          <div className="admin-profile-section-heading">
+            <span className="admin-profile-step" aria-hidden="true">01</span>
+            <div>
+              <h3 id="admin-profile-personal-title">{th ? 'ข้อมูลส่วนตัว' : 'Personal details'}</h3>
+              <p>{th ? 'ตรวจชื่อและข้อมูลยืนยันตัวตนให้ตรงกับสมาชิก' : 'Confirm the member’s name and identity details.'}</p>
+            </div>
+          </div>
+          <div className="admin-profile-fields admin-profile-fields--two">
+            <label className="admin-profile-field admin-profile-span-all">
+              <span>{th ? 'ชื่อและนามสกุลภาษาไทย' : 'Thai full name'} <span className="admin-profile-required">*</span></span>
+              <input required maxLength={200} value={profile.fullName} onChange={(e) => update('fullName', e.target.value)} autoComplete="name" />
+            </label>
+            <label className="admin-profile-field admin-profile-span-all">
+              <span>{th ? 'ชื่อและนามสกุลภาษาอังกฤษ' : 'English full name'}</span>
+              <input maxLength={200} value={profile.fullNameEn || ''} onChange={(e) => update('fullNameEn', e.target.value)} />
+            </label>
+            <label className="admin-profile-field">
+              <span>{th ? 'วันเกิด (ค.ศ.)' : 'Date of birth'}</span>
+              <input type="date" value={profile.birthDate} onChange={(e) => update('birthDate', e.target.value)} />
+            </label>
+            <label className="admin-profile-field">
+              <span>{th ? 'รหัสประเทศ' : 'Country code'} <span className="admin-profile-required">*</span></span>
+              <input required maxLength={2} pattern="[a-zA-Z]{2}" value={profile.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} placeholder="TH" />
+            </label>
+            <label className="admin-profile-field admin-profile-span-all">
+              <span>{th ? 'เลขบัตรประชาชน 13 หลัก หรือพาสปอร์ต' : 'National ID or passport'}</span>
+              <input autoComplete="off" maxLength={20} value={profile.identityNumber} onChange={(e) => update('identityNumber', e.target.value)} />
+              <small>{th ? 'เว้นว่างเพื่อลบหมายเลขเดิม' : 'Leave blank to remove the saved number.'}</small>
+            </label>
+          </div>
+        </section>
+
+        <section className="admin-profile-card admin-profile-address" aria-labelledby="admin-profile-address-title">
+          <div className="admin-profile-section-heading">
+            <span className="admin-profile-step" aria-hidden="true">02</span>
+            <div>
+              <h3 id="admin-profile-address-title">{th ? 'ที่อยู่' : 'Address'}</h3>
+              <p>{th ? 'เลือกจังหวัด อำเภอ และตำบลตามลำดับ' : 'Choose province, district and subdistrict in order.'}</p>
+            </div>
+          </div>
+          {profile.countryCode === 'TH' ? <ThaiAddressFields lang={lang} value={profile}
+            legacyAddress={profile.memberAddress || ''}
+            onChange={(patch) => { setProfile((current) => ({ ...current, ...patch })); if (cardImported) setCardReviewed(false); }} /> :
+            <label className="admin-profile-field">
+              <span>{th ? 'ที่อยู่ต่างประเทศ' : 'International address'}</span>
+              <textarea rows={4} maxLength={500} value={profile.memberAddress || ''} onChange={(e) => update('memberAddress', e.target.value)} />
+            </label>}
+        </section>
+      </div>
+
+      <aside className="admin-profile-aside" aria-label={th ? 'เครื่องมือจัดการสมาชิก' : 'Member tools'}>
+        <section className="admin-profile-card admin-profile-import" aria-labelledby="admin-profile-card-title">
+          <div className="admin-profile-section-heading">
+            <span className="admin-profile-step" aria-hidden="true">03</span>
+            <div>
+              <h3 id="admin-profile-card-title">{th ? 'นำเข้าข้อมูลจากบัตร' : 'Import ID card'}</h3>
+              <p>{th ? 'อ่านบัตรแล้วตรวจข้อมูลก่อนบันทึก' : 'Read and review card details.'}</p>
+            </div>
+          </div>
+          <button className="admin-profile-reader-button" type="button" disabled={readerBusy || saving || importingCard} onClick={importAndSaveFromReader}>
+            {readerBusy ? (th ? 'กำลังอ่านและตรวจบัตร...' : 'Reading and checking card...') : (th ? 'นำเข้าและบันทึกจาก Card Reader' : 'Import and save from Card Reader')}
+          </button>
+          <p className="admin-profile-help">{th
+            ? 'เปิดแอปสาริบุตรบนคอมพิวเตอร์ หากอ่านด้วยมือถือ ให้ส่งข้อมูลมาที่คอมพิวเตอร์ก่อน แล้วกดปุ่มนี้ภายใน 2 นาที'
+            : 'Open Saributr on the computer. For phone reads, send the card to the computer first, then use this button within two minutes.'}</p>
+          {readerError && <p className="admin-profile-message admin-profile-message--error" role="alert">{readerError}</p>}
+          {readerSuccess && <p className="admin-profile-message admin-profile-message--success" role="status">{readerSuccess}</p>}
+          <div className="admin-profile-divider" />
+          <label className="admin-profile-field">
+            <span>{th ? 'หรือเลือกไฟล์ JSON จากแอปอ่านบัตร' : 'Or import a card JSON file'}</span>
+            <input type="file" accept=".json,application/json" disabled={importingCard || saving || readerBusy}
+              onChange={(event) => { importCard(event.target.files?.[0]); event.target.value = ''; }} />
+          </label>
+          {importingCard && <p role="status" className="admin-profile-help">{th ? 'กำลังตรวจเลขบัตรกับสมาชิก...' : 'Checking the cardholder...'}</p>}
+          {cardError && <p role="alert" className="admin-profile-message admin-profile-message--error">{cardError}</p>}
+          {profile.addressNeedsReview && <p role="status" className="admin-profile-message admin-profile-message--warning">
+            {th ? 'ที่อยู่จากบัตรไม่ตรงกับรายการพื้นที่ กรุณาเลือกพื้นที่ด้วยตนเอง' : 'Please select the card address areas manually.'}
+          </p>}
+          {cardImported && <div className="admin-profile-review">
+            <strong>{th ? 'นำเข้าแล้ว · ยังไม่ได้บันทึก' : 'Imported · not saved yet'}</strong>
+            <p>{th ? 'ตรวจชื่อ เลขบัตร วันเกิด ที่อยู่ และรูปก่อนบันทึก' : 'Review the name, ID, birth date, address and photo.'}</p>
+            <label>
+              <input type="checkbox" checked={cardReviewed} onChange={(event) => setCardReviewed(event.target.checked)} />
+              <span>{th ? 'ตรวจแล้วว่าเป็นสมาชิกที่เลือก' : 'I confirmed this card belongs to this member.'}</span>
+            </label>
+          </div>}
+        </section>
+
+        <section className="admin-profile-card" aria-labelledby="admin-profile-photo-title">
+          <div className="admin-profile-section-heading">
+            <span className="admin-profile-step" aria-hidden="true">04</span>
+            <div>
+              <h3 id="admin-profile-photo-title">{th ? 'รูปโปรไฟล์' : 'Profile photo'}</h3>
+              <p>{th ? 'เลือกรูปหรือใช้รูปจากบัตร' : 'Choose or crop a card photo.'}</p>
+            </div>
+          </div>
+          {profile.picture && !removePhoto && !newPhoto && <div className="admin-profile-current-photo">
+            <img src={profile.picture} alt={th ? 'รูปปัจจุบัน' : 'Current photo'} />
+            <span>{th ? 'รูปปัจจุบัน' : 'Current photo'}</span>
+          </div>}
+          <MemberPhotoEditor key={photoVersion} initialPhoto={cardPhoto} lang={lang} onChange={(photo) => { setNewPhoto(photo); if (photo) setRemovePhoto(false); }} />
+          {cardPhoto && <p role="status" className="admin-profile-help">{newPhoto
+            ? (th ? 'รูปจากบัตรพร้อมบันทึก ปรับตำแหน่งหรือซูมได้' : 'Card photo is ready. Adjust the crop if needed.')
+            : (th ? 'กำลังเตรียมรูปจากบัตร' : 'Preparing the card photo...')}</p>}
+          {profile.profileImage && !newPhoto && <label className="admin-profile-check">
+            <input type="checkbox" checked={removePhoto} onChange={(e) => setRemovePhoto(e.target.checked)} />
+            <span>{th ? 'ลบรูปที่วัดอัปโหลด' : 'Remove uploaded photo'}</span>
+          </label>}
+        </section>
+
+        <section className="admin-profile-card" aria-labelledby="admin-profile-account-title">
+          <div className="admin-profile-section-heading">
+            <span className="admin-profile-step" aria-hidden="true">05</span>
+            <div>
+              <h3 id="admin-profile-account-title">{th ? 'บัญชีเข้าสู่ระบบ' : 'Login account'}</h3>
+              <p>{th ? 'เว้นรหัสผ่านใหม่ว่างไว้เพื่อคงรหัสเดิม' : 'Leave the new password blank to keep it.'}</p>
+            </div>
+          </div>
+          <div className="admin-profile-fields">
+            <label className="admin-profile-field">
+              <span>{th ? 'ชื่อผู้ใช้' : 'Username'}</span>
+              <input autoComplete="off" pattern="[a-z][a-z0-9._-]{3,31}" value={profile.username} onChange={(e) => update('username', e.target.value.toLowerCase())} placeholder="example.member" />
+            </label>
+            <label className="admin-profile-field">
+              <span>{th ? 'รหัสผ่านใหม่' : 'New password'}</span>
+              <input type="password" autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={profile.hasPasswordAccount ? (th ? 'เว้นว่างเพื่อคงรหัสเดิม' : 'Leave blank to keep current password') : ''} />
+              <small>{th ? 'อย่างน้อย 12 ตัวอักษร' : 'At least 12 characters'}</small>
+            </label>
+          </div>
+        </section>
+      </aside>
     </div>
-    <label style={field}>{th ? 'นำเข้า Card Reader เพื่ออัปเดตสมาชิกเดิม (.json)' : 'Import Card Reader data for this member (.json)'}
-      <input type="file" accept=".json,application/json" disabled={importingCard || saving || readerBusy}
-        onChange={(event) => { importCard(event.target.files?.[0]); event.target.value = ''; }} />
-    </label>
-    {importingCard && <p role="status">{th ? 'กำลังตรวจเลขบัตรกับสมาชิกในระบบ...' : 'Checking this card against member records...'}</p>}
-    {cardError && <p role="alert" style={{ color: '#a23f34' }}>{cardError}</p>}
-    {profile.addressNeedsReview && <p role="status" style={{ color: '#805a20' }}>
-      {th ? 'ที่อยู่จากบัตรไม่ตรงกับรายการพื้นที่ กรุณาเลือกจังหวัด อำเภอ ตำบลด้วยตนเอง' : 'Please select the card address areas manually.'}
-    </p>}
-    {cardImported && <div style={{ margin: '12px 0', padding: 12, borderRadius: 9, background: '#f5f1e8' }}>
-      <strong>{th ? 'นำเข้าข้อมูลแล้ว ยังไม่ได้บันทึก' : 'Card imported; changes are not saved yet.'}</strong>
-      <p style={{ margin: '6px 0', fontSize: 13 }}>{th ? 'ตรวจชื่อ เลขบัตร วันเกิด และรูปด้านล่างก่อนบันทึก ชื่อผู้ใช้ รหัสผ่าน และบัญชี LINE/Telegram ยังใช้ของเดิม' : 'Review the name, ID, birth date and photo below. The username, password and LINE/Telegram connections stay as they are.'}</p>
-      <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>
-        <input type="checkbox" checked={cardReviewed} onChange={(event) => setCardReviewed(event.target.checked)} />
-        {th ? 'ตรวจบัตรและยืนยันว่าเป็นสมาชิกที่เลือกอยู่แล้ว' : 'I checked that this card belongs to the selected member.'}
-      </label>
-    </div>}
-    <label style={field}>{th ? 'ชื่อและนามสกุล' : 'Full name'}
-      <input style={input} required maxLength={200} value={profile.fullName} onChange={(e) => update('fullName', e.target.value)} />
-    </label>
-    <label style={field}>{th ? 'ชื่อและนามสกุลภาษาอังกฤษ' : 'English full name'}
-      <input style={input} maxLength={200} value={profile.fullNameEn || ''} onChange={(e) => update('fullNameEn', e.target.value)} />
-    </label>
-    {profile.countryCode === 'TH' ? <ThaiAddressFields lang={lang} value={profile}
-      legacyAddress={profile.memberAddress || ''}
-      onChange={(patch) => { setProfile((current) => ({ ...current, ...patch })); if (cardImported) setCardReviewed(false); }} /> :
-      <label style={field}>{th ? 'ที่อยู่ต่างประเทศ' : 'Address'}
-        <textarea style={{ ...input, minHeight: 90 }} maxLength={500} value={profile.memberAddress || ''} onChange={(e) => update('memberAddress', e.target.value)} />
-      </label>}
-    <label style={field}>{th ? 'เลขบัตรประชาชน 13 หลัก หรือพาสปอร์ต (เว้นว่างเพื่อลบ)' : '13-digit national ID or passport (blank to clear)'}
-      <input style={input} autoComplete="off" maxLength={20} value={profile.identityNumber} onChange={(e) => update('identityNumber', e.target.value)} />
-    </label>
-    <label style={field}>{th ? 'วันเกิด (ค.ศ.)' : 'Date of birth'}
-      <input style={input} type="date" value={profile.birthDate} onChange={(e) => update('birthDate', e.target.value)} />
-    </label>
-    <label style={field}>{th ? 'รหัสประเทศ 2 ตัวอักษร' : 'Two-letter country code'}
-      <input style={input} required maxLength={2} pattern="[a-zA-Z]{2}" value={profile.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} placeholder="TH" />
-    </label>
-    {profile.picture && !removePhoto && !newPhoto && <img src={profile.picture} alt={th ? 'รูปปัจจุบัน' : 'Current picture'} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: '50%' }} />}
-    <MemberPhotoEditor key={photoVersion} initialPhoto={cardPhoto} lang={lang} onChange={(photo) => { setNewPhoto(photo); if (photo) setRemovePhoto(false); }} />
-    {cardPhoto && <p role="status" style={{ color: '#805a20' }}>{newPhoto
-      ? (th ? 'รูปจากบัตรพร้อมบันทึก สามารถเลื่อนหรือซูมเพิ่มได้' : 'Card photo is ready. You can adjust the crop.')
-      : (th ? 'กำลังเตรียมรูปจากบัตร กรุณารอสักครู่' : 'Preparing the card photo...')}</p>}
-    {profile.profileImage && !newPhoto && <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
-      <input type="checkbox" checked={removePhoto} onChange={(e) => setRemovePhoto(e.target.checked)} />
-      {th ? 'ลบรูปที่วัดอัปโหลด (รูป LINE/Telegram ยังอยู่)' : 'Remove uploaded photo (LINE/Telegram picture remains)'}
-    </label>}
-    <hr style={{ border: 0, borderTop: '1px solid #e4d9c9', margin: '20px 0' }} />
-    <p style={{ fontSize: 13, color: '#665d51' }}>{th ? 'ตั้งชื่อผู้ใช้ให้สมาชิกทุกคนได้ แม้สมัครผ่าน LINE/Telegram รหัสผ่านเดิมจะไม่แสดง หากเว้นช่องรหัสผ่านใหม่ไว้ ระบบจะคงรหัสเดิม' : 'Any member can also have a username. The existing password cannot be viewed; leave the new password blank to keep it.'}</p>
-    <label style={field}>{th ? 'ชื่อผู้ใช้' : 'Username'}
-      <input style={input} autoComplete="off" pattern="[a-z][a-z0-9._-]{3,31}" value={profile.username} onChange={(e) => update('username', e.target.value.toLowerCase())} placeholder="example.member" />
-    </label>
-    <label style={field}>{th ? 'รหัสผ่านใหม่ (อย่างน้อย 12 ตัวอักษร)' : 'New password (at least 12 characters)'}
-      <input style={input} type="password" autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={profile.hasPasswordAccount ? (th ? 'เว้นว่างเพื่อคงรหัสเดิม' : 'Leave blank to keep current password') : ''} />
-    </label>
-    {error && <p role="alert" style={{ color: '#a23f34' }}>{error}</p>}
-    {success && <p role="status" style={{ color: '#26723d' }}>{success}</p>}
-    {issuedPassword && <p role="status" style={{ background: '#eef8ec', padding: 10, borderRadius: 8 }}>
-      {th ? 'แจ้งรหัสผ่านใหัเจ้าของบัญชีโดยตรง แล้วกดซ่อนรหัสนี้' : 'Give this password to the member directly, then hide it.'}<br />
-      <strong>{issuedPassword}</strong>{' '}
-      <button type="button" onClick={() => setIssuedPassword('')}>{th ? 'ซ่อนรหัส' : 'Hide password'}</button>
-    </p>}
-    <button type="submit" disabled={saving || importingCard || readerBusy || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
-      {saving ? (th ? 'กำลังบันทึก...' : 'Saving...') : (th ? 'บันทึกโปรไฟล์และบัญชี' : 'Save profile and account')}
-    </button>
+
+    <div className="admin-profile-actions">
+      <div className="admin-profile-action-feedback">
+        {error && <p role="alert" className="admin-profile-message admin-profile-message--error">{error}</p>}
+        {success && <p role="status" className="admin-profile-message admin-profile-message--success">{success}</p>}
+        {issuedPassword && <p role="status" className="admin-profile-message admin-profile-message--success">
+          {th ? 'แจ้งรหัสผ่านให้เจ้าของบัญชีโดยตรง แล้วกดซ่อนรหัสนี้' : 'Give the password directly to the member, then hide it.'}<br />
+          <strong>{issuedPassword}</strong>{' '}
+          <button type="button" onClick={() => setIssuedPassword('')}>{th ? 'ซ่อนรหัส' : 'Hide password'}</button>
+        </p>}
+        {!error && !success && !issuedPassword && <span>{th ? 'ตรวจข้อมูลก่อนกดบันทึก' : 'Review the details before saving.'}</span>}
+      </div>
+      <button className="admin-profile-save" type="submit" disabled={saving || importingCard || readerBusy || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))}>
+        {saving ? (th ? 'กำลังบันทึก...' : 'Saving...') : (th ? 'บันทึกข้อมูลสมาชิก' : 'Save member profile')}
+      </button>
+    </div>
   </form>;
 }
