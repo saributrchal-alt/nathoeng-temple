@@ -5,6 +5,6 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>Saributr-Card-Reader-1.5.1</AssemblyName>
+    <AssemblyName>Saributr-Card-Reader-1.5.2</AssemblyName>
   </PropertyGroup>
 </Project>
