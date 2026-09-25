@@ -29,6 +29,9 @@ internal static class CardReader
     [DllImport("winscard.dll", CharSet = CharSet.Unicode, EntryPoint = "SCardConnectW")]
     private static extern int SCardConnect(IntPtr context, string reader, uint share, uint protocols, out IntPtr card, out uint protocol);
     [DllImport("winscard.dll")] private static extern int SCardDisconnect(IntPtr card, uint disposition);
+    [DllImport("winscard.dll", EntryPoint = "SCardStatusW", CharSet = CharSet.Unicode)]
+    private static extern int SCardStatus(IntPtr card, IntPtr readerNames, IntPtr readerLength,
+        IntPtr state, IntPtr activeProtocol, byte[] atr, ref uint atrLength);
     [StructLayout(LayoutKind.Sequential)] private struct IoRequest { public uint protocol; public uint length; }
     [DllImport("winscard.dll")] private static extern int SCardTransmit(IntPtr card, ref IoRequest sendPci, byte[] send, uint sendLength,
         IntPtr recvPci, byte[] recv, ref uint recvLength);
@@ -55,7 +58,10 @@ internal static class CardReader
             Check(SCardConnect(context, reader, Shared, T0 | T1, out var card, out var protocol), "ไม่พบบัตรหรือเครื่องอ่านถูกใช้งานอยู่");
             try
             {
-                var session = new Session(card, protocol);
+                var atr = new byte[32]; uint atrLength = (uint)atr.Length;
+                int responseP2 = SCardStatus(card, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, atr, ref atrLength) == Success
+                    && atrLength >= 2 && atr[0] == 0x3b && atr[1] == 0x67 ? 1 : 0;
+                var session = new Session(card, protocol, responseP2);
                 progress("กำลังเลือกข้อมูลบัตร");
                 session.Apdu([0, 0xA4, 4, 0, 8, 0xA0, 0, 0, 0, 0x54, 0x48, 0, 1]);
                 progress("กำลังอ่านเลขบัตรและชื่อ");
@@ -97,9 +103,8 @@ internal static class CardReader
         finally { SCardReleaseContext(context); }
     }
     private static void Check(int code, string message) { if (code != Success) throw new IOException($"{message} (0x{code:X8})"); }
-    private sealed class Session(IntPtr card, uint protocol)
+    private sealed class Session(IntPtr card, uint protocol, int responseP2)
     {
-        private int responseP2;
         private byte[] Exchange(byte[] command)
         {
             var pci = new IoRequest { protocol = protocol, length = 8 };
