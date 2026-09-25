@@ -12,6 +12,7 @@ internal sealed class CardData
     public string name_title { get; set; } = "";
     public string first_name { get; set; } = "";
     public string last_name { get; set; } = "";
+    public string full_name_en { get; set; } = "";
     public string birth_date { get; set; } = "";
     public string kinship_gender { get; set; } = "";
     public string card_address { get; set; } = "";
@@ -74,6 +75,13 @@ internal static class CardReader
                 data.name_title = parts[0].Trim();
                 data.first_name = (parts[1] + " " + parts[2]).Trim();
                 data.last_name = parts[3].Trim();
+                try
+                {
+                    data.full_name_en = string.Join(' ', Encoding.ASCII.GetString(session.Read(0x75, 100))
+                        .Replace('\0', ' ').Split('#', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(part => part.Trim()).Where(part => part.Length > 0));
+                }
+                catch (IOException) { /* Older cards may not return an English name. */ }
                 var rawDate = Encoding.ASCII.GetString(session.Read(0xD9, 8));
                 if (rawDate.Length == 8 && rawDate.All(char.IsAsciiDigit))
                 {
