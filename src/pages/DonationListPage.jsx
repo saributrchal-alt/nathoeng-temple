@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { isKathin2569Donation, kathin2569Label } from '../donationPurpose'
 
 export default function DonationListPage({
   lang,
@@ -177,6 +178,7 @@ export default function DonationListPage({
     )
 
   const getPurposeLabel = (item) => {
+    if (isKathin2569Donation(item)) return kathin2569Label(lang)
     const purpose = item?.purpose || ''
 
     if (purpose === 'custom') {
