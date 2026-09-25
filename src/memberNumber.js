@@ -15,3 +15,12 @@ export function memberIdFromNumber(value) {
   const id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   return memberNumber(id) === number ? id : '';
 }
+
+export function isValidShortMemberNumber(value) {
+  const number = String(value || '').trim();
+  if (!/^2\d{12}$/.test(number)) return false;
+  let sum = 0;
+  for (let index = 0; index < 12; index += 1)
+    sum += Number(number[index]) * (index % 2 ? 3 : 1);
+  return (10 - sum % 10) % 10 === Number(number[12]);
+}
