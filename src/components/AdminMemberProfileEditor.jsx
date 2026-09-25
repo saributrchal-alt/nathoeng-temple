@@ -17,6 +17,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const [cardError, setCardError] = useState('');
   const [importingCard, setImportingCard] = useState(false);
   const [readerBusy, setReaderBusy] = useState(false);
+  const [readerError, setReaderError] = useState('');
+  const [readerSuccess, setReaderSuccess] = useState('');
   const [photoVersion, setPhotoVersion] = useState(0);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [password, setPassword] = useState('');
@@ -90,7 +92,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
 
   async function importAndSaveFromReader() {
     if (!profile || readerBusy || saving || importingCard) return;
-    setReaderBusy(true); setError(''); setSuccess(''); setCardError('');
+    setReaderBusy(true); setReaderError(''); setReaderSuccess(''); setError(''); setSuccess(''); setCardError('');
     try {
       const card = await readLatestDesktopCard();
       const freshResponse = await fetch('/api/donation-profile', {
@@ -141,10 +143,10 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         username: data.username, hasPasswordAccount: Boolean(data.username) });
       setNewPhoto(''); setRemovePhoto(false); setCardPhoto('');
       setCardImported(false); setCardReviewed(false); setPhotoVersion((version) => version + 1);
-      setSuccess(th ? 'นำเข้าข้อมูลจาก Card Reader และบันทึกโปรไฟล์แล้ว' : 'Card Reader data imported and profile saved.');
+      setReaderSuccess(th ? 'นำเข้าข้อมูลจาก Card Reader และบันทึกโปรไฟล์แล้ว' : 'Card Reader data imported and profile saved.');
       onSaved?.(data.member);
     } catch (err) {
-      setError(err.message || (th ? 'นำเข้าข้อมูลจาก Card Reader ไม่สำเร็จ' : 'Unable to import from Card Reader.'));
+      setReaderError(err.message || (th ? 'นำเข้าข้อมูลจาก Card Reader ไม่สำเร็จ' : 'Unable to import from Card Reader.'));
     } finally {
       setReaderBusy(false);
     }
@@ -211,8 +213,10 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         {readerBusy ? (th ? 'กำลังอ่านและตรวจบัตร...' : 'Reading and checking card...') : (th ? 'นำเข้าและบันทึกจาก Card Reader' : 'Import and save from Card Reader')}
       </button>
       <p style={{ margin: '8px 0 0', fontSize: 12, color: '#665d51' }}>{th
-        ? 'ใช้กับแอปสาริบุตร อ่านบัตร 1.5 ที่เปิดอยู่บนคอมพิวเตอร์เครื่องนี้ อ่านบัตรภายใน 2 นาที แล้วกดปุ่มเพื่อตรวจชื่อก่อนบันทึก'
-        : 'Requires Saributr Card Reader 1.5 running on this computer. Read the card within two minutes, then check the name before saving.'}</p>
+        ? 'เปิดแอปสาริบุตรบนคอมพิวเตอร์ก่อน หากอ่านบัตรด้วยมือถือ ให้กดส่งข้อมูลจนมือถือแจ้งว่าสำเร็จ แล้วกดปุ่มนี้ภายใน 2 นาที'
+        : 'Run Saributr Card Reader on this computer. If reading with a phone, send the card to the desktop app first, then click here within two minutes.'}</p>
+      {readerError && <p role="alert" style={{ margin: '8px 0 0', color: '#a23f34', fontWeight: 700 }}>{readerError}</p>}
+      {readerSuccess && <p role="status" style={{ margin: '8px 0 0', color: '#245635', fontWeight: 700 }}>{readerSuccess}</p>}
     </div>
     <label style={field}>{th ? 'นำเข้า Card Reader เพื่ออัปเดตสมาชิกเดิม (.json)' : 'Import Card Reader data for this member (.json)'}
       <input type="file" accept=".json,application/json" disabled={importingCard || saving || readerBusy}
