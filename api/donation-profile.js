@@ -3,6 +3,7 @@ import {
   clearSessionCookie
 } from '../lib/_auth.js';
 import { handleWalkinMemberRequest } from '../lib/_walkin-members.js';
+import { getMemberProfileDetails } from '../lib/_member-profile-details.js';
 import {
   hasCompleteDonationIdentity,
   isValidIdentityNumber,
@@ -93,6 +94,7 @@ export default async function handler(req, res) {
         });
       }
 
+      const details = await getMemberProfileDetails(supabaseUrl, supabaseSecretKey, memberId);
       const hasIdentityNumber =
         isValidIdentityNumber(normalizeIdentityNumber(member.tax_id));
 
@@ -103,6 +105,7 @@ export default async function handler(req, res) {
         success: true,
         donationProfileComplete: completed,
         fullName: member.full_name || '',
+        fullNameEn: details.fullNameEn, memberAddress: details.memberAddress,
         birthDate: member.birth_date || '',
         picture: member.profile_image_url || '',
         countryCode:
@@ -135,6 +138,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const {
       fullName,
+      fullNameEn,
+      memberAddress,
       taxId,
       countryCode,
       birthDate,
@@ -143,6 +148,11 @@ export default async function handler(req, res) {
 
     const cleanFullName =
       String(fullName || '').trim();
+    const detailsWereProvided = Object.hasOwn(req.body || {}, 'fullNameEn') || Object.hasOwn(req.body || {}, 'memberAddress');
+    const cleanFullNameEn = String(fullNameEn || '').trim().replace(/\s+/g, ' ');
+    const cleanMemberAddress = String(memberAddress || '').trim();
+    if (cleanFullNameEn.length > 200 || cleanMemberAddress.length > 500)
+      return res.status(400).json({ success: false, message: 'English name or address is too long' });
 
     const identityWasProvided =
       String(taxId || '').trim().length > 0;
@@ -255,6 +265,13 @@ export default async function handler(req, res) {
         });
       }
 
+      let details = { available: false, fullNameEn: '', memberAddress: '' };
+      if (detailsWereProvided) {
+        details = await getMemberProfileDetails(supabaseUrl, supabaseSecretKey, memberId);
+        if (!details.available && (cleanFullNameEn || cleanMemberAddress))
+          return res.status(503).json({ success: false, message: 'Run supabase/member-profile-details.sql before saving English name or address' });
+      }
+
       const patch = {
         full_name: cleanFullName,
         donation_profile_updated_at: now,
@@ -301,6 +318,19 @@ export default async function handler(req, res) {
         });
       }
 
+      if (detailsWereProvided && details.available) {
+        const detailResponse = await fetch(`${supabaseUrl}/rest/v1/member_profile_details?on_conflict=member_id`, {
+          method: 'POST', headers: supabaseHeaders(supabaseSecretKey, { Prefer: 'resolution=merge-duplicates' }),
+          body: JSON.stringify({ member_id: memberId, full_name_en: cleanFullNameEn,
+            member_address: cleanMemberAddress, updated_at: now })
+        });
+        if (!detailResponse.ok) {
+          const detailError = await detailResponse.json().catch(() => ({}));
+          console.error('Member profile details save failed:', detailError.code || detailResponse.status);
+          return res.status(503).json({ success: false, message: 'Name and address could not be saved; please retry' });
+        }
+      }
+
       const savedMember =
         Array.isArray(data) &&
         data.length > 0
@@ -319,6 +349,8 @@ export default async function handler(req, res) {
         donationProfileComplete: true,
         fullName:
           savedMember.full_name || cleanFullName,
+        fullNameEn: detailsWereProvided ? cleanFullNameEn : details.fullNameEn,
+        memberAddress: detailsWereProvided ? cleanMemberAddress : details.memberAddress,
         countryCode:
           String(
             savedMember.country_code ||
