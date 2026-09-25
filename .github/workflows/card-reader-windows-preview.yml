@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feature/card-reader-15-bridge
+          ref: 2c1e89b7bf2dee290f35a55b791666c21a31291e
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
