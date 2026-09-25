@@ -131,14 +131,17 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'admin_edit_member', memberId,
-          fullName: card.fullName, identityNumber: card.citizenId,
+          fullName: card.fullName, fullNameEn: card.fullNameEn || fresh.fullNameEn || '',
+          memberAddress: card.memberAddress || fresh.memberAddress || '', identityNumber: card.citizenId,
           birthDate: nextBirthDate, countryCode: 'TH',
           picture: nextPicture, removePhoto: false,
           username: fresh.username, password: '' })
       });
       const data = await response.json();
       if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to save member');
-      setProfile({ ...fresh, fullName: card.fullName, identityNumber: card.citizenId,
+      setProfile({ ...fresh, fullName: card.fullName,
+        fullNameEn: card.fullNameEn || fresh.fullNameEn || '',
+        memberAddress: card.memberAddress || fresh.memberAddress || '', identityNumber: card.citizenId,
         birthDate: nextBirthDate, countryCode: 'TH',
         profileImage: nextPicture || fresh.profileImage,
         picture: nextPicture || fresh.picture,
