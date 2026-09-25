@@ -29,8 +29,12 @@ export default function MemberPhotoEditor({ initialPhoto = '', onChange, lang = 
     if (!initialPhoto) return;
     const img = new Image();
     img.onload = () => { setSource(img); setPreview(''); };
+    img.onerror = () => {
+      setError(th ? 'เปิดรูปจากบัตรไม่ได้ กรุณาเลือกรูปใหม่' : 'Card photo could not be opened. Choose another photo.');
+      onChangeRef.current('');
+    };
     img.src = initialPhoto;
-  }, [initialPhoto]);
+  }, [initialPhoto, th]);
   useEffect(() => {
     if (!source || !canvas.current) return;
     const c = canvas.current;
