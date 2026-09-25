@@ -32,7 +32,7 @@ const PRINT_STYLE = `
     overflow:hidden; overflow-wrap:anywhere; }
   .memberCardIdentity span { display:block; font-size:2.2mm; letter-spacing:.05em; margin-top:1.2mm; }
   .memberCardCode { background:white; padding:1mm 2mm 1.5mm; border-radius:2mm; z-index:1; }
-  .memberCardCode svg { display:block; width:100%; height:13mm; }
+  .memberCardCode svg { display:block; width:100%; height:15mm; }
   .memberCardCode span { display:block; margin-top:.5mm; text-align:center; font: 3mm/1.2 monospace;
     letter-spacing:0; color:#283b31; }
 `;
