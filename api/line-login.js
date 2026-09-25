@@ -223,6 +223,35 @@ export default async function handler(req, res) {
   const supabaseSecretKey =
     process.env.SUPABASE_SECRET_KEY;
 
+  // Shared library access using the existing temple login and member record.
+  if (route === 'library-session') {
+    res.setHeader('Access-Control-Allow-Origin', 'https://library.nathoeng.com');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'GET') return res.status(405).end();
+    const session = getSessionFromRequest(req);
+    if (!session?.memberId || session.actingAdminId) return res.status(401).json({ error: 'Login required' });
+    if (!supabaseUrl || !supabaseSecretKey || !process.env.SESSION_SECRET) return res.status(503).json({ error: 'Member service unavailable' });
+    try {
+      const response = await fetch(
+        supabaseUrl + '/rest/v1/members?id=eq.' + encodeURIComponent(session.memberId) + '&select=id,role,membership_status&limit=1',
+        { headers: { apikey: supabaseSecretKey, Authorization: 'Bearer ' + supabaseSecretKey }, cache: 'no-store' }
+      );
+      if (!response.ok) throw new Error('Member lookup failed');
+      const member = (await response.json())[0];
+      if (!member || (member.membership_status && member.membership_status !== 'active')) return res.status(403).json({ error: 'Inactive member' });
+      const payload = Buffer.from(JSON.stringify({ aud: 'nathoeng-library', sub: member.id, exp: Date.now() + 180000 })).toString('base64url');
+      const signature = crypto.createHmac('sha256', process.env.SESSION_SECRET).update(payload).digest('base64url');
+      return res.status(200).json({ token: payload + '.' + signature, member: { id: member.id, role: member.role } });
+    } catch (error) {
+      console.error('Library session:', error);
+      return res.status(503).json({ error: 'Member service unavailable' });
+    }
+  }
+
   // -----------------------------------------------------
   // Server-authoritative session check.
   // The React app uses this instead of trusting localStorage.
