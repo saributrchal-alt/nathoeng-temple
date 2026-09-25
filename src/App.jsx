@@ -1977,7 +1977,7 @@ const handleLineLogin = async (mode = 'login') => {
         ) : currentPage === 'admin-dashboard' ? (
           /* ================= PAGE: ADMIN DASHBOARD ================= */
           user && user.isAdmin ? (
-            <AdminDashboard lang={lang} goToPage={goToPage} />
+            <AdminDashboard lang={lang} goToPage={goToPage} currentMemberId={user?.memberId} />
           ) : (
             <div className="guidePage">
               <div className="guideContainer" style={{ maxWidth: '600px', textAlign: 'center', padding: '50px 20px' }}>
