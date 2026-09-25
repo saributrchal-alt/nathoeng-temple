@@ -204,7 +204,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       });
       const data = await response.json();
       if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to save member');
-      setProfile((current) => ({ ...current, hasPasswordAccount: Boolean(data.username),
+      setProfile((current) => ({ ...current, addressNeedsReview: false,
+        hasPasswordAccount: Boolean(data.username),
         profileImage: removePhoto ? '' : newPhoto || current.profileImage,
         picture: removePhoto ? '' : newPhoto || current.picture,
         username: data.username }));
