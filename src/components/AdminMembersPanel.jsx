@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import WalkinMemberRegistration from './WalkinMemberRegistration';
 import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 import { parseCardFile } from './parseCardFile';
 import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
 import MemberCard from './MemberCard';
-import { memberNumber } from '../memberNumber';
+import { memberIdFromNumber, memberNumber } from '../memberNumber';
 
 function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const th = lang === 'th';
@@ -24,6 +24,13 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [communicationResult, setCommunicationResult] = useState('');
   const [detailTab, setDetailTab] = useState('stays');
   const [search, setSearch] = useState('');
+  const [scannedNumber, setScannedNumber] = useState('');
+  const [scannedMember, setScannedMember] = useState(undefined);
+  const [scanError, setScanError] = useState('');
+  const [scanBusy, setScanBusy] = useState(false);
+  const scanInputRef = useRef(null);
+  const scanRequestRef = useRef(0);
+  const pendingScanRef = useRef('');
   const [identityQuery, setIdentityQuery] = useState('');
   const [cardLookup, setCardLookup] = useState(null);
   const [cardLookupError, setCardLookupError] = useState('');
@@ -390,6 +397,41 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     });
   }, [members, search, providerFilter]);
 
+  async function lookupMemberNumber(rawNumber) {
+    const number = String(rawNumber || '').trim();
+    if (!memberIdFromNumber(number)) {
+      setScannedMember(undefined);
+      setScanError(th ? 'กรุณาสแกนหรือกรอกหมายเลขสมาชิก 39 หลักให้ครบ' : 'Scan or enter a valid 39-digit member number.');
+      return;
+    }
+    if (pendingScanRef.current === number) return;
+    const request = ++scanRequestRef.current;
+    pendingScanRef.current = number;
+    setScanBusy(true);
+    setScanError('');
+    setScannedMember(undefined);
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'lookup_member_number', memberNumber: number })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to search members');
+      if (scanRequestRef.current === request)
+        setScannedMember(data.member ? members.find((item) => item.id === data.member.id) || data.member : null);
+    } catch (err) {
+      if (scanRequestRef.current === request)
+        setScanError(err.message || (th ? 'ค้นหาสมาชิกไม่ได้' : 'Unable to search members.'));
+    } finally {
+      if (scanRequestRef.current === request) {
+        pendingScanRef.current = '';
+        setScanBusy(false);
+        if (document.activeElement === scanInputRef.current) scanInputRef.current.select();
+      }
+    }
+  }
+
   async function lookupCardMember(citizenId, cardName = '', birthDate = '') {
     if (cardLookupBusy) return;
     setCardLookup(null);
@@ -731,6 +773,51 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
           <option value="walkin">{th ? 'สมัครที่วัด' : 'Walk-in'}</option>
         </select>
       </div>
+
+      <section style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
+        <h2 style={{ fontSize: 18, margin: '0 0 6px' }}>{th ? 'สแกนบาร์โค้ดบัตรสมาชิก' : 'Scan a member card barcode'}</h2>
+        <p style={{ margin: '0 0 12px', color: '#756c60', fontSize: 13 }}>
+          {th ? 'กดช่องหมายเลขแล้วสแกนบัตรสมาชิก ระบบค้นหาอัตโนมัติเมื่อรับครบ 39 หลัก หรือกด Enter จากเครื่องสแกน' : 'Focus the number field and scan the member card. Search starts after 39 digits or when the scanner sends Enter.'}
+        </p>
+        <form onSubmit={(event) => { event.preventDefault(); lookupMemberNumber(scanInputRef.current?.value); }}
+          style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
+          <label style={{ display: 'grid', gap: 5, flex: '1 1 260px', minWidth: 0, fontSize: 13, fontWeight: 700 }}>
+            {th ? 'หมายเลขสมาชิกจากบาร์โค้ด 39 หลัก' : '39-digit barcode member number'}
+            <input ref={scanInputRef} type="text" inputMode="numeric" autoComplete="off" maxLength={39}
+              value={scannedNumber} onChange={(event) => {
+                const number = event.target.value.replace(/\D/g, '').slice(0, 39);
+                scanRequestRef.current += 1;
+                pendingScanRef.current = '';
+                setScannedNumber(number);
+                setScannedMember(undefined);
+                setScanError('');
+                setScanBusy(false);
+                if (number.length === 39) lookupMemberNumber(number);
+              }}
+              placeholder={th ? 'คลิกช่องนี้แล้วสแกนบาร์โค้ด' : 'Focus here and scan the barcode'}
+              style={{ minHeight: 44, padding: '8px 11px', border: '1px solid #d8c9b5', borderRadius: 9, font: 'inherit', boxSizing: 'border-box', width: '100%' }} />
+          </label>
+          <button type="button" onClick={() => scanInputRef.current?.focus()}
+            style={{ minHeight: 44, padding: '8px 12px', border: '1px solid #bda578', borderRadius: 9, background: '#fff' }}>
+            {th ? 'เริ่มสแกน' : 'Focus scanner'}
+          </button>
+          <button type="submit" disabled={scanBusy}
+            style={{ minHeight: 44, padding: '8px 16px', border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', fontWeight: 700 }}>
+            {scanBusy ? (th ? 'กำลังค้นหา...' : 'Searching...') : (th ? 'ค้นหาสมาชิก' : 'Find member')}
+          </button>
+        </form>
+        {scanError && <p role="alert" style={{ color: '#a23f34', marginBottom: 0 }}>{scanError}</p>}
+        {scannedMember !== undefined && <div role="status" style={{ marginTop: 14, padding: 12, borderRadius: 10, background: '#f5f1e8' }}>
+          {scannedMember ? <>
+            <strong>{th ? 'พบบัญชีสมาชิก' : 'Member found'}</strong>
+            <div style={{ marginTop: 8 }}>
+              <button type="button" onClick={() => openMember(scannedMember)} style={{ minHeight: 44, border: '1px solid #bda578', borderRadius: 9, padding: '8px 12px', background: '#fff', fontWeight: 700 }}>
+                {memberName(scannedMember)} · {th ? 'เปิดข้อมูลสมาชิก' : 'Open member'}
+              </button>
+            </div>
+          </> : <strong>{th ? 'ไม่พบสมาชิกจากหมายเลขที่สแกน' : 'No member found for this barcode'}</strong>}
+        </div>}
+      </section>
 
       <section style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
         <h2 style={{ fontSize: 18, margin: '0 0 6px' }}>{th ? 'ค้นหาสมาชิกด้วยบัตรประชาชน' : 'Find a member by national ID card'}</h2>
