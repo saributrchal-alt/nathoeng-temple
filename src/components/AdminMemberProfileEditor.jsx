@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MemberPhotoEditor from './MemberPhotoEditor';
+import { parseCardFile } from './parseCardFile';
 
 export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const th = lang === 'th';
@@ -9,6 +10,12 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [newPhoto, setNewPhoto] = useState('');
+  const [cardPhoto, setCardPhoto] = useState('');
+  const [cardImported, setCardImported] = useState(false);
+  const [cardReviewed, setCardReviewed] = useState(false);
+  const [cardError, setCardError] = useState('');
+  const [importingCard, setImportingCard] = useState(false);
+  const [photoVersion, setPhotoVersion] = useState(0);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [password, setPassword] = useState('');
   const [issuedPassword, setIssuedPassword] = useState('');
@@ -35,14 +42,62 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     return () => { active = false; };
   }, [memberId]);
 
-  const update = (field, value) => setProfile((current) => ({ ...current, [field]: value }));
+  const update = (field, value) => {
+    setProfile((current) => ({ ...current, [field]: value }));
+    if (cardImported) setCardReviewed(false);
+  };
   const field = { display: 'grid', gap: 6, margin: '12px 0', fontWeight: 700, fontSize: 14 };
   const input = { width: '100%', minHeight: 44, boxSizing: 'border-box', border: '1px solid #d8c9b5', borderRadius: 9, padding: '8px 11px', font: 'inherit' };
 
+  async function importCard(file) {
+    if (!file || !profile || importingCard) return;
+    setImportingCard(true); setCardReviewed(false); setCardError(''); setError(''); setSuccess('');
+    try {
+      if (file.size > 200000) throw Error('ไฟล์ข้อมูลบัตรใหญ่เกินกำหนด');
+      const card = parseCardFile(await file.text());
+      if (card.fullName.length < 2 || card.fullName.length > 200)
+        throw Error(th ? 'ชื่อจากบัตรไม่ครบหรือยาวเกินกำหนด' : 'Cardholder name is missing or too long.');
+      const currentId = String(profile.identityNumber || '').replace(/[\s-]+/g, '').toUpperCase();
+      if (currentId && currentId !== card.citizenId)
+        throw Error(th ? 'สมาชิกที่เลือกมีเลขประจำตัวคนละเลข กรุณาตรวจสอบบัญชีสมาชิกก่อนนำเข้า' : 'This member has a different ID. Check the selected account before importing.');
+
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'lookup', citizenId: card.citizenId })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to check card identity');
+      if (data.member && String(data.member.id) !== String(memberId))
+        throw Error(th
+          ? `เลขบัตรนี้ผูกกับบัญชี ${data.member.fullName || data.member.id} อยู่แล้ว กรุณาเปิดสมาชิกบัญชีนั้น`
+          : `This card belongs to ${data.member.fullName || data.member.id}. Open that member account instead.`);
+
+      setProfile((current) => ({ ...current, fullName: card.fullName,
+        identityNumber: card.citizenId, birthDate: card.birthDate || current.birthDate,
+        countryCode: 'TH' }));
+      setNewPhoto(''); setRemovePhoto(false);
+      setCardPhoto(card.photo); setPhotoVersion((version) => version + 1);
+      setCardImported(true);
+    } catch (err) {
+      setCardError(err.message || (th ? 'นำเข้าไฟล์บัตรไม่ได้' : 'Unable to import card file.'));
+    } finally {
+      setImportingCard(false);
+    }
+  }
+
   async function save(event) {
     event.preventDefault();
-    if (!profile || saving) return;
+    if (!profile || saving || importingCard) return;
     setError(''); setSuccess(''); setIssuedPassword('');
+    if (cardImported && !cardReviewed) {
+      setError(th ? 'กรุณาตรวจข้อมูลบัตรกับเจ้าของก่อนบันทึก' : 'Please review the card details with the member before saving.');
+      return;
+    }
+    if (cardPhoto && !newPhoto) {
+      setError(th ? 'รูปจากบัตรยังไม่พร้อม กรุณารอสักครู่หรือเลือกรูปใหม่' : 'The card photo is not ready. Wait a moment or choose another photo.');
+      return;
+    }
     if (profile.hasPasswordAccount && !profile.username.trim()) {
       setError(th ? 'บัญชีที่มีรหัสผ่านแล้วต้องมีชื่อผู้ใช้' : 'An existing password account needs a username.');
       return;
@@ -69,6 +124,9 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         username: data.username }));
       setIssuedPassword(password);
       setPassword(''); setNewPhoto(''); setRemovePhoto(false);
+      setCardPhoto(''); setCardImported(false); setCardReviewed(false);
+      setCardError('');
+      setPhotoVersion((version) => version + 1);
       setSuccess(th ? 'บันทึกข้อมูลสมาชิกแล้ว' : 'Member profile saved.');
       onSaved?.(data.member);
     } catch (err) {
@@ -83,6 +141,20 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
 
   return <form onSubmit={save} style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
     <h3 style={{ marginTop: 0 }}>{th ? 'แก้ไขโปรไฟล์และบัญชีเข้าสู่ระบบ' : 'Edit profile and login account'}</h3>
+    <label style={field}>{th ? 'นำเข้า Card Reader เพื่ออัปเดตสมาชิกเดิม (.json)' : 'Import Card Reader data for this member (.json)'}
+      <input type="file" accept=".json,application/json" disabled={importingCard || saving}
+        onChange={(event) => { importCard(event.target.files?.[0]); event.target.value = ''; }} />
+    </label>
+    {importingCard && <p role="status">{th ? 'กำลังตรวจเลขบัตรกับสมาชิกในระบบ...' : 'Checking this card against member records...'}</p>}
+    {cardError && <p role="alert" style={{ color: '#a23f34' }}>{cardError}</p>}
+    {cardImported && <div style={{ margin: '12px 0', padding: 12, borderRadius: 9, background: '#f5f1e8' }}>
+      <strong>{th ? 'นำเข้าข้อมูลแล้ว ยังไม่ได้บันทึก' : 'Card imported; changes are not saved yet.'}</strong>
+      <p style={{ margin: '6px 0', fontSize: 13 }}>{th ? 'ตรวจชื่อ เลขบัตร วันเกิด และรูปด้านล่างก่อนบันทึก ชื่อผู้ใช้ รหัสผ่าน และบัญชี LINE/Telegram ยังใช้ของเดิม' : 'Review the name, ID, birth date and photo below. The username, password and LINE/Telegram connections stay as they are.'}</p>
+      <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13 }}>
+        <input type="checkbox" checked={cardReviewed} onChange={(event) => setCardReviewed(event.target.checked)} />
+        {th ? 'ตรวจบัตรและยืนยันว่าเป็นสมาชิกที่เลือกอยู่แล้ว' : 'I checked that this card belongs to the selected member.'}
+      </label>
+    </div>}
     <label style={field}>{th ? 'ชื่อและนามสกุล' : 'Full name'}
       <input style={input} required maxLength={200} value={profile.fullName} onChange={(e) => update('fullName', e.target.value)} />
     </label>
@@ -96,7 +168,10 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       <input style={input} required maxLength={2} pattern="[a-zA-Z]{2}" value={profile.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} placeholder="TH" />
     </label>
     {profile.picture && !removePhoto && !newPhoto && <img src={profile.picture} alt={th ? 'รูปปัจจุบัน' : 'Current picture'} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: '50%' }} />}
-    <MemberPhotoEditor lang={lang} onChange={(photo) => { setNewPhoto(photo); if (photo) setRemovePhoto(false); }} />
+    <MemberPhotoEditor key={photoVersion} initialPhoto={cardPhoto} lang={lang} onChange={(photo) => { setNewPhoto(photo); if (photo) setRemovePhoto(false); }} />
+    {cardPhoto && <p role="status" style={{ color: '#805a20' }}>{newPhoto
+      ? (th ? 'รูปจากบัตรพร้อมบันทึก สามารถเลื่อนหรือซูมเพิ่มได้' : 'Card photo is ready. You can adjust the crop.')
+      : (th ? 'กำลังเตรียมรูปจากบัตร กรุณารอสักครู่' : 'Preparing the card photo...')}</p>}
     {profile.profileImage && !newPhoto && <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
       <input type="checkbox" checked={removePhoto} onChange={(e) => setRemovePhoto(e.target.checked)} />
       {th ? 'ลบรูปที่วัดอัปโหลด (รูป LINE/Telegram ยังอยู่)' : 'Remove uploaded photo (LINE/Telegram picture remains)'}
@@ -116,7 +191,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       <strong>{issuedPassword}</strong>{' '}
       <button type="button" onClick={() => setIssuedPassword('')}>{th ? 'ซ่อนรหัส' : 'Hide password'}</button>
     </p>}
-    <button type="submit" disabled={saving} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
+    <button type="submit" disabled={saving || importingCard || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
       {saving ? (th ? 'กำลังบันทึก...' : 'Saving...') : (th ? 'บันทึกโปรไฟล์และบัญชี' : 'Save profile and account')}
     </button>
   </form>;
