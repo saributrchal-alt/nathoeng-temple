@@ -971,9 +971,20 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.42)', zIndex: 9999, display: 'grid', placeItems: 'center', padding: '18px' }}
         >
           <div
+            className={editMemberOpen ? 'admin-member-dialog admin-member-dialog--editing' : 'admin-member-dialog'}
             onClick={(event) => event.stopPropagation()}
-            style={{ width: 'min(660px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: '#fff', borderRadius: '18px', padding: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
+            style={{ width: editMemberOpen ? 'min(1120px, 100%)' : 'min(660px, 100%)', maxHeight: '92vh', overflowY: 'auto', background: '#fff', borderRadius: '18px', padding: editMemberOpen ? 0 : '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
           >
+            {editMemberOpen && <div className="admin-member-editor-bar">
+              <div>
+                <p className="admin-member-editor-bar__eyebrow">{th ? 'จัดการสมาชิก' : 'MEMBER MANAGEMENT'}</p>
+                <h2>{th ? 'แก้ไขโปรไฟล์สมาชิก' : 'Edit member profile'}</h2>
+                <p className="admin-member-editor-bar__name">{memberName(selectedMember)}</p>
+              </div>
+              <button type="button" className="admin-member-editor-bar__back" onClick={() => setEditMemberOpen(false)}>
+                {th ? '← กลับไปข้อมูลสมาชิก' : '← Back to member'}
+              </button>
+            </div>}
             <h2 style={{ marginTop: 0 }}>{memberName(selectedMember)}</h2>
 
             <h3>{text.connectedAccounts}</h3>
@@ -1025,11 +1036,13 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
               <p style={{ fontSize: 13, color: '#665d51' }}>{th ? 'ดูข้อมูลและบันทึกการบริจาคแทนสมาชิกได้ ระบบเก็บชื่อ Admin ผู้ดำเนินการ และกลับบัญชี Admin ได้ทุกเมื่อ' : 'View this account and record donations. The acting admin is recorded; you can return to the admin account.'}</p>
               {actingError && <p role="alert" style={{ color: '#a23f34' }}>{actingError}</p>}
             </div>}
-            {editMemberOpen && <AdminMemberProfileEditor key={selectedMember.id} memberId={selectedMember.id} lang={lang}
-              onSaved={(saved) => {
-                setMembers((current) => current.map((item) => String(item.id) === String(saved.id) ? { ...item, ...saved } : item));
-                setSelectedMember((current) => current ? { ...current, ...saved } : current);
-              }} />}
+            {editMemberOpen && <div className="admin-member-profile-editor-shell">
+              <AdminMemberProfileEditor key={selectedMember.id} memberId={selectedMember.id} lang={lang}
+                onSaved={(saved) => {
+                  setMembers((current) => current.map((item) => String(item.id) === String(saved.id) ? { ...item, ...saved } : item));
+                  setSelectedMember((current) => current ? { ...current, ...saved } : current);
+                }} />
+            </div>}
 
             <div style={{ border: '1px solid #dfd3c2', borderRadius: '14px', padding: '15px', background: '#fbf8f2', marginBottom: '18px' }}>
               <h3 style={{ margin: '0 0 5px' }}>{text.publicTeamTitle}</h3>
