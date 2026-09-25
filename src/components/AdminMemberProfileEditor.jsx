@@ -78,6 +78,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
           : `This card belongs to ${data.member.fullName || data.member.id}. Open that member account instead.`);
 
       setProfile((current) => ({ ...current, fullName: card.fullName,
+        fullNameEn: card.fullNameEn || current.fullNameEn,
+        memberAddress: card.memberAddress || current.memberAddress,
         identityNumber: card.citizenId, birthDate: card.birthDate || current.birthDate,
         countryCode: 'TH' }));
       setNewPhoto(''); setRemovePhoto(false);
@@ -178,7 +180,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'admin_edit_member', memberId,
-          fullName: profile.fullName, identityNumber: profile.identityNumber,
+          fullName: profile.fullName, fullNameEn: profile.fullNameEn || '',
+          memberAddress: profile.memberAddress || '', identityNumber: profile.identityNumber,
           birthDate: profile.birthDate, countryCode: profile.countryCode,
           picture: newPhoto, removePhoto, username: profile.username, password })
       });
@@ -234,6 +237,12 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     </div>}
     <label style={field}>{th ? 'ชื่อและนามสกุล' : 'Full name'}
       <input style={input} required maxLength={200} value={profile.fullName} onChange={(e) => update('fullName', e.target.value)} />
+    </label>
+    <label style={field}>{th ? 'ชื่อและนามสกุลภาษาอังกฤษ' : 'English full name'}
+      <input style={input} maxLength={200} value={profile.fullNameEn || ''} onChange={(e) => update('fullNameEn', e.target.value)} />
+    </label>
+    <label style={field}>{th ? 'ที่อยู่' : 'Address'}
+      <textarea style={{ ...input, minHeight: 90 }} maxLength={500} value={profile.memberAddress || ''} onChange={(e) => update('memberAddress', e.target.value)} />
     </label>
     <label style={field}>{th ? 'เลขบัตรประชาชน 13 หลัก หรือพาสปอร์ต (เว้นว่างเพื่อลบ)' : '13-digit national ID or passport (blank to clear)'}
       <input style={input} autoComplete="off" maxLength={20} value={profile.identityNumber} onChange={(e) => update('identityNumber', e.target.value)} />
