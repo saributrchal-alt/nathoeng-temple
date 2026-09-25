@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import MemberPhotoEditor from './MemberPhotoEditor';
 import { parseCardFile } from './parseCardFile';
 import { readLatestDesktopCard } from '../lib/cardReaderBridge';
+import { structuredAddress } from '../lib/thaiAddress.js';
+import ThaiAddressFields from './ThaiAddressFields.jsx';
 
 export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const th = lang === 'th';
@@ -80,6 +82,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       setProfile((current) => ({ ...current, fullName: card.fullName,
         fullNameEn: card.fullNameEn || current.fullNameEn,
         memberAddress: card.memberAddress || current.memberAddress,
+        ...structuredAddress(card.memberAddress ? card : current),
+        addressNeedsReview: card.addressNeedsReview,
         identityNumber: card.citizenId, birthDate: card.birthDate || current.birthDate,
         countryCode: 'TH' }));
       setNewPhoto(''); setRemovePhoto(false);
@@ -125,6 +129,9 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         (th ? 'กดตกลงเพื่อนำเข้าและบันทึกทันที' : 'Press OK to import and save now.'));
       if (!approved) return;
 
+      if (card.addressNeedsReview) throw Error(th
+        ? 'แยกที่อยู่จากบัตรไม่ครบ กรุณานำเข้าไฟล์แล้วเลือกจังหวัด อำเภอ ตำบลด้วยตนเองก่อนบันทึก'
+        : 'Card address could not be matched. Import the JSON and select the address manually.');
       const nextBirthDate = card.birthDate || fresh.birthDate;
       const nextPicture = card.photo || '';
       const response = await fetch('/api/donation-profile', {
@@ -132,7 +139,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'admin_edit_member', memberId,
           fullName: card.fullName, fullNameEn: card.fullNameEn || fresh.fullNameEn || '',
-          memberAddress: card.memberAddress || fresh.memberAddress || '', identityNumber: card.citizenId,
+          memberAddress: card.memberAddress || fresh.memberAddress || '',
+          ...structuredAddress(card.memberAddress ? card : fresh), identityNumber: card.citizenId,
           birthDate: nextBirthDate, countryCode: 'TH',
           picture: nextPicture, removePhoto: false,
           username: fresh.username, password: '' })
@@ -141,7 +149,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to save member');
       setProfile({ ...fresh, fullName: card.fullName,
         fullNameEn: card.fullNameEn || fresh.fullNameEn || '',
-        memberAddress: card.memberAddress || fresh.memberAddress || '', identityNumber: card.citizenId,
+        memberAddress: card.memberAddress || fresh.memberAddress || '',
+        ...structuredAddress(card.memberAddress ? card : fresh), identityNumber: card.citizenId,
         birthDate: nextBirthDate, countryCode: 'TH',
         profileImage: nextPicture || fresh.profileImage,
         picture: nextPicture || fresh.picture,
@@ -165,6 +174,10 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       setError(th ? 'กรุณาตรวจข้อมูลบัตรกับเจ้าของก่อนบันทึก' : 'Please review the card details with the member before saving.');
       return;
     }
+    if (cardImported && profile.addressNeedsReview && !profile.addressSubdistrictId) {
+      setError(th ? 'กรุณาเลือกจังหวัด อำเภอ ตำบล และตรวจบ้านเลขที่จากบัตรก่อนบันทึก' : 'Select the card address areas before saving.');
+      return;
+    }
     if (cardPhoto && !newPhoto) {
       setError(th ? 'รูปจากบัตรยังไม่พร้อม กรุณารอสักครู่หรือเลือกรูปใหม่' : 'The card photo is not ready. Wait a moment or choose another photo.');
       return;
@@ -184,7 +197,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'admin_edit_member', memberId,
           fullName: profile.fullName, fullNameEn: profile.fullNameEn || '',
-          memberAddress: profile.memberAddress || '', identityNumber: profile.identityNumber,
+          memberAddress: profile.memberAddress || '', ...structuredAddress(profile.countryCode === 'TH' ? profile : {}),
+          identityNumber: profile.identityNumber,
           birthDate: profile.birthDate, countryCode: profile.countryCode,
           picture: newPhoto, removePhoto, username: profile.username, password })
       });
@@ -230,6 +244,9 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     </label>
     {importingCard && <p role="status">{th ? 'กำลังตรวจเลขบัตรกับสมาชิกในระบบ...' : 'Checking this card against member records...'}</p>}
     {cardError && <p role="alert" style={{ color: '#a23f34' }}>{cardError}</p>}
+    {profile.addressNeedsReview && <p role="status" style={{ color: '#805a20' }}>
+      {th ? 'ที่อยู่จากบัตรไม่ตรงกับรายการพื้นที่ กรุณาเลือกจังหวัด อำเภอ ตำบลด้วยตนเอง' : 'Please select the card address areas manually.'}
+    </p>}
     {cardImported && <div style={{ margin: '12px 0', padding: 12, borderRadius: 9, background: '#f5f1e8' }}>
       <strong>{th ? 'นำเข้าข้อมูลแล้ว ยังไม่ได้บันทึก' : 'Card imported; changes are not saved yet.'}</strong>
       <p style={{ margin: '6px 0', fontSize: 13 }}>{th ? 'ตรวจชื่อ เลขบัตร วันเกิด และรูปด้านล่างก่อนบันทึก ชื่อผู้ใช้ รหัสผ่าน และบัญชี LINE/Telegram ยังใช้ของเดิม' : 'Review the name, ID, birth date and photo below. The username, password and LINE/Telegram connections stay as they are.'}</p>
@@ -244,9 +261,12 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     <label style={field}>{th ? 'ชื่อและนามสกุลภาษาอังกฤษ' : 'English full name'}
       <input style={input} maxLength={200} value={profile.fullNameEn || ''} onChange={(e) => update('fullNameEn', e.target.value)} />
     </label>
-    <label style={field}>{th ? 'ที่อยู่' : 'Address'}
-      <textarea style={{ ...input, minHeight: 90 }} maxLength={500} value={profile.memberAddress || ''} onChange={(e) => update('memberAddress', e.target.value)} />
-    </label>
+    {profile.countryCode === 'TH' ? <ThaiAddressFields lang={lang} value={profile}
+      legacyAddress={profile.memberAddress || ''}
+      onChange={(patch) => { setProfile((current) => ({ ...current, ...patch })); if (cardImported) setCardReviewed(false); }} /> :
+      <label style={field}>{th ? 'ที่อยู่ต่างประเทศ' : 'Address'}
+        <textarea style={{ ...input, minHeight: 90 }} maxLength={500} value={profile.memberAddress || ''} onChange={(e) => update('memberAddress', e.target.value)} />
+      </label>}
     <label style={field}>{th ? 'เลขบัตรประชาชน 13 หลัก หรือพาสปอร์ต (เว้นว่างเพื่อลบ)' : '13-digit national ID or passport (blank to clear)'}
       <input style={input} autoComplete="off" maxLength={20} value={profile.identityNumber} onChange={(e) => update('identityNumber', e.target.value)} />
     </label>
