@@ -3,7 +3,7 @@ import WalkinMemberRegistration from './WalkinMemberRegistration';
 import AdminMemberProfileEditor from './AdminMemberProfileEditor';
 import { parseCardFile } from './parseCardFile';
 
-function AdminMembersPanel({ lang, onDonation }) {
+function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const th = lang === 'th';
   const [members, setMembers] = useState([]);
   const [donations, setDonations] = useState([]);
@@ -914,7 +914,8 @@ function AdminMembersPanel({ lang, onDonation }) {
               style={{ minHeight: 44, marginBottom: 14, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700 }}>
               {editMemberOpen ? (th ? 'ปิดการแก้ไขโปรไฟล์' : 'Close profile editor') : (th ? 'แก้ไขโปรไฟล์ / ชื่อผู้ใช้ / รหัสผ่าน' : 'Edit profile / username / password')}
             </button>
-            {selectedMember.role === 'member' && <div style={{ marginBottom: 16 }}>
+            {(selectedMember.role === 'member' ||
+              (selectedMember.role === 'admin' && String(selectedMember.id) === String(currentMemberId))) && <div style={{ marginBottom: 16 }}>
               <button type="button" disabled={actingBusy} onClick={startActingAsMember}
                 style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#956e26', color: '#fff', padding: '9px 15px', fontWeight: 700 }}>
                 {actingBusy ? (th ? 'กำลังเปิดบัญชี...' : 'Opening member account...') : (th ? 'เข้าใช้งานในนามสมาชิก' : 'Act as this member')}
