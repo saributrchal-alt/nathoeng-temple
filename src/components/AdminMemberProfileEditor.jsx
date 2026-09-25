@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import MemberPhotoEditor from './MemberPhotoEditor';
 import { parseCardFile } from './parseCardFile';
+import { readLatestDesktopCard } from '../lib/cardReaderBridge';
 
 export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const th = lang === 'th';
@@ -15,6 +16,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   const [cardReviewed, setCardReviewed] = useState(false);
   const [cardError, setCardError] = useState('');
   const [importingCard, setImportingCard] = useState(false);
+  const [readerBusy, setReaderBusy] = useState(false);
   const [photoVersion, setPhotoVersion] = useState(0);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [password, setPassword] = useState('');
@@ -86,9 +88,71 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     }
   }
 
+  async function importAndSaveFromReader() {
+    if (!profile || readerBusy || saving || importingCard) return;
+    setReaderBusy(true); setError(''); setSuccess(''); setCardError('');
+    try {
+      const card = await readLatestDesktopCard();
+      const freshResponse = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'admin_member', memberId })
+      });
+      const freshData = await freshResponse.json();
+      if (!freshResponse.ok || !freshData?.success) throw Error(freshData?.message || 'Unable to check member profile');
+      const fresh = freshData.profile;
+      const currentId = String(fresh.identityNumber || '').replace(/[\s-]+/g, '').toUpperCase();
+      if (currentId && currentId !== card.citizenId)
+        throw Error(th ? 'เลขบัตรไม่ตรงกับสมาชิกที่เปิดอยู่ จึงไม่ได้บันทึกข้อมูล' : 'The card does not match the selected member. Nothing was saved.');
+
+      const lookupResponse = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'lookup', citizenId: card.citizenId })
+      });
+      const lookup = await lookupResponse.json();
+      if (!lookupResponse.ok || !lookup?.success) throw Error(lookup?.message || 'Unable to check card identity');
+      if (lookup.member && String(lookup.member.id) !== String(memberId))
+        throw Error(th ? 'เลขบัตรนี้ผูกกับสมาชิกบัญชีอื่นอยู่แล้ว จึงไม่ได้บันทึกข้อมูล' : 'This card belongs to another member. Nothing was saved.');
+
+      const approved = window.confirm((th ? 'ตรวจบัตรกับเจ้าของแล้วใช่ไหม?\nสมาชิก: ' : 'Have you checked the card with its owner?\nMember: ') +
+        fresh.fullName + '\n' + (th ? 'ข้อมูลจากบัตร: ' : 'Card name: ') + card.fullName +
+        ' (' + card.citizenId.slice(-4) + ')\n' +
+        (th ? 'กดตกลงเพื่อนำเข้าและบันทึกทันที' : 'Press OK to import and save now.'));
+      if (!approved) return;
+
+      const nextBirthDate = card.birthDate || fresh.birthDate;
+      const nextPicture = card.photo || '';
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'admin_edit_member', memberId,
+          fullName: card.fullName, identityNumber: card.citizenId,
+          birthDate: nextBirthDate, countryCode: 'TH',
+          picture: nextPicture, removePhoto: false,
+          username: fresh.username, password: '' })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to save member');
+      setProfile({ ...fresh, fullName: card.fullName, identityNumber: card.citizenId,
+        birthDate: nextBirthDate, countryCode: 'TH',
+        profileImage: nextPicture || fresh.profileImage,
+        picture: nextPicture || fresh.picture,
+        username: data.username, hasPasswordAccount: Boolean(data.username) });
+      setNewPhoto(''); setRemovePhoto(false); setCardPhoto('');
+      setCardImported(false); setCardReviewed(false); setPhotoVersion((version) => version + 1);
+      setSuccess(th ? 'นำเข้าข้อมูลจาก Card Reader และบันทึกโปรไฟล์แล้ว' : 'Card Reader data imported and profile saved.');
+      onSaved?.(data.member);
+    } catch (err) {
+      setError(err.message || (th ? 'นำเข้าข้อมูลจาก Card Reader ไม่สำเร็จ' : 'Unable to import from Card Reader.'));
+    } finally {
+      setReaderBusy(false);
+    }
+  }
+
   async function save(event) {
     event.preventDefault();
-    if (!profile || saving || importingCard) return;
+    if (!profile || saving || importingCard || readerBusy) return;
     setError(''); setSuccess(''); setIssuedPassword('');
     if (cardImported && !cardReviewed) {
       setError(th ? 'กรุณาตรวจข้อมูลบัตรกับเจ้าของก่อนบันทึก' : 'Please review the card details with the member before saving.');
@@ -141,8 +205,17 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
 
   return <form onSubmit={save} style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
     <h3 style={{ marginTop: 0 }}>{th ? 'แก้ไขโปรไฟล์และบัญชีเข้าสู่ระบบ' : 'Edit profile and login account'}</h3>
+    <div style={{ margin: '12px 0', padding: 12, borderRadius: 9, background: '#eef5ed' }}>
+      <button type="button" disabled={readerBusy || saving || importingCard} onClick={importAndSaveFromReader}
+        style={{ minHeight: 44, padding: '9px 15px', border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', fontWeight: 700 }}>
+        {readerBusy ? (th ? 'กำลังอ่านและตรวจบัตร...' : 'Reading and checking card...') : (th ? 'นำเข้าและบันทึกจาก Card Reader' : 'Import and save from Card Reader')}
+      </button>
+      <p style={{ margin: '8px 0 0', fontSize: 12, color: '#665d51' }}>{th
+        ? 'ใช้กับแอปสาริบุตร อ่านบัตร 1.5 ที่เปิดอยู่บนคอมพิวเตอร์เครื่องนี้ อ่านบัตรภายใน 2 นาที แล้วกดปุ่มเพื่อตรวจชื่อก่อนบันทึก'
+        : 'Requires Saributr Card Reader 1.5 running on this computer. Read the card within two minutes, then check the name before saving.'}</p>
+    </div>
     <label style={field}>{th ? 'นำเข้า Card Reader เพื่ออัปเดตสมาชิกเดิม (.json)' : 'Import Card Reader data for this member (.json)'}
-      <input type="file" accept=".json,application/json" disabled={importingCard || saving}
+      <input type="file" accept=".json,application/json" disabled={importingCard || saving || readerBusy}
         onChange={(event) => { importCard(event.target.files?.[0]); event.target.value = ''; }} />
     </label>
     {importingCard && <p role="status">{th ? 'กำลังตรวจเลขบัตรกับสมาชิกในระบบ...' : 'Checking this card against member records...'}</p>}
@@ -191,7 +264,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       <strong>{issuedPassword}</strong>{' '}
       <button type="button" onClick={() => setIssuedPassword('')}>{th ? 'ซ่อนรหัส' : 'Hide password'}</button>
     </p>}
-    <button type="submit" disabled={saving || importingCard || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
+    <button type="submit" disabled={saving || importingCard || readerBusy || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))} style={{ minHeight: 44, border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', padding: '9px 15px', fontWeight: 700, cursor: saving ? 'wait' : 'pointer' }}>
       {saving ? (th ? 'กำลังบันทึก...' : 'Saving...') : (th ? 'บันทึกโปรไฟล์และบัญชี' : 'Save profile and account')}
     </button>
   </form>;
