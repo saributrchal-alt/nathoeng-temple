@@ -15,7 +15,9 @@ export const emptyThaiAddress = {
 export function structuredAddress(value = {}) {
   return {
     addressHouseNo: String(value.addressHouseNo || '').trim(),
-    addressVillageNo: String(value.addressVillageNo || '').trim(),
+    addressVillageNo: String(value.addressVillageNo || '').trim()
+      .replace(/^(?:หมู่(?:ที่)?|ม\.)\s*/, '')
+      .replace(/[๐-๙]/g, (digit) => String('๐๑๒๓๔๕๖๗๘๙'.indexOf(digit))),
     addressExtra: String(value.addressExtra || '').trim(),
     addressProvinceId: Number(value.addressProvinceId) || null,
     addressDistrictId: Number(value.addressDistrictId) || null,
@@ -25,6 +27,7 @@ export function structuredAddress(value = {}) {
 export function validateThaiAddress(value = {}) {
   const a = structuredAddress(value);
   if (a.addressHouseNo.length > 40 || a.addressVillageNo.length > 20 || a.addressExtra.length > 200 ||
+    (a.addressVillageNo && !/^[0-9]{1,3}$/.test(a.addressVillageNo)) ||
     /[\u0000-\u001f]/.test(a.addressHouseNo + a.addressVillageNo + a.addressExtra))
     throw Error('ข้อมูลที่อยู่ยาวเกินกำหนดหรือมีอักขระไม่ถูกต้อง');
   const supplied = Object.values(a).some(Boolean);
