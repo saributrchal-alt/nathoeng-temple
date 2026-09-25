@@ -495,7 +495,7 @@ export default function DonationPage({ lang, goToPage }) {
         quantity: '',
         unit: '',
         note: '',
-        purpose: 'general',
+        purpose: '',
         customPurpose: '',
         taxReceipt: ''
       })
@@ -697,7 +697,7 @@ export default function DonationPage({ lang, goToPage }) {
                       taxReceipt: '',
                       purpose:
                         prev.purpose === 'utilities'
-                          ? 'general'
+                          ? ''
                           : prev.purpose,
                       customPurpose:
                         prev.purpose === 'utilities'
@@ -788,8 +788,8 @@ export default function DonationPage({ lang, goToPage }) {
                         {selectedPurposeOption
                           ? selectedPurposeOption.label
                           : (lang === 'th'
-                              ? 'กรุณาเลือกจุดประสงค์'
-                              : 'Please select a purpose')}
+                              ? 'กดเพื่อเลือกจุดประสงค์การทำบุญ'
+                              : 'Tap to select a donation purpose')}
                       </span>
 
                       <span
@@ -951,8 +951,8 @@ export default function DonationPage({ lang, goToPage }) {
                           {selectedPurposeOption
                             ? selectedPurposeOption.label
                             : (lang === 'th'
-                                ? 'กรุณาเลือกจุดประสงค์'
-                                : 'Please select a purpose')}
+                                ? 'กดเพื่อเลือกจุดประสงค์การทำบุญ'
+                                : 'Tap to select a donation purpose')}
                         </span>
                         <span
                           className={
