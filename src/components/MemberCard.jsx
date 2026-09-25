@@ -73,6 +73,7 @@ export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
     }
     popup.opener = null;
     popup.onload = () => {
+      if (!popup.document.querySelector('.memberCardSurface')) return;
       const pictures = Array.from(popup.document.images);
       Promise.all(pictures.map((picture) => picture.complete ? null : new Promise((resolve) => {
         picture.onload = resolve;
