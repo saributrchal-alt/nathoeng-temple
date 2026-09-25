@@ -1,3 +1,4 @@
+import { addressFromCard } from '../lib/thaiAddress.js';
 export function parseCardFile(text) {
   if (text.length > 200000) throw Error('ไฟล์ข้อมูลบัตรใหญ่เกินกำหนด');
   const card = JSON.parse(text);
@@ -15,6 +16,12 @@ export function parseCardFile(text) {
       !Number.isFinite(Date.parse(birthDate)) || new Date(birthDate).toISOString().slice(0, 10) !== birthDate)) throw Error('วันเกิดไม่ถูกต้อง');
   const photo = part('avatar_image', 100000);
   if (photo && !/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/.test(photo)) throw Error('รูปจากบัตรไม่ถูกต้อง');
-  return { citizenId, birthDate, photo, fullName: [part('name_title', 100), part('first_name', 200), part('last_name', 200)].filter(Boolean).join(' '),
-    fullNameEn: part('full_name_en', 200), memberAddress: part('card_address', 500) };
+  const addressFields = Object.fromEntries([
+    ['card_address', 500], ['address_house_no', 40], ['address_village_no', 20],
+    ['address_extra', 200], ['address_subdistrict', 100], ['address_district', 100],
+    ['address_province', 100]
+  ].map(([key, limit]) => [key, part(key, limit)]));
+  const address = addressFromCard(addressFields);
+  return { ...address, citizenId, birthDate, photo, fullName: [part('name_title', 100), part('first_name', 200), part('last_name', 200)].filter(Boolean).join(' '),
+    fullNameEn: part('full_name_en', 200) };
 }
