@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import WalkinMemberRegistration from './WalkinMemberRegistration';
 import AdminMemberProfileEditor from './AdminMemberProfileEditor';
+import { parseCardFile } from './parseCardFile';
 
 function AdminMembersPanel({ lang, onDonation }) {
   const th = lang === 'th';
@@ -20,6 +21,10 @@ function AdminMembersPanel({ lang, onDonation }) {
   const [communicationResult, setCommunicationResult] = useState('');
   const [detailTab, setDetailTab] = useState('stays');
   const [search, setSearch] = useState('');
+  const [identityQuery, setIdentityQuery] = useState('');
+  const [cardLookup, setCardLookup] = useState(null);
+  const [cardLookupError, setCardLookupError] = useState('');
+  const [cardLookupBusy, setCardLookupBusy] = useState(false);
   const [providerFilter, setProviderFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -379,6 +384,58 @@ function AdminMembersPanel({ lang, onDonation }) {
     });
   }, [members, search, providerFilter]);
 
+  async function lookupCardMember(citizenId, cardName = '', birthDate = '') {
+    if (cardLookupBusy) return;
+    setCardLookup(null);
+    setCardLookupError('');
+    if (!/^\d{13}$/.test(citizenId)) {
+      setCardLookupError(th ? 'กรุณากรอกเลขบัตรประชาชน 13 หลัก' : 'Enter a 13-digit national ID.');
+      return;
+    }
+    setCardLookupBusy(true);
+    try {
+      const response = await fetch('/api/donation-profile', {
+        method: 'POST', credentials: 'include', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'lookup', citizenId })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to search members');
+
+      const normalizeName = (value) => String(value || '').replace(/\s+/g, '').toLocaleLowerCase();
+      const name = normalizeName(cardName);
+      const possible = data.member || !name ? [] : members
+        .filter((member) => {
+          const registeredName = normalizeName(memberName(member));
+          return registeredName && (registeredName.includes(name) || name.includes(registeredName));
+        })
+        .sort((a, b) => Number(Boolean(birthDate && b.birth_date === birthDate)) - Number(Boolean(birthDate && a.birth_date === birthDate)))
+        .slice(0, 8);
+      const member = data.member
+        ? members.find((item) => String(item.id) === String(data.member.id)) || data.member
+        : null;
+      setCardLookup({ member, possible, cardName, suffix: citizenId.slice(-4) });
+    } catch (err) {
+      setCardLookupError(err.message || (th ? 'ค้นหาสมาชิกไม่ได้' : 'Unable to search members.'));
+    } finally {
+      setCardLookupBusy(false);
+    }
+  }
+
+  async function lookupCardFile(file) {
+    if (!file || cardLookupBusy) return;
+    setCardLookup(null);
+    setCardLookupError('');
+    try {
+      if (file.size > 200000) throw Error('ไฟล์ข้อมูลบัตรใหญ่เกินกำหนด');
+      const card = parseCardFile(await file.text());
+      setIdentityQuery(card.citizenId);
+      await lookupCardMember(card.citizenId, card.fullName, card.birthDate);
+    } catch (err) {
+      setCardLookupError(err.message || (th ? 'อ่านไฟล์บัตรไม่ได้' : 'Unable to read card file.'));
+    }
+  }
+
   const selectedDonations = useMemo(() => {
     if (!selectedMember?.id) return [];
     return donations.filter(
@@ -668,6 +725,53 @@ function AdminMembersPanel({ lang, onDonation }) {
           <option value="walkin">{th ? 'สมัครที่วัด' : 'Walk-in'}</option>
         </select>
       </div>
+
+      <section style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
+        <h2 style={{ fontSize: 18, margin: '0 0 6px' }}>{th ? 'ค้นหาสมาชิกด้วยบัตรประชาชน' : 'Find a member by national ID card'}</h2>
+        <p style={{ margin: '0 0 12px', color: '#756c60', fontSize: 13 }}>
+          {th ? 'เลือกไฟล์ .json จากเครื่องอ่านบัตรที่ใช้ลงทะเบียน หรือกรอกเลข 13 หลักแล้วกด Enter การค้นหาจะไม่แก้ไขข้อมูลสมาชิก' : 'Select the .json file from the existing card reader, or enter the 13-digit ID and press Enter. Searching does not change member records.'}
+        </p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'end' }}>
+          <label style={{ display: 'grid', gap: 5, flex: '1 1 210px', fontSize: 13, fontWeight: 700 }}>
+            {th ? 'ไฟล์จาก Card Reader (.json)' : 'Card Reader file (.json)'}
+            <input type="file" accept=".json,application/json" disabled={cardLookupBusy}
+              onChange={(event) => { lookupCardFile(event.target.files?.[0]); event.target.value = ''; }} />
+          </label>
+          <form onSubmit={(event) => { event.preventDefault(); lookupCardMember(identityQuery); }}
+            style={{ display: 'flex', flex: '2 1 260px', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
+            <label style={{ display: 'grid', gap: 5, flex: '1 1 180px', fontSize: 13, fontWeight: 700 }}>
+              {th ? 'เลขบัตรประชาชน 13 หลัก' : '13-digit national ID'}
+              <input type="text" inputMode="numeric" autoComplete="off" maxLength={13} value={identityQuery}
+                disabled={cardLookupBusy} onChange={(event) => { setIdentityQuery(event.target.value.replace(/\D/g, '')); setCardLookup(null); setCardLookupError(''); }}
+                placeholder={th ? 'อ่านบัตรหรือกรอกเลข 13 หลัก' : 'Scan or enter 13 digits'}
+                style={{ minHeight: 44, padding: '8px 11px', border: '1px solid #d8c9b5', borderRadius: 9, font: 'inherit', boxSizing: 'border-box', width: '100%' }} />
+            </label>
+            <button type="submit" disabled={cardLookupBusy} style={{ minHeight: 44, padding: '8px 16px', border: 0, borderRadius: 9, background: '#405c4c', color: '#fff', fontWeight: 700 }}>
+              {cardLookupBusy ? (th ? 'กำลังค้นหา...' : 'Searching...') : (th ? 'ค้นหาสมาชิก' : 'Find member')}
+            </button>
+          </form>
+        </div>
+        {cardLookupError && <p role="alert" style={{ color: '#a23f34', marginBottom: 0 }}>{cardLookupError}</p>}
+        {cardLookup && <div role="status" style={{ marginTop: 14, padding: 12, borderRadius: 10, background: '#f5f1e8' }}>
+          {cardLookup.member ? <>
+            <strong>{th ? `พบบัญชีที่ผูกกับบัตรลงท้าย ${cardLookup.suffix}` : `Account linked to card ending ${cardLookup.suffix}`}</strong>
+            <div style={{ marginTop: 8 }}>
+              <button type="button" onClick={() => openMember(cardLookup.member)} style={{ minHeight: 44, border: '1px solid #bda578', borderRadius: 9, padding: '8px 12px', background: '#fff', fontWeight: 700 }}>
+                {memberName(cardLookup.member)} · {th ? 'เปิดข้อมูลสมาชิก' : 'Open member'}
+              </button>
+            </div>
+          </> : <>
+            <strong>{th ? `ยังไม่มีบัญชีผูกกับบัตรลงท้าย ${cardLookup.suffix}` : `No account linked to card ending ${cardLookup.suffix}`}</strong>
+            {cardLookup.possible.length > 0 ? <>
+              <p style={{ fontSize: 13, margin: '8px 0' }}>{th ? `พบบัญชีที่ชื่ออาจตรงกับ ${cardLookup.cardName} กรุณาตรวจสอบตัวบุคคลก่อนเปิดบัญชีเพื่อเพิ่มข้อมูลบัตร:` : `Possible name matches for ${cardLookup.cardName}. Verify the person before updating an account:`}</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{cardLookup.possible.map((member) =>
+                <button type="button" key={member.id} onClick={() => openMember(member)} style={{ minHeight: 44, border: '1px solid #bda578', borderRadius: 9, padding: '8px 12px', background: '#fff' }}>
+                  {memberName(member)} · {providerLabel(member)}
+                </button>)}</div>
+            </> : <p style={{ fontSize: 13, margin: '8px 0 0' }}>{th ? 'ถ้าสมัครผ่าน LINE หรือ Telegram มาก่อน ให้ค้นหาด้วยชื่อในรายการด้านบน แล้วเปิดโปรไฟล์เพื่อตรวจสอบและนำเข้าบัตร' : 'If this person joined via LINE or Telegram, search their name in the member list above and review the profile before importing the card.'}</p>}
+          </>}
+        </div>}
+      </section>
 
       {filteredMembers.length === 0 ? (
         <div style={{ padding: '28px', textAlign: 'center', border: '1px dashed #d8cdbd', borderRadius: '14px', color: '#756c60' }}>
