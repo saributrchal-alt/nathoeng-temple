@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import MemberPhotoEditor from '../components/MemberPhotoEditor';
 import MemberCard from '../components/MemberCard';
+import ThaiAddressFields from '../components/ThaiAddressFields.jsx';
+import { structuredAddress, emptyThaiAddress } from '../lib/thaiAddress.js';
 
 
 const ISO_COUNTRY_CODES = [
@@ -57,6 +59,8 @@ function MyDashboard({
   const [editFullNameEn, setEditFullNameEn] = useState('');
   const [memberAddress, setMemberAddress] = useState('');
   const [editMemberAddress, setEditMemberAddress] = useState('');
+  const [addressStored, setAddressStored] = useState(emptyThaiAddress);
+  const [editStructuredAddress, setEditStructuredAddress] = useState(emptyThaiAddress);
   const [editCountryCode, setEditCountryCode] = useState('');
   const [editIdentityNumber, setEditIdentityNumber] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -126,6 +130,7 @@ function MyDashboard({
         setBirthDate(data.birthDate || '');
         setFullNameEn(data.fullNameEn || '');
         setMemberAddress(data.memberAddress || '');
+        setAddressStored(structuredAddress(data));
         setProfilePicture(data.picture || '');
       } catch (error) {
         console.error(
@@ -508,6 +513,7 @@ function MyDashboard({
     setEditFullName(verifiedFullName || user?.name || '');
     setEditFullNameEn(fullNameEn);
     setEditMemberAddress(memberAddress);
+    setEditStructuredAddress(structuredAddress(addressStored));
     setEditCountryCode(countryCode || 'TH');
     setEditIdentityNumber('');
     setEditBirthDate(birthDate);
@@ -568,6 +574,7 @@ function MyDashboard({
           fullName: cleanFullName,
           fullNameEn: editFullNameEn,
           memberAddress: editMemberAddress,
+          ...structuredAddress(cleanCountryCode === 'TH' ? editStructuredAddress : {}),
           countryCode: cleanCountryCode,
           birthDate: editBirthDate,
           picture: editPicture,
@@ -594,6 +601,7 @@ function MyDashboard({
       setVerifiedFullName(String(data.fullName || cleanFullName).trim());
       setFullNameEn(data.fullNameEn ?? editFullNameEn.trim());
       setMemberAddress(data.memberAddress ?? editMemberAddress.trim());
+      setAddressStored(structuredAddress(data));
       setCountryCode(String(data.countryCode || cleanCountryCode).trim().toUpperCase());
       setHasIdentityNumber(data.hasIdentityNumber === true || hasIdentityNumber || Boolean(cleanIdentityNumber));
       setBirthDate(data.birthDate || editBirthDate);
@@ -1448,10 +1456,13 @@ function MyDashboard({
                   <span>{th ? 'ชื่อและนามสกุลภาษาอังกฤษ' : 'English full name'}</span>
                   <input type="text" maxLength={200} value={editFullNameEn} onChange={(event) => setEditFullNameEn(event.target.value)} style={{ minHeight: 48, borderRadius: 12, border: '1px solid #d8cbb8', padding: '0 13px' }} />
                 </label>
-                <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
-                  <span>{th ? 'ที่อยู่' : 'Address'}</span>
-                  <textarea rows={3} maxLength={500} value={editMemberAddress} onChange={(event) => setEditMemberAddress(event.target.value)} style={{ borderRadius: 12, border: '1px solid #d8cbb8', padding: 13, font: 'inherit' }} />
-                </label>
+                {editCountryCode === 'TH' ? <ThaiAddressFields lang={lang} value={editStructuredAddress}
+                  legacyAddress={editMemberAddress}
+                  onChange={(patch) => setEditStructuredAddress((current) => ({ ...current, ...patch }))} /> :
+                  <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
+                    <span>{th ? 'ที่อยู่ต่างประเทศ' : 'Address'}</span>
+                    <textarea rows={3} maxLength={500} value={editMemberAddress} onChange={(event) => setEditMemberAddress(event.target.value)} style={{ borderRadius: 12, border: '1px solid #d8cbb8', padding: 13, font: 'inherit' }} />
+                  </label>}
                 <label style={{ display: 'grid', gap: '7px', fontWeight: 700, color: '#51493f' }}>
                   <span>{th ? 'ประเทศ' : 'Country'}</span>
                   <select
