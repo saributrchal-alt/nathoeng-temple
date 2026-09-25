@@ -43,7 +43,11 @@ function cleanDate(value) {
 
 function validatePurpose(purpose, customPurpose) {
   const cleanPurpose =
-    String(purpose || 'general').trim();
+    String(purpose || '').trim();
+
+  if (!cleanPurpose) {
+    return { ok: false, message: 'Donation purpose is required' };
+  }
 
   if (
     ![
