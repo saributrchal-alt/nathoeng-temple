@@ -1,0 +1,129 @@
+.memberCardWidget {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #e1d6bf;
+  border-radius: 16px;
+  background: #fffdf7;
+}
+
+.memberCardToolbar {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.memberCardToolbar h3 { margin: 0 0 4px; color: #264739; font-size: 17px; }
+.memberCardToolbar p { margin: 0; color: #766d5b; font-size: 12px; line-height: 1.5; }
+.memberCardToolbar button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: #405c4c;
+  color: #fff;
+  padding: 9px 15px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.memberCardSurface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  width: min(100%, 420px);
+  aspect-ratio: 85.6 / 54;
+  border: 1px solid #d7c8a8;
+  border-radius: 15px;
+  padding: 4.7% 5.8% 3.5%;
+  color: #244536;
+  background: linear-gradient(145deg, #f7f4e8 0%, #fffefa 61%, #e8f1e8 100%);
+  box-shadow: 0 10px 26px rgba(36, 69, 54, .11);
+}
+
+.memberCardSurface::before {
+  content: '';
+  position: absolute;
+  width: 46%;
+  aspect-ratio: 1;
+  top: -31%;
+  right: -15%;
+  border: 6px solid rgba(164, 124, 45, .13);
+  border-radius: 50%;
+}
+
+.memberCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #d9c9a8;
+  z-index: 1;
+}
+.memberCardSeal {
+  display: grid;
+  place-items: center;
+  width: 33px;
+  height: 33px;
+  flex: 0 0 33px;
+  border: 1px solid #a78036;
+  border-radius: 50%;
+  color: #997129;
+  font-size: 19px;
+}
+.memberCardHeading { min-width: 0; }
+.memberCardHeading strong { display: block; font-size: clamp(10px, 3.3vw, 14px); line-height: 1.2; }
+.memberCardHeading span { display: block; margin-top: 2px; font-size: 8px; letter-spacing: .11em; color: #9b752e; }
+
+.memberCardBody { display: flex; align-items: center; gap: 12px; flex: 1; min-height: 0; z-index: 1; }
+.memberCardPhoto {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #efe8d9;
+  box-shadow: 0 3px 10px #274a2e22;
+}
+.memberCardPhoto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.memberCardPhoto span { color: #a78036; font-size: 31px; }
+.memberCardIdentity { min-width: 0; flex: 1; }
+.memberCardIdentity small { display: block; font-size: 10px; color: #98792e; }
+.memberCardIdentity strong {
+  display: -webkit-box;
+  margin: 4px 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: clamp(13px, 4vw, 17px);
+  line-height: 1.15;
+}
+.memberCardIdentity span { display: block; font-size: 9px; letter-spacing: .05em; }
+
+.memberCardCode { z-index: 1; padding: 3px 7px 5px; border-radius: 7px; background: #fff; }
+.memberCardCode svg { display: block; width: 100%; height: 34px; }
+.memberCardCode span {
+  display: block;
+  margin-top: 2px;
+  text-align: center;
+  font: 9px/1.2 monospace;
+  letter-spacing: .02em;
+  color: #283b31;
+  white-space: nowrap;
+}
+
+@media (max-width: 390px) {
+  .memberCardWidget { padding: 10px; }
+  .memberCardSurface { padding: 4% 5% 3%; }
+  .memberCardSeal { width: 27px; height: 27px; flex-basis: 27px; font-size: 16px; }
+  .memberCardPhoto { width: 54px; height: 54px; flex-basis: 54px; }
+  .memberCardCode svg { height: 28px; }
+  .memberCardCode span { font-size: 7px; letter-spacing: 0; }
+}
