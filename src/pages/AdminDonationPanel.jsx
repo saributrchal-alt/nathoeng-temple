@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { KATHIN_2569, kathin2569Label, isKathin2569Donation, purposeForForm, purposeForSave } from '../donationPurpose';
 
 export default function AdminDonationPanel({
   lang,
@@ -85,6 +86,7 @@ export default function AdminDonationPanel({
 
 
   const safePurposeLabel = (item) => {
+    if (isKathin2569Donation(item)) return kathin2569Label(lang);
     const raw =
       String(item?.purpose || '')
         .trim()
@@ -259,7 +261,7 @@ export default function AdminDonationPanel({
       itemName: item.item_name || '',
       quantity: item.quantity ?? '',
       unit: item.unit || '',
-      purpose: item.purpose || 'general',
+      purpose: purposeForForm(item),
       customPurpose: item.custom_purpose || '',
       receiptRequested: item.receipt_requested === true,
       donationDate: item.donation_date || today(),
@@ -312,8 +314,7 @@ export default function AdminDonationPanel({
         itemName: form.itemName,
         quantity: form.quantity,
         unit: form.unit,
-        purpose: form.purpose,
-        customPurpose: form.customPurpose,
+        ...purposeForSave(form.purpose, form.customPurpose),
         receiptRequested: form.receiptRequested,
         donationDate: form.donationDate,
         note: form.note
@@ -542,6 +543,7 @@ export default function AdminDonationPanel({
     ['general', th ? 'ทำบุญตามอัธยาศัยทางคณะสงฆ์' : 'General donation'],
     ['utilities', th ? 'เพื่อค่าน้ำ - ค่าไฟวัด' : 'Electricity & water expenses'],
     ['development', th ? 'เพื่องานพัฒนาทำนุบำรุงเสนาสนะ' : 'Monastery development & maintenance'],
+    [KATHIN_2569, kathin2569Label(lang)],
     ['custom', th ? 'ระบุวัตถุประสงค์อื่น' : 'Other purpose']
   ].filter(([value]) => !(form.donationType === 'item' && value === 'utilities'));
 
