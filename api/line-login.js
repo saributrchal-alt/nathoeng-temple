@@ -223,6 +223,27 @@ export default async function handler(req, res) {
   const supabaseSecretKey =
     process.env.SUPABASE_SECRET_KEY;
 
+  // Verify a short-lived library assertion on the issuing server.
+  if (route === 'library-verify') {
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method !== 'POST') return res.status(405).end();
+    const token = String(req.body?.token || '');
+    if (!process.env.LIBRARY_SHARED_SECRET || token.length > 4000) return res.status(401).json({ valid: false });
+    const parts = token.split('.');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return res.status(401).json({ valid: false });
+    const expected = crypto.createHmac('sha256', process.env.LIBRARY_SHARED_SECRET).update(parts[0]).digest('base64url');
+    const actual = Buffer.from(parts[1]);
+    const signed = Buffer.from(expected);
+    if (actual.length !== signed.length || !crypto.timingSafeEqual(actual, signed)) return res.status(401).json({ valid: false });
+    try {
+      const claim = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+      if (claim.aud !== 'nathoeng-library' || !claim.sub || !Number.isFinite(claim.exp) || claim.exp <= Date.now() || claim.exp - Date.now() > 300000) return res.status(401).json({ valid: false });
+      return res.status(200).json({ sub: claim.sub });
+    } catch {
+      return res.status(401).json({ valid: false });
+    }
+  }
+
   // Shared library access using the existing temple login and member record.
   if (route === 'library-session') {
     res.setHeader('Access-Control-Allow-Origin', 'https://library.nathoeng.com');
