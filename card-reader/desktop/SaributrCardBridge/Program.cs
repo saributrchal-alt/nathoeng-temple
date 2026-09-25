@@ -12,6 +12,12 @@ internal static class Program
     [STAThread]
     static void Main()
     {
+        using var singleInstance = new Mutex(true, @"Local\SaributrCardReader15", out bool firstInstance);
+        if (!firstInstance)
+        {
+            MessageBox.Show("สาริบุตร อ่านบัตร เปิดอยู่แล้วที่มุมขวาล่างของ Windows กรุณาเปิดหน้าต่างเดิม หรือกด ออก ก่อนเปิดไฟล์ใหม่", "สาริบุตร อ่านบัตร");
+            return;
+        }
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         ApplicationConfiguration.Initialize();
         Application.Run(new BridgeForm());
@@ -21,6 +27,7 @@ internal static class Program
 internal sealed class BridgeForm : Form
 {
     private readonly Label info = new() { AutoSize = true, MaximumSize = new System.Drawing.Size(490, 0) };
+    private readonly Label connection = new() { AutoSize = true, MaximumSize = new System.Drawing.Size(490, 0), Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold) };
     private readonly ComboBox readers = new() { Width = 420, DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly NotifyIcon tray = new() { Text = "สาริบุตร อ่านบัตร 1.5", Visible = true, Icon = System.Drawing.SystemIcons.Application };
     private readonly CancellationTokenSource stop = new();
@@ -30,15 +37,18 @@ internal sealed class BridgeForm : Form
     private int failures;
     private DateTimeOffset blockedUntil;
     private readonly BridgeServer bridge;
+    private bool mobileReady, desktopReady;
 
     public BridgeForm()
     {
-        Text = "สาริบุตร · อ่านบัตร 1.5";
-        Width = 560; Height = 380;
+        Text = "สาริบุตร · อ่านบัตร 1.5.1";
+        Width = 560; Height = 400;
         var panel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(16), AutoScroll = true };
         Controls.Add(panel);
         panel.Controls.Add(new Label { Text = "โปรแกรมอ่านบัตรและเชื่อมหน้าแก้ไขสมาชิก", AutoSize = true, Font = new System.Drawing.Font(Font.FontFamily, 14) });
         panel.Controls.Add(info);
+        panel.Controls.Add(connection);
+        panel.Controls.Add(new Label { Text = "เครื่องอ่านที่เสียบมือถือ ไม่ต้องปรากฏในรายการเครื่องอ่านของคอมพิวเตอร์", AutoSize = true, MaximumSize = new System.Drawing.Size(490, 0) });
         panel.Controls.Add(readers);
         var scan = new Button { Text = "ค้นหาเครื่องอ่านบนคอมพิวเตอร์", AutoSize = true };
         scan.Click += (_, _) => RefreshReaders(); panel.Controls.Add(scan);
@@ -60,10 +70,14 @@ internal sealed class BridgeForm : Form
         tray.ContextMenuStrip.Items.Add("ออก", null, (_, _) => { reallyClose = true; Close(); });
         FormClosing += (_, e) => { if (!reallyClose) { e.Cancel = true; Hide(); } };
         FormClosed += (_, _) => { stop.Cancel(); tray.Dispose(); };
+        RefreshReaders();
         bridge = new BridgeServer(this);
-        _ = bridge.RunAsync(IPAddress.Loopback, 8765, stop.Token);
-        _ = bridge.RunAsync(IPAddress.Any, 8766, stop.Token);
-        UpdateInfo(); RefreshReaders();
+        desktopReady = bridge.Start(IPAddress.Loopback, 8765, stop.Token);
+        mobileReady = bridge.Start(IPAddress.Any, 8766, stop.Token);
+        UpdateInfo();
+        if (!desktopReady || !mobileReady)
+            SetStatus("มีโปรแกรมเก่าค้างอยู่: ปิดจากไอคอนมุมขวาล่าง Windows แล้วเปิดโปรแกรมใหม่นี้อีกครั้ง");
+        else SetStatus("พร้อมรับข้อมูลจากมือถือ: กรอก IP และรหัสจับคู่ที่แสดงอยู่");
     }
     private bool reallyClose;
     private static string NewCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
@@ -71,21 +85,25 @@ internal sealed class BridgeForm : Form
     {
         string ips = string.Join(", ", Dns.GetHostAddresses(Dns.GetHostName())
             .Where(x => x.AddressFamily == AddressFamily.InterNetwork && IsPrivate(x)).Select(x => x.ToString()));
-        info.Text = $"คอมพิวเตอร์ IP: {ips}\nรหัสจับคู่มือถือ: {code}\nมือถือและคอมพิวเตอร์ต้องใช้ Wi-Fi วงเดียวกัน\nโปรแกรมทำงานอยู่ที่มุมขวาล่างเมื่อปิดหน้าต่าง";
+        info.Text = $"คอมพิวเตอร์ IP: {ips}\nรหัสจับคู่มือถือ: {(mobileReady ? code : "ยังไม่พร้อมใช้งาน")}\nมือถือและคอมพิวเตอร์ต้องใช้ Wi-Fi วงเดียวกัน\nโปรแกรมทำงานอยู่ที่มุมขวาล่างเมื่อปิดหน้าต่าง";
     }
     private void RefreshReaders()
     {
-        try { readers.Items.Clear(); readers.Items.AddRange(CardReader.Readers()); if (readers.Items.Count > 0) readers.SelectedIndex = 0; else SetStatus("ไม่พบเครื่องอ่านบัตรที่เสียบคอมพิวเตอร์"); }
-        catch (Exception ex) { SetStatus(ex.Message); }
+        try { readers.Items.Clear(); readers.Items.AddRange(CardReader.Readers()); if (readers.Items.Count > 0) readers.SelectedIndex = 0; }
+        catch (Exception) { readers.Items.Clear(); /* Smart Card service is optional for the mobile route. */ }
     }
     private void SetStatus(string message)
     {
         if (IsDisposed) return;
         if (InvokeRequired) { BeginInvoke(() => SetStatus(message)); return; }
-        Text = "สาริบุตร 1.5 · " + message;
+        Text = "สาริบุตร 1.5.1 · " + message;
+        connection.Text = message;
+        connection.ForeColor = message.Contains("ไม่") || message.Contains("ปิด") || message.Contains("ผิด")
+            ? System.Drawing.Color.DarkRed : System.Drawing.Color.DarkGreen;
     }
     private static bool IsPrivate(IPAddress addr)
     {
+        if (addr.IsIPv4MappedToIPv6) addr = addr.MapToIPv4();
         if (addr.AddressFamily != AddressFamily.InterNetwork) return false;
         var b = addr.GetAddressBytes();
         return b[0] == 10 || (b[0] == 172 && b[1] is >= 16 and <= 31) || (b[0] == 192 && b[1] == 168);
@@ -98,19 +116,20 @@ internal sealed class BridgeForm : Form
         {
             if (latest == null || !DateTimeOffset.TryParse(latest.read_at, out var at) ||
                 (DateTimeOffset.UtcNow - at).TotalSeconds > 120 || at > DateTimeOffset.UtcNow.AddSeconds(10))
-            { latest = null; return (404, null); }
+            { latest = null; SetStatus("เว็บขอข้อมูลแล้ว แต่ยังไม่มีข้อมูลบัตรใหม่ กรุณาส่งจากมือถือก่อน"); return (404, null); }
             return (200, JsonSerializer.Serialize(latest));
         }
     }
     internal int Receive(IPAddress remote, string? pairingCode, string body)
     {
-        if (!IsPrivate(remote)) return 403;
+        if (!IsPrivate(remote)) { SetStatus($"ปฏิเสธการส่งจาก {remote}: ไม่ใช่เครือข่ายส่วนตัว"); return 403; }
         lock (gate)
         {
-            if (DateTimeOffset.UtcNow < blockedUntil) return 429;
+            if (DateTimeOffset.UtcNow < blockedUntil) { SetStatus("รหัสผิดหลายครั้ง กรุณารอ 2 นาที หรือกดเปลี่ยนรหัสจับคู่"); return 429; }
             if (!string.Equals(pairingCode, code, StringComparison.Ordinal))
             {
                 if (++failures >= 5) { blockedUntil = DateTimeOffset.UtcNow.AddMinutes(2); failures = 0; }
+                SetStatus($"ปฏิเสธการส่งจาก {remote}: รหัสจับคู่ไม่ตรง กรุณาตรวจว่าใช้หน้าต่างโปรแกรมที่เปิดอยู่จริง");
                 return 403;
             }
             failures = 0;
@@ -135,12 +154,21 @@ internal sealed class BridgeServer(BridgeForm form)
 {
     private const int MaxBody = 200000;
     private const string AllowedOrigin = "https://watt.nathoeng.com";
-    public async Task RunAsync(IPAddress address, int port, CancellationToken cancel)
+    public bool Start(IPAddress address, int port, CancellationToken cancel)
     {
         var listener = new TcpListener(address, port);
         try
         {
             listener.Start(8);
+            _ = RunAsync(listener, port, cancel);
+            return true;
+        }
+        catch (Exception ex) { listener.Stop(); form.Report($"พอร์ต {port} ถูกใช้งาน: {ex.Message}"); return false; }
+    }
+    private async Task RunAsync(TcpListener listener, int port, CancellationToken cancel)
+    {
+        try
+        {
             while (!cancel.IsCancellationRequested)
             {
                 var client = await listener.AcceptTcpClientAsync(cancel);
@@ -148,7 +176,7 @@ internal sealed class BridgeServer(BridgeForm form)
             }
         }
         catch (OperationCanceledException) { }
-        catch (Exception ex) { form.Report($"เปิดพอร์ต {port} ไม่ได้: {ex.Message}"); }
+        catch (Exception ex) { form.Report($"การเชื่อมต่อพอร์ต {port} หยุดทำงาน: {ex.Message}"); }
         finally { listener.Stop(); }
     }
     private async Task HandleAsync(TcpClient client, int port)
