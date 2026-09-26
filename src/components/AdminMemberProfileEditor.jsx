@@ -17,6 +17,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved, onDi
   const [success, setSuccess] = useState('');
   const [newPhoto, setNewPhoto] = useState('');
   const [cardPhoto, setCardPhoto] = useState('');
+  const [cardEvidence, setCardEvidence] = useState(null);
   const [cardImported, setCardImported] = useState(false);
   const [cardReviewed, setCardReviewed] = useState(false);
   const [cardError, setCardError] = useState('');
@@ -91,7 +92,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved, onDi
         countryCode: 'TH' }));
       setNewPhoto(''); setRemovePhoto(false);
       setCardPhoto(card.photo); setPhotoVersion((version) => version + 1);
-      setCardImported(true); setDirty(true);
+      setCardImported(true); setDirty(true); setCardEvidence({ citizenId: card.citizenId, fullName: card.fullName, birthDate: card.birthDate });
     } catch (err) {
       setCardError(err.message || (th ? 'นำเข้าไฟล์บัตรไม่ได้' : 'Unable to import card file.'));
     } finally {
@@ -145,7 +146,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved, onDi
           memberAddress: card.memberAddress || fresh.memberAddress || '',
           ...structuredAddress(card.memberAddress ? card : fresh), identityNumber: card.citizenId,
           birthDate: nextBirthDate, countryCode: 'TH',
-          picture: nextPicture, removePhoto: false,
+          picture: nextPicture, removePhoto: false, cardReviewed: true,
+          cardEvidence: { citizenId: card.citizenId, fullName: card.fullName, birthDate: card.birthDate || nextBirthDate },
           username: fresh.username, password: '' })
       });
       const data = await response.json();
@@ -211,7 +213,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved, onDi
           memberAddress: profile.memberAddress || '', ...structuredAddress(profile.countryCode === 'TH' ? profile : {}),
           identityNumber: profile.identityNumber,
           birthDate: profile.birthDate, countryCode: profile.countryCode,
-          picture: newPhoto, removePhoto, username: profile.username, password })
+          picture: newPhoto, removePhoto, cardReviewed: cardImported && cardReviewed, cardEvidence, username: profile.username, password })
       });
       const data = await response.json();
       if (!response.ok || !data?.success) throw Error(data?.message || 'Unable to save member');

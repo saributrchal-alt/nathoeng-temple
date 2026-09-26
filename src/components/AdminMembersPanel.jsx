@@ -911,6 +911,18 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                         marginTop: '5px'
                       }}
                     >
+                      <span style={{ display: 'inline-flex', padding: '4px 9px', borderRadius: 999,
+                        background: member.id_card_verified_at ? '#e4f3e9' : '#f4f1eb',
+                        color: member.id_card_verified_at ? '#21613b' : '#756c60', fontSize: 12, fontWeight: 700 }}>
+                        {member.id_card_verified_at
+                          ? (th ? '✓ ยืนยันด้วยบัตรประชาชนแล้ว' : '✓ ID card verified')
+                          : (th ? 'ยังไม่มีข้อมูลยืนยันด้วยบัตร' : 'No ID card verification recorded')}
+                      </span>
+                      {member.id_card_verified_at && <span style={{ fontSize: 12, color: '#53645a' }}>
+                        {th ? 'ล่าสุด ' : 'Last verified '}{new Date(member.id_card_verified_at).toLocaleString(th ? 'th-TH' : 'en-GB', {
+                          timeZone: 'Asia/Bangkok', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        })}{th ? ' น. (เวลาไทย)' : ' (Thailand time)'}
+                      </span>}
                       {pushStatusByMember[String(member.id)]?.deviceCount > 0 ? (
                         <span
                           style={{

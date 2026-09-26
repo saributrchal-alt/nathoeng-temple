@@ -6,6 +6,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
   const th = lang === 'th';
   const [form, setForm] = useState({ fullName: '', citizenId: '', birthDate: '', picture: '', username: '', password: '', memberId: '' });
   const [cardPhoto, setCardPhoto] = useState('');
+  const [cardEvidence, setCardEvidence] = useState(null);
   const [cardImported, setCardImported] = useState(false);
   const [cardMatched, setCardMatched] = useState(false);
   const [reviewed, setReviewed] = useState(false);
@@ -41,7 +42,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
       setForm({ fullName: card.fullName, citizenId: card.citizenId, birthDate: card.birthDate,
         picture: '', username: '', password: '', memberId: '' });
       setCardPhoto(card.photo);
-      setCardImported(true);
+      setCardImported(true); setCardEvidence({ citizenId: card.citizenId, fullName: card.fullName, birthDate: card.birthDate });
       const match = await request({ action: 'lookup', citizenId: card.citizenId });
       setCardMatched(Boolean(match.member));
       if (match.member) update('memberId', match.member.id);
@@ -60,7 +61,7 @@ export default function WalkinMemberRegistration({ lang, members = [], onSaved, 
     }
     setBusy(true); setError('');
     try {
-      const result = await request({ action: 'register', ...form });
+      const result = await request({ action: 'register', ...form, cardReviewed: cardImported && reviewed, cardEvidence });
       setCreated({ id: result.memberId, name: form.fullName, username: form.username, password: form.password });
       setReviewed(false);
       onSaved?.();
