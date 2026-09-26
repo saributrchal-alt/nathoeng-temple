@@ -799,6 +799,19 @@ function MyDashboard({
           lang={lang}
         />
 
+        {!user?.actingAsMember && <a
+          className="compactDhammaStrip"
+          href="https://library.nathoeng.com/?member=1#member-area"
+          style={{ textDecoration: 'none', border: '1px solid #d9e6dd', borderRadius: 16 }}
+        >
+          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
+          <span>
+            <strong>{th ? 'ห้องสมุดวัดนาเทิง' : 'Nathoeng Library'}</strong>
+            <small>{th ? 'ค้นหาหนังสือ · รายการยืมของฉัน · ใช้บัญชีสมาชิกเดิม' : 'Find books · My loans · Continue with your member account'}</small>
+          </span>
+          <span aria-hidden="true">›</span>
+        </a>}
+
         {user?.authProvider === 'password' && <details style={{ maxWidth: 590, margin: '12px auto 20px', padding: 18, background: '#fffdf8', border: '1px solid #e2d8c8', borderRadius: 14 }}>
           <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{th ? 'เปลี่ยนรหัสผ่าน' : 'Change password'}</summary>
           <form onSubmit={changePassword} style={{ display: 'grid', gap: 10, marginTop: 14 }}>
