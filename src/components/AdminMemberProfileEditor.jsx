@@ -6,8 +6,10 @@ import { structuredAddress } from '../lib/thaiAddress.js';
 import ThaiAddressFields from './ThaiAddressFields.jsx';
 import './AdminMemberProfileEditor.css';
 
-export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
+export default function AdminMemberProfileEditor({ memberId, lang, onSaved, onDirtyChange }) {
   const th = lang === 'th';
+  const [activeSection, setActiveSection] = useState('personal');
+  const [dirty, setDirty] = useState(false);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -49,6 +51,8 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
     return () => { active = false; };
   }, [memberId]);
 
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+
   const update = (field, value) => {
     setProfile((current) => ({ ...current, [field]: value }));
     if (cardImported) setCardReviewed(false);
@@ -87,7 +91,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         countryCode: 'TH' }));
       setNewPhoto(''); setRemovePhoto(false);
       setCardPhoto(card.photo); setPhotoVersion((version) => version + 1);
-      setCardImported(true);
+      setCardImported(true); setDirty(true);
     } catch (err) {
       setCardError(err.message || (th ? 'นำเข้าไฟล์บัตรไม่ได้' : 'Unable to import card file.'));
     } finally {
@@ -156,6 +160,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         username: data.username, hasPasswordAccount: Boolean(data.username) });
       setNewPhoto(''); setRemovePhoto(false); setCardPhoto('');
       setCardImported(false); setCardReviewed(false); setPhotoVersion((version) => version + 1);
+      setDirty(false);
       setReaderSuccess(th ? 'นำเข้าข้อมูลจาก Card Reader และบันทึกโปรไฟล์แล้ว' : 'Card Reader data imported and profile saved.');
       onSaved?.(data.member);
     } catch (err) {
@@ -167,6 +172,13 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
 
   async function save(event) {
     event.preventDefault();
+    const invalid = Array.from(event.currentTarget.elements).find((element) => element.willValidate && !element.validity.valid);
+    if (invalid) {
+      const section = invalid.closest('[data-profile-section]')?.dataset.profileSection;
+      if (section) setActiveSection(section);
+      requestAnimationFrame(() => { invalid.focus(); invalid.reportValidity(); });
+      return;
+    }
     if (!profile || saving || importingCard || readerBusy) return;
     setError(''); setSuccess(''); setIssuedPassword('');
     if (cardImported && !cardReviewed) {
@@ -208,6 +220,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
         profileImage: removePhoto ? '' : newPhoto || current.profileImage,
         picture: removePhoto ? '' : newPhoto || current.picture,
         username: data.username }));
+      setDirty(false);
       setIssuedPassword(password);
       setPassword(''); setNewPhoto(''); setRemovePhoto(false);
       setCardPhoto(''); setCardImported(false); setCardReviewed(false);
@@ -225,10 +238,32 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
   if (loading) return <p role="status">{th ? 'กำลังโหลดโปรไฟล์...' : 'Loading profile...'}</p>;
   if (!profile) return <p role="alert" style={{ color: '#a23f34' }}>{error || (th ? 'เปิดข้อมูลสมาชิกไม่ได้' : 'Unable to open member profile.')}</p>;
 
-  return <form onSubmit={save} className="admin-profile-form">
+  const sections = [
+    ['personal', '01', th ? 'ข้อมูลส่วนตัว' : 'Personal details', th ? 'ชื่อและข้อมูลยืนยันตัวตน' : 'Name and identity'],
+    ['address', '02', th ? 'ที่อยู่สมาชิก' : 'Member address', th ? 'บ้านเลขที่และพื้นที่' : 'House and location'],
+    ['photo', '03', th ? 'รูปโปรไฟล์' : 'Profile photo', th ? 'เลือกรูป ถ่ายภาพ และจัดกรอบ' : 'Upload, camera and crop'],
+    ['card', '04', th ? 'เครื่องอ่านบัตร' : 'ID card reader', th ? 'นำเข้าข้อมูลจากบัตรประชาชน' : 'Import card details'],
+    ['account', '05', th ? 'บัญชีเข้าสู่ระบบ' : 'Login account', th ? 'ชื่อผู้ใช้และรหัสผ่าน' : 'Username and password']
+  ];
+  return <form noValidate onSubmit={save} className="admin-profile-form" onChange={() => { setDirty(true); setSuccess(''); }}
+    onInvalidCapture={(event) => {
+      const section = event.target.closest('[data-profile-section]')?.dataset.profileSection;
+      if (section) { setActiveSection(section); requestAnimationFrame(() => event.target.focus()); }
+    }}>
+    <div className="admin-profile-workspace">
+      <nav className="admin-profile-navigation" aria-label={th ? 'หมวดข้อมูลสมาชิก' : 'Member sections'}>
+        <p className="admin-profile-navigation-title">{th ? 'เลือกหมวดที่ต้องการแก้ไข' : 'Choose a section'}</p>
+        {sections.map(([id, number, title, description]) => <button key={id} type="button"
+          aria-pressed={activeSection === id} aria-controls={`admin-profile-panel-${id}`}
+          onClick={() => setActiveSection(id)}>
+          <span className="admin-profile-step" aria-hidden="true">{number}</span>
+          <span><strong>{title}</strong><small>{description}</small></span>
+        </button>)}
+        <p className="admin-profile-navigation-note">{th ? 'สลับหมวดได้โดยข้อมูลที่กรอกยังอยู่ เมื่อแก้ไขครบแล้วกดบันทึกข้อมูลสมาชิก' : 'Your edits stay when switching sections. Save when you have finished.'}</p>
+      </nav>
     <div className="admin-profile-grid">
       <div className="admin-profile-primary">
-        <section className="admin-profile-card" aria-labelledby="admin-profile-personal-title">
+        <section className="admin-profile-card" aria-labelledby="admin-profile-personal-title" id="admin-profile-panel-personal" data-profile-section="personal" hidden={activeSection !== 'personal'}>
           <div className="admin-profile-section-heading">
             <span className="admin-profile-step" aria-hidden="true">01</span>
             <div>
@@ -261,7 +296,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
           </div>
         </section>
 
-        <section className="admin-profile-card admin-profile-address" aria-labelledby="admin-profile-address-title">
+        <section className="admin-profile-card admin-profile-address" aria-labelledby="admin-profile-address-title" id="admin-profile-panel-address" data-profile-section="address" hidden={activeSection !== 'address'}>
           <div className="admin-profile-section-heading">
             <span className="admin-profile-step" aria-hidden="true">02</span>
             <div>
@@ -280,9 +315,9 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       </div>
 
       <aside className="admin-profile-aside" aria-label={th ? 'เครื่องมือจัดการสมาชิก' : 'Member tools'}>
-        <section className="admin-profile-card admin-profile-import" aria-labelledby="admin-profile-card-title">
+        <section className="admin-profile-card admin-profile-import" aria-labelledby="admin-profile-card-title" id="admin-profile-panel-card" data-profile-section="card" hidden={activeSection !== 'card'}>
           <div className="admin-profile-section-heading">
-            <span className="admin-profile-step" aria-hidden="true">03</span>
+            <span className="admin-profile-step" aria-hidden="true">04</span>
             <div>
               <h3 id="admin-profile-card-title">{th ? 'นำเข้าข้อมูลจากบัตร' : 'Import ID card'}</h3>
               <p>{th ? 'อ่านบัตรแล้วตรวจข้อมูลก่อนบันทึก' : 'Read and review card details.'}</p>
@@ -317,9 +352,9 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
           </div>}
         </section>
 
-        <section className="admin-profile-card" aria-labelledby="admin-profile-photo-title">
+        <section className="admin-profile-card" aria-labelledby="admin-profile-photo-title" id="admin-profile-panel-photo" data-profile-section="photo" hidden={activeSection !== 'photo'}>
           <div className="admin-profile-section-heading">
-            <span className="admin-profile-step" aria-hidden="true">04</span>
+            <span className="admin-profile-step" aria-hidden="true">03</span>
             <div>
               <h3 id="admin-profile-photo-title">{th ? 'รูปโปรไฟล์' : 'Profile photo'}</h3>
               <p>{th ? 'เลือกรูปหรือใช้รูปจากบัตร' : 'Choose or crop a card photo.'}</p>
@@ -329,7 +364,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
             <img src={profile.picture} alt={th ? 'รูปปัจจุบัน' : 'Current photo'} />
             <span>{th ? 'รูปปัจจุบัน' : 'Current photo'}</span>
           </div>}
-          <MemberPhotoEditor key={photoVersion} initialPhoto={cardPhoto} lang={lang} onChange={(photo) => { setNewPhoto(photo); if (photo) setRemovePhoto(false); }} />
+          <MemberPhotoEditor key={photoVersion} initialPhoto={cardPhoto} lang={lang} onChange={(photo) => { setNewPhoto(photo); if (photo) setDirty(true); if (photo) setRemovePhoto(false); }} />
           {cardPhoto && <p role="status" className="admin-profile-help">{newPhoto
             ? (th ? 'รูปจากบัตรพร้อมบันทึก ปรับตำแหน่งหรือซูมได้' : 'Card photo is ready. Adjust the crop if needed.')
             : (th ? 'กำลังเตรียมรูปจากบัตร' : 'Preparing the card photo...')}</p>}
@@ -339,7 +374,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
           </label>}
         </section>
 
-        <section className="admin-profile-card" aria-labelledby="admin-profile-account-title">
+        <section className="admin-profile-card" aria-labelledby="admin-profile-account-title" id="admin-profile-panel-account" data-profile-section="account" hidden={activeSection !== 'account'}>
           <div className="admin-profile-section-heading">
             <span className="admin-profile-step" aria-hidden="true">05</span>
             <div>
@@ -362,8 +397,13 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
       </aside>
     </div>
 
+    </div>
     <div className="admin-profile-actions">
       <div className="admin-profile-action-feedback">
+        {cardImported && !cardReviewed && <p className="admin-profile-help">
+          {th ? 'ตรวจข้อมูลที่นำเข้าให้ครบ แล้ว ' : 'Review the imported details, then '}
+          <button type="button" onClick={() => setActiveSection('card')}>{th ? 'ยืนยันเจ้าของบัตร' : 'confirm the cardholder'}</button>
+        </p>}
         {error && <p role="alert" className="admin-profile-message admin-profile-message--error">{error}</p>}
         {success && <p role="status" className="admin-profile-message admin-profile-message--success">{success}</p>}
         {issuedPassword && <p role="status" className="admin-profile-message admin-profile-message--success">
@@ -371,7 +411,7 @@ export default function AdminMemberProfileEditor({ memberId, lang, onSaved }) {
           <strong>{issuedPassword}</strong>{' '}
           <button type="button" onClick={() => setIssuedPassword('')}>{th ? 'ซ่อนรหัส' : 'Hide password'}</button>
         </p>}
-        {!error && !success && !issuedPassword && <span>{th ? 'ตรวจข้อมูลก่อนกดบันทึก' : 'Review the details before saving.'}</span>}
+        {!error && !success && !issuedPassword && <span>{dirty ? (th ? 'มีข้อมูลที่แก้ไข · ยังไม่ได้บันทึก' : 'Unsaved changes') : (th ? 'ข้อมูลพร้อมแก้ไข · เลือกหมวดด้านซ้าย' : 'Choose a section to edit')}</span>}
       </div>
       <button className="admin-profile-save" type="submit" disabled={saving || importingCard || readerBusy || (cardImported && (!cardReviewed || Boolean(cardPhoto && !newPhoto)))}>
         {saving ? (th ? 'กำลังบันทึก...' : 'Saving...') : (th ? 'บันทึกข้อมูลสมาชิก' : 'Save member profile')}

@@ -14,6 +14,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [pushStatusByMember, setPushStatusByMember] = useState({});
   const [selectedMember, setSelectedMember] = useState(null);
   const [editMemberOpen, setEditMemberOpen] = useState(false);
+  const [memberEditorDirty, setMemberEditorDirty] = useState(false);
   const [actingBusy, setActingBusy] = useState(false);
   const [actingError, setActingError] = useState('');
   const [composeChannel, setComposeChannel] = useState(null);
@@ -967,13 +968,13 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
         <div
           role="dialog"
           aria-modal="true"
-          onClick={() => setSelectedMember(null)}
+          onClick={() => { if (!editMemberOpen) setSelectedMember(null); }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.42)', zIndex: 9999, display: 'grid', placeItems: 'center', padding: '18px' }}
         >
           <div
             className={editMemberOpen ? 'admin-member-dialog admin-member-dialog--editing' : 'admin-member-dialog'}
             onClick={(event) => event.stopPropagation()}
-            style={{ width: editMemberOpen ? 'min(1120px, 100%)' : 'min(660px, 100%)', maxHeight: '92vh', overflowY: 'auto', background: '#fff', borderRadius: '18px', padding: editMemberOpen ? 0 : '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
+            style={{ width: editMemberOpen ? 'min(1240px, 100%)' : 'min(660px, 100%)', maxHeight: '92vh', overflowY: 'auto', background: '#fff', borderRadius: '18px', padding: editMemberOpen ? 0 : '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
           >
             {editMemberOpen && <div className="admin-member-editor-bar">
               <div>
@@ -981,7 +982,10 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                 <h2>{th ? 'แก้ไขโปรไฟล์สมาชิก' : 'Edit member profile'}</h2>
                 <p className="admin-member-editor-bar__name">{memberName(selectedMember)}</p>
               </div>
-              <button type="button" className="admin-member-editor-bar__back" onClick={() => setEditMemberOpen(false)}>
+              <button type="button" className="admin-member-editor-bar__back" onClick={() => {
+                if (memberEditorDirty && !window.confirm(th ? 'มีข้อมูลที่ยังไม่ได้บันทึก ต้องการออกจากการแก้ไขหรือไม่?' : 'Discard unsaved changes and leave the editor?')) return;
+                setMemberEditorDirty(false); setEditMemberOpen(false);
+              }}>
                 {th ? '← กลับไปข้อมูลสมาชิก' : '← Back to member'}
               </button>
             </div>}
@@ -1037,7 +1041,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
               {actingError && <p role="alert" style={{ color: '#a23f34' }}>{actingError}</p>}
             </div>}
             {editMemberOpen && <div className="admin-member-profile-editor-shell">
-              <AdminMemberProfileEditor key={selectedMember.id} memberId={selectedMember.id} lang={lang}
+              <AdminMemberProfileEditor key={selectedMember.id} memberId={selectedMember.id} lang={lang} onDirtyChange={setMemberEditorDirty}
                 onSaved={(saved) => {
                   setMembers((current) => current.map((item) => String(item.id) === String(saved.id) ? { ...item, ...saved } : item));
                   setSelectedMember((current) => current ? { ...current, ...saved } : current);
