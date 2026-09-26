@@ -1035,6 +1035,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
             {selectedMember.membership_status !== 'cancelled' && <MemberCard
               memberId={selectedMember.id}
               fullName={memberName(selectedMember)}
+              verifiedAt={selectedMember.id_card_verified_at || null}
               photo={pictureUrl(selectedMember)}
               lang={lang}
             />}

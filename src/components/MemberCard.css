@@ -127,3 +127,15 @@
   .memberCardCode svg { height: 46px; }
   .memberCardCode span { font-size: 11px; letter-spacing: 0; }
 }
+
+.memberCardToolbarActions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.memberCardVerification { display: grid; gap: 5px; text-align: right; }
+.memberCardVerification > span { display: inline-block; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; line-height: 1.5; }
+.memberCardVerified { color: #21613b; background: #e4f3e9; }
+.memberCardUnverified { color: #756c60; background: #f4f1eb; }
+.memberCardVerification small { font-size: 11px; color: #617064; line-height: 1.5; }
+.memberCardToolbarActions button { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .memberCardToolbarActions { width: 100%; justify-content: space-between; }
+  .memberCardVerification { text-align: left; }
+}

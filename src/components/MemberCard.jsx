@@ -53,7 +53,7 @@ function barcodeBars(value) {
   return { bars, width: bits.length + 24 };
 }
 
-export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
+export default function MemberCard({ memberId, fullName, photo, lang = 'th', verifiedAt }) {
   const th = lang === 'th';
   const [cardResult, setCardResult] = useState({ memberId: '', number: '', error: '' });
   const number = cardResult.memberId === memberId ? cardResult.number : '';
@@ -76,7 +76,7 @@ export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
       const data = await response.json();
       if (!response.ok || !data?.success || !isValidShortMemberNumber(data.cardNumber))
         throw Error(data?.message || 'Unable to load member card number');
-      if (!controller.signal.aborted) setCardResult({ memberId, number: data.cardNumber, error: '' });
+      if (!controller.signal.aborted) setCardResult({ memberId, number: data.cardNumber, error: '', verifiedAt: data.idCardVerifiedAt || null });
     }).catch((error) => {
       if (controller.signal.aborted) return;
       setCardResult({ memberId, number: '', error: error.message || 'Unable to load member card number' });
@@ -88,6 +88,10 @@ export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
   if (!number || !barcode) return <p role="status" style={{ margin: 16, color: cardError ? '#a23f34' : '#665d51' }}>
     {cardError || (th ? 'กำลังเตรียมบัตรสมาชิก...' : 'Preparing member card...')}
   </p>;
+
+  const verificationTime = verifiedAt !== undefined ? verifiedAt : cardResult.verifiedAt;
+  const verifiedDate = verificationTime ? new Date(verificationTime) : null;
+  const isVerified = verifiedDate && Number.isFinite(verifiedDate.getTime());
 
   const printCard = () => {
     const popup = window.open('', '_blank', 'width=600,height=460');
@@ -117,7 +121,20 @@ export default function MemberCard({ memberId, fullName, photo, lang = 'th' }) {
         <h3>{th ? 'บัตรสมาชิกวัด' : 'Monastery Member Card'}</h3>
         <p>{th ? 'แสดงบัตรบนมือถือ หรือพิมพ์ขนาดบัตรจริง' : 'Show this card on your phone or print it at card size.'}</p>
       </div>
-      <button type="button" onClick={printCard}>{th ? 'พิมพ์บัตร' : 'Print card'}</button>
+      <div className="memberCardToolbarActions">
+        <div className="memberCardVerification" role="status">
+          <span className={isVerified ? 'memberCardVerified' : 'memberCardUnverified'}>
+            {isVerified ? (th ? '✓ ยืนยันด้วยบัตรประชาชนแล้ว' : '✓ ID card verified')
+              : (th ? 'ยังไม่มีข้อมูลยืนยันด้วยบัตร' : 'No ID card verification recorded')}
+          </span>
+          {isVerified && <small>{th ? 'ล่าสุด ' : 'Last verified '}
+            <time dateTime={verifiedDate.toISOString()}>{verifiedDate.toLocaleString(th ? 'th-TH' : 'en-GB', {
+              timeZone: 'Asia/Bangkok', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            })}</time>{th ? ' น. (เวลาไทย)' : ' (Thailand time)'}
+          </small>}
+        </div>
+        <button type="button" onClick={printCard}>{th ? 'พิมพ์บัตร' : 'Print card'}</button>
+      </div>
     </div>
     <div className="memberCardSurface" ref={cardRef} aria-label={th ? `บัตรสมาชิก ${fullName}` : `Member card for ${fullName}`}>
       <div className="memberCardHeader">
