@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/book/:id", "destination": "/index.html" },
+    { "source": "/my-loans", "destination": "/index.html" },
+    { "source": "/staff", "destination": "/index.html" }
+  ]
+}

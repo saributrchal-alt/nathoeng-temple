@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   getSessionFromRequest,
   clearSessionCookie
@@ -21,6 +22,44 @@ function supabaseHeaders(secretKey, extra = {}) {
 }
 
 export default async function handler(req, res) {
+  // Issue a one-use library login ticket on the monastery's own host. The
+  // session cookie stays host-only; the library never receives that cookie.
+  if (req.method === 'GET' && new URL(req.url || '/', 'https://watt.nathoeng.com').searchParams.get('route') === 'library-sso') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    const session = getSessionFromRequest(req);
+    if (!session?.memberId) {
+      res.statusCode = 302;
+      res.setHeader('Location', 'https://watt.nathoeng.com/?library-login=1#login-page');
+      return res.end();
+    }
+    if (session.actingAdminId) return res.status(403).json({ success: false, message: 'Use your own member account to enter the library' });
+    const url = process.env.SUPABASE_URL?.replace(/\/$/, '');
+    const key = process.env.SUPABASE_SECRET_KEY;
+    if (!url || !key) return res.status(500).json({ success: false, message: 'Database configuration missing' });
+    try {
+      const memberResponse = await fetch(`${url}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,membership_status&limit=1`,
+        { headers: supabaseHeaders(key), cache: 'no-store' });
+      const members = await memberResponse.json();
+      if (!memberResponse.ok || !members?.[0] || members[0].membership_status === 'cancelled')
+        return res.status(403).json({ success: false, message: 'Member account unavailable' });
+      const ticket = crypto.randomBytes(32).toString('base64url');
+      const token_hash = crypto.createHash('sha256').update(ticket).digest('hex');
+      const inserted = await fetch(`${url}/rest/v1/library_login_tickets`, {
+        method: 'POST', headers: supabaseHeaders(key),
+        body: JSON.stringify({ token_hash, member_id: session.memberId,
+          expires_at: new Date(Date.now() + 120000).toISOString() }), cache: 'no-store'
+      });
+      if (!inserted.ok) throw Error('Unable to issue library login ticket');
+      res.statusCode = 302;
+      res.setHeader('Location', `https://library.nathoeng.com/?ticket=${encodeURIComponent(ticket)}`);
+      return res.end();
+    } catch (error) {
+      console.error('Library login handoff failed:', error.message);
+      return res.status(503).json({ success: false, message: 'Library login is temporarily unavailable' });
+    }
+  }
+
   // Share an existing Vercel function for member registration and password login.
   if (req.method === 'POST' && req.body && Object.hasOwn(req.body, 'action')) {
     return handleWalkinMemberRequest(req, res);
