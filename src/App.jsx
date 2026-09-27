@@ -1428,7 +1428,15 @@ const handleLineLogin = async (mode = 'login') => {
                   setTimeout(() => document.querySelector(link.href)?.scrollIntoView({behavior:'smooth'}), 100)
                 }
               }
-              return <div className="navGroup" key={item.href}>
+              return <div className="navGroup" key={item.href}
+                onPointerEnter={event => {
+                  if (event.pointerType === 'mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                    setOpenSubmenu(item.children ? item.href : null)
+                }}
+                onPointerLeave={event => {
+                  if (event.pointerType === 'mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                    setOpenSubmenu(current => current === item.href ? null : current)
+                }}>
                 <div className="navGroupHeading">
                   <a href={item.href} onClick={event => navigate(event, item)}>{item.label}</a>
                   {item.children && <button type="button" className="navSubmenuToggle"
