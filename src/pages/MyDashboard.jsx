@@ -812,6 +812,19 @@ function MyDashboard({
           <span aria-hidden="true">›</span>
         </a>}
 
+        {!user?.actingAsMember && <a
+          className="compactDhammaStrip"
+          href="https://gears.nathoeng.com/#loans"
+          style={{ textDecoration: 'none', border: '1px solid #d9e6dd', borderRadius: 16 }}
+        >
+          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
+          <span>
+            <strong>{th ? 'คลังเก็บของวัดนาเทิง' : 'Nathoeng Gears'}</strong>
+            <small>{th ? 'ค้นหาอุปกรณ์ · ยืม–คืนที่วัด · ติดตามรายการของฉัน' : 'Find equipment · Temple pickup · Track my loans'}</small>
+          </span>
+          <span aria-hidden="true">›</span>
+        </a>}
+
         {user?.authProvider === 'password' && <details style={{ maxWidth: 590, margin: '12px auto 20px', padding: 18, background: '#fffdf8', border: '1px solid #e2d8c8', borderRadius: 14 }}>
           <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{th ? 'เปลี่ยนรหัสผ่าน' : 'Change password'}</summary>
           <form onSubmit={changePassword} style={{ display: 'grid', gap: 10, marginTop: 14 }}>

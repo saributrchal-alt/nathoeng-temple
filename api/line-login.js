@@ -273,6 +273,56 @@ export default async function handler(req, res) {
     }
   }
 
+  // Verify a short-lived gears assertion on the issuing server.
+  if (route === 'gears-verify') {
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method !== 'POST') return res.status(405).end();
+    const token = String(req.body?.token || '');
+    if (!process.env.SESSION_SECRET || token.length > 4000) return res.status(401).json({ valid: false });
+    const parts = token.split('.');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return res.status(401).json({ valid: false });
+    const expected = crypto.createHmac('sha256', process.env.SESSION_SECRET).update(parts[0]).digest('base64url');
+    const actual = Buffer.from(parts[1]);
+    const signed = Buffer.from(expected);
+    if (actual.length !== signed.length || !crypto.timingSafeEqual(actual, signed)) return res.status(401).json({ valid: false });
+    try {
+      const claim = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+      if (claim.aud !== 'nathoeng-gears' || !claim.sub || !Number.isFinite(claim.exp) || claim.exp <= Date.now() || claim.exp - Date.now() > 300000) return res.status(401).json({ valid: false });
+      return res.status(200).json({ sub: claim.sub });
+    } catch {
+      return res.status(401).json({ valid: false });
+    }
+  }
+
+  // Shared gears access using the existing temple login and member record.
+  if (route === 'gears-session') {
+    res.setHeader('Access-Control-Allow-Origin', 'https://gears.nathoeng.com');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'GET') return res.status(405).end();
+    const session = getSessionFromRequest(req);
+    if (!session?.memberId || session.actingAdminId) return res.status(401).json({ error: 'Login required' });
+    if (!supabaseUrl || !supabaseSecretKey || !process.env.SESSION_SECRET) return res.status(503).json({ error: 'Member service unavailable' });
+    try {
+      const response = await fetch(
+        supabaseUrl + '/rest/v1/members?id=eq.' + encodeURIComponent(session.memberId) + '&select=id,role,membership_status&limit=1',
+        { headers: { apikey: supabaseSecretKey, ...(supabaseSecretKey.startsWith('sb_secret_') ? {} : { Authorization: 'Bearer ' + supabaseSecretKey }) }, cache: 'no-store' }
+      );
+      if (!response.ok) throw new Error('Member lookup failed');
+      const member = (await response.json())[0];
+      if (!member || (member.membership_status && member.membership_status !== 'active')) return res.status(403).json({ error: 'Inactive member' });
+      const payload = Buffer.from(JSON.stringify({ aud: 'nathoeng-gears', sub: member.id, exp: Date.now() + 180000 })).toString('base64url');
+      const signature = crypto.createHmac('sha256', process.env.SESSION_SECRET).update(payload).digest('base64url');
+      return res.status(200).json({ token: payload + '.' + signature, member: { id: member.id, role: member.role } });
+    } catch (error) {
+      console.error('Gears session:', error);
+      return res.status(503).json({ error: 'Member service unavailable' });
+    }
+  }
+
   // -----------------------------------------------------
   // Server-authoritative session check.
   // The React app uses this instead of trusting localStorage.
