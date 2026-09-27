@@ -26,11 +26,8 @@ const content = {
   en: {
     nav: [
       { label: 'Home', href: '#home' },
-      { label: 'About', href: '#about' },
-      { label: 'Teachings', href: '#teachings' },
-      { label: 'Dhamma Live', href: '#dhamma-live' },
-      { label: 'News & Events', href: '#events' },
-      { label: 'Visit & Stay', href: '#visit' },
+      { label: 'About', href: '#about', children: [{"label":"Teachings","href":"#teachings"},{"label":"Dhamma Live","href":"#dhamma-live"},{"label":"Library","href":"https://library.nathoeng.com/"},{"label":"Borrow & Return Equipment","href":"https://gears.nathoeng.com/"}] },
+      { label: 'News & Events', href: '#events', children: [{"label":"Dhamma Practice","href":"#retreats"},{"label":"Visit","href":"#visit"}] },
       { label: 'Support', href: '#support' },
       { label: 'Contact', href: '#contact' },
       { label: 'Admin', href: '#admin-dashboard' },
@@ -121,11 +118,8 @@ const content = {
   th: {
     nav: [
       { label: 'หน้าแรก', href: '#home' },
-      { label: 'เกี่ยวกับวัด', href: '#about' },
-      { label: 'ธรรมะ', href: '#teachings' },
-      { label: 'Dhamma Live', href: '#dhamma-live' },
-      { label: 'ข่าวและกิจกรรม', href: '#events' },
-      { label: 'ปฏิบัติธรรม / เยี่ยมชม', href: '#visit' },
+      { label: 'เกี่ยวกับวัด', href: '#about', children: [{"label":"ธรรมะ","href":"#teachings"},{"label":"Dhamma Live","href":"#dhamma-live"},{"label":"ห้องสมุด","href":"https://library.nathoeng.com/"},{"label":"ยืม-คืนอุปกรณ์","href":"https://gears.nathoeng.com/"}] },
+      { label: 'ข่าวและกิจกรรม', href: '#events', children: [{"label":"ปฏิบัติธรรม","href":"#retreats"},{"label":"เยี่ยมชม","href":"#visit"}] },
       { label: 'สนับสนุนวัด', href: '#support' },
       { label: 'ติดต่อ', href: '#contact' },
       { label: 'ระบบผู้ดูแล', href: '#admin-dashboard' },
@@ -478,6 +472,7 @@ function App() {
   const [lang, setLang] = useState('th')
   const [currentPage, setCurrentPage] = useState('home')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [openSubmenu, setOpenSubmenu] = useState(null)
   const [copied, setCopied] = useState(false)
   const [user, setUser] = useState(null)
   const [returningToAdmin, setReturningToAdmin] = useState(false)
@@ -1330,6 +1325,7 @@ const handleLineLogin = async (mode = 'login') => {
 
   const goToPage = (page) => {
     setCurrentPage(page)
+    setOpenSubmenu(null)
     setMenuOpen(false)
     window.location.hash = page
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1402,7 +1398,7 @@ const handleLineLogin = async (mode = 'login') => {
           {/* Hamburger Menu Button */}
           <button
             className="menuToggleBtn"
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => { setMenuOpen(!menuOpen); setOpenSubmenu(null) }}
             aria-label="Toggle Menu"
             aria-expanded={menuOpen}
           >
@@ -1410,39 +1406,46 @@ const handleLineLogin = async (mode = 'login') => {
           </button>
 
           {/* Navigation */}
-          <nav className={`siteNav ${menuOpen ? 'navOpen' : ''}`}>
-            {t.nav
-              .filter((item) => item.href !== '#login-page' && item.href !== '#admin-dashboard')
-              .map((item) => (
-                <a
-                  href={item.href}
-                  key={item.href}
-                  onClick={(e) => {
-                    setMenuOpen(false)
-                    e.preventDefault()
-
-                    if (item.href === '#contact') {
-                      goToPage('contact-page')
-                    } else if (item.href === '#teachings') {
-                      goToPage('teachings-page')
-                    } else if (item.href === '#dhamma-live') {
-                      goToPage('dhamma-live')
-                    } else if (item.href === '#events') {
-                      goToPage('event-kathina')
-                    } else if (item.href === '#visit') {
-                      goToPage('visit-guide')
-                    } else {
-                      goToPage('home')
-                      setTimeout(() => {
-                        const el = document.querySelector(item.href)
-                        if (el) el.scrollIntoView({ behavior: 'smooth' })
-                      }, 100)
-                    }
-                  }}
-                >
-                  {item.label}
-                </a>
-              ))}
+          <nav className={`siteNav ${menuOpen ? 'navOpen' : ''}`}
+            aria-label={lang === 'th' ? 'เมนูหลัก' : 'Main navigation'}
+            onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpenSubmenu(null) }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.currentTarget.querySelector('[aria-expanded="true"]')?.focus()
+                setOpenSubmenu(null)
+              }
+            }}>
+            {t.nav.filter(item => !['#login-page', '#admin-dashboard'].includes(item.href)).map(item => {
+              const navigate = (event, link) => {
+                setMenuOpen(false)
+                setOpenSubmenu(null)
+                if (link.href.startsWith('https://')) return
+                event.preventDefault()
+                const pages = {'#contact':'contact-page', '#teachings':'teachings-page', '#dhamma-live':'dhamma-live', '#events':'event-kathina', '#visit':'visit-guide'}
+                if (pages[link.href]) goToPage(pages[link.href])
+                else {
+                  goToPage('home')
+                  setTimeout(() => document.querySelector(link.href)?.scrollIntoView({behavior:'smooth'}), 100)
+                }
+              }
+              return <div className="navGroup" key={item.href}>
+                <div className="navGroupHeading">
+                  <a href={item.href} onClick={event => navigate(event, item)}>{item.label}</a>
+                  {item.children && <button type="button" className="navSubmenuToggle"
+                    aria-label={lang === 'th' ? 'เมนูย่อย ' + item.label : item.label + ' submenu'}
+                    aria-expanded={openSubmenu === item.href}
+                    aria-controls={'submenu-' + item.href.slice(1)}
+                    onClick={() => setOpenSubmenu(openSubmenu === item.href ? null : item.href)}>
+                    <span aria-hidden="true">⌄</span>
+                  </button>}
+                </div>
+                {item.children && <div id={'submenu-' + item.href.slice(1)} className="navSubmenu" hidden={openSubmenu !== item.href}>
+                  {item.children.map(child => <a key={child.href} href={child.href} onClick={event => navigate(event, child)}>
+                    {child.href === '#dhamma-live' ? <>Dhamma <span className="navLive">Live</span></> : child.label}
+                  </a>)}
+                </div>}
+              </div>
+            })}
           </nav>
 
           <div className="headerActions">

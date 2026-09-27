@@ -4467,3 +4467,25 @@ img {
     border-radius: 15px;
   }
 }
+
+/* Compact navigation with accessible click/touch submenus. */
+.siteNav .navGroup { position: relative; }
+.siteNav .navGroupHeading { display: flex; align-items: center; gap: 3px; }
+.siteNav .navSubmenuToggle { display: grid; place-items: center; min-width: 32px; min-height: 40px; padding: 0; border: 0; background: transparent; color: #695039; cursor: pointer; font-size: 20px; border-radius: 8px; }
+.siteNav .navSubmenuToggle[aria-expanded="true"] span { transform: rotate(180deg); }
+.siteNav .navSubmenuToggle:hover { background: #f6f1e8; }
+.siteNav a:focus-visible, .siteNav button:focus-visible { outline: 2px solid #ad7b23; outline-offset: 3px; }
+.siteNav .navSubmenu { position: absolute; top: 100%; left: 0; min-width: 230px; padding: 8px; background: #fff; border: 1px solid #eee7dc; border-radius: 14px; box-shadow: 0 14px 36px rgba(66,45,25,.13); z-index: 100; }
+.siteNav .navSubmenu[hidden] { display: none; }
+.siteNav .navSubmenu a { display: block; padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+.siteNav .navSubmenu a:hover { background: #f8f4ed; }
+.siteNav .navSubmenu a::after { display: none; }
+.siteNav .navLive { color: #c53030; }
+@media (max-width: 768px) {
+  .siteNav.navOpen { align-items: stretch; max-height: calc(100dvh - 90px); overflow-y: auto; }
+  .siteNav .navGroup { width: 100%; border-bottom: 1px solid #f4f0e9; }
+  .siteNav .navGroupHeading > a { flex: 1; text-align: left; border: 0; padding: 14px 8px; }
+  .siteNav .navSubmenuToggle { min-width: 44px; min-height: 44px; }
+  .siteNav .navSubmenu { position: static; min-width: 0; margin: 0 0 10px 12px; padding: 4px 8px; border: 0; border-left: 2px solid #dfcfb6; border-radius: 0; box-shadow: none; background: #fbf8f3; }
+  .siteNav .navSubmenu a { width: auto; text-align: left; border: 0; white-space: normal; }
+}
