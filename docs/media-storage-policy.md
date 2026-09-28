@@ -13,7 +13,7 @@
 
 - hostinger/upload.php ขยาย allowlist จาก gears/library ให้รองรับ temple/nathoeng ด้วย โดยคง protocol เดิมและ config.php เดิม
 - lib/_media-upload.js ตัวเชื่อม server-to-server สำหรับรูปสาธารณะ มี timeout, ไม่ตาม redirect และตรวจ URL ผลลัพธ์ให้ตรงโครงการ
-- ยังไม่เปลี่ยนเส้นทางอัปโหลดที่ใช้งานจริงหรือย้ายไฟล์เดิม เพราะยังไม่ได้ติดตั้ง PHP และตั้งค่า environment ของ watt
+- เพิ่มเส้นทางรูปสมาชิกและเด็กวัดแบบ private แล้ว เปิดใช้ตาม docs/private-media-setup.md เมื่อ PHP และ SQL พร้อม; ไฟล์เดิมยังอ่านได้และยังไม่ได้ย้าย
 
 ## ขั้นตอนเปิดใช้งาน
 
@@ -31,8 +31,8 @@
 
 ## งานต่อสำหรับ watt และโครงการใหม่
 
-- api/donation-profile.js และ lib/_walkin-members.js: รูปสมาชิกบางเส้นทางยังเก็บ data URL ต้องแยกสิทธิ์รูปก่อนย้าย
-- lib/student-api/student-profile.js และ student-photo.js: เตรียม private media endpoint และคง authorization เดิมก่อนย้ายจาก Supabase
+- api/donation-profile.js และ lib/_walkin-members.js: รูปใหม่ใช้ private media เมื่อเปิด MEDIA_PRIVATE_ENABLED; รูปเก่ายังเก็บตามเดิมจนย้ายแยกต่างหาก
+- lib/student-api/student-profile.js และ student-photo.js: รูปใหม่ใช้ private media เมื่อเปิด MEDIA_PRIVATE_ENABLED และคง authorization เดิม; รูปเก่ายังอ่านจาก Supabase
 - รูปจาก LINE/Telegram และภาพที่มากับ source code ยังไม่ได้คัดลอก
 - nathoeng.com: ใช้ project=nathoeng เมื่อเริ่มโครงการ ไม่ถือว่า nathoeng-experience เป็นโครงการนี้โดยอัตโนมัติ
 - ย้ายไฟล์เดิมด้วยรายการ mapping URL เก่า/ใหม่ ตรวจขนาดหรือ checksum และการเปิดอ่านก่อนเปลี่ยนฐานข้อมูล เก็บต้นฉบับไว้จนตรวจครบ

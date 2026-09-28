@@ -1,3 +1,4 @@
+-- Upgrade existing admin photo validation; no data is deleted or migrated.
 -- Run once in the temple Supabase SQL Editor before deploying admin member editing.
 -- Requires supabase/walkin-members.sql to have been applied already.
 begin;

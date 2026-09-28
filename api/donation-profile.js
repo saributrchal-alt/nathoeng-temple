@@ -1,3 +1,5 @@
+import memberPhoto from '../lib/_member-photo.js';
+import { storeMemberPicture } from '../lib/_private-media.js';
 import {
   getSessionFromRequest,
   clearSessionCookie
@@ -21,6 +23,7 @@ function supabaseHeaders(secretKey, extra = {}) {
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'GET' && req.query?.media !== undefined) return memberPhoto(req, res);
   // Share an existing Vercel function for member registration and password login.
   if (req.method === 'POST' && req.body && Object.hasOwn(req.body, 'action')) {
     return handleWalkinMemberRequest(req, res);
@@ -299,7 +302,7 @@ export default async function handler(req, res) {
         patch.country_code = cleanCountryCode;
       }
       if (cleanBirthDate) patch.birth_date = cleanBirthDate;
-      if (cleanPicture) patch.profile_image_url = cleanPicture;
+      if (cleanPicture) patch.profile_image_url = await storeMemberPicture(cleanPicture);
 
       const response = await fetch(
         `${supabaseUrl}/rest/v1/members` +
@@ -389,6 +392,7 @@ export default async function handler(req, res) {
         picture: savedMember.profile_image_url || ''
       });
     } catch (error) {
+      if (error.code === 'MEDIA_UNAVAILABLE') return res.status(503).json({ success: false, message: error.message });
       console.error(
         'Donation profile POST error:',
         error
