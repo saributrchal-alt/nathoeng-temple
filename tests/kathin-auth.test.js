@@ -17,8 +17,9 @@ function responseStub() {
 
 test('Kathin exchanges the temple assertion and uses the Supabase secret key', async () => {
   const originalFetch = global.fetch;
-  const previous = { secret: process.env.SESSION_SECRET, key: process.env.SUPABASE_SECRET_KEY, url: process.env.SUPABASE_URL };
-  process.env.SESSION_SECRET = 'test-kathin-shared-secret';
+  const previous = { secret: process.env.SESSION_SECRET, bridge: process.env.KATHIN_BRIDGE_SECRET, key: process.env.SUPABASE_SECRET_KEY, url: process.env.SUPABASE_URL };
+  process.env.SESSION_SECRET = 'test-temple-session-secret';
+  process.env.KATHIN_BRIDGE_SECRET = 'test-kathin-bridge-secret';
   process.env.SUPABASE_SECRET_KEY = 'sb_secret_test';
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   const calls = [];
@@ -35,6 +36,7 @@ test('Kathin exchanges the temple assertion and uses the Supabase secret key', a
     assert.equal(templeRes.headers['Access-Control-Allow-Origin'], 'https://kathin.nathoeng.com');
     const [payload] = templeRes.body.token.split('.');
     assert.equal(JSON.parse(Buffer.from(payload, 'base64url').toString()).aud, 'nathoeng-kathin');
+    assert.equal(templeRes.body.token.split('.')[1], crypto.createHmac('sha256', process.env.KATHIN_BRIDGE_SECRET).update(payload).digest('base64url'));
 
     const kathinRes = responseStub();
     await kathinApi({ method: 'POST', body: { action: 'session-exchange', token: templeRes.body.token }, headers: {}, url: '/api/kathin-drinks' }, kathinRes);
@@ -45,15 +47,16 @@ test('Kathin exchanges the temple assertion and uses the Supabase secret key', a
     assert.equal(calls.at(-1).options.headers.Authorization, undefined);
   } finally {
     global.fetch = originalFetch;
-    for (const [name, value] of Object.entries({ SESSION_SECRET: previous.secret, SUPABASE_SECRET_KEY: previous.key, SUPABASE_URL: previous.url })) {
+    for (const [name, value] of Object.entries({ SESSION_SECRET: previous.secret, KATHIN_BRIDGE_SECRET: previous.bridge, SUPABASE_SECRET_KEY: previous.key, SUPABASE_URL: previous.url })) {
       if (value === undefined) delete process.env[name]; else process.env[name] = value;
     }
   }
 });
 
 test('Kathin rejects assertions for another service', async () => {
-  const prior = { secret: process.env.SESSION_SECRET, key: process.env.SUPABASE_SECRET_KEY, url: process.env.SUPABASE_URL };
-  process.env.SESSION_SECRET = 'test-kathin-shared-secret';
+  const prior = { secret: process.env.SESSION_SECRET, bridge: process.env.KATHIN_BRIDGE_SECRET, key: process.env.SUPABASE_SECRET_KEY, url: process.env.SUPABASE_URL };
+  process.env.SESSION_SECRET = 'test-temple-session-secret';
+  process.env.KATHIN_BRIDGE_SECRET = 'test-kathin-bridge-secret';
   process.env.SUPABASE_SECRET_KEY = 'sb_secret_test';
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   const payload = Buffer.from(JSON.stringify({ aud: 'nathoeng-gears', sub: 'member-1', exp: Date.now() + 60000 })).toString('base64url');
@@ -63,7 +66,7 @@ test('Kathin rejects assertions for another service', async () => {
     await kathinApi({ method: 'POST', body: { action: 'session-exchange', token }, headers: {}, url: '/api/kathin-drinks' }, res);
     assert.equal(res.statusCode, 401);
   } finally {
-    for (const [name, value] of Object.entries({ SESSION_SECRET: prior.secret, SUPABASE_SECRET_KEY: prior.key, SUPABASE_URL: prior.url })) {
+    for (const [name, value] of Object.entries({ SESSION_SECRET: prior.secret, KATHIN_BRIDGE_SECRET: prior.bridge, SUPABASE_SECRET_KEY: prior.key, SUPABASE_URL: prior.url })) {
       if (value === undefined) delete process.env[name]; else process.env[name] = value;
     }
   }
