@@ -93,6 +93,7 @@ create or replace function public.place_kathin_drink_order(
 declare v_right public.kathin_drink_rights%rowtype; v_seq integer; v_order public.kathin_drink_orders%rowtype;
 begin
   if p_service_day not in (date '2026-11-07',date '2026-11-08') then raise exception 'INVALID_SERVICE_DAY'; end if;
+  if p_service_day <> (now() at time zone 'Asia/Bangkok')::date then raise exception 'INVALID_SERVICE_DAY'; end if;
   if p_actor_id is distinct from p_member_id and
      not exists(select 1 from public.members where id::text=p_actor_id and role='admin') and
      not exists(select 1 from public.kathin_drink_staff where member_id=p_actor_id and active) then raise exception 'FORBIDDEN'; end if;

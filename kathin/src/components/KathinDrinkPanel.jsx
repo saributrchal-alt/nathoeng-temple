@@ -8,7 +8,7 @@ const DAY_CHOICES = [
 export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false, onClose }) {
   const th = lang !== 'en';
   const [data, setData] = useState(null);
-  const [day, setDay] = useState('2026-11-07');
+  const [day] = useState(() => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' }) === '2026-11-08' ? '2026-11-08' : '2026-11-07');
   const [working, setWorking] = useState('');
   const [message, setMessage] = useState('');
   const [query, setQuery] = useState('');
@@ -73,7 +73,7 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
         </div>
       </section>
       {!staffMode && <section style={{ ...card, marginBottom: 16 }}>
-        <label style={{ display: 'grid', gap: 7, fontWeight: 700 }}>{th ? 'วันที่มารับเครื่องดื่ม' : 'Pickup day'}<select value={day} onChange={(e) => setDay(e.target.value)} style={{ padding: 12, borderRadius: 10, border: '1px solid #d9cfbf', fontSize: 16 }}>{DAY_CHOICES.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
+        <strong>{th ? 'คิวของวันนี้' : 'Today’s queue'}: {DAY_CHOICES.find((d) => d.value === day)?.label}</strong>
       </section>}
       {(staffMode ? Boolean(target) : data.availableRights > 0) && canOrder && <section style={{ ...card, marginBottom: 16 }}><h2 style={{ marginTop: 0 }}>{th ? 'เลือกเมนู · 1 สิทธิ์ต่อ 1 แก้ว' : 'Choose a drink · 1 right per cup'}</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10 }}>{menu.map((item) => <button key={item.id} disabled={Boolean(working) || !item.active} onClick={() => fire('order', { memberId: target?.id || user?.memberId, menuId: item.id, serviceDay: day })} style={{ ...card, textAlign: 'left', cursor: item.active ? 'pointer' : 'not-allowed', padding: 14, opacity: item.active ? 1 : .55 }}><strong>{th ? item.name_th : item.name_en}</strong><div style={{ color: '#756d61', marginTop: 5 }}>{item.category === 'blended' ? (th ? 'ปั่น' : 'Blended') : (th ? 'ดริป' : 'Drip')} · 1 {th ? 'สิทธิ์' : 'right'}</div></button>)}</div></section>}
       {staffMode && <section style={card}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}><h2 style={{ margin: 0 }}>{th ? 'รายการตามคิว' : 'Orders by queue'}</h2><button onClick={() => load().catch((e) => setMessage(e.message))} style={{ ...button, background: '#eee8dd', color: '#514838' }}>{th ? 'รีเฟรชรายการ' : 'Refresh list'}</button></div>

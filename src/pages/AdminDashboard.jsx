@@ -1604,6 +1604,13 @@ function AdminDashboard({ lang, goToPage, currentMemberId }) {
   if (activeTab === 'menu') {
     const menuItems = [
       {
+        key: 'kathin-drinks',
+        external: 'https://kathin.nathoeng.com/',
+        icon: '/icons/donation.svg',
+        title: lang === 'en' ? 'Kathin drink service' : 'งานเครื่องดื่มกฐิน',
+        text: lang === 'en' ? 'Member rights, staff access, menu and pickup queue.' : 'จัดการสิทธิ์ Staff เมนู และคิวรับเครื่องดื่ม'
+      },
+      {
         key: 'members',
         icon: '/icons/profile.svg',
         title: t.memberTab,
@@ -1823,9 +1830,7 @@ function AdminDashboard({ lang, goToPage, currentMemberId }) {
               <button
                 key={item.key}
                 type="button"
-                onClick={() =>
-                  openAdminSection(item.key)
-                }
+                onClick={() => item.external ? window.location.assign(item.external) : openAdminSection(item.key)}
                 style={{
                   width: '100%',
                   minHeight: '150px',

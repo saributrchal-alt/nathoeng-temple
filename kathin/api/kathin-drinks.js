@@ -1,8 +1,9 @@
-import { getSessionFromRequest } from '../lib/_auth.js';
+import crypto from 'crypto';
+import { createSessionToken, getSessionFromRequest, setSessionCookie } from '../lib/_auth.js';
 
 const EVENT = 'kathin-2569';
 const headers = (key, extra = {}) => ({
-  apikey: key, Authorization: `Bearer ${key}`, Accept: 'application/json',
+  apikey: key, ...(key.startsWith('sb_secret_') ? {} : { Authorization: `Bearer ${key}` }), Accept: 'application/json',
   'Content-Type': 'application/json', ...extra
 });
 async function read(response) {
@@ -26,11 +27,34 @@ function isAdmin(session) { return session?.role === 'admin'; }
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, private');
   if (!['GET', 'POST', 'PATCH'].includes(req.method)) return send(res, 405, { success: false, message: 'Method not allowed' });
+  const base = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!base || !key) return send(res, 500, { success: false, message: 'ระบบฐานข้อมูลยังตั้งค่าไม่ครบ' });
+  if (req.method === 'POST' && req.body?.action === 'session-exchange') {
+    const token = String(req.body?.token || '');
+    const secret = process.env.SESSION_SECRET;
+    if (!secret || token.length > 4000) return send(res, 401, { success: false, message: 'ไม่สามารถยืนยันบัญชีสมาชิกได้' });
+    const parts = token.split('.');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return send(res, 401, { success: false, message: 'โทเคนไม่ถูกต้อง' });
+    const expected = crypto.createHmac('sha256', secret).update(parts[0]).digest('base64url');
+    const received = Buffer.from(parts[1]);
+    const signed = Buffer.from(expected);
+    if (received.length !== signed.length || !crypto.timingSafeEqual(received, signed)) return send(res, 401, { success: false, message: 'โทเคนไม่ถูกต้อง' });
+    try {
+      const claim = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+      if (claim.aud !== 'nathoeng-kathin' || !claim.sub || !Number.isFinite(claim.exp) || claim.exp <= Date.now() || claim.exp - Date.now() > 300000) return send(res, 401, { success: false, message: 'โทเคนหมดอายุหรือไม่ถูกต้อง' });
+      const people = await lookup(base, key, 'members', `id=eq.${encodeURIComponent(claim.sub)}&select=id,role,membership_status&limit=1`);
+      const member = people?.[0];
+      if (!member || (member.membership_status && member.membership_status !== 'active')) return send(res, 403, { success: false, message: 'สมาชิกไม่พร้อมใช้งาน' });
+      setSessionCookie(res, createSessionToken({ memberId: member.id, role: member.role || 'member' }), 12 * 3600);
+      return send(res, 200, { success: true });
+    } catch (error) {
+      console.error('Kathin session exchange:', error);
+      return send(res, 503, { success: false, message: 'เชื่อมบัญชีสมาชิกไม่สำเร็จ' });
+    }
+  }
   const session = getSessionFromRequest(req);
   if (!session?.memberId) return send(res, 401, { success: false, message: 'กรุณาเข้าสู่ระบบสมาชิก' });
-  const base = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!base || !key) return send(res, 500, { success: false, message: 'ระบบฐานข้อมูลยังตั้งค่าไม่ครบ' });
   const actorId = String(session.memberId);
   try {
     const staffRows = await lookup(base, key, 'kathin_drink_staff', `member_id=eq.${encodeURIComponent(actorId)}&active=eq.true&select=member_id`);

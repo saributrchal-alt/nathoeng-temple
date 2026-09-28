@@ -81,6 +81,7 @@ function MyDashboard({
   const [cancelMembershipConfirmed, setCancelMembershipConfirmed] = useState(false);
   const [cancelMembershipWorking, setCancelMembershipWorking] = useState(false);
   const [cancelMembershipError, setCancelMembershipError] = useState('');
+  const [kathinDrinksActive, setKathinDrinksActive] = useState(false);
 
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -155,6 +156,14 @@ function MyDashboard({
     return () => {
       cancelled = true;
     };
+  }, [user?.memberId]);
+
+  useEffect(() => {
+    if (!user?.memberId) return;
+    fetch('/api/line-login?route=kathin-event-status', { credentials: 'include', cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => setKathinDrinksActive(data?.active === true))
+      .catch(() => setKathinDrinksActive(false));
   }, [user?.memberId]);
 
   useEffect(() => {
@@ -704,6 +713,12 @@ function MyDashboard({
               : 'Your profile, retreat stay, and donation memories.'}
           </p>
         </div>
+
+        {kathinDrinksActive && <a href="https://kathin.nathoeng.com/" style={{ display: 'block', textDecoration: 'none', margin: '0 0 18px', padding: '18px 20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
+          <span style={{ display: 'block', fontSize: 12, fontWeight: 900, color: '#92691e' }}>7–8 พฤศจิกายน 2569 · KATHIN 2569</span>
+          <strong style={{ display: 'block', fontSize: 21, marginTop: 4 }}>{th ? '☕ เครื่องดื่มฟรีในงานกฐิน' : '☕ Kathin free drinks'}</strong>
+          <span style={{ display: 'block', marginTop: 5 }}>{th ? 'เลือกเมนู ใช้สิทธิ์ และติดตามเลขคิวของคุณ →' : 'Choose a drink and follow your queue →'}</span>
+        </a>}
 
         <section className="compactProfileCard">
           <div className="compactProfileAvatar">

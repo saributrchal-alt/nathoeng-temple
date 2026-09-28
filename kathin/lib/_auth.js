@@ -158,37 +158,21 @@ export function getSessionFromRequest(req) {
   return null;
 }
 
-function sessionCookieDomain() {
-  return process.env.SESSION_COOKIE_DOMAIN === '.nathoeng.com'
-    ? '; Domain=.nathoeng.com'
-    : '';
-}
-
 export function setSessionCookie(res, token, maxAgeSeconds = 604800) {
-  const sessionCookie = COOKIE_NAME + '=' + encodeURIComponent(token) +
-    `; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAgeSeconds}` +
-    sessionCookieDomain();
-  const clearHostOnlyCookie = COOKIE_NAME +
-    '=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
   res.setHeader(
     'Set-Cookie',
-    process.env.SESSION_COOKIE_DOMAIN === '.nathoeng.com'
-      ? [sessionCookie, clearHostOnlyCookie]
-      : sessionCookie
+    COOKIE_NAME +
+      '=' +
+      encodeURIComponent(token) +
+      `; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAgeSeconds}`
   );
 }
 
 export function clearSessionCookie(res) {
-  const clearCookie = COOKIE_NAME +
-    '=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' +
-    sessionCookieDomain();
-  const clearHostOnlyCookie = COOKIE_NAME +
-    '=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
   res.setHeader(
     'Set-Cookie',
-    process.env.SESSION_COOKIE_DOMAIN === '.nathoeng.com'
-      ? [clearCookie, clearHostOnlyCookie]
-      : clearCookie
+    COOKIE_NAME +
+      '=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
   );
 }
 

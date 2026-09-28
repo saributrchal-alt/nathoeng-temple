@@ -5,9 +5,23 @@ export default function App() {
   const [sessionState, setSessionState] = useState('checking');
 
   useEffect(() => {
-    fetch('/api/kathin-drinks?view=member', { credentials: 'include', cache: 'no-store' })
-      .then((response) => setSessionState(response.status === 401 ? 'signed-out' : 'ready'))
-      .catch(() => setSessionState('offline'));
+    let cancelled = false;
+    const connect = async () => {
+      try {
+        const local = await fetch('/api/kathin-drinks?view=member', { credentials: 'include', cache: 'no-store' });
+        if (local.ok) { if (!cancelled) setSessionState('ready'); return; }
+        if (local.status !== 401) { if (!cancelled) setSessionState('offline'); return; }
+        const temple = await fetch('https://watt.nathoeng.com/api/line-login?route=kathin-session', { credentials: 'include', cache: 'no-store' });
+        if (temple.status === 401) { if (!cancelled) setSessionState('signed-out'); return; }
+        if (!temple.ok) throw new Error('Temple login bridge unavailable');
+        const assertion = await temple.json();
+        const exchange = await fetch('/api/kathin-drinks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'session-exchange', token: assertion.token }) });
+        if (!exchange.ok) throw new Error('Kathin session exchange failed');
+        if (!cancelled) setSessionState('ready');
+      } catch { if (!cancelled) setSessionState('offline'); }
+    };
+    connect();
+    return () => { cancelled = true; };
   }, []);
 
   return <>
