@@ -46,6 +46,7 @@ function MyDashboard({
   handleTelegramLogin
 }) {
   const th = lang === 'th';
+  const [otherMenuOpen, setOtherMenuOpen] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
   const [verifiedFullName, setVerifiedFullName] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -686,7 +687,28 @@ function MyDashboard({
 
   return (
     <div className="nathoengDashboardPage compactAccountPage">
-      <div className="nathoengDashboard compactAccountDashboard">
+      <div className={`nathoengDashboard compactAccountDashboard${otherMenuOpen ? ' accountMenuOpen' : ''}`}>
+        <style>{`
+          .accountOtherMenuButton { display: none; }
+          .accountOtherContent { display: contents; }
+          @media (max-width: 767px) {
+            .compactAccountDashboard { display: flex; flex-direction: column; }
+            .compactAccountDashboard > .compactProfileCard { order: 4; }
+            .compactAccountDashboard > .accountOtherContent { order: 5; display: block; }
+            .compactAccountDashboard > .compactLogoutWrap { order: 6; }
+            .compactAccountDashboard:not(.accountMenuOpen) > .compactProfileCard,
+            .compactAccountDashboard:not(.accountMenuOpen) > .accountOtherContent,
+            .compactAccountDashboard:not(.accountMenuOpen) > .compactLogoutWrap { display: none; }
+            .accountOtherMenuButton {
+              display: flex; align-items: center; justify-content: space-between;
+              width: 100%; min-height: 52px; margin: 16px 0; padding: 14px 18px;
+              border: 1px solid #ddcfb8; border-radius: 16px;
+              background: #fffdf8; color: #64502c; font: inherit; font-weight: 700;
+              cursor: pointer;
+            }
+            .accountOtherMenuButton:focus-visible { outline: 3px solid #b58a3b; outline-offset: 3px; }
+          }
+        `}</style>
 
         <button
           type="button"
@@ -712,7 +734,7 @@ function MyDashboard({
           <span style={{ display: 'block', marginTop: 5 }}>{th ? 'กดดูสิทธิ์ฟรีของคุณ เลือกเมนูในวันงาน และติดตามเลขคิว →' : 'View your free drink right, choose a drink on event days, and follow your queue →'}</span>
         </a>}
 
-        <section className="compactProfileCard">
+        <section id="account-profile" className="compactProfileCard">
           <div className="compactProfileAvatar">
             {(profilePicture || user?.picture) && !profileImageError ? (
               <img
@@ -806,6 +828,18 @@ function MyDashboard({
           lang={lang}
         />
 
+        <button
+          type="button"
+          className="accountOtherMenuButton"
+          aria-expanded={otherMenuOpen}
+          aria-controls="account-profile account-other-content account-logout"
+          onClick={() => setOtherMenuOpen((open) => !open)}
+        >
+          <span>{th ? (otherMenuOpen ? 'ซ่อนเมนูอื่น ๆ' : 'เมนูอื่น ๆ') : (otherMenuOpen ? 'Hide other menus' : 'Other menus')}</span>
+          <span aria-hidden="true">{otherMenuOpen ? '−' : '+'}</span>
+        </button>
+
+        <div id="account-other-content" className="accountOtherContent">
         {!user?.actingAsMember && <a
           className="compactDhammaStrip"
           href="https://library.nathoeng.com/?member=1#member-area"
@@ -1359,6 +1393,8 @@ function MyDashboard({
           </button>
         </section>}
 
+        </div>
+
         {cancelMembershipOpen && (
           <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(34,28,18,.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
             <section role="dialog" aria-modal="true" aria-labelledby="cancel-membership-title" style={{ width: 'min(100%, 520px)', maxHeight: '90vh', overflowY: 'auto', background: '#fffdf8', borderRadius: '22px', padding: '23px', boxShadow: '0 24px 70px rgba(32,25,15,.3)' }}>
@@ -1602,7 +1638,7 @@ function MyDashboard({
           </div>
         )}
 
-        <div className="compactLogoutWrap">
+        <div id="account-logout" className="compactLogoutWrap">
           <button type="button" className="dashboardLogoutBtn" onClick={handleLogout}>
             {th ? 'ออกจากระบบ' : 'Logout'}
           </button>
