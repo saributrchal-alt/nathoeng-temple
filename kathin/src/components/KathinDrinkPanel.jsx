@@ -57,7 +57,9 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
   };
 
   const choose = (member) => { setTarget(member); setQuery(''); setMembers([]); };
-  const canOrder = Boolean(data?.event?.is_open) && (staffMode ? Boolean(target) : true);
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
+  const eventLive = Boolean(data?.event && today >= data.event.starts_on && today <= data.event.ends_on);
+  const canOrder = eventLive && Boolean(data?.event?.is_open) && (staffMode ? Boolean(target) : true);
   const orders = data?.orders || [];
   const wrap = { maxWidth: 1000, margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)', color: '#302b22' };
   const card = { background: '#fff', border: '1px solid #e8dfd0', borderRadius: 18, padding: 18, boxShadow: '0 5px 18px rgba(50,40,20,.06)' };
@@ -71,6 +73,7 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
     {message && <div role="status" style={{ ...card, marginBottom: 14, background: '#fff9e9' }}>{message}</div>}
     {!data ? <div style={card}>{th ? 'กำลังโหลด...' : 'Loading...'}</div> : <>
       {!data.event.is_open && <div style={{ ...card, marginBottom: 14, background: '#f5f0e8' }}>{th ? 'ขณะนี้ปิดรับรายการเครื่องดื่มแล้ว' : 'Drink ordering is closed.'}</div>}
+      {data.event.is_open && !eventLive && <div style={{ ...card, marginBottom: 14, background: '#fff9e9' }}>{th ? 'เปิดรับรายการเครื่องดื่มในวันที่ 7–8 พฤศจิกายน 2569 สิทธิ์ของสมาชิกแสดงไว้ล่วงหน้าแล้ว' : 'Ordering opens November 7–8, 2026. Your rights are already reserved.'}</div>}
       {staffMode && <section style={{ ...card, marginBottom: 16 }}>
         <h2 style={{ marginTop: 0 }}>{th ? 'ค้นหาสมาชิกเพื่อช่วยสั่งหรือออกสิทธิ์' : 'Find a member'}</h2>
         <input value={query} onChange={(e) => { setQuery(e.target.value); setTarget(null); }} placeholder={th ? 'พิมพ์ชื่อสมาชิกอย่างน้อย 2 ตัวอักษร' : 'Search member name'} style={{ width: '100%', boxSizing: 'border-box', padding: 12, border: '1px solid #d9cfbf', borderRadius: 10, fontSize: 16 }} />
