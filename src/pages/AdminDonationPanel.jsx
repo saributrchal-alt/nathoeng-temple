@@ -1,3 +1,4 @@
+import { printDonation } from '../lib/donationPrint.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { KATHIN_2569, kathin2569Label, isKathin2569Donation, purposeForForm, purposeForSave } from '../donationPurpose';
 
@@ -682,6 +683,11 @@ export default function AdminDonationPanel({
                       : (th?'💬 แจ้งผู้บริจาคทาง LINE':'💬 Notify donor via LINE')}
                   </button>
                 )}
+                <button type="button" onClick={()=>printDonation(item, {
+                  lang, donorName: item.owner_member_id ? currentOwnerName(item) : (item.donor_name_snapshot || '—'),
+                  dateLabel: formatDonationDate(item), purposeLabel: safePurposeLabel(item),
+                  statusLabel: verificationMeta(item).text
+                })} style={{...smallBtn,color:'#355b49',borderColor:'#355b49',fontWeight:800}}>{th?'พิมพ์บันทึก':'Print Record'}</button>
                 <button type="button" onClick={()=>openEdit(item)} style={smallBtn}>{th?'แก้ไขรายละเอียด':'Edit Details'}</button>
                 <button type="button" onClick={()=>openOwner(item)} style={{...smallBtn,background:'#fff8e8',color:'#8a611d',fontWeight:800}}>{th?'เปลี่ยนเจ้าของรายการ':'Change Owner'}</button>
               </div>
