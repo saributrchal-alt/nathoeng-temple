@@ -5,6 +5,17 @@ const DAY_CHOICES = [
   { value: '2026-11-08', label: 'อาทิตย์ 8 พ.ย. · คิว 8xxx' }
 ];
 
+function printDrinkMenu(menu) {
+  const popup = window.open('', '_blank');
+  if (!popup) return;
+  const safe = (value) => String(value || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const items = menu.filter((item) => item.active).map((item) => `<li>${safe(item.name_th)}</li>`).join('');
+  popup.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>เมนูเครื่องดื่มงานกฐิน 2569</title><style>body{font-family:Arial,sans-serif;max-width:700px;margin:36px auto;color:#302b22}h1{text-align:center;color:#376b4d}p{text-align:center}li{font-size:23px;line-height:1.8}footer{margin-top:36px;text-align:center;color:#776c5c}@page{size:A4;margin:18mm}</style></head><body><h1>เครื่องดื่มงานกฐิน 2569</h1><p>วัดพุทธอุทยานนาเทิง · 7–8 พฤศจิกายน 2569</p><p><strong>ฟรี 1 แก้วต่อ 1 สิทธิ์สมาชิก</strong></p><ul>${items}</ul><footer>เลือกเมนูและแจ้งเจ้าหน้าที่ หรือสั่งผ่าน kathin.nathoeng.com</footer></body></html>`);
+  popup.document.close();
+  popup.focus();
+  popup.print();
+}
+
 export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false, onClose }) {
   const th = lang !== 'en';
   const [data, setData] = useState(null);
@@ -80,7 +91,7 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
         <div style={{ display: 'grid', gap: 9, marginTop: 14 }}>{orders.map((order) => <article key={order.id} style={{ border: '1px solid #e9e1d5', borderRadius: 12, padding: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><b style={{ color: '#976b24', fontSize: 20 }}>{order.queue_number}</b> · <b>{order.member_name || 'สมาชิก'}</b><div>{menu.find((m) => m.id === order.menu_id)?.name_th || order.menu_id} · {order.service_day === '2026-11-07' ? 'เสาร์ 7 พ.ย.' : 'อาทิตย์ 8 พ.ย.'}</div><small>{({ pending: 'รอรับออเดอร์', accepted: 'กำลังจัดเตรียม', sent: 'ส่งแล้ว', cancelled: 'ยกเลิก' })[order.status] || order.status}</small></div><div style={{ display: 'flex', gap: 7 }}>{order.status === 'pending' && <button style={button} disabled={Boolean(working)} onClick={() => fire('transition', { orderId: order.id, status: 'accepted' })}>{th ? 'รับออเดอร์' : 'Accept'}</button>}{order.status === 'accepted' && <button style={{ ...button, background: '#986b23' }} disabled={Boolean(working)} onClick={() => fire('transition', { orderId: order.id, status: 'sent' })}>{th ? 'ส่งออเดอร์' : 'Handed off'}</button>}</div></article>)}{!orders.length && <p>{th ? 'ยังไม่มีรายการในคิว' : 'No orders yet.'}</p>}</div>
       </section>}
       {!staffMode && <section style={{ ...card, marginTop: 16 }}><h2 style={{ marginTop: 0 }}>{th ? 'คิวของฉัน' : 'My queue numbers'}</h2>{orders.map((order) => <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '9px 0', borderBottom: '1px solid #eee8dd' }}><span>{menu.find((m) => m.id === order.menu_id)?.name_th || order.menu_id}</span><b>{order.queue_number}</b></div>)}{!orders.length && <p>{th ? 'ยังไม่มีรายการสั่งเครื่องดื่ม' : 'No orders yet.'}</p>}</section>}
-      {data.admin && staffMode && <section style={{ ...card, marginTop: 16 }}><h2 style={{ marginTop: 0 }}>{th ? 'เมนูเครื่องดื่ม' : 'Drink menu'}</h2><div style={{ display: 'grid', gap: 8 }}>{menu.map((item) => <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}><span>{item.name_th} · {item.category === 'blended' ? 'ปั่น' : 'ดริป'}</span><button style={{ ...button, background: item.active ? '#a04a3f' : '#376b4d' }} disabled={Boolean(working)} onClick={() => fire('menu-active', { menuId: item.id, active: !item.active })}>{item.active ? (th ? 'ซ่อนเมนู' : 'Disable') : (th ? 'เปิดเมนู' : 'Enable')}</button></div>)}</div></section>}
+      {data.admin && staffMode && <section style={{ ...card, marginTop: 16 }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}><h2 style={{ margin: 0 }}>{th ? 'เมนูเครื่องดื่ม' : 'Drink menu'}</h2><button style={button} onClick={() => printDrinkMenu(menu)}>{th ? 'พิมพ์เมนูหน้าเคาน์เตอร์' : 'Print counter menu'}</button></div><div style={{ display: 'grid', gap: 8, marginTop: 14 }}>{menu.map((item) => <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}><span>{item.name_th} · {item.category === 'blended' ? 'ปั่น' : 'ดริป'}</span><button style={{ ...button, background: item.active ? '#a04a3f' : '#376b4d' }} disabled={Boolean(working)} onClick={() => fire('menu-active', { menuId: item.id, active: !item.active })}>{item.active ? (th ? 'ซ่อนเมนู' : 'Disable') : (th ? 'เปิดเมนู' : 'Enable')}</button></div>)}</div></section>}
       {data.admin && staffMode && <section style={{ ...card, marginTop: 16 }}><h2 style={{ marginTop: 0 }}>{th ? 'สถานะระบบ' : 'Event status'}</h2><button style={{ ...button, background: data.event.is_open ? '#a04a3f' : '#376b4d' }} disabled={Boolean(working)} onClick={() => fire(data.event.is_open ? 'close' : 'open')}>{data.event.is_open ? (th ? 'ปิดรับรายการ' : 'Close ordering') : (th ? 'เปิดรับรายการ' : 'Open ordering')}</button></section>}
     </>}
   </main>;
