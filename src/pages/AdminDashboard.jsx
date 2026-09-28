@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 25076)
-Total output lines: 3209
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { geoGraticule10, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
@@ -11,7 +8,6 @@ import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
 import AdminRetreatReviewPanel from '../components/AdminRetreatReviewPanel';
 import AdminMembersPanel from '../components/AdminMembersPanel';
 import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
-import KathinDrinkPanel from '../components/KathinDrinkPanel.jsx';
 
 
 const COUNTRY_POINTS = {
@@ -893,16 +889,1029 @@ function AdminDashboard({ lang, goToPage, currentMemberId }) {
       buildCompletionBlessingMessage(booking)
     );
     setLineBlessingError('');
-  …7076 tokens truncated…    </button>
+  };
+
+  const closeCompletionBlessing = () => {
+    if (lineBlessingSending) return;
+
+    setLineBlessingTarget(null);
+    setLineBlessingMessage('');
+    setLineBlessingError('');
+  };
+
+  const completeStayAfterBlessing = async (booking) => {
+    const response = await fetch(
+      '/api/update-stay-status',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          action: 'complete',
+          accommodationName: '',
+          note: ''
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    let data = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
+
+    if (
+      !response.ok ||
+      !data?.success
+    ) {
+      throw new Error(
+        data?.message ||
+        t.actionError
+      );
+    }
+
+    return data;
+  };
+
+  const sendCompletionBlessing = async () => {
+    if (!lineBlessingTarget?.id) return;
+
+    const messageText =
+      String(lineBlessingMessage || '').trim();
+
+    if (!messageText) {
+      setLineBlessingError(
+        lang === 'th'
+          ? 'กรุณากรอกคำอวยพรก่อนส่ง'
+          : 'Please enter the blessing message before sending.'
+      );
+      return;
+    }
+
+    if (messageText.length > 5000) {
+      setLineBlessingError(
+        lang === 'th'
+          ? 'ข้อความยาวเกิน 5,000 ตัวอักษร'
+          : 'Message exceeds 5,000 characters.'
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      lang === 'th'
+        ? 'ยืนยันส่งคำอวยพรทาง LINE OA ถึงผู้เข้าพักรายการนี้หรือไม่?'
+        : 'Send this blessing to the guest via LINE OA?'
+    );
+
+    if (!confirmed) return;
+
+    setLineBlessingSending(true);
+    setLineBlessingError('');
+
+    try {
+      const lineResponse = await fetch(
+        '/api/stay-line-notify',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: lineBlessingTarget.id,
+            event: 'completed_blessing',
+            messageText
+          })
+        }
+      );
+
+      const lineText =
+        await lineResponse.text();
+
+      let lineData = null;
+
+      try {
+        lineData =
+          lineText
+            ? JSON.parse(lineText)
+            : null;
+      } catch {
+        lineData = null;
+      }
+
+      if (
+        !lineResponse.ok ||
+        !lineData?.success
+      ) {
+        throw new Error(
+          lineData?.message ||
+          t.lineBlessingError
+        );
+      }
+
+      await completeStayAfterBlessing(
+        lineBlessingTarget
+      );
+
+      await loadBookings();
+
+      window.alert(
+        t.lineBlessingSuccess
+      );
+
+      setLineBlessingTarget(null);
+      setLineBlessingMessage('');
+      setLineBlessingError('');
+    } catch (err) {
+      console.error(
+        'Stay completion blessing error:',
+        err
+      );
+
+      setLineBlessingError(
+        err.message ||
+        t.lineBlessingError
+      );
+    } finally {
+      setLineBlessingSending(false);
+    }
+  };
+
+  const accommodationOptions = [
+    'กุฏิยอดคำ ห้อง 2',
+    'กุฏิสกุลคุณสวัสดิ์ 1 ห้อง 1',
+    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 1',
+    'กุฏิสกุลคุณสวัสดิ์ 2 ห้อง 2',
+    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 1',
+    'กุฏิสกุลคุณสวัสดิ์ 3 ห้อง 2'
+  ];
+
+  const openAccommodationPicker = (booking) => {
+    setAccommodationTarget(booking);
+    setSelectedAccommodation(
+      accommodationOptions.includes(
+        booking?.accommodation_name
+      )
+        ? booking.accommodation_name
+        : ''
+    );
+    setAccommodationError('');
+  };
+
+  const closeAccommodationPicker = () => {
+    if (accommodationSaving) return;
+
+    setAccommodationTarget(null);
+    setSelectedAccommodation('');
+    setAccommodationError('');
+  };
+
+  const saveAccommodationSelection = async () => {
+    if (!accommodationTarget?.id) return;
+
+    if (
+      !accommodationOptions.includes(
+        selectedAccommodation
+      )
+    ) {
+      setAccommodationError(
+        t.accommodationPickerRequired
+      );
+      return;
+    }
+
+    setAccommodationSaving(true);
+    setAccommodationError('');
+
+    try {
+      const response = await fetch(
+        '/api/update-stay-status',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: accommodationTarget.id,
+            action: 'assign_accommodation',
+            accommodationName:
+              selectedAccommodation,
+            note: ''
+          })
+        }
+      );
+
+      const responseText =
+        await response.text();
+
+      let data = null;
+
+      try {
+        data =
+          responseText
+            ? JSON.parse(responseText)
+            : null;
+      } catch {
+        data = null;
+      }
+
+      if (
+        !response.ok ||
+        !data?.success
+      ) {
+        throw new Error(
+          data?.message ||
+          t.actionError
+        );
+      }
+
+      await loadBookings();
+
+      window.alert(
+        t.accommodationPickerSuccess
+      );
+
+      setAccommodationTarget(null);
+      setSelectedAccommodation('');
+      setAccommodationError('');
+    } catch (err) {
+      console.error(
+        'Accommodation assignment error:',
+        err
+      );
+
+      setAccommodationError(
+        err.message ||
+        t.actionError
+      );
+    } finally {
+      setAccommodationSaving(false);
+    }
+  };
+
+  const callStayAction = async (booking, action) => {
+    if (action === 'complete') {
+      openCompletionBlessing(booking);
+      return;
+    }
+
+    let accommodationName = '';
+    let note = '';
+
+    if (action === 'assign_accommodation') {
+      openAccommodationPicker(booking);
+      return;
+    }
+
+    if (action === 'reject' || action === 'cancel') {
+      note = window.prompt(
+        t.notePrompt,
+        ''
+      );
+
+      if (note === null) {
+        return;
+      }
+    } else {
+      const confirmed = window.confirm(
+        t.confirmAction
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setProcessingId(booking.id);
+
+    try {
+      const response = await fetch(
+        '/api/update-stay-status',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: booking.id,
+            action: action,
+            accommodationName: accommodationName,
+            note: note
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || t.actionError
+        );
+      }
+
+      await loadBookings();
+
+      if (action === 'approve') {
+        openApprovalLineNotification({
+          ...booking,
+          status: 'approved'
+        });
+      } else {
+        alert(t.actionSuccess);
+      }
+    } catch (err) {
+      console.error('Stay action error:', err);
+
+      alert(
+        err.message || t.actionError
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const actionButtonStyle = {
+    border: 'none',
+    padding: '7px 10px',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    fontWeight: '600'
+  };
+
+  const isReturnConfirmed = (booking) => {
+    return (
+      Boolean(booking?.completed_at) ||
+      ['qr_return', 'admin_return'].includes(
+        booking?.checkout_method
+      )
+    );
+  };
+
+  const getAdminDisplayStatus = (booking) => {
+    if (
+      booking?.status === 'checked_out' &&
+      isReturnConfirmed(booking)
+    ) {
+      return 'completed';
+    }
+
+    return booking?.status || '';
+  };
+
+  const renderActions = (booking) => {
+    const busy =
+      processingId === booking.id;
+
+    if (booking.status === 'pending') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'assign_accommodation'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#7e57c2',
+              color: '#fff'
+            }}
+          >
+            {t.assignAccommodation}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'approve'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#2e7d32',
+              color: '#fff'
+            }}
+          >
+            {t.approve}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'reject'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#c62828',
+              color: '#fff'
+            }}
+          >
+            {t.reject}
+          </button>
+        </div>
+      );
+    }
+
+    if (booking.status === 'approved') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'assign_accommodation'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#7e57c2',
+              color: '#fff'
+            }}
+          >
+            {t.assignAccommodation}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'check_in'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#1565c0',
+              color: '#fff'
+            }}
+          >
+            {t.checkIn}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              openApprovalLineNotification(
+                booking
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#06c755',
+              color: '#fff'
+            }}
+          >
+            {t.lineNotifyApproval}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'cancel'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#736f66',
+              color: '#fff'
+            }}
+          >
+            {t.cancel}
+          </button>
+        </div>
+      );
+    }
+
+    if (booking.status === 'checked_in') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'assign_accommodation'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#7e57c2',
+              color: '#fff'
+            }}
+          >
+            {t.assignAccommodation}
+          </button>
+
+          {booking.accommodation_name && (
+            <button
+              disabled={busy}
+              onClick={() =>
+                callStayAction(
+                  booking,
+                  'confirm_accommodation'
+                )
+              }
+              style={{
+                ...actionButtonStyle,
+                background: '#5e35b1',
+                color: '#fff'
+              }}
+            >
+              {t.confirmAccommodation}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (booking.status === 'accommodated') {
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'start_retreat'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#8e24aa',
+              color: '#fff'
+            }}
+          >
+            {t.startRetreat}
+          </button>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'check_out'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#546e7a',
+              color: '#fff'
+            }}
+          >
+            {t.checkOut}
+          </button>
+        </div>
+      );
+    }
+
+    if (booking.status === 'in_retreat') {
+      return (
+        <button
+          disabled={busy}
+          onClick={() =>
+            callStayAction(
+              booking,
+              'check_out'
+            )
+          }
+          style={{
+            ...actionButtonStyle,
+            background: '#546e7a',
+            color: '#fff'
+          }}
+        >
+          {t.checkOut}
+        </button>
+      );
+    }
+
+    if (booking.status === 'checked_out') {
+      if (!isReturnConfirmed(booking)) {
+        return (
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'confirm_return'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#546e7a',
+              color: '#fff'
+            }}
+          >
+            {t.confirmReturn}
+          </button>
+        );
+      }
+
+      return (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}
+        >
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: '#2e7d32'
+            }}
+          >
+            ✓ {t.returnConfirmed}
+          </span>
+
+          <button
+            disabled={busy}
+            onClick={() =>
+              callStayAction(
+                booking,
+                'complete'
+              )
+            }
+            style={{
+              ...actionButtonStyle,
+              background: '#00695c',
+              color: '#fff'
+            }}
+          >
+            {t.lineBlessingButton}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <span
+        style={{
+          fontSize: '12px',
+          color: '#888'
+        }}
+      >
+        —
+      </span>
+    );
+  };
+
+  if (activeTab === 'menu') {
+    const menuItems = [
+      {
+        key: 'members',
+        icon: '/icons/profile.svg',
+        title: t.memberTab,
+        text:
+          lang === 'en'
+            ? 'Member directory and connected LINE / Telegram accounts.'
+            : 'รายชื่อสมาชิกและบัญชี LINE / Telegram ที่เชื่อมต่อ'
+      },
+      {
+        key: 'bookings',
+        icon: '/icons/stay.svg',
+        title: t.bookingTab,
+        text:
+          lang === 'en'
+            ? 'Approvals, check-in, accommodation and retreat progress.'
+            : 'อนุมัติ เช็กอิน จัดที่พัก และติดตามการเข้าพักปฏิบัติธรรม'
+      },
+      {
+        key: 'donations',
+        icon: '/icons/donation.svg',
+        title: t.donationTab,
+        text:
+          lang === 'en'
+            ? 'Donation totals, donor records, money and item offerings.'
+            : 'ยอดทำบุญ รายชื่อผู้บริจาค เงิน และสิ่งของถวาย'
+      },
+      {
+        key: 'students',
+        icon: '/icons/profile.svg',
+        title: t.studentTab,
+        text:
+          lang === 'en'
+            ? 'Temple students, daily routine and latest status.'
+            : 'รายชื่อเด็กวัด กิจวัตรประจำวัน และสถานะล่าสุด'
+      },
+      {
+        key: 'practice-messages',
+        icon: '/icons/dhamma-book.svg',
+        title: t.practiceMessageTab,
+        text:
+          lang === 'en'
+            ? 'One-way practice guidance for all practitioners or a selected member.'
+            : 'ฝากข้อความและแนวทางปฏิบัติแบบทางเดียว ถึงผู้ปฏิบัติทุกคนหรือเฉพาะบุคคล'
+      },
+      {
+        key: 'reviews',
+        icon: '/icons/lotus.svg',
+        title: t.reviewTab,
+        text:
+          lang === 'en'
+            ? 'Review participant feedback before publishing it on the public website.'
+            : 'ตรวจสอบความคิดเห็นของผู้เข้าปฏิบัติธรรมก่อนอนุมัติให้แสดงบนหน้าเว็บไซต์'
+      }
+    ];
+
+    return (
+      <div className="guidePage">
+        <div
+          className="guideContainer"
+          style={{
+            maxWidth: '880px',
+            paddingBottom: '60px'
+          }}
+        >
+          <button
+            className="backButton"
+            onClick={() => goToPage('home')}
+          >
+            {t.back}
+          </button>
+
+          <div style={{ marginBottom: '24px' }}>
+            <span className="eyebrow">
+              {t.eyebrow}
+            </span>
+
+            <h1 style={{ marginBottom: '8px' }}>
+              {t.title}
+            </h1>
+
+            <h2
+              style={{
+                margin: '20px 0 6px',
+                fontSize: '21px',
+                color: '#332f29'
+              }}
+            >
+              {t.adminMenuTitle}
+            </h2>
+
+            <p
+              style={{
+                margin: 0,
+                color: '#756c60',
+                lineHeight: 1.6
+              }}
+            >
+              {t.adminMenuHelp}
+            </p>
+          </div>
+
+          <div
+            style={{
+              marginBottom: '18px',
+              padding: '18px',
+              border: '1px solid #e1d8ca',
+              borderRadius: '18px',
+              background: '#fff',
+              boxShadow: '0 4px 14px rgba(73,59,39,0.05)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '18px', color: '#332f29' }}>
+                  {lang === 'th' ? '🌍 สมาชิกของวัดจากทั่วโลก' : '🌍 Members around the world'}
+                </strong>
+                <span style={{ fontSize: '12px', color: '#756c60' }}>
+                  {lang === 'th' ? 'แสดงจากประเทศที่ตรวจพบเมื่อสมาชิกเข้าสู่ระบบ โดยไม่เก็บ IP' : 'Based on country detected at login; IP addresses are not stored.'}
+                </span>
+              </div>
+              <div style={{ fontSize: '12px', color: '#756c60' }}>
+                {memberMapLoading
+                  ? (lang === 'th' ? 'กำลังโหลด…' : 'Loading…')
+                  : `${memberCountries.reduce((sum, item) => sum + item.count, 0)} ${lang === 'th' ? 'สมาชิกที่ระบุประเทศแล้ว' : 'members with country data'}`}
+              </div>
+            </div>
+
+            <div style={{ position: 'relative', width: '100%', aspectRatio: '2 / 1', minHeight: '230px', overflow: 'hidden', borderRadius: '16px', background: 'linear-gradient(180deg, #eef6f7 0%, #f7f4ed 100%)', border: '1px solid #e3ded3', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.45)' }}>
+              {(() => {
+                const world = feature(worldTopology, worldTopology.objects.countries);
+                const projection = geoNaturalEarth1().fitExtent(
+                  [[28, 26], [972, 474]],
+                  world
+                );
+                const path = geoPath(projection);
+                const graticule = geoGraticule10();
+
+                return (
+                  <svg viewBox="0 0 1000 500" width="100%" height="100%" role="img" aria-label="World member map" style={{ display: 'block' }}>
+                    <defs>
+                      <filter id="memberMapShadow" x="-40%" y="-40%" width="180%" height="180%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.22" />
+                      </filter>
+                      <radialGradient id="memberMapOcean" cx="50%" cy="42%" r="72%">
+                        <stop offset="0%" stopColor="#f7fbfb" />
+                        <stop offset="100%" stopColor="#e8f1f1" />
+                      </radialGradient>
+                    </defs>
+
+                    <rect x="0" y="0" width="1000" height="500" fill="url(#memberMapOcean)" />
+                    <path d={path({ type: 'Sphere' })} fill="none" stroke="#d9e4e3" strokeWidth="1.25" />
+                    <path d={path(graticule)} fill="none" stroke="#dfe9e8" strokeWidth="0.7" opacity="0.8" />
+
+                    <g>
+                      {world.features.map((country, index) => (
+                        <path
+                          key={country.id || index}
+                          d={path(country)}
+                          fill="#e7dfd0"
+                          stroke="#c9bea9"
+                          strokeWidth="0.85"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      ))}
+                    </g>
+
+                    {memberCountries.map((item) => {
+                      const point = COUNTRY_POINTS[item.code];
+                      if (!point) return null;
+                      const projected = projection(point);
+                      if (!projected) return null;
+                      const [x, y] = projected;
+                      const r = Math.min(24, 8 + Math.sqrt(item.count) * 4.2);
+
+                      return (
+                        <g key={item.code} filter="url(#memberMapShadow)">
+                          <circle cx={x} cy={y} r={r + 5} fill="#9b7226" opacity="0.13" />
+                          <circle cx={x} cy={y} r={r} fill="#9b7226" fillOpacity="0.92" stroke="#fff" strokeWidth="3" />
+                          <text x={x} y={y + 4.5} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">{item.count}</text>
+                          <title>{`${countryName(item.code, lang)}: ${item.count}`}</title>
+                        </g>
+                      );
+                    })}
+
+                    <text x="24" y="480" fontSize="10" fill="#8d857a" opacity="0.8">
+                      Natural Earth · country-level member locations
+                    </text>
+                  </svg>
+                );
+              })()}
+            </div>
+
+            {memberCountries.length > 0 ? (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                {memberCountries.slice(0, 8).map((item) => (
+                  <span key={item.code} style={{ padding: '6px 9px', borderRadius: '999px', background: '#f6f1e7', color: '#51483d', fontSize: '12px', fontWeight: 700 }}>
+                    {countryFlag(item.code)} {countryName(item.code, lang)} · {item.count}
+                  </span>
+                ))}
+              </div>
+            ) : !memberMapLoading ? (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#8b8174' }}>
+                {lang === 'th' ? 'ยังไม่มีสมาชิกที่มีข้อมูลประเทศ' : 'No members have country data yet.'}
+              </div>
+            ) : null}
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '14px'
+            }}
+          >
+            {menuItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() =>
+                  openAdminSection(item.key)
+                }
+                style={{
+                  width: '100%',
+                  minHeight: '150px',
+                  padding: '18px',
+                  border: '1px solid #e1d8ca',
+                  borderRadius: '18px',
+                  background: '#fff',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  boxShadow:
+                    '0 4px 14px rgba(73,59,39,0.05)'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '13px',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      flex: '0 0 48px',
+                      borderRadius: '14px',
+                      background: '#f6f1e7',
+                      display: 'grid',
+                      placeItems: 'center'
+                    }}
+                  >
+                    <img
+                      src={item.icon}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        width: '27px',
+                        height: '27px'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display =
+                          'none';
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ minWidth: 0 }}>
+                    <strong
+                      style={{
+                        display: 'block',
+                        fontSize: '18px',
+                        color: '#332f29',
+                        marginBottom: '6px'
+                      }}
+                    >
+                      {item.title}
+                    </strong>
+
+                    <div
+                      style={{
+                        fontSize: '13px',
+                        lineHeight: 1.55,
+                        color: '#756c60'
+                      }}
+                    >
+                      {item.text}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: '14px',
+                        color: '#9b7226',
+                        fontWeight: 800,
+                        fontSize: '13px'
+                      }}
+                    >
+                      {t.openSection} →
+                    </div>
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
         </div>
       </div>
     );
-  }
-
-  if (activeTab === 'kathin-drinks') {
-    return <KathinDrinkPanel user={{ memberId: currentMemberId }} lang={lang} staffMode onClose={() => setActiveTab('menu')} />;
   }
 
   if (activeTab === 'members') {

@@ -3,7 +3,6 @@ import MemberPhotoEditor from '../components/MemberPhotoEditor';
 import MemberCard from '../components/MemberCard';
 import ThaiAddressFields from '../components/ThaiAddressFields.jsx';
 import { structuredAddress, emptyThaiAddress } from '../lib/thaiAddress.js';
-import KathinDrinkPanel from '../components/KathinDrinkPanel.jsx';
 
 
 const ISO_COUNTRY_CODES = [
@@ -82,9 +81,6 @@ function MyDashboard({
   const [cancelMembershipConfirmed, setCancelMembershipConfirmed] = useState(false);
   const [cancelMembershipWorking, setCancelMembershipWorking] = useState(false);
   const [cancelMembershipError, setCancelMembershipError] = useState('');
-  const [drinkPanelOpen, setDrinkPanelOpen] = useState(false);
-  const [drinkEventOpen, setDrinkEventOpen] = useState(false);
-  const [drinkIsStaff, setDrinkIsStaff] = useState(false);
 
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -159,14 +155,6 @@ function MyDashboard({
     return () => {
       cancelled = true;
     };
-  }, [user?.memberId]);
-
-  useEffect(() => {
-    if (!user) return;
-    fetch('/api/kathin-drinks?view=member', { credentials: 'include', cache: 'no-store' })
-      .then((response) => response.json())
-      .then((data) => { if (data?.success) { setDrinkEventOpen(Boolean(data.event?.is_open)); setDrinkIsStaff(Boolean(data.staff || data.admin)); } })
-      .catch(() => {});
   }, [user?.memberId]);
 
   useEffect(() => {
@@ -716,16 +704,6 @@ function MyDashboard({
               : 'Your profile, retreat stay, and donation memories.'}
           </p>
         </div>
-
-        {drinkPanelOpen ? (
-          <KathinDrinkPanel user={user} lang={lang} staffMode={drinkIsStaff} onClose={() => setDrinkPanelOpen(false)} />
-        ) : drinkEventOpen ? (
-          <button type="button" onClick={() => setDrinkPanelOpen(true)} style={{ width: '100%', textAlign: 'left', margin: '0 0 18px', padding: '18px 20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', cursor: 'pointer', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 900, color: '#92691e' }}>7–8 พฤศจิกายน 2569 · KATHIN 2569</span>
-            <strong style={{ display: 'block', fontSize: 21, marginTop: 4 }}>{drinkIsStaff ? (th ? '☕ Staff · จัดการคิวเครื่องดื่ม' : '☕ Staff · Manage drink queue') : (th ? '☕ รับสิทธิ์เครื่องดื่มฟรี 1 แก้ว' : '☕ Claim your free drink')}</strong>
-            <span style={{ display: 'block', marginTop: 5 }}>{drinkIsStaff ? (th ? 'รับออเดอร์ อัปเดตคิว ออกสิทธิ์ และช่วยสมาชิกสั่งเครื่องดื่ม' : 'Accept orders, update queues, grant rights, and assist members.') : (th ? 'เลือกเมนู สั่งเครื่องดื่ม และติดตามเลขคิวของคุณ' : 'Choose a drink and follow your queue number.')}</span>
-          </button>
-        ) : null}
 
         <section className="compactProfileCard">
           <div className="compactProfileAvatar">
