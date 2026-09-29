@@ -728,10 +728,9 @@ function MyDashboard({
           </p>
         </div>
 
-        {kathinDrinksActive && <a href="https://kathin.nathoeng.com/" style={{ display: 'block', textDecoration: 'none', margin: '0 0 18px', padding: '18px 20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
-          <span style={{ display: 'block', fontSize: 12, fontWeight: 900, color: '#92691e' }}>7–8 พฤศจิกายน 2569 · KATHIN 2569</span>
-          <strong style={{ display: 'block', fontSize: 21, marginTop: 4 }}>{th ? '☕ เข้าระบบเครื่องดื่มงานกฐิน' : '☕ Kathin drinks'}</strong>
-          <span style={{ display: 'block', marginTop: 5 }}>{th ? 'กดดูสิทธิ์ฟรีของคุณ เลือกเมนูในวันงาน และติดตามเลขคิว →' : 'View your free drink right, choose a drink on event days, and follow your queue →'}</span>
+        {kathinDrinksActive && <a href="https://kathin.nathoeng.com/" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
+          <span aria-hidden="true" style={{ fontSize: 64, lineHeight: 1.15, flexShrink: 0 }}>☕</span>
+          <strong style={{ fontSize: 21, lineHeight: 1.5, minWidth: 0 }}>{th ? 'กดรับกาแฟ เครื่องดื่มฟรีในงาน' : 'Tap for free coffee and drinks at the event'}</strong>
         </a>}
 
         <section id="account-profile" className="compactProfileCard">
