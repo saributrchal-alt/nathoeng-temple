@@ -1602,7 +1602,35 @@ function AdminDashboard({ lang, goToPage, currentMemberId }) {
   };
 
   if (activeTab === 'menu') {
+    const openAccountSystem = async () => {
+      try {
+        const response = await fetch('/api/admin-bookings?route=account-handoff', { credentials: 'same-origin' });
+        const data = await response.json();
+        if (!response.ok || !data?.success || !data?.token) throw new Error('Unable to authorize accounting system');
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://account.nathoeng.com/api/session';
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'token';
+        input.value = data.token;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+      } catch (error) {
+        console.error(error);
+        alert(lang === 'th' ? 'ไม่สามารถเปิดระบบบัญชีได้ กรุณาเข้าสู่ระบบ Admin ใหม่' : 'Unable to open accounting system. Please sign in as Admin again.');
+      }
+    };
+
     const menuItems = [
+      {
+        key: 'account',
+        action: openAccountSystem,
+        icon: '/icons/donation.svg',
+        title: lang === 'en' ? 'Temple Accounting' : 'ระบบบัญชีวัด',
+        text: lang === 'en' ? 'Income, expenses, supporting bills and accounting reports.' : 'บันทึกรายรับ รายจ่าย หลักฐานบิล และรายงานบัญชี'
+      },
       {
         key: 'kathin-drinks',
         external: 'https://kathin.nathoeng.com/',
@@ -1830,7 +1858,7 @@ function AdminDashboard({ lang, goToPage, currentMemberId }) {
               <button
                 key={item.key}
                 type="button"
-                onClick={() => item.external ? window.location.assign(item.external) : openAdminSection(item.key)}
+                onClick={() => item.action ? item.action() : item.external ? window.location.assign(item.external) : openAdminSection(item.key)}
                 style={{
                   width: '100%',
                   minHeight: '150px',
