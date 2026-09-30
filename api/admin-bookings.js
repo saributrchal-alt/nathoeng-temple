@@ -1,5 +1,6 @@
 import {
-  requireAdmin
+  requireAdmin,
+  createSessionToken
 } from '../lib/_auth.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
@@ -417,6 +418,18 @@ export default async function handler(req, res) {
 
   const session = requireAdmin(req, res);
   if (!session) return;
+
+  if (route === 'account-handoff') {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+    const token = createSessionToken({
+      memberId: session.memberId,
+      role: 'admin',
+      authProvider: session.authProvider
+    });
+    return res.status(200).json({ success: true, token });
+  }
 
   if (route === 'member-team') {
     try {
