@@ -404,6 +404,41 @@ export default async function handler(req, res) {
       String(body.action || '').trim();
 
     // -----------------------------------------------------
+    // ADMIN: FORWARD VERIFIED MONEY DONATION TO ACCOUNTING
+    // -----------------------------------------------------
+    if (action === 'forward_accounting') {
+      if (!isAdmin(session)) return res.status(403).json({ success:false, message:'Admin permission required' });
+      const donation = await getDonation({ supabaseUrl, secretKey:supabaseSecretKey, donationId:body.donationId });
+      if (!donation) return res.status(404).json({ success:false, message:'Donation not found' });
+      if (donation.donation_type !== 'money') return res.status(400).json({ success:false, message:'Only money donations can be forwarded to accounting' });
+      if (donation.verification_status !== 'verified') return res.status(400).json({ success:false, message:'กรุณาตรวจสอบรายการให้ถูกต้องก่อนส่งฝ่ายบัญชี' });
+      const bridgeKey = process.env.ACCOUNT_BRIDGE_KEY;
+      if (!bridgeKey) return res.status(500).json({ success:false, message:'Accounting bridge is not configured' });
+      const crypto = await import('crypto');
+      const payload = {
+        source_id:String(donation.id),
+        income_date:donation.donation_date,
+        donor_name:donation.donor_name_snapshot || null,
+        purpose:donation.purpose === 'custom' ? (donation.custom_purpose || 'วัตถุประสงค์อื่น') : donation.purpose,
+        amount:Number(donation.amount),
+        note:donation.note || null,
+        verification_status:donation.verification_status,
+        source_created_at:donation.created_at || null
+      };
+      const raw = JSON.stringify(payload);
+      const signature = crypto.createHmac('sha256', bridgeKey).update(raw).digest('hex');
+      const rr = await fetch('https://account.nathoeng.com/api/account?route=donation-import', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Account-Signature':signature},
+        body:raw,
+        cache:'no-store'
+      });
+      const result = await rr.json().catch(()=>null);
+      if (!rr.ok || !result?.success) return res.status(502).json({ success:false, message:result?.message || 'ส่งต่อฝ่ายบัญชีไม่สำเร็จ' });
+      return res.status(200).json({ success:true, duplicate:result.duplicate===true, message:result.duplicate ? 'รายการนี้ส่งฝ่ายบัญชีแล้ว' : 'ส่งต่อฝ่ายบัญชีเรียบร้อยแล้ว' });
+    }
+
+    // -----------------------------------------------------
     // ADMIN: CREATE DONATION
     // -----------------------------------------------------
     if (action === 'admin_create') {
