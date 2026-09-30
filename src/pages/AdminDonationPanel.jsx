@@ -401,11 +401,14 @@ export default function AdminDonationPanel({
     }
   };
 
+  const [accountSent,setAccountSent] = React.useState({});
+
   const forwardAccounting = async (item) => {
     if (!window.confirm(th ? 'ยืนยันส่งรายการบริจาคนี้ต่อฝ่ายบัญชีหรือไม่?' : 'Forward this donation to accounting?')) return;
     setBusy(`account-${item.id}`);
     try {
       const result = await post({ action:'forward_accounting', donationId:item.id });
+      setAccountSent(prev=>({...prev,[item.id]:true}));
       window.alert(result.duplicate
         ? (th ? 'รายการนี้ถูกส่งฝ่ายบัญชีไว้แล้ว' : 'Already forwarded to accounting')
         : (th ? 'ส่งต่อฝ่ายบัญชีเรียบร้อยแล้ว' : 'Forwarded to accounting'));
@@ -703,9 +706,9 @@ export default function AdminDonationPanel({
                     type="button"
                     disabled={busy===`account-${item.id}`}
                     onClick={()=>forwardAccounting(item)}
-                    style={{...smallBtn,background:'#d99a20',borderColor:'#d99a20',color:'#fff',fontWeight:800}}
+                    style={{...smallBtn,background:accountSent[item.id]?'#edf7f1':'#d99a20',borderColor:accountSent[item.id]?'#8bc6a4':'#d99a20',color:accountSent[item.id]?'#236b4a':'#fff',fontWeight:800}}
                   >
-                    {busy===`account-${item.id}` ? (th?'กำลังส่ง...':'Sending...') : (th?'ส่งต่อฝ่ายบัญชี':'Forward to Accounting')}
+                    {busy===`account-${item.id}` ? (th?'กำลังส่ง...':'Sending...') : accountSent[item.id] ? (th?'✓ ส่งบัญชีแล้ว':'✓ Sent to Accounting') : (th?'ส่งต่อฝ่ายบัญชี':'Forward to Accounting')}
                   </button>
                 )}
                 <button type="button" onClick={()=>printDonation(item, {
