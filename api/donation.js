@@ -417,7 +417,7 @@ export default async function handler(req, res) {
       const crypto = await import('crypto');
       const payload = {
         source_id:String(donation.id),
-        income_date:donation.donation_date,
+        income_date:String(donation.donation_date||donation.created_at||'').slice(0,10),
         donor_name:donation.donor_name_snapshot || null,
         purpose:donation.purpose === 'custom' ? (donation.custom_purpose || 'วัตถุประสงค์อื่น') : donation.purpose,
         amount:Number(donation.amount),
