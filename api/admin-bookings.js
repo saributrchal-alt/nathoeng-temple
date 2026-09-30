@@ -425,8 +425,19 @@ export default async function handler(req, res) {
     const bridgeKey = process.env.ACCOUNT_BRIDGE_KEY;
     if (!bridgeKey) return res.status(500).json({ success:false, message:'Accounting bridge is not configured' });
     const crypto = await import('crypto');
+    let adminName = null;
+    try {
+      const memberResponse = await fetch(
+        `${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=*`,
+        { headers: supabaseHeaders(supabaseSecretKey), cache: 'no-store' }
+      );
+      const memberRows = await readJson(memberResponse);
+      const member = memberResponse.ok && Array.isArray(memberRows) ? memberRows[0] : null;
+      adminName = member?.full_name || member?.display_name || member?.name || member?.line_display_name || null;
+    } catch {}
     const payload = Buffer.from(JSON.stringify({
       memberId: session.memberId,
+      adminName,
       role: 'admin',
       exp: Date.now() + 1000 * 60 * 5
     })).toString('base64url');
