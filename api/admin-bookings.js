@@ -446,6 +446,29 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, token });
   }
 
+  if (route === 'account-staff-members') {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ success: false, message: 'Method not allowed' });
+    }
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/members?select=*&order=created_at.desc`,
+        { headers: supabaseHeaders(supabaseSecretKey), cache: 'no-store' }
+      );
+      const rows = await readJson(response);
+      if (!response.ok) return res.status(500).json({ success:false, message:'Unable to load members' });
+      const members = (Array.isArray(rows) ? rows : []).map((m) => ({
+        id: m.id,
+        name: m.full_name || m.display_name || m.name || m.line_display_name || '',
+        picture_url: m.profile_image_url || m.picture_url || m.line_picture_url || m.avatar_url || ''
+      })).filter((m) => m.id && m.name);
+      return res.status(200).json({ success:true, members });
+    } catch (error) {
+      console.error('Account staff member lookup failed:', error);
+      return res.status(500).json({ success:false, message:'Unable to load members' });
+    }
+  }
+
   if (route === 'member-team') {
     try {
       return await handleMemberTeam(req, res, supabaseUrl, supabaseSecretKey);
