@@ -42,6 +42,9 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [teamForm, setTeamForm] = useState({ enabled: false, group: 'volunteer', roleTh: '', roleEn: '', order: 999 });
   const [teamSaving, setTeamSaving] = useState(false);
   const [teamResult, setTeamResult] = useState('');
+  const [departmentForm, setDepartmentForm] = useState({ department:'account', canPrepare:true, canReview:false });
+  const [departmentBusy, setDepartmentBusy] = useState(false);
+  const [departmentResult, setDepartmentResult] = useState('');
 
   const text = {
     title: th ? 'สมาชิก' : 'Members',
@@ -152,6 +155,21 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     nextPhase: th
       ? 'ประวัติการติดต่อ LINE / Telegram จะเชื่อมเข้าหน้านี้ในขั้นต่อไป'
       : 'LINE / Telegram communication history will be connected here in the next phase.'
+  };
+
+  const assignDepartment = async () => {
+    if (!selectedMember?.id) return;
+    setDepartmentBusy(true); setDepartmentResult('');
+    try {
+      const response = await fetch('/api/admin-bookings?route=assign-department', {
+        method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({memberId:selectedMember.id,department:departmentForm.department,canPrepare:departmentForm.canPrepare,canReview:departmentForm.canReview})
+      });
+      const result = await response.json();
+      if (!response.ok || !result?.success) throw new Error(result?.message || 'ส่งสิทธิ์ไม่สำเร็จ');
+      setDepartmentResult(th ? '✓ ส่งสิทธิ์ไปฝ่ายบัญชีแล้ว' : '✓ Assigned to Accounting');
+    } catch (error) { setDepartmentResult(error.message || 'ส่งสิทธิ์ไม่สำเร็จ'); }
+    finally { setDepartmentBusy(false); }
   };
 
   const loadMembers = async () => {
@@ -1060,6 +1078,22 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                   setSelectedMember((current) => current ? { ...current, ...saved } : current);
                 }} />
             </div>}
+
+            <div style={{ border:'1px solid #cfe0d5', borderRadius:'14px', padding:'15px', background:'#f6fbf7', marginBottom:'18px' }}>
+              <h3 style={{margin:'0 0 5px'}}>{th?'มอบหมายฝ่ายงาน':'Department assignment'}</h3>
+              <p style={{margin:'0 0 12px',color:'#66756b',fontSize:'13px'}}>{th?'ส่งสมาชิกไปยังระบบฝ่ายงานที่ได้รับมอบหมายอย่างปลอดภัย':'Securely assign this member to a department system.'}</p>
+              <select value={departmentForm.department} onChange={e=>setDepartmentForm(v=>({...v,department:e.target.value}))} style={{padding:'10px',border:'1px solid #c8d8cd',borderRadius:'9px',background:'#fff',width:'100%',marginBottom:'10px'}}>
+                <option value="account">{th?'ฝ่ายบัญชี (Account)':'Accounting (Account)'}</option>
+              </select>
+              <div style={{display:'flex',gap:'16px',flexWrap:'wrap',marginBottom:'12px'}}>
+                <label><input type="checkbox" checked={departmentForm.canPrepare} onChange={e=>setDepartmentForm(v=>({...v,canPrepare:e.target.checked}))}/> {th?'ผู้ทำรายการ':'Preparer'}</label>
+                <label><input type="checkbox" checked={departmentForm.canReview} onChange={e=>setDepartmentForm(v=>({...v,canReview:e.target.checked}))}/> {th?'ผู้ตรวจ':'Reviewer'}</label>
+              </div>
+              <button type="button" onClick={assignDepartment} disabled={departmentBusy||(!departmentForm.canPrepare&&!departmentForm.canReview)} style={{border:'none',borderRadius:'9px',padding:'10px 14px',background:'#287a47',color:'#fff',fontWeight:800,cursor:'pointer'}}>
+                {departmentBusy?(th?'กำลังส่ง...':'Sending...'):(th?'ส่งไปฝ่ายบัญชี':'Assign to Accounting')}
+              </button>
+              {departmentResult?<div style={{marginTop:'9px',fontSize:'13px',fontWeight:700,color:departmentResult.startsWith('✓')?'#287a47':'#a0463d'}}>{departmentResult}</div>:null}
+            </div>
 
             <div style={{ border: '1px solid #dfd3c2', borderRadius: '14px', padding: '15px', background: '#fbf8f2', marginBottom: '18px' }}>
               <h3 style={{ margin: '0 0 5px' }}>{text.publicTeamTitle}</h3>
