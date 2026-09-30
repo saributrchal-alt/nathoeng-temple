@@ -1,0 +1,26 @@
+{
+  "name": "Nathoeng Connect",
+  "short_name": "Nathoeng",
+  "description": "วัดพุทธอุทยานนาเทิง · Nathoeng Connect",
+  "lang": "th",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#355b49",
+  "icons": [
+    {
+      "src": "/icons/nathoeng-connect.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/nathoeng-connect-badge.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
