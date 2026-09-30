@@ -469,6 +469,42 @@ export default async function handler(req, res) {
     }
   }
 
+  if (route === 'assign-department') {
+    if (req.method !== 'POST') return res.status(405).json({ success:false, message:'Method not allowed' });
+    const memberId = String(req.body?.memberId || '').trim();
+    const department = String(req.body?.department || '').trim();
+    if (!memberId || department !== 'account') return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    const memberResponse = await fetch(
+      `${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=*`,
+      { headers: supabaseHeaders(supabaseSecretKey), cache:'no-store' }
+    );
+    const memberRows = await readJson(memberResponse);
+    const member = memberResponse.ok && Array.isArray(memberRows) ? memberRows[0] : null;
+    const memberName = member?.full_name || member?.display_name || member?.name || member?.line_display_name || '';
+    if (!member || !memberName) return res.status(404).json({ success:false, message:'ไม่พบสมาชิก' });
+    const payload = {
+      member_id: memberId,
+      member_name: memberName,
+      can_prepare: req.body?.canPrepare === true,
+      can_review: req.body?.canReview === true
+    };
+    if (!payload.can_prepare && !payload.can_review) return res.status(400).json({ success:false, message:'กรุณาเลือกหน้าที่อย่างน้อย 1 รายการ' });
+    const bridgeKey = process.env.ACCOUNT_BRIDGE_KEY;
+    if (!bridgeKey) return res.status(500).json({ success:false, message:'Accounting bridge is not configured' });
+    const crypto = await import('crypto');
+    const raw = JSON.stringify(payload);
+    const signature = crypto.createHmac('sha256', bridgeKey).update(raw).digest('hex');
+    const rr = await fetch('https://account.nathoeng.com/api/account?route=staff-import', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'X-Account-Signature':signature },
+      body:raw,
+      cache:'no-store'
+    });
+    const result = await readJson(rr);
+    if (!rr.ok || !result?.success) return res.status(502).json({ success:false, message:result?.message || 'ส่งสิทธิ์ไปฝ่ายบัญชีไม่สำเร็จ' });
+    return res.status(200).json({ success:true, message:'ส่งสิทธิ์ไปฝ่ายบัญชีเรียบร้อยแล้ว', staff:result.item || null });
+  }
+
   if (route === 'member-team') {
     try {
       return await handleMemberTeam(req, res, supabaseUrl, supabaseSecretKey);
