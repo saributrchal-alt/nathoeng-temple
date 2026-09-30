@@ -5,7 +5,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!manifest\\.webmanifest|sw\\.js|favicon\\.svg|icons/|images/|qr/|checkin-qr\\.png|checkin-qr1\\.png|logo-).*)",
       "destination": "/index.html"
     }
   ]
