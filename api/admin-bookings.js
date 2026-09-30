@@ -1,6 +1,5 @@
 import {
-  requireAdmin,
-  createSessionToken
+  requireAdmin
 } from '../lib/_auth.js';
 
 function supabaseHeaders(secretKey, extra = {}) {
@@ -423,11 +422,16 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') {
       return res.status(405).json({ success: false, message: 'Method not allowed' });
     }
-    const token = createSessionToken({
+    const bridgeKey = process.env.ACCOUNT_BRIDGE_KEY;
+    if (!bridgeKey) return res.status(500).json({ success:false, message:'Accounting bridge is not configured' });
+    const crypto = await import('crypto');
+    const payload = Buffer.from(JSON.stringify({
       memberId: session.memberId,
       role: 'admin',
-      authProvider: session.authProvider
-    });
+      exp: Date.now() + 1000 * 60 * 5
+    })).toString('base64url');
+    const signature = crypto.createHmac('sha256', bridgeKey).update(payload).digest('base64url');
+    const token = payload + '.' + signature;
     return res.status(200).json({ success: true, token });
   }
 
