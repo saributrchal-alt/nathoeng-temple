@@ -401,6 +401,21 @@ export default function AdminDonationPanel({
     }
   };
 
+  const forwardAccounting = async (item) => {
+    if (!window.confirm(th ? 'ยืนยันส่งรายการบริจาคนี้ต่อฝ่ายบัญชีหรือไม่?' : 'Forward this donation to accounting?')) return;
+    setBusy(`account-${item.id}`);
+    try {
+      const result = await post({ action:'forward_accounting', donationId:item.id });
+      window.alert(result.duplicate
+        ? (th ? 'รายการนี้ถูกส่งฝ่ายบัญชีไว้แล้ว' : 'Already forwarded to accounting')
+        : (th ? 'ส่งต่อฝ่ายบัญชีเรียบร้อยแล้ว' : 'Forwarded to accounting'));
+    } catch (e) {
+      window.alert(e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const buildLineMessage = (item) => {
     const donorName = item?.owner_member_id
       ? currentOwnerName(item)
@@ -681,6 +696,16 @@ export default function AdminDonationPanel({
                     {busy===`line-${item.id}`
                       ? (th?'กำลังส่ง LINE...':'Sending LINE...')
                       : (th?'💬 แจ้งผู้บริจาคทาง LINE':'💬 Notify donor via LINE')}
+                  </button>
+                )}
+                {money && item.verification_status==='verified' && (
+                  <button
+                    type="button"
+                    disabled={busy===`account-${item.id}`}
+                    onClick={()=>forwardAccounting(item)}
+                    style={{...smallBtn,background:'#d99a20',borderColor:'#d99a20',color:'#fff',fontWeight:800}}
+                  >
+                    {busy===`account-${item.id}` ? (th?'กำลังส่ง...':'Sending...') : (th?'ส่งต่อฝ่ายบัญชี':'Forward to Accounting')}
                   </button>
                 )}
                 <button type="button" onClick={()=>printDonation(item, {
