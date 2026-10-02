@@ -3,7 +3,7 @@ import MemberPhotoEditor from './MemberPhotoEditor';
 import ThaiAddressFields from './ThaiAddressFields';
 import { parseCardFile } from './parseCardFile';
 import { readLatestDesktopCard, readLatestMobileCard, startMobileCardReader,
-  pendingMobileCardRequest, MOBILE_CARD_REQUEST_KEY } from '../lib/cardReaderBridge';
+  pendingMobileCardRequest, clearMobileCardRequest } from '../lib/cardReaderBridge';
 import { emptyThaiAddress, structuredAddress, validateThaiAddress } from '../lib/thaiAddress.js';
 import './WalkinMemberRegistration.css';
 
@@ -104,9 +104,7 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
       // Keep the callback available after denied permission or a network timeout.
       // Only a completed, validated read consumes the locally initiated request.
       if (!active()) return;
-      localStorage.removeItem(MOBILE_CARD_REQUEST_KEY);
-      const url = new URL(window.location.href); url.searchParams.delete('reader_nonce');
-      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      clearMobileCardRequest();
       setMobileNonce('');
       const next = await receiveCard(card, active);
       if (!next || !active()) return;
@@ -192,14 +190,14 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
       </div>
       {mode === 'reader' && <div className="member-registration__tools">
         {mobile ? <>
-          <button type="button" disabled={busy || !android} onClick={() => { try { setMobileNonce(''); setError(''); startMobileCardReader(); } catch { setError(th ? 'เปิดแอปอ่านบัตรไม่ได้ กรุณาใช้ Chrome บน Android และติดตั้งแอป 1.5.5' : 'Use Chrome on Android with reader app 1.5.5.'); } }}>{th ? 'อ่านบัตรและบันทึก' : 'Read card and save'}</button>
+          <button type="button" disabled={busy || !android} onClick={() => { try { setMobileNonce(''); setError(''); startMobileCardReader(); } catch { setError(th ? 'เปิดแอปอ่านบัตรไม่ได้ กรุณาใช้ Chrome บน Android และติดตั้งแอป 1.5.6' : 'Use Chrome on Android with reader app 1.5.6.'); } }}>{th ? 'อ่านบัตรและบันทึก' : 'Read card and save'}</button>
           {mobileNonce && android && <button type="button" disabled={busy} onClick={() => {
             const nonce = pendingMobileCardRequest();
             if (nonce !== mobileNonce) { setMobileNonce(''); setError(th ? 'คำขอหมดอายุ กรุณากดอ่านบัตรใหม่' : 'Request expired. Read the card again.'); return; }
             receiveMobileAndSave(nonce);
           }}>{busy ? (th ? 'กำลังรับข้อมูลบัตร…' : 'Receiving card…') : (th ? 'รับข้อมูลบัตรอีกครั้ง' : 'Receive card again')}</button>}
-          <p className="member-registration__hint">{android ? (th ? 'Android: ติดตั้งแอปสาริบุตร 1.5.5 และต่อเครื่องอ่านผ่าน OTG กดอ่านบัตรแล้วตรวจข้อมูลในแอป เมื่อยืนยันจะกลับมาบันทึกที่หน้านี้ หาก Chrome ขอสิทธิ์เข้าถึงเครือข่ายภายในเครื่อง ให้กดอนุญาต' : 'Android: use reader app 1.5.5 with USB OTG. Review the card in the app; confirmation returns here and saves. Allow local network access if Chrome asks.') : (th ? 'การอ่านบัตรโดยตรงรองรับ Android ผ่านแอปสาริบุตร สำหรับ iPhone ให้ใช้กรอกโดยเจ้าหน้าที่' : 'Direct card reading uses the Android app. On iPhone, use Staff entry.')}</p>
-          <a href="/downloads/Saributr-Card-Reader-1.5.5-Android.apk">{th ? 'ดาวน์โหลดแอปอ่านบัตร Android 1.5.5' : 'Download Android reader 1.5.5'}</a>
+          <p className="member-registration__hint">{android ? (th ? 'Android: ติดตั้งแอปสาริบุตร 1.5.6 และต่อเครื่องอ่านผ่าน OTG กดอ่านบัตรแล้วตรวจข้อมูลในแอป เมื่อยืนยันจะกลับมาบันทึกที่หน้านี้' : 'Android: use reader app 1.5.6 with USB OTG. Review the card in the app; confirmation returns here and saves.') : (th ? 'การอ่านบัตรโดยตรงรองรับ Android ผ่านแอปสาริบุตร สำหรับ iPhone ให้ใช้กรอกโดยเจ้าหน้าที่' : 'Direct card reading uses the Android app. On iPhone, use Staff entry.')}</p>
+          <a href="/downloads/Saributr-Card-Reader-1.5.6-Android.apk">{th ? 'ดาวน์โหลดแอปอ่านบัตร Android 1.5.6' : 'Download Android reader 1.5.6'}</a>
         </> : <>
           <p>{th ? 'เปิดแอปสาริบุตรบนคอมพิวเตอร์ แล้วอ่านบัตรก่อนกดรับข้อมูลภายใน 2 นาที' : 'Open the desktop reader app, read the card, and receive its details within 2 minutes.'}</p>
           <button type="button" disabled={busy} onClick={readDesktopCard}>{busy ? (th ? 'กำลังรับข้อมูล…' : 'Receiving…') : (th ? 'รับข้อมูลจากเครื่องอ่านบัตร' : 'Receive card reader data')}</button>
