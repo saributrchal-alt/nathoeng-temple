@@ -1,0 +1,18 @@
+.member-registration { padding: 20px; margin-bottom: 24px; border: 1px solid #e1d3bd; border-radius: 16px; background: #fffdfa; }
+.member-registration h2 { margin-top: 0; }
+.member-registration__choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.member-registration button { min-height: 46px; padding: 10px 16px; border: 1px solid #d8c9b5; border-radius: 10px; font: inherit; cursor: pointer; background: #fff; color: #503a27; }
+.member-registration__choices button { display: grid; gap: 6px; padding: 18px; text-align: left; }
+.member-registration__choices button[aria-pressed="true"] { border-color: #6b3517; background: #f6ecdf; box-shadow: inset 0 0 0 1px #6b3517; }
+.member-registration__choices span, .member-registration__hint { font-size: 13px; font-weight: 400; color: #746a5f; }
+.member-registration fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.member-registration label.member-registration__field { display: grid; gap: 6px; margin: 12px 0; font-weight: 700; }
+.member-registration__field input, .member-registration__field textarea { width: 100%; min-height: 44px; border: 1px solid #d8c9b5; border-radius: 9px; padding: 8px 11px; font: inherit; box-sizing: border-box; background: #fff; }
+.member-registration__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.member-registration__tools, .member-registration__success { padding: 16px; border-radius: 12px; background: #f6f0e7; margin: 16px 0; }
+.member-registration .member-registration__save { background: #405c4c; color: #fff; border: 0; }
+.member-registration button:disabled { cursor: default; opacity: .6; }
+.member-registration button:focus-visible { outline: 3px solid #bb8a35; outline-offset: 3px; }
+.member-registration__review { display: flex; gap: 9px; align-items: start; margin: 16px 0; }
+.member-registration__error { color: #a23f34; }
+@media (max-width: 520px) { .member-registration { padding: 16px; } .member-registration__choices, .member-registration__grid { grid-template-columns: 1fr; } }
