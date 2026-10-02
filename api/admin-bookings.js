@@ -5,7 +5,7 @@ import {
 function supabaseHeaders(secretKey, extra = {}) {
   return {
     apikey: secretKey,
-    Authorization: `Bearer ${secretKey}`,
+    ...(secretKey.startsWith('sb_secret_') ? {} : { Authorization: `Bearer ${secretKey}` }),
     Accept: 'application/json',
     'Content-Type': 'application/json',
     ...extra
@@ -259,6 +259,16 @@ async function handleMembers(req, res, supabaseUrl, secretKey) {
 
   const bookingsByMember = new Map();
 
+  // Kathin shares the temple member database. Keep the member list available
+  // if the event tables have not been installed yet, without inventing a role.
+  let kathinStaffIds = null;
+  try {
+    const response = await fetch(`${supabaseUrl}/rest/v1/kathin_drink_staff?active=eq.true&select=member_id`,
+      { headers: supabaseHeaders(secretKey), cache: 'no-store' });
+    const rows = await readJson(response);
+    if (response.ok && Array.isArray(rows)) kathinStaffIds = new Set(rows.map((row) => String(row.member_id)));
+  } catch { /* Assignment endpoints report event-table availability separately. */ }
+
   (Array.isArray(bookingsData) ? bookingsData : []).forEach((booking) => {
     if (!booking?.member_id) return;
     const key = String(booking.member_id);
@@ -269,6 +279,7 @@ async function handleMembers(req, res, supabaseUrl, secretKey) {
   const members = (Array.isArray(membersData) ? membersData : []).map((member) => {
     const { tax_id: _privateIdentity, ...safeMember } = member;
     return { ...safeMember, has_identity_number: Boolean(_privateIdentity),
+      kathin_staff: kathinStaffIds === null ? null : kathinStaffIds.has(String(member.id)),
       stay_history: bookingsByMember.get(String(member.id)) || [] };
   });
 
@@ -473,7 +484,37 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success:false, message:'Method not allowed' });
     const memberId = String(req.body?.memberId || '').trim();
     const department = String(req.body?.department || '').trim();
-    if (!memberId || department !== 'account') return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    if (!/^[\w-]{1,100}$/.test(memberId) || !['account', 'kathin'].includes(department)) return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    if (department === 'kathin') {
+      if (typeof req.body?.active !== 'boolean') return res.status(400).json({ success:false, message:'กรุณาระบุการมอบหรือถอนสิทธิ์ Staff' });
+      try {
+        const actorResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,role,membership_status&limit=1`,
+          { headers:supabaseHeaders(supabaseSecretKey), cache:'no-store' });
+        const actors = await readJson(actorResponse);
+        if (!actorResponse.ok) return res.status(503).json({ success:false, message:'ตรวจสิทธิ์ผู้ดูแลไม่สำเร็จ' });
+        const actor = actors?.[0];
+        if (actor?.role !== 'admin' || (actor.membership_status && actor.membership_status !== 'active'))
+          return res.status(403).json({ success:false, message:'เฉพาะผู้ดูแลวัดมอบหมายเจ้าหน้าที่กฐินได้' });
+        const targetResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=id,membership_status&limit=1`,
+          { headers:supabaseHeaders(supabaseSecretKey), cache:'no-store' });
+        const targets = await readJson(targetResponse);
+        if (!targetResponse.ok) return res.status(503).json({ success:false, message:'ตรวจสมาชิกไม่สำเร็จ' });
+        const target = targets?.[0];
+        if (!target) return res.status(404).json({ success:false, message:'ไม่พบสมาชิก' });
+        if (req.body.active && target.membership_status && target.membership_status !== 'active')
+          return res.status(409).json({ success:false, message:'มอบสิทธิ์ได้เฉพาะสมาชิกที่ยังใช้งานอยู่' });
+        const active = req.body.active;
+        const response = await fetch(`${supabaseUrl}/rest/v1/kathin_drink_staff${active ? '?on_conflict=member_id' : `?member_id=eq.${encodeURIComponent(memberId)}`}`, {
+          method:active ? 'POST' : 'PATCH', cache:'no-store',
+          headers:supabaseHeaders(supabaseSecretKey, { Prefer:active ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal' }),
+          body:JSON.stringify(active ? { member_id:memberId, assigned_by:String(actor.id), active:true } : { active:false })
+        });
+        if (!response.ok) return res.status(503).json({ success:false, message:'บันทึกสิทธิ์กฐินไม่สำเร็จ กรุณาตรวจตารางและสิทธิ์ kathin_drink_staff' });
+        return res.status(200).json({ success:true, staff:{ memberId, active }, message:active ? 'ส่งสิทธิ์เจ้าหน้าที่กฐินแล้ว' : 'ถอนสิทธิ์เจ้าหน้าที่กฐินแล้ว' });
+      } catch {
+        return res.status(503).json({ success:false, message:'เชื่อมต่อระบบสิทธิ์กฐินไม่สำเร็จ กรุณาลองใหม่' });
+      }
+    }
     const memberResponse = await fetch(
       `${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=*`,
       { headers: supabaseHeaders(supabaseSecretKey), cache:'no-store' }
