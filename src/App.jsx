@@ -21,6 +21,7 @@ import PublicRetreatReviews from './components/PublicRetreatReviews'
 import StayProcessPage from './pages/StayProcessPage'
 import StayPreparationPage from './pages/StayPreparationPage'
 import DhammaLivePage from './pages/DhammaLivePage'
+import { captureMobileCardReturn } from './lib/cardReaderBridge'
 
 const content = {
   en: {
@@ -509,6 +510,7 @@ function App() {
 
 useEffect(() => {
     const handleHashChange = () => {
+      captureMobileCardReturn()
       const hash = window.location.hash.replace('#', '')
       if (
         hash === 'event-kathina' || 

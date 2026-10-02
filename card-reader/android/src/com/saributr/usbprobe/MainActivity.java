@@ -14,7 +14,7 @@ public class MainActivity extends Activity {
  private final String action="com.saributr.usbprobe.PERMISSION";
  private ThaiCard.Data cardData;private byte[] pendingExport;private long cardReadAt;
  private EditText desktopIp,desktopCode;
- private String webToken; private long webRequestedAt;
+ private String webToken; private byte[] webKey; private long webRequestedAt;
  private boolean webReadRequested,webPermissionRequested;
  private boolean registered; private boolean busy; private int generation; private Thread worker;
  private final BroadcastReceiver receiver=new BroadcastReceiver(){public void onReceive(Context c,Intent i){
@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle b){super.onCreate(b);manager=(UsbManager)getSystemService(USB_SERVICE);
   LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(24,20,24,20);root.setBackgroundColor(Color.rgb(247,245,238));root.setFitsSystemWindows(true);
   if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets x=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(24+x.left,20+x.top,24+x.right,20+x.bottom);return insets;});
-  TextView title=new TextView(this);title.setText("สาริบุตร · อ่านบัตร 1.5.5");title.setTextSize(24);root.addView(title);
+  TextView title=new TextView(this);title.setText("สาริบุตร · อ่านบัตร 1.5.6");title.setTextSize(24);root.addView(title);
   TextView help=new TextView(this);help.setText("เสียบเครื่องอ่าน USB OTG แล้วอ่านบัตร\nเพิ่มสมาชิกบนมือถือ: กดอ่านบัตรจากเว็บ ตรวจข้อมูลที่นี่ แล้วกดยืนยันบันทึกในเว็บ\nส่งเข้าคอมพิวเตอร์: กรอก IP และรหัสจับคู่ แล้วกดส่งข้อมูลผ่าน Wi-Fi");help.setTextSize(16);help.setPadding(0,16,0,16);root.addView(help);
   Button scan=new Button(this);scan.setText("ค้นหาอุปกรณ์ USB ใหม่");scan.setOnClickListener(v->{if(busy)return;cardData=null;results.clear();status.setText("ค้นหาเรียบร้อย");refresh();beginWebRead();});root.addView(scan);
   Button website=new Button(this);website.setText("เปิดเว็บสมาชิกวัดป่านาเทิง");website.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://watt.nathoeng.com")));}catch(Exception e){status.setText("เปิดเบราว์เซอร์แล้วเข้า watt.nathoeng.com");}});root.addView(website);
@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
  }
  @Override protected void onResume(){super.onResume();if(manager!=null){refresh();beginWebRead();}}
  @Override protected void onStop(){super.onStop();generation++;if(worker!=null)worker.interrupt();busy=false;cardData=null;if(list!=null)refresh();}
- @Override protected void onDestroy(){generation++;if(worker!=null)worker.interrupt();if(registered)unregisterReceiver(receiver);super.onDestroy();}
+ @Override protected void onDestroy(){generation++;if(worker!=null)worker.interrupt();if(registered)unregisterReceiver(receiver);clearWebKey();super.onDestroy();}
  @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);handleWebIntent(intent);beginWebRead();}
  private void handleWebIntent(Intent intent){
   android.net.Uri uri=intent==null?null:intent.getData();
@@ -53,13 +53,17 @@ public class MainActivity extends Activity {
   String nonce=uri.getQueryParameter("nonce");
   if(nonce==null||!nonce.matches("[a-f0-9]{32}")){status.setText("คำขออ่านบัตรไม่ถูกต้อง กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
   if(busy){status.setText("กำลังอ่านบัตรอยู่ กรุณารอแล้วกดอ่านจากเว็บใหม่");return;}
+  clearWebKey();
+  String keyHex=uri.getQueryParameter("key");
+  if(keyHex!=null){try{webKey=CardReturnCipher.keyFromHex(keyHex);}catch(IllegalArgumentException e){webToken=null;intent.setData(null);status.setText("คำขอส่งกลับไม่ถูกต้อง กลับไปกดอ่านจากเว็บใหม่");return;}}
+  intent.setData(null);
   webToken=nonce;webRequestedAt=System.currentTimeMillis();webReadRequested=false;webPermissionRequested=false;
   cardData=null;cardReadAt=0;stopService(new Intent(this,CardHandoffService.class));
   status.setText("เพิ่มสมาชิกผ่านมือถือ • อ่านบัตรแล้วตรวจข้อมูลก่อนกดยืนยันบันทึกในเว็บ");
  }
  private void beginWebRead(){
   if(webToken==null||webReadRequested||busy||manager==null)return;
-  if(System.currentTimeMillis()-webRequestedAt>300000){webToken=null;status.setText("คำขอหมดอายุ กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
+  if(System.currentTimeMillis()-webRequestedAt>300000){webToken=null;clearWebKey();status.setText("คำขอหมดอายุ กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
   UsbDevice selected=null;int count=0;
   for(UsbDevice d:manager.getDeviceList().values()){
    boolean ccid=false;for(int j=0;j<d.getInterfaceCount();j++)if(d.getInterface(j).getInterfaceClass()==11)ccid=true;
@@ -72,16 +76,27 @@ public class MainActivity extends Activity {
  }
  private void returnToWeb(){
   if(cardData==null||webToken==null)return;
-  if(System.currentTimeMillis()-webRequestedAt>300000){status.setText("คำขอหมดอายุ กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
+  if(System.currentTimeMillis()-webRequestedAt>300000){webToken=null;clearWebKey();status.setText("คำขอหมดอายุ กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
+  byte[] payload=null;
   try{
    org.json.JSONObject json=cardJson(cardData);
    java.text.SimpleDateFormat iso=new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",java.util.Locale.US);iso.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));json.put("read_at",iso.format(new java.util.Date(cardReadAt)));
+   payload=json.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+   if(webKey!=null){
+    String packet=CardReturnCipher.encrypt(webToken,webKey,payload,cardReadAt);
+    Intent browser=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse(CardReturnCipher.ORIGIN+"/?reader_nonce="+webToken+"#admin-dashboard&reader_card="+packet));
+    browser.addCategory(Intent.CATEGORY_BROWSABLE);browser.setPackage("com.android.chrome");startActivity(browser);
+    webToken=null;clearWebKey();cardData=null;cardReadAt=0;refresh();return;
+   }
+   // Compatibility for a request already started on a cached older website.
    Intent handoff=new Intent(this,CardHandoffService.class);
    handoff.putExtra("nonce",webToken);handoff.putExtra("readAt",cardReadAt);
-   handoff.putExtra("card",json.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+   handoff.putExtra("card",payload);
    startForegroundService(handoff);webToken=null;
-  }catch(Exception e){status.setText("ส่งข้อมูลเข้าเว็บไม่ได้ ตรวจว่าใช้ Chrome และกลับไปกดอ่านบัตรที่เว็บใหม่");}
+  }catch(Exception e){status.setText(e instanceof java.io.IOException?e.getMessage():"ส่งข้อมูลเข้าเว็บไม่ได้ ตรวจว่าใช้ Chrome และกลับไปกดอ่านบัตรที่เว็บใหม่ [CARD_RETURN]");}
+  finally{if(payload!=null)Arrays.fill(payload,(byte)0);}
  }
+ private void clearWebKey(){if(webKey!=null)Arrays.fill(webKey,(byte)0);webKey=null;}
  private void text(String s){TextView t=new TextView(this);t.setText(s);t.setTextSize(16);t.setTextIsSelectable(true);t.setPadding(0,16,0,8);list.addView(t);}
  private void refresh(){list.removeAllViews();
   if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_USB_HOST)){text("เครื่องนี้ไม่ได้รายงานว่ารองรับ USB Host");return;}
