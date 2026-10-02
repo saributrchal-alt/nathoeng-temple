@@ -24,8 +24,8 @@ self.addEventListener('push', (event) => {
         body:
           data.body ||
           'มีข้อความใหม่จากวัดพุทธอุทยานนาเทิง',
-        icon: '/favicon.svg',
-        badge: '/favicon.svg',
+        icon: '/icons/nathoeng-brown-192.png',
+        badge: '/icons/nathoeng-notification-badge-96.png',
         tag:
           data.tag ||
           'nathoeng-connect-test',

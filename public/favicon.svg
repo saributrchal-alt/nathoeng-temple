@@ -1,47 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs>
-    <style>
-      .bg { fill: #C59B27; }
-      .wheel { fill: none; stroke: #4A3B5C; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-      .wheel-fill { fill: #4A3B5C; }
-    </style>
-  </defs>
-  
-  <!-- พื้นหลังสี่เหลี่ยมสีทองขอบมน -->
-  <rect width="100" height="100" rx="12" class="bg" />
-  
-  <!-- ธรรมจักรดีไซน์ละเอียด -->
-  <g transform="translate(50, 50)">
-    <!-- วงล้อรอบนอก -->
-    <circle cx="0" cy="0" r="34" class="wheel" stroke-width="1.5" />
-    <circle cx="0" cy="0" r="32" class="wheel" stroke-width="2.5" />
-    <circle cx="0" cy="0" r="25" class="wheel" stroke-width="2" />
-    
-    <!-- ดุมกลาง -->
-    <circle cx="0" cy="0" r="7.5" class="wheel" stroke-width="2" />
-    <circle cx="0" cy="0" r="3.5" class="wheel-fill" />
-    
-    <!-- ซี่ล้อ 8 แฉก -->
-    <line x1="0" y1="-25" x2="0" y2="-7.5" class="wheel" stroke-width="2.5" />
-    <line x1="0" y1="7.5" x2="0" y2="25" class="wheel" stroke-width="2.5" />
-    <line x1="-25" y1="0" x2="-7.5" y2="0" class="wheel" stroke-width="2.5" />
-    <line x1="7.5" y1="0" x2="25" y2="0" class="wheel" stroke-width="2.5" />
-    
-    <line x1="-17.68" y1="-17.68" x2="-5.3" y2="-5.3" class="wheel" stroke-width="2.5" />
-    <line x1="5.3" y1="5.3" x2="17.68" y2="17.68" class="wheel" stroke-width="2.5" />
-    <line x1="-17.68" y1="17.68" x2="-5.3" y2="5.3" class="wheel" stroke-width="2.5" />
-    <line x1="5.3" y1="-5.3" x2="17.68" y2="-17.68" class="wheel" stroke-width="2.5" />
-    
-    <!-- หมุด/ลายประดับขอบ 8 ทิศทาง -->
-    <path d="M 0 -37 L -3 -32 L 3 -32 Z" class="wheel-fill" />
-    <path d="M 0 37 L -3 32 L 3 32 Z" class="wheel-fill" />
-    <path d="M -37 0 L -32 -3 L -32 3 Z" class="wheel-fill" />
-    <path d="M 37 0 L 32 -3 L 32 3 Z" class="wheel-fill" />
-    
-    <path d="M -26.16 -26.16 L -23 -20 L -20 -23 Z" class="wheel-fill" />
-    <path d="M 26.16 26.16 L 23 20 L 20 23 Z" class="wheel-fill" />
-    <path d="M -26.16 26.16 L -20 23 L -23 20 Z" class="wheel-fill" />
-    <path d="M 26.16 -26.16 L -20 -23 L 23 -20 Z" class="wheel-fill" />
+  <circle cx="50" cy="50" r="49" fill="#6B3517"/>
+  <g fill="none" stroke="#F4C430" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" transform="translate(50 50)">
+    <circle r="34"/>
+    <circle r="9"/>
+    <line x1="9.0000" y1="0.0000" x2="34.0000" y2="0.0000"/>
+    <line x1="6.3640" y1="6.3640" x2="24.0416" y2="24.0416"/>
+    <line x1="0.0000" y1="9.0000" x2="0.0000" y2="34.0000"/>
+    <line x1="-6.3640" y1="6.3640" x2="-24.0416" y2="24.0416"/>
+    <line x1="-9.0000" y1="0.0000" x2="-34.0000" y2="0.0000"/>
+    <line x1="-6.3640" y1="-6.3640" x2="-24.0416" y2="-24.0416"/>
+    <line x1="-0.0000" y1="-9.0000" x2="-0.0000" y2="-34.0000"/>
+    <line x1="6.3640" y1="-6.3640" x2="24.0416" y2="-24.0416"/>
   </g>
+  <circle cx="50" cy="50" r="2.5" fill="#F4C430"/>
 </svg>
