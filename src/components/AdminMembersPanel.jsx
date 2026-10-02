@@ -172,8 +172,8 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     finally { setDepartmentBusy(false); }
   };
 
-  const loadMembers = async () => {
-    setLoading(true);
+  const loadMembers = async (silent = false) => {
+    if (silent !== true) setLoading(true);
     setError('');
 
     try {
@@ -751,7 +751,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
         <p style={{ margin: 0, color: '#756c60', lineHeight: 1.65 }}>{text.help}</p>
       </div>
 
-      <WalkinMemberRegistration lang={lang} members={members} onSaved={loadMembers} onDonation={onDonation} />
+      <WalkinMemberRegistration lang={lang} members={members} onSaved={() => loadMembers(true)} onDonation={onDonation} />
 
       {error ? (
         <div style={{ border: '1px solid #efc7c2', background: '#fff7f6', borderRadius: '12px', padding: '14px', marginBottom: '16px', color: '#9f2f25' }}>

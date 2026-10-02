@@ -8,6 +8,7 @@ import AdminPracticeMessagePanel from '../components/AdminPracticeMessagePanel';
 import AdminRetreatReviewPanel from '../components/AdminRetreatReviewPanel';
 import AdminMembersPanel from '../components/AdminMembersPanel';
 import { isKathin2569Donation, kathin2569Label } from '../donationPurpose';
+import { pendingMobileCardRequest } from '../lib/cardReaderBridge';
 
 
 const COUNTRY_POINTS = {
@@ -38,7 +39,7 @@ function countryName(code, lang) {
 function AdminDashboard({ lang, goToPage, currentMemberId }) {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
-  const [activeTab, setActiveTab] = useState('menu');
+  const [activeTab, setActiveTab] = useState(() => pendingMobileCardRequest() ? 'members' : 'menu');
   const [deskDonorId, setDeskDonorId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
