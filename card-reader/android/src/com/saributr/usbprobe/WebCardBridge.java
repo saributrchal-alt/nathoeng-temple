@@ -12,12 +12,15 @@ public final class WebCardBridge implements Closeable {
   private final ServerSocket server;
   private final Thread listener;
   private final Timer expiry = new Timer(true);
+  private final Runnable onConsumed;
   private byte[] card;
   private String token;
   private long readAt;
   private TimerTask clearTask;
 
-  public WebCardBridge() throws IOException {
+  public WebCardBridge() throws IOException { this(null); }
+  public WebCardBridge(Runnable onConsumed) throws IOException {
+    this.onConsumed = onConsumed;
     server = new ServerSocket();
     server.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 8765), 4);
     listener = new Thread(() -> {
@@ -74,6 +77,7 @@ public final class WebCardBridge implements Closeable {
       }
       // Keep the handoff if the socket write fails; successful reads consume it.
       reply(socket, 200, card, true); clear();
+      if (onConsumed != null) onConsumed.run();
     }
   }
 

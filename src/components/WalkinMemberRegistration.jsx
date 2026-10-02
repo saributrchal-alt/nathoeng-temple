@@ -34,6 +34,7 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [created, setCreated] = useState(null);
+  const [mobileNonce, setMobileNonce] = useState(pendingMobileCardRequest);
   const busyRef = useRef(false);
   const generation = useRef(0);
   const mobile = isMobileDevice();
@@ -100,6 +101,13 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
   async function receiveMobileAndSave(nonce) {
     await run(async (active) => {
       const card = await readLatestMobileCard(nonce);
+      // Keep the callback available after denied permission or a network timeout.
+      // Only a completed, validated read consumes the locally initiated request.
+      if (!active()) return;
+      localStorage.removeItem(MOBILE_CARD_REQUEST_KEY);
+      const url = new URL(window.location.href); url.searchParams.delete('reader_nonce');
+      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      setMobileNonce('');
       const next = await receiveCard(card, active);
       if (!next || !active()) return;
       if (!next.memberId) {
@@ -123,9 +131,6 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
     if (!nonce || !mobile) return undefined;
     // Delay until after React's development effect cleanup; consume the explicit request once.
     const timer = setTimeout(() => {
-      localStorage.removeItem(MOBILE_CARD_REQUEST_KEY);
-      const url = new URL(window.location.href); url.searchParams.delete('reader_nonce');
-      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
       receiveMobileAndSave(nonce);
     }, 0);
     return () => clearTimeout(timer);
@@ -165,6 +170,7 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
     generation.current += 1;
     setMode(''); setForm(blankForm()); setCardPhoto(''); setCardEvidence(null); setCardImported(false);
     setAddressNeedsReview(false); setReviewed(false); setCreated(null); setError(''); setPhotoVersion((v) => v + 1);
+    setMobileNonce('');
   }
   const showForm = mode === 'manual' || (mode === 'reader' && cardImported);
   return <section className="member-registration">
@@ -186,9 +192,14 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
       </div>
       {mode === 'reader' && <div className="member-registration__tools">
         {mobile ? <>
-          <button type="button" disabled={busy || !android} onClick={() => { try { startMobileCardReader(); } catch { setError(th ? 'เปิดแอปอ่านบัตรไม่ได้ กรุณาใช้ Chrome บน Android และติดตั้งแอป 1.5.4' : 'Use Chrome on Android with reader app 1.5.4.'); } }}>{th ? 'อ่านบัตรและบันทึก' : 'Read card and save'}</button>
-          <p className="member-registration__hint">{android ? (th ? 'Android: ติดตั้งแอปสาริบุตร 1.5.4 และต่อเครื่องอ่านผ่าน OTG กดอ่านบัตรแล้วตรวจข้อมูลในแอป เมื่อยืนยันจะกลับมาบันทึกที่หน้านี้' : 'Android: use reader app 1.5.4 with USB OTG. Review the card in the app; confirmation returns here and saves.') : (th ? 'การอ่านบัตรโดยตรงรองรับ Android ผ่านแอปสาริบุตร สำหรับ iPhone ให้ใช้กรอกโดยเจ้าหน้าที่' : 'Direct card reading uses the Android app. On iPhone, use Staff entry.')}</p>
-          <a href="/downloads/Saributr-Card-Reader-1.5.4-Android.apk">{th ? 'ดาวน์โหลดแอปอ่านบัตร Android 1.5.4' : 'Download Android reader 1.5.4'}</a>
+          <button type="button" disabled={busy || !android} onClick={() => { try { setMobileNonce(''); setError(''); startMobileCardReader(); } catch { setError(th ? 'เปิดแอปอ่านบัตรไม่ได้ กรุณาใช้ Chrome บน Android และติดตั้งแอป 1.5.5' : 'Use Chrome on Android with reader app 1.5.5.'); } }}>{th ? 'อ่านบัตรและบันทึก' : 'Read card and save'}</button>
+          {mobileNonce && android && <button type="button" disabled={busy} onClick={() => {
+            const nonce = pendingMobileCardRequest();
+            if (nonce !== mobileNonce) { setMobileNonce(''); setError(th ? 'คำขอหมดอายุ กรุณากดอ่านบัตรใหม่' : 'Request expired. Read the card again.'); return; }
+            receiveMobileAndSave(nonce);
+          }}>{busy ? (th ? 'กำลังรับข้อมูลบัตร…' : 'Receiving card…') : (th ? 'รับข้อมูลบัตรอีกครั้ง' : 'Receive card again')}</button>}
+          <p className="member-registration__hint">{android ? (th ? 'Android: ติดตั้งแอปสาริบุตร 1.5.5 และต่อเครื่องอ่านผ่าน OTG กดอ่านบัตรแล้วตรวจข้อมูลในแอป เมื่อยืนยันจะกลับมาบันทึกที่หน้านี้ หาก Chrome ขอสิทธิ์เข้าถึงเครือข่ายภายในเครื่อง ให้กดอนุญาต' : 'Android: use reader app 1.5.5 with USB OTG. Review the card in the app; confirmation returns here and saves. Allow local network access if Chrome asks.') : (th ? 'การอ่านบัตรโดยตรงรองรับ Android ผ่านแอปสาริบุตร สำหรับ iPhone ให้ใช้กรอกโดยเจ้าหน้าที่' : 'Direct card reading uses the Android app. On iPhone, use Staff entry.')}</p>
+          <a href="/downloads/Saributr-Card-Reader-1.5.5-Android.apk">{th ? 'ดาวน์โหลดแอปอ่านบัตร Android 1.5.5' : 'Download Android reader 1.5.5'}</a>
         </> : <>
           <p>{th ? 'เปิดแอปสาริบุตรบนคอมพิวเตอร์ แล้วอ่านบัตรก่อนกดรับข้อมูลภายใน 2 นาที' : 'Open the desktop reader app, read the card, and receive its details within 2 minutes.'}</p>
           <button type="button" disabled={busy} onClick={readDesktopCard}>{busy ? (th ? 'กำลังรับข้อมูล…' : 'Receiving…') : (th ? 'รับข้อมูลจากเครื่องอ่านบัตร' : 'Receive card reader data')}</button>

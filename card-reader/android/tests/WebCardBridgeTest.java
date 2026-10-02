@@ -2,6 +2,7 @@ import com.saributr.usbprobe.WebCardBridge;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebCardBridgeTest {
   static final String TOKEN="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",ORIGIN="https://watt.nathoeng.com";
@@ -18,7 +19,8 @@ public class WebCardBridgeTest {
   static void check(boolean condition,String name){if(!condition)throw new AssertionError(name);}
   public static void main(String[] args)throws Exception {
     byte[] payload="{\"synthetic\":true}".getBytes(StandardCharsets.UTF_8);
-    try(WebCardBridge bridge=new WebCardBridge()) {
+    AtomicInteger consumed=new AtomicInteger();
+    try(WebCardBridge bridge=new WebCardBridge(consumed::incrementAndGet)) {
       bridge.offer(TOKEN,payload,System.currentTimeMillis());
       check(request("GET","https://other.example",TOKEN,"").startsWith("HTTP/1.1 403"),"reject other origin");
       String preflight=request("OPTIONS",ORIGIN,TOKEN,"Access-Control-Request-Method: GET\r\nAccess-Control-Request-Private-Network: true\r\n");
@@ -26,14 +28,17 @@ public class WebCardBridgeTest {
       check(!preflight.contains("synthetic"),"preflight contains no card");
       check(request("GET",ORIGIN,"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","").startsWith("HTTP/1.1 404"),"wrong token");
       check(request("POST",ORIGIN,TOKEN,"").startsWith("HTTP/1.1 405"),"method");
+      check(consumed.get()==0,"denied requests must not stop the service");
       String response=request("GET",ORIGIN,TOKEN,"");
       check(response.startsWith("HTTP/1.1 200")&&response.endsWith("{\"synthetic\":true}"),"valid read");
       check(response.contains("Cache-Control: no-store"),"no cache");
       check(request("GET",ORIGIN,TOKEN,"").startsWith("HTTP/1.1 404"),"one time consumption");
+      check(consumed.get()==1,"completed read stops the service exactly once");
       boolean expired=false;try{bridge.offer(TOKEN,payload,System.currentTimeMillis()-121000);}catch(IOException e){expired=true;}
       check(expired,"old card rejected");
       bridge.offer(TOKEN,payload,System.currentTimeMillis());bridge.clear();
       check(request("GET",ORIGIN,TOKEN,"").startsWith("HTTP/1.1 404"),"explicit clear");
+      check(consumed.get()==1,"clear does not report a successful handoff");
     }
     System.out.println("Bridge passed: origin, nonce, preflight, method, one-time read, no cache, expiry and clear.");
   }
