@@ -11,11 +11,14 @@ async function readCard(url, mobile = false) {
       mode: 'cors',
       credentials: 'omit',
       cache: 'no-store',
-      signal: AbortSignal.timeout(7000),
+      // A mobile permission prompt can remain open while the operator reads it.
+      signal: AbortSignal.timeout(mobile ? 60000 : 7000),
       targetAddressSpace: 'loopback'
     });
   } catch (error) {
-    if (mobile) throw Error('รับข้อมูลจากแอปมือถือไม่ได้ กรุณาเปิดแอปอ่านบัตร 1.5.4 แล้วอนุญาตการเข้าถึงอุปกรณ์ภายในเครื่องใน Chrome');
+    if (mobile) throw Error(error?.name === 'TimeoutError'
+      ? 'รอรับข้อมูลเกิน 1 นาที หาก Chrome ขอสิทธิ์เข้าถึงอุปกรณ์ภายในเครื่อง ให้กดอนุญาตแล้วกด “รับข้อมูลบัตรอีกครั้ง” หากอ่านบัตรเกิน 2 นาที ให้กดอ่านใหม่'
+      : 'Chrome ยังรับข้อมูลบัตรไม่ได้ กรุณาใช้แอปอ่านบัตร 1.5.5 และอนุญาตการเข้าถึงเครือข่ายภายในเครื่องของ watt.nathoeng.com ใน Chrome แล้วกด “รับข้อมูลบัตรอีกครั้ง” หากเกิน 2 นาที ให้กดอ่านใหม่');
     if (error?.name === 'TimeoutError') throw Error('แอปอ่านบัตรไม่ตอบสนอง กรุณาเปิดแอปบนคอมพิวเตอร์แล้วลองใหม่');
     throw Error('เชื่อมต่อแอปอ่านบัตรบนคอมพิวเตอร์ไม่ได้ กรุณาเปิดแอป 1.5 และอนุญาตการเข้าถึงอุปกรณ์ภายในเครื่องใน Chrome');
   }

@@ -14,7 +14,7 @@ public class MainActivity extends Activity {
  private final String action="com.saributr.usbprobe.PERMISSION";
  private ThaiCard.Data cardData;private byte[] pendingExport;private long cardReadAt;
  private EditText desktopIp,desktopCode;
- private WebCardBridge webBridge; private String webToken; private long webRequestedAt;
+ private String webToken; private long webRequestedAt;
  private boolean webReadRequested,webPermissionRequested;
  private boolean registered; private boolean busy; private int generation; private Thread worker;
  private final BroadcastReceiver receiver=new BroadcastReceiver(){public void onReceive(Context c,Intent i){
@@ -24,14 +24,14 @@ public class MainActivity extends Activity {
    status.setText("ตรวจสิทธิ์แล้ว หากยังไม่ได้อนุญาต กดปุ่มของอุปกรณ์เพื่อลองอีกครั้ง");
    if(webToken!=null)beginWebRead();
   }else if(UsbManager.ACTION_USB_DEVICE_DETACHED.equals(i.getAction())){
-   generation++; if(worker!=null)worker.interrupt(); busy=false; cardData=null;cardReadAt=0; if(webBridge!=null)webBridge.clear(); results.clear(); status.setText("มีอุปกรณ์ถูกถอด • ตรวจรายการใหม่แล้ว");
+   generation++; if(worker!=null)worker.interrupt(); busy=false; cardData=null;cardReadAt=0; stopService(new Intent(MainActivity.this,CardHandoffService.class)); results.clear(); status.setText("มีอุปกรณ์ถูกถอด • ตรวจรายการใหม่แล้ว");
   }else{status.setText("ตรวจพบการเปลี่ยนแปลง USB");}
   refresh();
  }};
  @Override public void onCreate(Bundle b){super.onCreate(b);manager=(UsbManager)getSystemService(USB_SERVICE);
   LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(24,20,24,20);root.setBackgroundColor(Color.rgb(247,245,238));root.setFitsSystemWindows(true);
   if(Build.VERSION.SDK_INT>=30)root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets x=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(24+x.left,20+x.top,24+x.right,20+x.bottom);return insets;});
-  TextView title=new TextView(this);title.setText("สาริบุตร · อ่านบัตร 1.5.4");title.setTextSize(24);root.addView(title);
+  TextView title=new TextView(this);title.setText("สาริบุตร · อ่านบัตร 1.5.5");title.setTextSize(24);root.addView(title);
   TextView help=new TextView(this);help.setText("เสียบเครื่องอ่าน USB OTG แล้วอ่านบัตร\nเพิ่มสมาชิกบนมือถือ: กดอ่านบัตรจากเว็บ ตรวจข้อมูลที่นี่ แล้วกดยืนยันบันทึกในเว็บ\nส่งเข้าคอมพิวเตอร์: กรอก IP และรหัสจับคู่ แล้วกดส่งข้อมูลผ่าน Wi-Fi");help.setTextSize(16);help.setPadding(0,16,0,16);root.addView(help);
   Button scan=new Button(this);scan.setText("ค้นหาอุปกรณ์ USB ใหม่");scan.setOnClickListener(v->{if(busy)return;cardData=null;results.clear();status.setText("ค้นหาเรียบร้อย");refresh();beginWebRead();});root.addView(scan);
   Button website=new Button(this);website.setText("เปิดเว็บสมาชิกวัดป่านาเทิง");website.setOnClickListener(v->{try{startActivity(new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://watt.nathoeng.com")));}catch(Exception e){status.setText("เปิดเบราว์เซอร์แล้วเข้า watt.nathoeng.com");}});root.addView(website);
@@ -41,12 +41,11 @@ public class MainActivity extends Activity {
   ScrollView scroll=new ScrollView(this);list=new LinearLayout(this);list.setOrientation(1);scroll.addView(list);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);
   IntentFilter filter=new IntentFilter(action);filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
   if(Build.VERSION.SDK_INT>=33)registerReceiver(receiver,filter,Context.RECEIVER_NOT_EXPORTED);else registerReceiver(receiver,filter);registered=true;
-  try{webBridge=new WebCardBridge();}catch(Exception e){status.setText("ช่องส่งข้อมูลเข้าเว็บไม่พร้อม ปิดแล้วเปิดแอปใหม่");}
   handleWebIntent(getIntent());
  }
  @Override protected void onResume(){super.onResume();if(manager!=null){refresh();beginWebRead();}}
  @Override protected void onStop(){super.onStop();generation++;if(worker!=null)worker.interrupt();busy=false;cardData=null;if(list!=null)refresh();}
- @Override protected void onDestroy(){generation++;if(worker!=null)worker.interrupt();if(registered)unregisterReceiver(receiver);try{if(webBridge!=null)webBridge.close();}catch(Exception ignored){}super.onDestroy();}
+ @Override protected void onDestroy(){generation++;if(worker!=null)worker.interrupt();if(registered)unregisterReceiver(receiver);super.onDestroy();}
  @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);handleWebIntent(intent);beginWebRead();}
  private void handleWebIntent(Intent intent){
   android.net.Uri uri=intent==null?null:intent.getData();
@@ -55,7 +54,7 @@ public class MainActivity extends Activity {
   if(nonce==null||!nonce.matches("[a-f0-9]{32}")){status.setText("คำขออ่านบัตรไม่ถูกต้อง กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
   if(busy){status.setText("กำลังอ่านบัตรอยู่ กรุณารอแล้วกดอ่านจากเว็บใหม่");return;}
   webToken=nonce;webRequestedAt=System.currentTimeMillis();webReadRequested=false;webPermissionRequested=false;
-  cardData=null;cardReadAt=0;if(webBridge!=null)webBridge.clear();
+  cardData=null;cardReadAt=0;stopService(new Intent(this,CardHandoffService.class));
   status.setText("เพิ่มสมาชิกผ่านมือถือ • อ่านบัตรแล้วตรวจข้อมูลก่อนกดยืนยันบันทึกในเว็บ");
  }
  private void beginWebRead(){
@@ -72,14 +71,15 @@ public class MainActivity extends Activity {
    PendingIntent pi=PendingIntent.getBroadcast(this,selected.getDeviceId(),i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);manager.requestPermission(selected,pi);}
  }
  private void returnToWeb(){
-  if(cardData==null||webToken==null||webBridge==null)return;
+  if(cardData==null||webToken==null)return;
   if(System.currentTimeMillis()-webRequestedAt>300000){status.setText("คำขอหมดอายุ กลับไปกดอ่านบัตรที่เว็บใหม่");return;}
   try{
    org.json.JSONObject json=cardJson(cardData);
    java.text.SimpleDateFormat iso=new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",java.util.Locale.US);iso.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));json.put("read_at",iso.format(new java.util.Date(cardReadAt)));
-   String nonce=webToken;webBridge.offer(nonce,json.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8),cardReadAt);
-   Intent browser=new Intent(Intent.ACTION_VIEW,android.net.Uri.parse("https://watt.nathoeng.com/?reader_nonce="+nonce+"#admin-dashboard"));
-   browser.addCategory(Intent.CATEGORY_BROWSABLE);browser.setPackage("com.android.chrome");startActivity(browser);webToken=null;
+   Intent handoff=new Intent(this,CardHandoffService.class);
+   handoff.putExtra("nonce",webToken);handoff.putExtra("readAt",cardReadAt);
+   handoff.putExtra("card",json.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+   startForegroundService(handoff);webToken=null;
   }catch(Exception e){status.setText("ส่งข้อมูลเข้าเว็บไม่ได้ ตรวจว่าใช้ Chrome และกลับไปกดอ่านบัตรที่เว็บใหม่");}
  }
  private void text(String s){TextView t=new TextView(this);t.setText(s);t.setTextSize(16);t.setTextIsSelectable(true);t.setPadding(0,16,0,8);list.addView(t);}
@@ -94,12 +94,12 @@ public class MainActivity extends Activity {
    if(cardData.photoError!=null)text("อ่านรูปยังไม่สำเร็จ: "+cardData.photoError);
    if(webToken!=null){
     text("ตรวจข้อมูลกับเจ้าของแล้วใช่ไหม? กดยืนยันเพื่อบันทึกบัญชีสมาชิกในเว็บวัด ข้อมูลนี้จะส่งให้เฉพาะเว็บวัดในมือถือเครื่องนี้ภายใน 2 นาที");
-    Button saveWeb=new Button(this);saveWeb.setText("ตรวจข้อมูลแล้ว บันทึกสมาชิกในเว็บ");saveWeb.setEnabled(webBridge!=null);saveWeb.setOnClickListener(v->returnToWeb());list.addView(saveWeb);
+    Button saveWeb=new Button(this);saveWeb.setText("ตรวจข้อมูลแล้ว บันทึกสมาชิกในเว็บ");saveWeb.setOnClickListener(v->returnToWeb());list.addView(saveWeb);
    }
    Button send=new Button(this);send.setText("ส่งข้อมูลไปคอมพิวเตอร์ผ่าน Wi-Fi");send.setOnClickListener(v->sendToDesktop());list.addView(send);
    Button export=new Button(this);export.setText("บันทึกไฟล์ JSON (วิธีเดิม)");export.setOnClickListener(v->exportCard());list.addView(export);
    text("ไฟล์นี้มีข้อมูลส่วนตัว เก็บไว้ในเครื่องและลบหลังนำเข้าเสร็จ");
-   Button clear=new Button(this);clear.setText("ล้างข้อมูลบนหน้าจอ");clear.setOnClickListener(v->{cardData=null;cardReadAt=0;if(webBridge!=null)webBridge.clear();refresh();});list.addView(clear);
+   Button clear=new Button(this);clear.setText("ล้างข้อมูลบนหน้าจอ");clear.setOnClickListener(v->{cardData=null;cardReadAt=0;stopService(new Intent(this,CardHandoffService.class));refresh();});list.addView(clear);
   }
   text("พบอุปกรณ์ USB "+devices.size()+" เครื่อง");
   for(UsbDevice d:devices.values()){
@@ -157,7 +157,7 @@ public class MainActivity extends Activity {
   catch(Exception e){status.setText("บันทึกไฟล์ไม่สำเร็จ กรุณาอ่านบัตรแล้วลองอีกครั้ง");}
  }
  private void readCard(UsbDevice d){
-  if(busy)return;busy=true;cardData=null;cardReadAt=0;if(webBridge!=null)webBridge.clear();final int ticket=++generation;status.setText("กำลังอ่านบัตร…");refresh();
+  if(busy)return;busy=true;cardData=null;cardReadAt=0;stopService(new Intent(this,CardHandoffService.class));final int ticket=++generation;status.setText("กำลังอ่านบัตร…");refresh();
   worker=new Thread(()->{ThaiCard.Data data=null;String error=null;
    try{data=(ThaiCard.Data)UsbCardProbe.run(manager,d,message->runOnUiThread(()->{if(!isDestroyed()&&ticket==generation)status.setText(message);}));}
    catch(Exception e){error="อ่านข้อมูลยังไม่สำเร็จ: "+e.getMessage();}
