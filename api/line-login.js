@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { handleKathinQueueNotify } from '../lib/_kathin-queue-notify.js';
 import {
   createSessionToken,
   setSessionCookie,
@@ -207,6 +208,8 @@ async function mergeMembersForAccountLink(
 export default async function handler(req, res) {
   const route =
     String(req.query?.route || '').trim();
+
+  if (route === 'kathin-queue-notify') return handleKathinQueueNotify(req, res);
 
   const lineChannelId =
     process.env.LINE_CHANNEL_ID;
