@@ -83,6 +83,23 @@ function MyDashboard({
   const [cancelMembershipWorking, setCancelMembershipWorking] = useState(false);
   const [cancelMembershipError, setCancelMembershipError] = useState('');
   const kathinDrinksActive = Date.now() < Date.parse('2026-11-08T17:00:00Z');
+  const [kathinStaff, setKathinStaff] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setKathinStaff(false);
+    if (!user?.memberId) return undefined;
+    const check = async () => {
+      try {
+        const response = await fetch('/api/line-login?route=kathin-access', {credentials:'include',cache:'no-store'});
+        const result = await response.json();
+        if (!cancelled) setKathinStaff(response.ok && Boolean(result.staff || result.admin));
+      } catch { if (!cancelled) setKathinStaff(false); }
+    };
+    check();
+    window.addEventListener('focus', check);
+    return () => { cancelled = true; window.removeEventListener('focus', check); };
+  }, [user?.memberId]);
 
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -731,6 +748,11 @@ function MyDashboard({
         {kathinDrinksActive && <a href="https://kathin.nathoeng.com/" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
           <span aria-hidden="true" style={{ fontSize: 64, lineHeight: 1.15, flexShrink: 0 }}>☕</span>
           <strong style={{ fontSize: 21, lineHeight: 1.5, minWidth: 0 }}>{th ? 'กดรับกาแฟ เครื่องดื่มฟรีในงาน' : 'Tap for free coffee and drinks at the event'}</strong>
+        </a>}
+
+        {kathinStaff && <a href="https://kathin.nathoeng.com/#staff-dashboard" style={{display:'block',marginBottom:18,padding:18,borderRadius:16,background:'#edf6ef',border:'1px solid #b5d4bf',color:'#24563a',textDecoration:'none'}}>
+          <strong style={{display:'block',fontSize:18}}>{th?'แดชบอร์ดเจ้าหน้าที่งานกฐิน':'Kathin Staff dashboard'}</strong>
+          <small>{th?'จัดการคิว · เรียกรับ · ส่งเครื่องดื่ม · บริการสมาชิก':'Manage queues · Call and serve drinks · Assist members'}</small>
         </a>}
 
         <section id="account-profile" className="compactProfileCard">

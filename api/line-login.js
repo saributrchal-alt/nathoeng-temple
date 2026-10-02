@@ -247,6 +247,26 @@ export default async function handler(req, res) {
     }
   }
 
+  if (route === 'kathin-access') {
+    res.setHeader('Cache-Control', 'no-store');
+    if (req.method !== 'GET') return res.status(405).end();
+    const session = getSessionFromRequest(req);
+    if (!session?.memberId || session.actingAdminId) return res.status(401).json({ staff:false, admin:false });
+    if (!supabaseUrl || !supabaseSecretKey) return res.status(503).json({ staff:false, admin:false });
+    try {
+      const headers = { apikey:supabaseSecretKey, ...(supabaseSecretKey.startsWith('sb_secret_') ? {} : { Authorization:'Bearer ' + supabaseSecretKey }) };
+      const [memberResponse, staffResponse] = await Promise.all([
+        fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,role,membership_status&limit=1`, { headers, cache:'no-store' }),
+        fetch(`${supabaseUrl}/rest/v1/kathin_drink_staff?member_id=eq.${encodeURIComponent(session.memberId)}&active=eq.true&select=member_id`, { headers, cache:'no-store' })
+      ]);
+      if (!memberResponse.ok || !staffResponse.ok) throw Error('Access lookup failed');
+      const member = (await memberResponse.json())?.[0];
+      if (!member || (member.membership_status && member.membership_status !== 'active')) return res.status(403).json({ staff:false, admin:false });
+      const staff = (await staffResponse.json()).length > 0;
+      return res.status(200).json({ success:true, staff, admin:member.role === 'admin' });
+    } catch { return res.status(503).json({ staff:false, admin:false }); }
+  }
+
   // Verify a short-lived library assertion on the issuing server.
   if (route === 'library-verify') {
     res.setHeader('Cache-Control', 'no-store');

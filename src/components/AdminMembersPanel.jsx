@@ -45,6 +45,8 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [departmentForm, setDepartmentForm] = useState({ department:'account', canPrepare:true, canReview:false });
   const [departmentBusy, setDepartmentBusy] = useState(false);
   const [departmentResult, setDepartmentResult] = useState('');
+  const departmentBusyRef = useRef(false);
+  const departmentViewRef = useRef(0);
 
   const text = {
     title: th ? 'สมาชิก' : 'Members',
@@ -157,19 +159,29 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
       : 'LINE / Telegram communication history will be connected here in the next phase.'
   };
 
-  const assignDepartment = async () => {
-    if (!selectedMember?.id) return;
+  const assignDepartment = async (active = true) => {
+    if (!selectedMember?.id || departmentBusyRef.current) return;
+    departmentBusyRef.current = true;
+    const memberId = selectedMember.id;
+    const department = departmentForm.department;
+    const view = departmentViewRef.current;
     setDepartmentBusy(true); setDepartmentResult('');
     try {
       const response = await fetch('/api/admin-bookings?route=assign-department', {
         method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({memberId:selectedMember.id,department:departmentForm.department,canPrepare:departmentForm.canPrepare,canReview:departmentForm.canReview})
+        body:JSON.stringify({memberId,department,...(department === 'kathin' ? {active} : {canPrepare:departmentForm.canPrepare,canReview:departmentForm.canReview})})
       });
       const result = await response.json();
       if (!response.ok || !result?.success) throw new Error(result?.message || 'ส่งสิทธิ์ไม่สำเร็จ');
-      setDepartmentResult(th ? '✓ ส่งสิทธิ์ไปฝ่ายบัญชีแล้ว' : '✓ Assigned to Accounting');
-    } catch (error) { setDepartmentResult(error.message || 'ส่งสิทธิ์ไม่สำเร็จ'); }
-    finally { setDepartmentBusy(false); }
+      if (department === 'kathin') {
+        setMembers((current) => current.map((member) => String(member.id) === String(memberId) ? {...member,kathin_staff:active} : member));
+        setSelectedMember((current) => String(current?.id) === String(memberId) ? {...current,kathin_staff:active} : current);
+      }
+      if (view === departmentViewRef.current) setDepartmentResult(department === 'kathin'
+        ? (th ? active ? '✓ ส่งสิทธิ์เจ้าหน้าที่กฐินแล้ว' : '✓ ถอนสิทธิ์เจ้าหน้าที่กฐินแล้ว' : active ? '✓ Kathin Staff assigned' : '✓ Kathin Staff removed')
+        : (th ? '✓ ส่งสิทธิ์ไปฝ่ายบัญชีแล้ว' : '✓ Assigned to Accounting'));
+    } catch (error) { if (view === departmentViewRef.current) setDepartmentResult(error.message || 'ส่งสิทธิ์ไม่สำเร็จ'); }
+    finally { departmentBusyRef.current = false; setDepartmentBusy(false); }
   };
 
   const loadMembers = async (silent = false) => {
@@ -665,6 +677,9 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     sendMemberMessage('telegram');
 
   const openMember = (member) => {
+    departmentViewRef.current++;
+    setDepartmentResult('');
+    setDepartmentForm({department:'account',canPrepare:true,canReview:false});
     setSelectedMember(member);
     setEditMemberOpen(false);
     setActingError('');
@@ -980,6 +995,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                       {providerLabel(member)}
                       {member?.country_code ? ` · ${countryLabel(member)}` : ''}
                       {member?.role === 'admin' ? ` · ${text.admin}` : ''}
+                      {member?.kathin_staff === true ? (th ? ' · เจ้าหน้าที่กฐิน (Staff)' : ' · Kathin Staff') : ''}
                       {Array.isArray(member?.stay_history) && member.stay_history.length
                         ? ` · ${text.staysTab} ${member.stay_history.length}`
                         : ''}
@@ -1082,17 +1098,22 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
             <div style={{ border:'1px solid #cfe0d5', borderRadius:'14px', padding:'15px', background:'#f6fbf7', marginBottom:'18px' }}>
               <h3 style={{margin:'0 0 5px'}}>{th?'มอบหมายฝ่ายงาน':'Department assignment'}</h3>
               <p style={{margin:'0 0 12px',color:'#66756b',fontSize:'13px'}}>{th?'ส่งสมาชิกไปยังระบบฝ่ายงานที่ได้รับมอบหมายอย่างปลอดภัย':'Securely assign this member to a department system.'}</p>
-              <select value={departmentForm.department} onChange={e=>setDepartmentForm(v=>({...v,department:e.target.value}))} style={{padding:'10px',border:'1px solid #c8d8cd',borderRadius:'9px',background:'#fff',width:'100%',marginBottom:'10px'}}>
+              <select aria-label={th?'ฝ่ายงานที่มอบหมาย':'Assigned department'} value={departmentForm.department} disabled={departmentBusy} onChange={e=>{setDepartmentResult('');setDepartmentForm(v=>({...v,department:e.target.value}));}} style={{padding:'10px',border:'1px solid #c8d8cd',borderRadius:'9px',background:'#fff',width:'100%',marginBottom:'10px'}}>
                 <option value="account">{th?'ฝ่ายบัญชี (Account)':'Accounting (Account)'}</option>
+                <option value="kathin">{th?'เจ้าหน้าที่งานกฐิน (Staff)':'Kathin event (Staff)'}</option>
               </select>
-              <div style={{display:'flex',gap:'16px',flexWrap:'wrap',marginBottom:'12px'}}>
+              {departmentForm.department === 'account' ? <div style={{display:'flex',gap:'16px',flexWrap:'wrap',marginBottom:'12px'}}>
                 <label><input type="checkbox" checked={departmentForm.canPrepare} onChange={e=>setDepartmentForm(v=>({...v,canPrepare:e.target.checked}))}/> {th?'ผู้ทำรายการ':'Preparer'}</label>
                 <label><input type="checkbox" checked={departmentForm.canReview} onChange={e=>setDepartmentForm(v=>({...v,canReview:e.target.checked}))}/> {th?'ผู้ตรวจ':'Reviewer'}</label>
-              </div>
-              <button type="button" onClick={assignDepartment} disabled={departmentBusy||(!departmentForm.canPrepare&&!departmentForm.canReview)} style={{border:'none',borderRadius:'9px',padding:'10px 14px',background:'#287a47',color:'#fff',fontWeight:800,cursor:'pointer'}}>
-                {departmentBusy?(th?'กำลังส่ง...':'Sending...'):(th?'ส่งไปฝ่ายบัญชี':'Assign to Accounting')}
+              </div> : <div style={{marginBottom:12,fontSize:13,lineHeight:1.6}}>
+                <strong>{selectedMember.kathin_staff === true ? (th?'✓ เป็นเจ้าหน้าที่กฐินแล้ว':'✓ Assigned Kathin Staff') : selectedMember.kathin_staff === false ? (th?'ยังไม่ได้รับสิทธิ์เจ้าหน้าที่กฐิน':'No Kathin Staff access') : (th?'ยังตรวจสถานะสิทธิ์กฐินไม่ได้':'Kathin access status unavailable')}</strong>
+                <p style={{margin:'5px 0 0'}}>{th?'เข้าแดชบอร์ดกฐิน จัดการคิว เรียกรับ ส่งเครื่องดื่ม ช่วยสมาชิกสั่งและเพิ่มสิทธิ์เครื่องดื่มได้':'Access the Kathin dashboard, call and serve queues, place assisted orders and grant drink credits.'}</p>
+              </div>}
+              <button type="button" onClick={()=>assignDepartment(true)} disabled={departmentBusy||(departmentForm.department === 'account' ? !departmentForm.canPrepare&&!departmentForm.canReview : selectedMember.kathin_staff === true||selectedMember.membership_status === 'cancelled')} style={{border:'none',borderRadius:'9px',padding:'10px 14px',background:'#287a47',color:'#fff',fontWeight:800,cursor:'pointer'}}>
+                {departmentBusy?(th?'กำลังบันทึก...':'Saving...'):departmentForm.department === 'kathin'?(th?'ส่งไปเป็น Staff งานกฐิน':'Assign Kathin Staff'):(th?'ส่งไปฝ่ายบัญชี':'Assign to Accounting')}
               </button>
-              {departmentResult?<div style={{marginTop:'9px',fontSize:'13px',fontWeight:700,color:departmentResult.startsWith('✓')?'#287a47':'#a0463d'}}>{departmentResult}</div>:null}
+              {departmentForm.department === 'kathin' && <button type="button" onClick={()=>assignDepartment(false)} disabled={departmentBusy||selectedMember.kathin_staff !== true} style={{marginLeft:8,border:'1px solid #a0463d',borderRadius:9,padding:'10px 14px',background:'#fff',color:'#a0463d',fontWeight:700}}>{th?'ถอนสิทธิ์ Staff':'Remove Staff access'}</button>}
+              {departmentResult?<div role="status" style={{marginTop:'9px',fontSize:'13px',fontWeight:700,color:departmentResult.startsWith('✓')?'#287a47':'#a0463d'}}>{departmentResult}</div>:null}
             </div>
 
             <div style={{ border: '1px solid #dfd3c2', borderRadius: '14px', padding: '15px', background: '#fbf8f2', marginBottom: '18px' }}>
