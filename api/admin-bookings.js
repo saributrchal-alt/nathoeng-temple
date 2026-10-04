@@ -484,7 +484,35 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success:false, message:'Method not allowed' });
     const memberId = String(req.body?.memberId || '').trim();
     const department = String(req.body?.department || '').trim();
-    if (!/^[\w-]{1,100}$/.test(memberId) || !['account', 'kathin'].includes(department)) return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    if (!/^[\w-]{1,100}$/.test(memberId) || !['account', 'kathin', 'school'].includes(department)) return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    if (department === 'school') {
+      if (['active','canStudy','canTeach','canManage'].some(key => typeof req.body?.[key] !== 'boolean')) return res.status(400).json({success:false,message:'กรุณาระบุสิทธิ์ School ให้ครบ'});
+      const bridgeKey = process.env.SCHOOL_BRIDGE_KEY;
+      if (!bridgeKey) return res.status(503).json({success:false,message:'ยังไม่ได้ตั้งค่า SCHOOL_BRIDGE_KEY'});
+      try {
+        const actorResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,role,membership_status&limit=1`, {headers:supabaseHeaders(supabaseSecretKey),cache:'no-store'});
+        const actors = await readJson(actorResponse);
+        if (!actorResponse.ok) return res.status(503).json({success:false,message:'ตรวจสิทธิ์ผู้ดูแลไม่สำเร็จ'});
+        const actor = actors?.[0];
+        if (actor?.role !== 'admin' || (actor.membership_status && actor.membership_status !== 'active')) return res.status(403).json({success:false,message:'เฉพาะผู้ดูแลวัดที่ยังใช้งานอยู่มอบสิทธิ์ School ได้'});
+        const targetResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=*&limit=1`, {headers:supabaseHeaders(supabaseSecretKey),cache:'no-store'});
+        const targets = await readJson(targetResponse);
+        if (!targetResponse.ok) return res.status(503).json({success:false,message:'ตรวจสมาชิกไม่สำเร็จ'});
+        const target = targets?.[0];
+        const name = target?.full_name || target?.display_name || target?.name || target?.line_display_name || '';
+        if (!target || !name) return res.status(404).json({success:false,message:'ไม่พบสมาชิก'});
+        if (req.body.active && target.membership_status && target.membership_status !== 'active') return res.status(409).json({success:false,message:'มอบสิทธิ์ได้เฉพาะสมาชิกที่ยังใช้งานอยู่'});
+        if (req.body.active && !req.body.canStudy && !req.body.canTeach && !req.body.canManage) return res.status(400).json({success:false,message:'กรุณาเลือกสิทธิ์ School อย่างน้อยหนึ่งรายการ'});
+        const crypto = await import('node:crypto');
+        const payload = {member_id:memberId,member_name:name,assigned_by:String(actor.id),can_study:req.body.active && req.body.canStudy,can_teach:req.body.active && req.body.canTeach,can_manage:req.body.active && req.body.canManage,is_active:req.body.active,issued_at:new Date().toISOString(),event_id:crypto.randomUUID()};
+        const raw = JSON.stringify(payload);
+        const signature = crypto.createHmac('sha256',bridgeKey).update(raw).digest('hex');
+        const response = await fetch('https://school.nathoeng.com/api/school?route=member-import', {method:'POST',headers:{'Content-Type':'application/json','X-School-Signature':signature},body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
+        const result = await readJson(response);
+        if (!response.ok || !result?.success) return res.status(502).json({success:false,message:result?.message || 'ส่งสิทธิ์ School ไม่สำเร็จ'});
+        return res.status(200).json({success:true,message:req.body.active?'ส่งสมาชิกไป School เรียบร้อยแล้ว':'ถอนสิทธิ์ School เรียบร้อยแล้ว',school:result.item});
+      } catch { return res.status(503).json({success:false,message:'เชื่อมต่อ School ไม่สำเร็จ กรุณาลองใหม่'}); }
+    }
     if (department === 'kathin') {
       if (typeof req.body?.active !== 'boolean') return res.status(400).json({ success:false, message:'กรุณาระบุการมอบหรือถอนสิทธิ์ Staff' });
       try {

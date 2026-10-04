@@ -84,6 +84,23 @@ function MyDashboard({
   const [cancelMembershipError, setCancelMembershipError] = useState('');
   const kathinDrinksActive = Date.now() < Date.parse('2026-11-08T17:00:00Z');
   const [kathinStaff, setKathinStaff] = useState(false);
+  const [schoolOpening, setSchoolOpening] = useState(false);
+  const [schoolError, setSchoolError] = useState('');
+
+  const openSchool = async () => {
+    if (schoolOpening) return;
+    setSchoolOpening(true); setSchoolError('');
+    try {
+      const response = await fetch('/api/my-bookings?route=school-handoff', {credentials:'include',cache:'no-store'});
+      const result = await response.json();
+      if (!response.ok || !result?.success || !result.token) throw new Error(result?.message || (th?'เข้า School ไม่สำเร็จ':'Unable to open School'));
+      const form = document.createElement('form');
+      form.method = 'POST'; form.action = 'https://school.nathoeng.com/api/session';
+      const input = document.createElement('input');
+      input.type = 'hidden'; input.name = 'token'; input.value = result.token;
+      form.appendChild(input); document.body.appendChild(form); form.submit(); form.remove();
+    } catch (error) { setSchoolError(error.message); setSchoolOpening(false); }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -861,6 +878,14 @@ function MyDashboard({
         </button>
 
         <div id="account-other-content" className="accountOtherContent">
+        {!user?.actingAsMember && <>
+          <button type="button" className="compactDhammaStrip" onClick={openSchool} disabled={schoolOpening} style={{width:'100%',textAlign:'left',font:'inherit',border:'1px solid #d9e6dd',borderRadius:16,cursor:'pointer'}}>
+            <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
+            <span><strong>{th?'การศึกษา School วัดนาเทิง':'Nathoeng School'}</strong><small>{schoolOpening?(th?'กำลังเข้า School...':'Opening School...'):(th?'หัวข้อเรียน · บันทึกการเรียนของฉัน · ใช้บัญชีสมาชิกเดิม':'Study topics · My learning progress · Your existing member account')}</small></span>
+            <span aria-hidden="true">›</span>
+          </button>
+          {schoolError && <p role="alert" style={{color:'#a0463d',fontSize:14}}>{schoolError}</p>}
+        </>}
         {!user?.actingAsMember && <a
           className="compactDhammaStrip"
           href="https://library.nathoeng.com/?member=1#member-area"

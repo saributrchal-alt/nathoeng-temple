@@ -713,6 +713,26 @@ export default async function handler(req, res) {
     req.query?.route || ''
   ).trim();
 
+  if (route === 'school-member-status') {
+    if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
+    const bridgeKey = process.env.SCHOOL_BRIDGE_KEY;
+    if (!bridgeKey) return res.status(503).json({success:false,message:'School bridge is not configured'});
+    const payload = req.body;
+    const issued = Date.parse(payload?.issued_at);
+    if (!payload || !/^[\w-]{1,100}$/.test(payload.member_id || '') || !Number.isFinite(issued) || issued > Date.now()+30000 || Date.now()-issued > 300000) return res.status(403).json({success:false,message:'Invalid School request'});
+    const crypto = await import('node:crypto');
+    const signature = String(req.headers['x-school-signature'] || '');
+    const expected = crypto.createHmac('sha256',bridgeKey).update(JSON.stringify(payload)).digest('hex');
+    if (!/^[a-f0-9]{64}$/.test(signature) || !crypto.timingSafeEqual(Buffer.from(signature),Buffer.from(expected))) return res.status(403).json({success:false,message:'Invalid School signature'});
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(payload.member_id)}&select=id,membership_status&limit=1`, {headers:jsonHeaders(supabaseSecretKey),cache:'no-store'});
+      const rows = await response.json();
+      if (!response.ok || !Array.isArray(rows)) return res.status(503).json({success:false,message:'Member verification unavailable'});
+      const member = rows[0];
+      return res.status(200).json({success:true,is_active:Boolean(member && (!member.membership_status || member.membership_status === 'active'))});
+    } catch { return res.status(503).json({success:false,message:'Member verification unavailable'}); }
+  }
+
   if (route === 'reviews') {
     return handleReviewRoute(
       req,
@@ -736,6 +756,32 @@ export default async function handler(req, res) {
       success: false,
       message: 'Login required'
     });
+  }
+
+  if (route === 'school-handoff') {
+    if (session.actingAdminId) return res.status(403).json({success:false,message:'กรุณาใช้บัญชีสมาชิกของตนเองเข้า School'});
+    const bridgeKey = process.env.SCHOOL_BRIDGE_KEY;
+    if (!bridgeKey) return res.status(503).json({success:false,message:'ยังไม่ได้ตั้งค่า SCHOOL_BRIDGE_KEY'});
+    try {
+      const memberResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,membership_status&limit=1`, {headers:jsonHeaders(supabaseSecretKey),cache:'no-store'});
+      const rows = await memberResponse.json();
+      if (!memberResponse.ok || !Array.isArray(rows)) return res.status(503).json({success:false,message:'ตรวจสมาชิกไม่สำเร็จ'});
+      const member = rows[0];
+      if (!member || (member.membership_status && member.membership_status !== 'active')) return res.status(403).json({success:false,message:'บัญชีสมาชิกนี้หยุดใช้งานแล้ว'});
+      const crypto = await import('node:crypto');
+      const lookup = {member_id:String(member.id),issued_at:new Date().toISOString()};
+      const raw = JSON.stringify(lookup);
+      const signature = crypto.createHmac('sha256',bridgeKey).update(raw).digest('hex');
+      const response = await fetch('https://school.nathoeng.com/api/school?route=member-status', {method:'POST',headers:{'Content-Type':'application/json','X-School-Signature':signature},body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
+      const access = await response.json();
+      if (!response.ok || !access?.success) return res.status(503).json({success:false,message:'ตรวจสิทธิ์ School ไม่สำเร็จ'});
+      const school = access.member;
+      if (!school?.is_active || !(school.can_study || school.can_teach || school.can_manage)) return res.status(403).json({success:false,message:'กรุณาให้ผู้ดูแลวัดมอบสิทธิ์ School จากรายการสมาชิกก่อน'});
+      const now = Date.now();
+      const encoded = Buffer.from(JSON.stringify({memberId:String(member.id),purpose:'school-handoff',aud:'school.nathoeng.com',iat:now,exp:now+300000})).toString('base64url');
+      const token = encoded + '.' + crypto.createHmac('sha256',bridgeKey).update(encoded).digest('base64url');
+      return res.status(200).json({success:true,token});
+    } catch { return res.status(503).json({success:false,message:'เชื่อมต่อ School ไม่สำเร็จ กรุณาลองใหม่'}); }
   }
 
   try {
