@@ -1189,7 +1189,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                 <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={healthConsent} onChange={e=>setHealthConsent(e.target.checked)}/>เจ้าของบัตรรับทราบและยินยอมให้เชื่อมสมาชิกกับระบบ Health</label>
                 <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
                   <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('prepare')}>เตรียมจับคู่ (ยังปิดสิทธิ์)</button>
-                  <button type="button" disabled={healthPairingBusy||!healthConsent||!/^\\d{9}$/.test(healthClaimCode)} onClick={()=>manageHealthCard('approve')}>อนุมัติด้วยรหัสจากมือถือ (3 นาที)</button>
+                  <button type="button" disabled={healthPairingBusy||!healthConsent||!/^[0-9]{9}$/.test(healthClaimCode)} onClick={()=>manageHealthCard('approve')}>อนุมัติด้วยรหัสจากมือถือ (3 นาที)</button>
                   <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('revoke')}>ถอนสิทธิ์บัตร</button>
                 </div>
                 {healthPairingResult&&<div role="status" style={{paddingTop:8,color:healthPairingResult.startsWith('✓')?'#216640':'#a23737'}}>{healthPairingResult}</div>}
