@@ -498,11 +498,11 @@ export default async function handler(req, res) {
       const rows=await readJson(rr);
       const actor=rows?.find(x=>x.id===session.memberId),member=rows?.find(x=>x.id===memberId);
       if(actor?.role!=='admin'||actor?.membership_status!=='active')return res.status(403).json({success:false,message:'ผู้ดูแลไม่ได้รับสิทธิ์'});
-      if(!member||member.membership_status!=='active'||!member.id_card_verified_at||!/^[0-9]{13}$/.test(member.tax_id||''))
+      if(action!=='revoke'&&(!member||member.membership_status!=='active'||!member.id_card_verified_at||!/^[0-9]{13}$/.test(member.tax_id||'')))
         return res.status(409).json({success:false,message:'สมาชิกยังไม่มีบัตรที่ตรวจยืนยันในทะเบียน Temple'});
       const crypto=await import('node:crypto');
       const payload={event_id:crypto.randomUUID(),member_id:memberId,actor_id:actor.id,
-        action,citizen_id:member.tax_id,confirm_consent:consent,issued_at:new Date().toISOString()};
+        action,citizen_id:action==='revoke'?'':member.tax_id,confirm_consent:consent,issued_at:new Date().toISOString()};
       const raw=JSON.stringify(payload);
       const signature=crypto.createHmac('sha256',key).update(raw).digest('hex');
       const response=await fetch('https://health.nathoeng.com/api/kiosk/admin-card-binding',{
