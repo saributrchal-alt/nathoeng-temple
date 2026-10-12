@@ -505,7 +505,7 @@ export default async function handler(req, res) {
         action:b.action,label:b.label,public_key:b.publicKey,issued_at:new Date().toISOString()};
       const raw=JSON.stringify(payload);
       const signature=crypto.createHmac('sha256',process.env.HEALTH_BRIDGE_KEY).update(raw).digest('hex');
-      const response=await fetch('https://health.nathoeng.com/api/kiosk/admin-device',
+      const response=await fetch('https://health.nathoeng.com/api/member-bridge?scope=health-kiosk-device-v1',
         {method:'POST',headers:{'Content-Type':'application/json','X-Health-Signature':signature},
         body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
       const result=await readJson(response);
