@@ -489,6 +489,8 @@ export default async function handler(req, res) {
     if(!uuid.test(memberId)||!['prepare','approve','revoke'].includes(action))
       return res.status(400).json({success:false,message:'ข้อมูลคำขอไม่ถูกต้อง'});
     if(action==='approve'&&!consent)return res.status(400).json({success:false,message:'ต้องได้รับความยินยอมโดยชัดแจ้งก่อน'});
+    const claimCode=String(req.body?.claimCode||'');
+    if(action==='approve'&&!/^[0-9]{9}$/.test(claimCode))return res.status(400).json({success:false,message:'กรุณากรอกรหัส 9 หลักจากแอป Health'});
     const key=process.env.HEALTH_BRIDGE_KEY;
     if(!key||key.length<24)return res.status(503).json({success:false,message:'Health Bridge ไม่พร้อม'});
     try{
@@ -502,7 +504,7 @@ export default async function handler(req, res) {
         return res.status(409).json({success:false,message:'สมาชิกยังไม่มีบัตรที่ตรวจยืนยันในทะเบียน Temple'});
       const crypto=await import('node:crypto');
       const payload={event_id:crypto.randomUUID(),member_id:memberId,actor_id:actor.id,
-        action,citizen_id:action==='revoke'?'':member.tax_id,confirm_consent:consent,issued_at:new Date().toISOString()};
+        action,citizen_id:action==='revoke'?'':member.tax_id,claim_code:action==='approve'?claimCode:undefined,confirm_consent:consent,issued_at:new Date().toISOString()};
       const raw=JSON.stringify(payload);
       const signature=crypto.createHmac('sha256',key).update(raw).digest('hex');
       const response=await fetch('https://health.nathoeng.com/api/kiosk/admin-card-binding',{
