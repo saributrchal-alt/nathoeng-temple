@@ -484,7 +484,32 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success:false, message:'Method not allowed' });
     const memberId = String(req.body?.memberId || '').trim();
     const department = String(req.body?.department || '').trim();
-    if (!/^[\w-]{1,100}$/.test(memberId) || !['account', 'kathin', 'school'].includes(department)) return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    if (!/^[\w-]{1,100}$/.test(memberId) || !['account', 'kathin', 'school', 'health'].includes(department)) return res.status(400).json({ success:false, message:'ข้อมูลการมอบหมายไม่ถูกต้อง' });
+    if (department === 'health') {
+      if (typeof req.body?.active !== 'boolean') return res.status(400).json({success:false,message:'กรุณาระบุสิทธิ์ Health'});
+      const bridgeKey = process.env.HEALTH_BRIDGE_KEY;
+      if (!bridgeKey || bridgeKey.length < 24) return res.status(503).json({success:false,message:'Health Bridge is not configured'});
+      try {
+        const headers = supabaseHeaders(supabaseSecretKey);
+        const actorResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,role,membership_status&limit=1`,{headers,cache:'no-store'});
+        if (!actorResponse.ok) return res.status(503).json({success:false,message:'ตรวจผู้ดูแลไม่สำเร็จ'});
+        const actor = (await readJson(actorResponse))?.[0];
+        if (!actor || actor.role !== 'admin' || actor.membership_status !== 'active') return res.status(403).json({success:false,message:'เฉพาะผู้ดูแลวัดที่ใช้งานอยู่'});
+        const targetResponse = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=id,membership_status&limit=1`,{headers,cache:'no-store'});
+        if (!targetResponse.ok) return res.status(503).json({success:false,message:'ตรวจสมาชิกไม่สำเร็จ'});
+        const target = (await readJson(targetResponse))?.[0];
+        if (!target) return res.status(404).json({success:false,message:'ไม่พบสมาชิก'});
+        if (req.body.active && target.membership_status !== 'active') return res.status(409).json({success:false,message:'สมาชิกไม่ได้อยู่ในสถานะใช้งาน'});
+        const crypto = await import('node:crypto');
+        const payload = {member_id:memberId,assigned_by:actor.id,is_active:req.body.active,issued_at:new Date().toISOString(),event_id:crypto.randomUUID()};
+        const raw = JSON.stringify(payload);
+        const signature = crypto.createHmac('sha256',bridgeKey).update(raw).digest('hex');
+        const response=await fetch('https://health.nathoeng.com/api/member-bridge',{method:'POST',headers:{'Content-Type':'application/json','X-Health-Signature':signature},body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
+        const result = await readJson(response);
+        if (!response.ok || !result?.success) return res.status(502).json({success:false,message:result?.message||'ส่งสิทธิ์ Health ไม่สำเร็จ'});
+        return res.status(200).json({success:true,message:req.body.active?'ส่งสมาชิกไป Health เรียบร้อยแล้ว':'ถอนสิทธิ์ Health เรียบร้อยแล้ว',health:result.item});
+      } catch {return res.status(503).json({success:false,message:'เชื่อมต่อ Health ไม่สำเร็จ กรุณาลองใหม่'});}
+    }
     if (department === 'school') {
       if (['active','canStudy','canTeach','canManage'].some(key => typeof req.body?.[key] !== 'boolean')) return res.status(400).json({success:false,message:'กรุณาระบุสิทธิ์ School ให้ครบ'});
       const bridgeKey = process.env.SCHOOL_BRIDGE_KEY;
