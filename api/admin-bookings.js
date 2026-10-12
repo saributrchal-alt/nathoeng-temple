@@ -513,7 +513,7 @@ export default async function handler(req, res) {
         console.error('Health kiosk provisioning response route mismatch',response.status,typeof result?.message==='string'?result.message.slice(0,90):'unknown');
         return res.status(502).json({success:false,message:'ปลายทาง Health ไม่ตรงกับทะเบียนอุปกรณ์ (KIOSK_ROUTE_MISMATCH) กรุณาแจ้งผู้ดูแล'});
       }
-      if(!response.ok||!result?.success)return res.status(502).json({success:false,message:(result?.message||'ส่งคำสั่งอุปกรณ์ไม่สำเร็จ')+' (HEALTH_DEVICE_'+response.status+')'});
+      if(!response.ok||!result?.success)return res.status(502).json({success:false,message:(result?.message||'ส่งคำสั่งอุปกรณ์ไม่สำเร็จ')+' (HEALTH_DEVICE_'+response.status+(result?.db_code?' / DB_'+result.db_code:'')+')'});
       return res.status(200).json({success:true,device_id:result.device_id,enabled:result.enabled});
     }catch{return res.status(503).json({success:false,message:'เชื่อม Health ไม่สำเร็จ'});}
   }
