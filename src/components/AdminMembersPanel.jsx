@@ -1180,11 +1180,12 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
               {departmentForm.department === 'kathin' && <button type="button" onClick={()=>assignDepartment(false)} disabled={departmentBusy||selectedMember.kathin_staff !== true} style={{marginLeft:8,border:'1px solid #a0463d',borderRadius:9,padding:'10px 14px',background:'#fff',color:'#a0463d',fontWeight:700}}>{th?'ถอนสิทธิ์ Staff':'Remove Staff access'}</button>}
               {departmentForm.department === 'health' && <div style={{marginTop:14,padding:12,border:'1px solid #c9dcd0',borderRadius:10,background:'#f6faf7'}}>
                 <strong>จับคู่บัตรประชาชนกับ Health (เจ้าหน้าที่เท่านั้น)</strong>
+                <p style={{fontSize:13,color:'#a45c14',fontWeight:700}}>ขั้นอนุมัติยังปิดไว้ระหว่างพัฒนาการยืนยันว่าได้อ่านชิปบัตรจากมือถือ Health เครื่องที่ได้รับอนุมัติจริง</p>
                 <p style={{fontSize:13}}>ต้องส่งสิทธิ์สมาชิกไป Health ก่อน และตรวจบัตรจริงกับเจ้าของบัตร โดยใช้ข้อมูลบัตรที่ตรวจยืนยันใน Temple เท่านั้น ห้ามกรอกเลขบัตรในช่องข้อความหรือแชต</p>
                 <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={healthConsent} onChange={e=>setHealthConsent(e.target.checked)}/>เจ้าของบัตรรับทราบและยินยอมให้เชื่อมสมาชิกกับระบบ Health</label>
                 <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
                   <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('prepare')}>เตรียมจับคู่ (ยังปิดสิทธิ์)</button>
-                  <button type="button" disabled={healthPairingBusy||!healthConsent} onClick={()=>manageHealthCard('approve')}>อนุมัติหลังตรวจบัตรและความยินยอม</button>
+                  <button type="button" disabled={true} title="รอการตรวจหลักฐานอ่านบัตรจริงจาก Health Android" onClick={()=>manageHealthCard('approve')}>อนุมัติ (รอหลักฐานบัตรจากมือถือ)</button>
                   <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('revoke')}>ถอนสิทธิ์บัตร</button>
                 </div>
                 {healthPairingResult&&<div role="status" style={{paddingTop:8,color:healthPairingResult.startsWith('✓')?'#216640':'#a23737'}}>{healthPairingResult}</div>}
