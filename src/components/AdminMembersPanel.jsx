@@ -46,6 +46,9 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [deviceForm,setDeviceForm] = useState({deviceId:'',label:'realme Note 70 - Health Kiosk',publicKey:''});
   const [deviceResult,setDeviceResult] = useState('');
   const [deviceBusy,setDeviceBusy] = useState(false);
+  const [healthConsent,setHealthConsent] = useState(false);
+  const [healthPairingBusy,setHealthPairingBusy] = useState(false);
+  const [healthPairingResult,setHealthPairingResult] = useState('');
   const [departmentBusy, setDepartmentBusy] = useState(false);
   const [departmentResult, setDepartmentResult] = useState('');
   const departmentBusyRef = useRef(false);
@@ -178,6 +181,21 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
         action==='approve'?'✓ อนุมัติเครื่องสำหรับการทดสอบแล้ว':'✓ ปิดสิทธิ์เครื่องแล้ว');
     }catch(e){setDeviceResult(e.message||'เชื่อมต่อไม่ได้');}
     finally{setDeviceBusy(false);}
+  };
+
+  const manageHealthCard = async (action) => {
+    if(!selectedMember?.id||healthPairingBusy)return;
+    if(action==='approve'&&!healthConsent){setHealthPairingResult('ต้องได้รับความยินยอมจากเจ้าของบัตรก่อน');return;}
+    if(!window.confirm(action==='approve'?'ตรวจบัตรจริงและยืนยันความยินยอมของสมาชิกแล้วหรือไม่?':'ยืนยันคำสั่งจับคู่/ถอนสิทธิ์บัตร Health?'))return;
+    setHealthPairingBusy(true);setHealthPairingResult('');
+    try{
+      const res=await fetch('/api/admin-bookings?route=health-card-admin',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:selectedMember.id,action,confirmConsent:action==='approve'&&healthConsent})});
+      const data=await res.json();
+      if(!res.ok||!data?.success)throw new Error(data?.message||'ดำเนินการไม่สำเร็จ');
+      setHealthPairingResult(action==='prepare'?'✓ เตรียมจับคู่บัตรแล้ว (ยังไม่เปิดใช้)':action==='approve'?'✓ อนุมัติจับคู่บัตรแล้ว':'✓ ถอนสิทธิ์บัตรแล้ว');
+      setHealthConsent(false);
+    }catch(e){setHealthPairingResult(e.message||'เชื่อมต่อ Health ไม่สำเร็จ');}
+    finally{setHealthPairingBusy(false);}
   };
 
   const assignDepartment = async (active = true) => {
@@ -1160,6 +1178,17 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
                 {departmentBusy?(th?'กำลังบันทึก...':'Saving...'):departmentForm.department === 'kathin'?(th?'ส่งไปเป็น Staff งานกฐิน':'Assign Kathin Staff'):departmentForm.department === 'school'?(th?'ส่งสมาชิกไป School':'Assign to School'):departmentForm.department === 'health'?(th?'ส่งสมาชิกไป Health':'Assign to Health'):(th?'ส่งไปฝ่ายบัญชี':'Assign to Accounting')}
               </button>
               {departmentForm.department === 'kathin' && <button type="button" onClick={()=>assignDepartment(false)} disabled={departmentBusy||selectedMember.kathin_staff !== true} style={{marginLeft:8,border:'1px solid #a0463d',borderRadius:9,padding:'10px 14px',background:'#fff',color:'#a0463d',fontWeight:700}}>{th?'ถอนสิทธิ์ Staff':'Remove Staff access'}</button>}
+              {departmentForm.department === 'health' && <div style={{marginTop:14,padding:12,border:'1px solid #c9dcd0',borderRadius:10,background:'#f6faf7'}}>
+                <strong>จับคู่บัตรประชาชนกับ Health (เจ้าหน้าที่เท่านั้น)</strong>
+                <p style={{fontSize:13}}>ต้องส่งสิทธิ์สมาชิกไป Health ก่อน และตรวจบัตรจริงกับเจ้าของบัตร โดยใช้ข้อมูลบัตรที่ตรวจยืนยันใน Temple เท่านั้น ห้ามกรอกเลขบัตรในช่องข้อความหรือแชต</p>
+                <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={healthConsent} onChange={e=>setHealthConsent(e.target.checked)}/>เจ้าของบัตรรับทราบและยินยอมให้เชื่อมสมาชิกกับระบบ Health</label>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
+                  <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('prepare')}>เตรียมจับคู่ (ยังปิดสิทธิ์)</button>
+                  <button type="button" disabled={healthPairingBusy||!healthConsent} onClick={()=>manageHealthCard('approve')}>อนุมัติหลังตรวจบัตรและความยินยอม</button>
+                  <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('revoke')}>ถอนสิทธิ์บัตร</button>
+                </div>
+                {healthPairingResult&&<div role="status" style={{paddingTop:8,color:healthPairingResult.startsWith('✓')?'#216640':'#a23737'}}>{healthPairingResult}</div>}
+              </div>}
               {departmentForm.department === 'health' && <button type="button" onClick={()=>assignDepartment(false)} disabled={departmentBusy} style={{marginLeft:8,border:'1px solid #a0463d',borderRadius:9,padding:'10px 14px',background:'#fff',color:'#a0463d',fontWeight:700}}>{th?'ถอนสิทธิ์ Health':'Remove Health access'}</button>}
               {departmentForm.department === 'school' && <button type="button" onClick={()=>assignDepartment(false)} disabled={departmentBusy} style={{marginLeft:8,border:'1px solid #a0463d',borderRadius:9,padding:'10px 14px',background:'#fff',color:'#a0463d',fontWeight:700}}>{th?'ถอนสิทธิ์ School':'Remove School access'}</button>}
               {departmentResult?<div role="status" style={{marginTop:'9px',fontSize:'13px',fontWeight:700,color:departmentResult.startsWith('✓')?'#287a47':'#a0463d'}}>{departmentResult}</div>:null}
