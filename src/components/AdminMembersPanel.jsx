@@ -43,6 +43,9 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [teamSaving, setTeamSaving] = useState(false);
   const [teamResult, setTeamResult] = useState('');
   const [departmentForm, setDepartmentForm] = useState({ department:'account', canPrepare:true, canReview:false, canStudy:true, canTeach:false, canManage:false });
+  const [deviceForm,setDeviceForm] = useState({deviceId:'',label:'realme Note 70 - Health Kiosk',publicKey:''});
+  const [deviceResult,setDeviceResult] = useState('');
+  const [deviceBusy,setDeviceBusy] = useState(false);
   const [departmentBusy, setDepartmentBusy] = useState(false);
   const [departmentResult, setDepartmentResult] = useState('');
   const departmentBusyRef = useRef(false);
@@ -157,6 +160,24 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     nextPhase: th
       ? 'ประวัติการติดต่อ LINE / Telegram จะเชื่อมเข้าหน้านี้ในขั้นต่อไป'
       : 'LINE / Telegram communication history will be connected here in the next phase.'
+  };
+
+  const manageHealthDevice = async (action) => {
+    if (deviceBusy) return;
+    if (action !== 'register' && !window.confirm(th ? 'ยืนยันการเปลี่ยนสิทธิ์เครื่อง Health?' : 'Confirm Health device access change?')) return;
+    setDeviceBusy(true);setDeviceResult('');
+    try {
+      const rr=await fetch('/api/admin-bookings?route=health-device-admin',{
+        method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({deviceId:deviceForm.deviceId.trim(),label:deviceForm.label.trim(),
+          publicKey:deviceForm.publicKey.replace(/\\s+/g,''),action})
+      });
+      const data=await rr.json();
+      if(!rr.ok||!data.success)throw Error(data.message||'ดำเนินการไม่สำเร็จ');
+      setDeviceResult(action==='register'?'✓ บันทึกเครื่องแล้ว แต่ยังไม่อนุมัติ':
+        action==='approve'?'✓ อนุมัติเครื่องสำหรับการทดสอบแล้ว':'✓ ปิดสิทธิ์เครื่องแล้ว');
+    }catch(e){setDeviceResult(e.message||'เชื่อมต่อไม่ได้');}
+    finally{setDeviceBusy(false);}
   };
 
   const assignDepartment = async (active = true) => {
@@ -808,6 +829,22 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
           <option value="walkin">{th ? 'สมัครที่วัด' : 'Walk-in'}</option>
         </select>
       </div>
+
+      <section style={{ border:'1px solid #c8e2d6',borderRadius:14,background:'#f4fbf7',padding:16,marginBottom:18 }}>
+        <h2 style={{fontSize:18,margin:'0 0 8px'}}>{th?'ทะเบียนเครื่อง NATHOENG HEALTH':'Nathoeng Health Kiosk Devices'}</h2>
+        <p style={{fontSize:13,color:'#56695f'}}>{th?'ขั้นแรกคัดลอก Device ID และ Public Key จากแอป Android Pilot แล้วลงทะเบียนเป็นเครื่องปิดสิทธิ์ก่อน ผู้ดูแลจึงกดอนุมัติได้ ห้ามส่งเลขบัตรประชาชนหรือ PIN มาที่นี่':'Paste only device ID and public key from Android Pilot. Registration does not grant access.'}</p>
+        <div style={{display:'grid',gap:8}}>
+          <input aria-label="Health device ID" placeholder="Device ID (UUID)" value={deviceForm.deviceId} onChange={e=>setDeviceForm(v=>({...v,deviceId:e.target.value}))} style={{padding:10,border:'1px solid #cad9d1',borderRadius:8}}/>
+          <input aria-label="Health device label" placeholder="ชื่อเครื่อง" value={deviceForm.label} onChange={e=>setDeviceForm(v=>({...v,label:e.target.value}))} style={{padding:10,border:'1px solid #cad9d1',borderRadius:8}}/>
+          <textarea aria-label="Health device public key" placeholder="Public key (SPKI Base64)" rows={3} value={deviceForm.publicKey} onChange={e=>setDeviceForm(v=>({...v,publicKey:e.target.value}))} style={{padding:10,border:'1px solid #cad9d1',borderRadius:8,resize:'vertical'}}/>
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
+          <button type="button" disabled={deviceBusy} onClick={()=>manageHealthDevice('register')} style={{padding:'10px 12px',borderRadius:8,background:'#e2ede5',border:'1px solid #bbcfc3'}}>ลงทะเบียน (ยังปิดสิทธิ์)</button>
+          <button type="button" disabled={deviceBusy} onClick={()=>manageHealthDevice('approve')} style={{padding:'10px 12px',borderRadius:8,background:'#266e4b',color:'#fff',border:'none'}}>อนุมัติอุปกรณ์</button>
+          <button type="button" disabled={deviceBusy} onClick={()=>manageHealthDevice('disable')} style={{padding:'10px 12px',borderRadius:8,background:'#9a3d34',color:'#fff',border:'none'}}>ปิดสิทธิ์เครื่อง</button>
+        </div>
+        {deviceResult&&<div role="status" style={{marginTop:8,color:deviceResult.startsWith('✓')?'#26724c':'#a33b34'}}>{deviceResult}</div>}
+      </section>
 
       <section style={{ border: '1px solid #d9c9af', borderRadius: 14, background: '#fffdf8', padding: 16, marginBottom: 18 }}>
         <h2 style={{ fontSize: 18, margin: '0 0 6px' }}>{th ? 'สแกนบาร์โค้ดบัตรสมาชิก' : 'Scan a member card barcode'}</h2>
