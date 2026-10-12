@@ -47,6 +47,7 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
   const [deviceResult,setDeviceResult] = useState('');
   const [deviceBusy,setDeviceBusy] = useState(false);
   const [healthConsent,setHealthConsent] = useState(false);
+  const [healthClaimCode,setHealthClaimCode] = useState('');
   const [healthPairingBusy,setHealthPairingBusy] = useState(false);
   const [healthPairingResult,setHealthPairingResult] = useState('');
   const [departmentBusy, setDepartmentBusy] = useState(false);
@@ -189,11 +190,11 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
     if(!window.confirm(action==='approve'?'ตรวจบัตรจริงและยืนยันความยินยอมของสมาชิกแล้วหรือไม่?':'ยืนยันคำสั่งจับคู่/ถอนสิทธิ์บัตร Health?'))return;
     setHealthPairingBusy(true);setHealthPairingResult('');
     try{
-      const res=await fetch('/api/admin-bookings?route=health-card-admin',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:selectedMember.id,action,confirmConsent:action==='approve'&&healthConsent})});
+      const res=await fetch('/api/admin-bookings?route=health-card-admin',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:selectedMember.id,action,claimCode:action==='approve'?healthClaimCode:'',confirmConsent:action==='approve'&&healthConsent})});
       const data=await res.json();
       if(!res.ok||!data?.success)throw new Error(data?.message||'ดำเนินการไม่สำเร็จ');
       setHealthPairingResult(action==='prepare'?'✓ เตรียมจับคู่บัตรแล้ว (ยังไม่เปิดใช้)':action==='approve'?'✓ อนุมัติจับคู่บัตรแล้ว':'✓ ถอนสิทธิ์บัตรแล้ว');
-      setHealthConsent(false);
+      setHealthConsent(false);setHealthClaimCode('');
     }catch(e){setHealthPairingResult(e.message||'เชื่อมต่อ Health ไม่สำเร็จ');}
     finally{setHealthPairingBusy(false);}
   };
@@ -1180,12 +1181,15 @@ function AdminMembersPanel({ lang, onDonation, currentMemberId }) {
               {departmentForm.department === 'kathin' && <button type="button" onClick={()=>assignDepartment(false)} disabled={departmentBusy||selectedMember.kathin_staff !== true} style={{marginLeft:8,border:'1px solid #a0463d',borderRadius:9,padding:'10px 14px',background:'#fff',color:'#a0463d',fontWeight:700}}>{th?'ถอนสิทธิ์ Staff':'Remove Staff access'}</button>}
               {departmentForm.department === 'health' && <div style={{marginTop:14,padding:12,border:'1px solid #c9dcd0',borderRadius:10,background:'#f6faf7'}}>
                 <strong>จับคู่บัตรประชาชนกับ Health (เจ้าหน้าที่เท่านั้น)</strong>
-                <p style={{fontSize:13,color:'#a45c14',fontWeight:700}}>ขั้นอนุมัติยังปิดไว้ระหว่างพัฒนาการยืนยันว่าได้อ่านชิปบัตรจากมือถือ Health เครื่องที่ได้รับอนุมัติจริง</p>
+                <p style={{fontSize:13,color:'#a45c14',fontWeight:700}}>ก่อนอนุมัติ ให้อ่านชิปบัตรด้วยมือถือ Health เครื่องที่ลงทะเบียน แล้วนำรหัสยืนยัน 9 หลักมาใส่ภายใน 3 นาที</p>
                 <p style={{fontSize:13}}>ต้องส่งสิทธิ์สมาชิกไป Health ก่อน และตรวจบัตรจริงกับเจ้าของบัตร โดยใช้ข้อมูลบัตรที่ตรวจยืนยันใน Temple เท่านั้น ห้ามกรอกเลขบัตรในช่องข้อความหรือแชต</p>
+                <label style={{display:'block',fontSize:13,marginBottom:8}}>รหัสยืนยัน 9 หลัก จากแอป Android Health หลังอ่านชิปบัตร
+                  <input type="text" inputMode="numeric" autoComplete="off" maxLength={9} placeholder="รหัส 9 หลัก (หมดอายุ 3 นาที)" value={healthClaimCode} onChange={e=>setHealthClaimCode(e.target.value.replace(/[^0-9]/g,'').slice(0,9))} style={{display:'block',width:'100%',maxWidth:310,padding:9,borderRadius:8,border:'1px solid #b6cfc0',marginTop:4}}/>
+                </label>
                 <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={healthConsent} onChange={e=>setHealthConsent(e.target.checked)}/>เจ้าของบัตรรับทราบและยินยอมให้เชื่อมสมาชิกกับระบบ Health</label>
                 <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:8}}>
                   <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('prepare')}>เตรียมจับคู่ (ยังปิดสิทธิ์)</button>
-                  <button type="button" disabled={true} title="รอการตรวจหลักฐานอ่านบัตรจริงจาก Health Android" onClick={()=>manageHealthCard('approve')}>อนุมัติ (รอหลักฐานบัตรจากมือถือ)</button>
+                  <button type="button" disabled={healthPairingBusy||!healthConsent||!/^\\d{9}$/.test(healthClaimCode)} onClick={()=>manageHealthCard('approve')}>อนุมัติด้วยรหัสจากมือถือ (3 นาที)</button>
                   <button type="button" disabled={healthPairingBusy} onClick={()=>manageHealthCard('revoke')}>ถอนสิทธิ์บัตร</button>
                 </div>
                 {healthPairingResult&&<div role="status" style={{paddingTop:8,color:healthPairingResult.startsWith('✓')?'#216640':'#a23737'}}>{healthPairingResult}</div>}
