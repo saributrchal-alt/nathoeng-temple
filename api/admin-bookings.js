@@ -509,7 +509,11 @@ export default async function handler(req, res) {
         {method:'POST',headers:{'Content-Type':'application/json','X-Health-Signature':signature},
         body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
       const result=await readJson(response);
-      if(!response.ok||!result?.success)return res.status(502).json({success:false,message:result?.message||'ส่งคำสั่งอุปกรณ์ไม่สำเร็จ'});
+      if(result?.endpoint!=='health-kiosk-admin-device-v1') {
+        console.error('Health kiosk provisioning response route mismatch',response.status,typeof result?.message==='string'?result.message.slice(0,90):'unknown');
+        return res.status(502).json({success:false,message:'ปลายทาง Health ไม่ตรงกับทะเบียนอุปกรณ์ (KIOSK_ROUTE_MISMATCH) กรุณาแจ้งผู้ดูแล'});
+      }
+      if(!response.ok||!result?.success)return res.status(502).json({success:false,message:(result?.message||'ส่งคำสั่งอุปกรณ์ไม่สำเร็จ')+' (HEALTH_DEVICE_'+response.status+')'});
       return res.status(200).json({success:true,device_id:result.device_id,enabled:result.enabled});
     }catch{return res.status(503).json({success:false,message:'เชื่อม Health ไม่สำเร็จ'});}
   }
