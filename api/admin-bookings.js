@@ -480,6 +480,40 @@ export default async function handler(req, res) {
     }
   }
 
+  if (route === 'health-card-admin') {
+    if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
+    const memberId=String(req.body?.memberId||'');
+    const action=String(req.body?.action||'');
+    const consent=req.body?.confirmConsent===true;
+    const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+    if(!uuid.test(memberId)||!['prepare','approve','revoke'].includes(action))
+      return res.status(400).json({success:false,message:'ข้อมูลคำขอไม่ถูกต้อง'});
+    if(action==='approve'&&!consent)return res.status(400).json({success:false,message:'ต้องได้รับความยินยอมโดยชัดแจ้งก่อน'});
+    const key=process.env.HEALTH_BRIDGE_KEY;
+    if(!key||key.length<24)return res.status(503).json({success:false,message:'Health Bridge ไม่พร้อม'});
+    try{
+      const headers=supabaseHeaders(supabaseSecretKey);
+      const rr=await fetch(`${supabaseUrl}/rest/v1/members?id=in.(${encodeURIComponent(session.memberId)},${encodeURIComponent(memberId)})&select=id,role,membership_status,tax_id,id_card_verified_at`,{headers,cache:'no-store',signal:AbortSignal.timeout(8000)});
+      if(!rr.ok)return res.status(503).json({success:false,message:'ตรวจทะเบียนวัดไม่ได้'});
+      const rows=await readJson(rr);
+      const actor=rows?.find(x=>x.id===session.memberId),member=rows?.find(x=>x.id===memberId);
+      if(actor?.role!=='admin'||actor?.membership_status!=='active')return res.status(403).json({success:false,message:'ผู้ดูแลไม่ได้รับสิทธิ์'});
+      if(!member||member.membership_status!=='active'||!member.id_card_verified_at||!/^[0-9]{13}$/.test(member.tax_id||''))
+        return res.status(409).json({success:false,message:'สมาชิกยังไม่มีบัตรที่ตรวจยืนยันในทะเบียน Temple'});
+      const crypto=await import('node:crypto');
+      const payload={event_id:crypto.randomUUID(),member_id:memberId,actor_id:actor.id,
+        action,citizen_id:member.tax_id,confirm_consent:consent,issued_at:new Date().toISOString()};
+      const raw=JSON.stringify(payload);
+      const signature=crypto.createHmac('sha256',key).update(raw).digest('hex');
+      const response=await fetch('https://health.nathoeng.com/api/kiosk/admin-card-binding',{
+        method:'POST',headers:{'Content-Type':'application/json','X-Health-Signature':signature},
+        body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
+      const result=await readJson(response);
+      if(!response.ok||!result?.success)return res.status(502).json({success:false,message:result?.message||'ไม่สามารถจับคู่บัตร Health ได้'});
+      return res.status(200).json({success:true,action});
+    }catch(e){console.error('Health card command failed',e?.message);return res.status(503).json({success:false,message:'เชื่อมระบบ Health ไม่สำเร็จ'});}
+  }
+
   if (route === 'health-device-admin') {
     if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
     const b=req.body||{};
