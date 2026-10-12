@@ -480,6 +480,40 @@ export default async function handler(req, res) {
     }
   }
 
+  if (route === 'health-device-admin') {
+    if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
+    const b=req.body||{};
+    const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+    if (!uuid.test(b.deviceId||'') || !['register','approve','disable'].includes(b.action)
+      || typeof b.label!=='string' || b.label.length<2 || b.label.length>120
+      || typeof b.publicKey!=='string' || b.publicKey.length<80 || b.publicKey.length>700)
+      return res.status(400).json({success:false,message:'ข้อมูลเครื่องไม่ถูกต้อง'});
+    if (!process.env.HEALTH_BRIDGE_KEY || process.env.HEALTH_BRIDGE_KEY.length<24)
+      return res.status(503).json({success:false,message:'Health Bridge ไม่พร้อม'});
+    try {
+      const crypto=await import('node:crypto');
+      const pub=crypto.createPublicKey({key:Buffer.from(b.publicKey,'base64'),format:'der',type:'spki'});
+      if(pub.asymmetricKeyType!=='ec'||pub.asymmetricKeyDetails?.namedCurve!=='prime256v1')
+        return res.status(400).json({success:false,message:'รูปแบบกุญแจเครื่องไม่รองรับ'});
+      const rr=await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(session.memberId)}&select=id,role,membership_status&limit=1`,
+        {headers:supabaseHeaders(supabaseSecretKey),cache:'no-store'});
+      if(!rr.ok)return res.status(503).json({success:false,message:'ตรวจผู้ดูแลไม่ได้'});
+      const actor=(await readJson(rr))?.[0];
+      if(actor?.role!=='admin'||actor?.membership_status!=='active')
+        return res.status(403).json({success:false,message:'ต้องเป็นผู้ดูแลวัดที่ยังใช้งานอยู่'});
+      const payload={event_id:crypto.randomUUID(),device_id:b.deviceId,assigned_by:actor.id,
+        action:b.action,label:b.label,public_key:b.publicKey,issued_at:new Date().toISOString()};
+      const raw=JSON.stringify(payload);
+      const signature=crypto.createHmac('sha256',process.env.HEALTH_BRIDGE_KEY).update(raw).digest('hex');
+      const response=await fetch('https://health.nathoeng.com/api/kiosk/admin-device',
+        {method:'POST',headers:{'Content-Type':'application/json','X-Health-Signature':signature},
+        body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
+      const result=await readJson(response);
+      if(!response.ok||!result?.success)return res.status(502).json({success:false,message:result?.message||'ส่งคำสั่งอุปกรณ์ไม่สำเร็จ'});
+      return res.status(200).json({success:true,device_id:result.device_id,enabled:result.enabled});
+    }catch{return res.status(503).json({success:false,message:'เชื่อม Health ไม่สำเร็จ'});}
+  }
+
   if (route === 'assign-department') {
     if (req.method !== 'POST') return res.status(405).json({ success:false, message:'Method not allowed' });
     const memberId = String(req.body?.memberId || '').trim();
