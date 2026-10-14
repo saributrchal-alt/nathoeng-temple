@@ -74,7 +74,13 @@ export default function WalkinMemberRegistration({ lang = 'th', members = [], on
   }
 
   async function receiveCard(card, active) {
-    const lookup = await request({ action: 'lookup', citizenId: card.citizenId });
+    const lookup = await request({ action: 'lookup', citizenId: card.citizenId,
+      fullName: card.fullName, birthDate: card.birthDate });
+    if (!lookup.member && lookup.possibleMatches?.length) {
+      throw Error(th
+        ? 'พบบัญชีสมาชิกเดิมที่ชื่อและวันเกิดตรงกับบัตรนี้ ห้ามสร้างบัญชีใหม่ กรุณาเปิดสมาชิกที่สมัครผ่าน LINE เดิมจากรายการสมาชิก แล้วเลือกเมนูเครื่องอ่านบัตรเพื่อยืนยัน'
+        : 'An existing member has the same name and birth date. Do not create a duplicate. Open the existing LINE member profile and verify the card there.');
+    }
     const previous = lookup.member ? fromExisting(await existingProfile(lookup.member.id)) : blankForm();
     if (!active()) return null;
     const next = { ...previous, fullName: card.fullName, citizenId: card.citizenId,
