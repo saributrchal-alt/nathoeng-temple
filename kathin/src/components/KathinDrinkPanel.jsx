@@ -25,6 +25,7 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
   const [query, setQuery] = useState('');
   const [members, setMembers] = useState([]);
   const [target, setTarget] = useState(null);
+  const [displayConsent, setDisplayConsent] = useState(false);
 
   const load = useCallback(async () => {
     const response = await fetch(`/api/kathin-drinks?view=${staffMode ? 'staff' : 'member'}`, { credentials: 'include', cache: 'no-store' });
@@ -49,8 +50,8 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
       const response = await fetch('/api/kathin-drinks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...values }) });
       const body = await response.json();
       if (!response.ok || !body.success) throw new Error(body.message || 'บันทึกไม่สำเร็จ');
-      if (action === 'order') setMessage(`${th ? 'รับคิวแล้ว' : 'Queued'}: ${body.order.queue_number}`);
-      else setMessage(th ? 'บันทึกเรียบร้อย' : 'Saved');
+      if (action === 'order') { setDisplayConsent(false); setMessage(`${th ? 'รับคิวแล้ว' : 'Queued'}: ${body.order.queue_number}`);
+      } else setMessage(th ? 'บันทึกเรียบร้อย' : 'Saved');
       await load();
     } catch (error) { setMessage(error.message); }
     finally { setWorking(''); }
@@ -89,7 +90,12 @@ export default function KathinDrinkPanel({ user, lang = 'th', staffMode = false,
       {!staffMode && <section style={{ ...card, marginBottom: 16 }}>
         <strong>{th ? 'คิวของวันนี้' : 'Today’s queue'}: {DAY_CHOICES.find((d) => d.value === day)?.label}</strong>
       </section>}
-      {(staffMode ? Boolean(target) : data.availableRights > 0) && canOrder && <section style={{ ...card, marginBottom: 16 }}><h2 style={{ marginTop: 0 }}>{th ? 'เลือกเมนู · 1 สิทธิ์ต่อ 1 แก้ว' : 'Choose a drink · 1 right per cup'}</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10 }}>{menu.map((item) => <button key={item.id} disabled={Boolean(working) || !item.active} onClick={() => fire('order', { memberId: target?.id || user?.memberId, menuId: item.id, serviceDay: day })} style={{ ...card, textAlign: 'left', cursor: item.active ? 'pointer' : 'not-allowed', padding: 14, opacity: item.active ? 1 : .55 }}><strong>{th ? item.name_th : item.name_en}</strong><div style={{ color: '#756d61', marginTop: 5 }}>{item.category === 'blended' ? (th ? 'ปั่น' : 'Blended') : (th ? 'ดริป' : 'Drip')} · 1 {th ? 'สิทธิ์' : 'right'}</div></button>)}</div></section>}
+      {(staffMode ? Boolean(target) : data.availableRights > 0) && canOrder && <section style={{ ...card, marginBottom: 16 }}><h2 style={{ marginTop: 0 }}>{th ? 'เลือกเมนู · 1 สิทธิ์ต่อ 1 แก้ว' : 'Choose a drink · 1 right per cup'}</h2>
+        {!staffMode && <label style={{ display:'flex',alignItems:'flex-start',gap:10,padding:'12px 14px',margin:'12px 0',borderRadius:12,background:'#eff8ee',border:'1px solid #c8dccb',fontSize:13,lineHeight:1.7,cursor:'pointer' }}>
+          <input type="checkbox" checked={displayConsent} onChange={e=>setDisplayConsent(e.target.checked)} style={{ width:20,height:20,marginTop:3,accentColor:'#367751' }} />
+          <span>{th ? 'ข้าพเจ้ายินยอมให้แสดงชื่อและรูปโปรไฟล์ (หากมี) ของข้าพเจ้าบนจอประกาศคิวสาธารณะหน้าร้านกาแฟของงานกฐินสำหรับรายการนี้ หากไม่เลือก จอจะแสดงเพียงเลขคิวและสัญลักษณ์สมาชิก' : 'I agree to show my member name and public profile photo on the event queue screen for this order. Without consent, only the queue number and a default avatar appear.'}</span>
+        </label>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10 }}>{menu.map((item) => <button key={item.id} disabled={Boolean(working) || !item.active} onClick={() => fire('order', { memberId: target?.id || user?.memberId, menuId: item.id, serviceDay: day, displayConsent: !staffMode && displayConsent })} style={{ ...card, textAlign: 'left', cursor: item.active ? 'pointer' : 'not-allowed', padding: 14, opacity: item.active ? 1 : .55 }}><strong>{th ? item.name_th : item.name_en}</strong><div style={{ color: '#756d61', marginTop: 5 }}>{item.category === 'blended' ? (th ? 'ปั่น' : 'Blended') : (th ? 'ดริป' : 'Drip')} · 1 {th ? 'สิทธิ์' : 'right'}</div></button>)}</div></section>}
       {staffMode && <section style={card}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}><h2 style={{ margin: 0 }}>{th ? 'รายการตามคิว' : 'Orders by queue'}</h2><button onClick={() => load().catch((e) => setMessage(e.message))} style={{ ...button, background: '#eee8dd', color: '#514838' }}>{th ? 'รีเฟรชรายการ' : 'Refresh list'}</button></div>
         <div style={{ display: 'grid', gap: 9, marginTop: 14 }}>{orders.map((order) => <article key={order.id} style={{ border: '1px solid #e9e1d5', borderRadius: 12, padding: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><b style={{ color: '#976b24', fontSize: 20 }}>{order.queue_number}</b> · <b>{order.member_name || 'สมาชิก'}</b><div>{menu.find((m) => m.id === order.menu_id)?.name_th || order.menu_id} · {order.service_day === '2026-11-07' ? 'เสาร์ 7 พ.ย.' : 'อาทิตย์ 8 พ.ย.'}</div><small>{({ pending: 'รอรับออเดอร์', accepted: 'กำลังจัดเตรียม', sent: 'ส่งแล้ว', cancelled: 'ยกเลิก' })[order.status] || order.status}</small></div><div style={{ display: 'flex', gap: 7 }}>{order.status === 'pending' && <button style={button} disabled={Boolean(working)} onClick={() => fire('transition', { orderId: order.id, status: 'accepted' })}>{th ? 'รับออเดอร์' : 'Accept'}</button>}{order.status === 'accepted' && <button style={{ ...button, background: '#986b23' }} disabled={Boolean(working)} onClick={() => fire('transition', { orderId: order.id, status: 'sent' })}>{th ? 'ส่งออเดอร์' : 'Handed off'}</button>}</div></article>)}{!orders.length && <p>{th ? 'ยังไม่มีรายการในคิว' : 'No orders yet.'}</p>}</div>
       </section>}
