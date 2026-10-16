@@ -5350,3 +5350,184 @@ img {
   .memberPortalAccessStatus { font-size: 11px; gap: 4px; }
   .memberPortalAccessStatus > span { flex-basis: 20px; width: 20px; height: 20px; }
 }
+
+
+/* Signature service icon system — hand-drawn two-tone SVGs, soft ceramic tiles. */
+.memberPortalDashboard .memberPortalShortcuts {
+  border-color: #e5e9df;
+  box-shadow: 0 9px 32px rgba(43, 76, 52, .045);
+}
+.memberPortalDashboard .memberPortalTile {
+  --tile-bg: #ecf6ee;
+  --tile-color: #277954;
+  --tile-ink: #215039;
+  overflow: hidden;
+  isolation: isolate;
+  gap: 10px;
+  min-height: 139px;
+  padding: 17px 9px 19px;
+  border: 1px solid color-mix(in srgb, var(--tile-color) 15%, #ffffff);
+  border-radius: 17px;
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--tile-bg) 80%, #fff) 0%,
+    var(--tile-bg) 100%);
+  color: var(--tile-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 3px 10px rgba(39, 55, 37, .025);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.memberPortalDashboard .memberPortalTile::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 95px;
+  height: 95px;
+  top: -52px;
+  right: -33px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tile-color) 8%, transparent);
+  pointer-events: none;
+}
+.memberPortalDashboard .memberPortalTile::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 30%;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in srgb, var(--tile-color) 40%, transparent);
+  pointer-events: none;
+}
+.memberPortalDashboard .memberPortalTileIcon {
+  position: relative;
+  width: 59px;
+  height: 59px;
+  border-radius: 19px;
+  flex: 0 0 59px;
+  display: grid;
+  place-items: center;
+  color: var(--tile-color);
+  background: linear-gradient(155deg, rgba(255,255,255,.99), rgba(255,255,255,.73));
+  border: 1px solid color-mix(in srgb, var(--tile-color) 19%, white);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--tile-color) 10%, transparent),
+    inset 0 1px 2px rgba(255,255,255,.98);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.memberPortalDashboard .memberPortalTileIcon::after {
+  content: '';
+  position: absolute;
+  height: 7px;
+  width: 7px;
+  right: 6px;
+  top: 6px;
+  border: 1.5px solid rgba(255,255,255,.95);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tile-color) 42%, white);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tile-color) 8%, transparent);
+  pointer-events: none;
+}
+.memberPortalDashboard .memberPortalTileIcon svg {
+  width: 34px;
+  height: 34px;
+  display: block;
+}
+.memberPortalDashboard .memberPortalTileLabel {
+  font-size: clamp(12px, 1.12vw, 14px);
+  font-weight: 750;
+  line-height: 1.45;
+  letter-spacing: -.008em;
+  min-height: 35px;
+  max-width: 100%;
+  text-wrap: balance;
+}
+.memberPortalDashboard .memberPortalTileArrow {
+  bottom: 7px;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  background: color-mix(in srgb, var(--tile-color) 10%, white);
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  opacity: .83;
+}
+.memberPortalDashboard .memberPortalTile.tone-gold {
+  --tile-bg: #fcf3df; --tile-color: #9f751e; --tile-ink: #64502b;
+}
+.memberPortalDashboard .memberPortalTile.tone-amber {
+  --tile-bg: #fff0d9; --tile-color: #b77915; --tile-ink: #6e5324;
+}
+.memberPortalDashboard .memberPortalTile.tone-rose {
+  --tile-bg: #faf0f5; --tile-color: #ad5a82; --tile-ink: #69445a;
+}
+.memberPortalDashboard .memberPortalTile.tone-sky {
+  --tile-bg: #eaf5fa; --tile-color: #277ea7; --tile-ink: #30566a;
+}
+.memberPortalDashboard .memberPortalTile.tone-cream {
+  --tile-bg: #f9f3e8; --tile-color: #9a722d; --tile-ink: #66543a;
+}
+.memberPortalDashboard .memberPortalTile.tone-mint {
+  --tile-bg: #e9f7f2; --tile-color: #238467; --tile-ink: #285b4c;
+}
+.memberPortalDashboard .memberPortalTile.tone-sage {
+  --tile-bg: #edf7ed; --tile-color: #27825e; --tile-ink: #305b43;
+}
+@media (hover:hover) {
+  .memberPortalDashboard .memberPortalTile:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--tile-color) 37%, #ffffff);
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--tile-color) 11%, transparent);
+  }
+  .memberPortalDashboard .memberPortalTile:hover .memberPortalTileIcon {
+    transform: translateY(-2px) rotate(-3deg) scale(1.055);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--tile-color) 15%, transparent);
+  }
+}
+.memberPortalDashboard .memberPortalTile:focus-visible {
+  outline: 3px solid #c49a45;
+  outline-offset: 3px;
+}
+.memberPortalDashboard .memberPortalTile:disabled {
+  cursor: wait;
+  opacity: .65;
+  transform: none;
+}
+@media (min-width: 900px) {
+  .memberPortalDashboard .memberPortalTile { min-height: 151px; }
+}
+@media (max-width: 600px) {
+  .memberPortalDashboard .memberPortalShortcutGrid { gap: 8px; }
+  .memberPortalDashboard .memberPortalTile {
+    min-height: 124px;
+    padding: 12px 5px 16px;
+    gap: 7px;
+    border-radius: 14px;
+  }
+  .memberPortalDashboard .memberPortalTileIcon {
+    width: 47px; height: 47px; flex-basis: 47px; border-radius: 16px;
+  }
+  .memberPortalDashboard .memberPortalTileIcon svg { width: 29px; height: 29px; }
+  .memberPortalDashboard .memberPortalTileLabel {
+    font-size: 11px;
+    min-height: 32px;
+    line-height: 1.35;
+  }
+  .memberPortalDashboard .memberPortalTileArrow { bottom: 4px; right: 5px; }
+  .memberPortalDashboard .memberPortalTile:last-child:nth-child(3n + 1) {
+    grid-column: auto;
+    min-height: 124px;
+    flex-direction: column;
+  }
+}
+@media (max-width: 360px) {
+  .memberPortalDashboard .memberPortalTile { min-height: 118px; }
+  .memberPortalDashboard .memberPortalTileLabel { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .memberPortalDashboard .memberPortalTile,
+  .memberPortalDashboard .memberPortalTileIcon { transition: none; }
+}
