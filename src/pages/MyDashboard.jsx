@@ -1242,6 +1242,108 @@ function MyDashboard({
           </button>
         </div>
       </div>
+      {infoPanel && createPortal(
+        <div className="memberPortalCardBackdrop"
+          onMouseDown={event => { if (event.target === event.currentTarget) setInfoPanel(null); }}>
+          <section ref={infoDialogRef} className="memberPortalCardDialog memberPortalInfoDialog"
+            role="dialog" aria-modal="true" aria-labelledby="member-portal-info-title" tabIndex={-1}>
+            <header className="memberPortalCardDialogHeader">
+              <div className="memberPortalCardDialogTitle">
+                <span className="memberPortalCardDialogIcon" aria-hidden="true">
+                  <MemberPortalIcon name={infoPanel === 'contact' ? 'contact' : 'settings'} />
+                </span>
+                <div>
+                  <span>NATHOENG CONNECT</span>
+                  <h2 id="member-portal-info-title">
+                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : (th ? 'ตั้งค่าบัญชีสมาชิก' : 'Account Settings')}
+                  </h2>
+                </div>
+              </div>
+              <button ref={infoCloseRef} type="button" className="memberPortalCardDialogClose"
+                onClick={() => setInfoPanel(null)}
+                aria-label={th ? 'ปิดหน้าต่าง' : 'Close dialog'}>×</button>
+            </header>
+
+            <div className="memberPortalInfoBody">
+              {infoPanel === 'contact' ? <>
+                <p className="memberPortalInfoLead">
+                  {th ? 'เลือกช่องทางที่สะดวกเพื่อติดต่อเจ้าหน้าที่วัดพุทธอุทยานนาเทิง' : 'Choose a channel to contact the monastery.'}
+                </p>
+                <div className="memberPortalContactOptions">
+                  <a className="memberPortalContactOption memberPortalContactLine"
+                    href="https://line.me/R/ti/p/@nathoeng" target="_blank" rel="noopener noreferrer">
+                    <span className="memberPortalSocialSymbol">LINE</span>
+                    <span><strong>LINE OA @nathoeng</strong><small>{th ? 'เปิดแชทกับวัดผ่าน LINE' : 'Message us on LINE'}</small></span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                  <a className="memberPortalContactOption memberPortalContactTelegram"
+                    href="https://t.me/NathoengConnectBot" target="_blank" rel="noopener noreferrer">
+                    <span className="memberPortalSocialSymbol">➤</span>
+                    <span><strong>Telegram @NathoengConnectBot</strong><small>{th ? 'เปิดแชทกับวัดผ่าน Telegram' : 'Message us on Telegram'}</small></span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </div>
+                <section className="memberPortalInfoSection">
+                  <h3>{th ? 'การเชื่อมต่อบัญชีของฉัน' : 'My connected accounts'}</h3>
+                  <div className="memberPortalConnection">
+                    <div><strong>LINE</strong><small>{user?.lineUid ? (th ? '✓ เชื่อมต่อแล้ว' : '✓ Connected') : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}</small></div>
+                    {!user?.actingAsMember && !user?.lineUid && <button type="button" onClick={() => handleLineLogin?.('link')}>{th ? 'เชื่อมต่อ' : 'Connect'}</button>}
+                  </div>
+                  <div className="memberPortalConnection">
+                    <div><strong>Telegram</strong><small>{user?.telegramUid ? (th ? '✓ เชื่อมต่อแล้ว' : '✓ Connected') : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}</small></div>
+                    {!user?.actingAsMember && !user?.telegramUid && <button type="button" onClick={() => handleTelegramLogin?.('link')}>{th ? 'เชื่อมต่อ' : 'Connect'}</button>}
+                  </div>
+                </section>
+                <button type="button" className="memberPortalInfoSecondary" onClick={() => { setInfoPanel(null); goToPage('contact-page'); }}>
+                  {th ? 'ดูที่ตั้งวัดและข้อมูลติดต่อเพิ่มเติม →' : 'Monastery location and other contact details →'}
+                </button>
+              </> : <>
+                <section className="memberPortalInfoSection">
+                  <h3>{th ? 'รับข่าวสารและประกาศจากวัด' : 'Monastery notifications'}</h3>
+                  <p>{th ? 'เปิดรับการแจ้งเตือนบนอุปกรณ์เครื่องนี้' : 'Enable notifications on this device.'}</p>
+                  <button type="button" className="memberPortalInfoPrimary" onClick={registerPushDevice}
+                    disabled={pushDeviceStatus === 'working' || pushDeviceStatus === 'registered'}>
+                    {pushDeviceStatus === 'registered'
+                      ? (th ? '✓ เปิดรับข่าวจากวัดแล้ว' : '✓ Notifications enabled')
+                      : pushDeviceStatus === 'working'
+                        ? (th ? 'กำลังเปิดรับข่าว...' : 'Enabling...')
+                        : (th ? '🔔 เปิดรับข่าวจากวัด' : '🔔 Enable notifications')}
+                  </button>
+                  {pushDeviceMessage && <p role="status" className={pushDeviceStatus === 'error' ? 'memberPortalInfoError' : ''}>{pushDeviceMessage}</p>}
+                </section>
+                {user?.authProvider === 'password' && <section className="memberPortalInfoSection">
+                  <h3>{th ? 'เปลี่ยนรหัสผ่าน' : 'Change Password'}</h3>
+                  <form className="memberPortalPasswordForm" onSubmit={changePassword}>
+                    <label>{th ? 'รหัสผ่านเดิม' : 'Current password'}
+                      <input type="password" required autoComplete="current-password"
+                        value={oldPassword} onChange={event => setOldPassword(event.target.value)} />
+                    </label>
+                    <label>{th ? 'รหัสผ่านใหม่ อย่างน้อย 12 ตัวอักษร' : 'New password, at least 12 characters'}
+                      <input type="password" required minLength={12} maxLength={128} autoComplete="new-password"
+                        value={newPassword} onChange={event => setNewPassword(event.target.value)} />
+                    </label>
+                    <button type="submit" className="memberPortalInfoPrimary" disabled={passwordBusy}>
+                      {passwordBusy ? (th ? 'กำลังบันทึก…' : 'Saving…') : (th ? 'บันทึกรหัสผ่านใหม่' : 'Save new password')}
+                    </button>
+                    {passwordMessage && <p role="status">{passwordMessage}</p>}
+                  </form>
+                </section>}
+                {!user?.actingAsMember && <section className="memberPortalInfoSection memberPortalInfoDanger">
+                  <h3>{th ? 'การเป็นสมาชิก' : 'Membership'}</h3>
+                  <p>{th ? 'หากไม่ประสงค์ใช้งานบัญชีสมาชิกวัดอีกต่อไป' : 'If you no longer wish to use your monastery membership.'}</p>
+                  <button type="button" onClick={() => {
+                    setInfoPanel(null); setCancelMembershipError(''); setCancelMembershipOpen(true);
+                  }}>{th ? 'ยกเลิกการเป็นสมาชิกวัด' : 'Cancel Monastery Membership'}</button>
+                </section>}
+              </>}
+            </div>
+            <footer className="memberPortalCardDialogFooter">
+              <button type="button" onClick={() => setInfoPanel(null)}>{th ? 'ปิดหน้าต่าง' : 'Close'}</button>
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
       {memberCardOpen && createPortal(
         <div
           className="memberPortalCardBackdrop"
