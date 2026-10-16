@@ -80,7 +80,7 @@ function MyDashboard({
       setMemberAccessLoading(true);
       setMemberAccessError('');
       try {
-        const response = await fetch('/api/member-access', {
+        const response = await fetch('/api/line-login?route=member-access', {
           credentials: 'include', cache: 'no-store', signal: controller.signal
         });
         const result = await response.json();
