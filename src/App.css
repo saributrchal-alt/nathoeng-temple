@@ -5531,3 +5531,314 @@ img {
   .memberPortalDashboard .memberPortalTile,
   .memberPortalDashboard .memberPortalTileIcon { transition: none; }
 }
+
+
+/* International-style member services layout: elegant responsive app cards.
+ * Scope changes to the member-service menu only: no changes to role or routing logic.
+ */
+.memberPortalDashboard .memberPortalAppMenu {
+  overflow: hidden;
+  position: relative;
+  padding: 0 0 24px;
+  background: #ffffff;
+  border: 1px solid #e5e8de;
+  border-radius: 24px;
+  box-shadow: 0 14px 46px rgba(40, 61, 48, .07);
+}
+.memberPortalAppHero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 182px;
+  padding: 28px clamp(20px, 4vw, 44px);
+  background:
+    radial-gradient(ellipse at 73% 23%, rgba(254, 221, 167, .67), transparent 38%),
+    linear-gradient(115deg, #fbfaf5 0%, #fcf7ed 53%, #eff6ee 100%);
+  border-bottom: 1px solid #eee7d6;
+}
+.memberPortalAppHero::after {
+  content: '';
+  position: absolute;
+  height: 110px;
+  width: 100%;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(0deg, rgba(255,255,255,.25), transparent 87%);
+  pointer-events: none;
+}
+.memberPortalAppHeroCopy { position: relative; z-index: 2; width: 64%; min-width: 0; }
+.memberPortalAppEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .17em;
+  color: #9b7433;
+  margin-bottom: 13px;
+}
+.memberPortalAppEyebrowIcon {
+  font-size: 16px;
+  color: #bd9a52;
+  line-height: 1;
+}
+.memberPortalAppHero h2 {
+  font-size: clamp(23px, 3.2vw, 36px);
+  line-height: 1.23;
+  font-weight: 830;
+  letter-spacing: -.025em;
+  color: #254836;
+  margin: 0;
+}
+.memberPortalAppHero p {
+  color: #7a7868;
+  font-size: clamp(12px, 1.5vw, 15px);
+  line-height: 1.7;
+  margin: 10px 0 0;
+  max-width: 530px;
+}
+.memberPortalAppHeroArtwork {
+  position: absolute;
+  z-index: 1;
+  right: clamp(-50px, 0vw, 8px);
+  bottom: -14px;
+  width: min(47%, 390px);
+  max-height: 190px;
+  opacity: .78;
+  pointer-events: none;
+}
+.memberPortalAppGridIntro {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 15px;
+  margin: 24px clamp(14px, 2vw, 28px) 16px;
+}
+.memberPortalAppGridIntro h3 {
+  font-size: clamp(17px, 2.1vw, 21px);
+  margin: 0;
+  font-weight: 790;
+  color: #24523e;
+}
+.memberPortalAppGridIntro > span {
+  font-size: 12px;
+  color: #85887c;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(11px, 1.65vw, 18px);
+  padding: 0 clamp(14px, 2vw, 28px);
+  box-sizing: border-box;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTile {
+  --tile-bg: #f4f5ee;
+  --tile-color: #64806f;
+  --tile-ink: #304c3d;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  min-width: 0;
+  min-height: 185px;
+  padding: clamp(14px, 1.7vw, 20px);
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.96);
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 112% -18%, color-mix(in srgb, var(--tile-color) 15%, #ffffff) 0%, transparent 63%),
+    linear-gradient(135deg, color-mix(in srgb, var(--tile-bg) 37%, white), var(--tile-bg));
+  color: var(--tile-ink);
+  box-shadow:
+    0 7px 17px rgba(41, 63, 48, .065),
+    inset 0 1px 0 rgba(255,255,255,.98);
+  isolation: isolate;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTile::before,
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTile::after {
+  display: none;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileArt {
+  position: absolute;
+  right: -26px;
+  top: 35px;
+  width: 138px;
+  height: 138px;
+  opacity: .105;
+  color: var(--tile-color);
+  transform: rotate(-11deg);
+  pointer-events: none;
+  z-index: -1;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileArt svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 1.1;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  border-radius: 19px;
+  background: rgba(255,255,255,.89);
+  border: 1px solid color-mix(in srgb, var(--tile-color) 13%, #ffffff);
+  box-shadow: 0 5px 13px color-mix(in srgb, var(--tile-color) 15%, transparent);
+  color: var(--tile-color);
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon::after { display: none; }
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon svg {
+  width: 35px;
+  height: 35px;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+  padding-top: 14px;
+  padding-right: 22px;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileLabel {
+  min-height: 0;
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: clamp(13px, 1.27vw, 16px);
+  line-height: 1.45;
+  font-weight: 840;
+  letter-spacing: -.012em;
+  text-wrap: pretty;
+  color: var(--tile-ink);
+  overflow-wrap: anywhere;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileDescription {
+  display: block;
+  margin-top: 4px;
+  min-width: 0;
+  width: 100%;
+  font-size: clamp(11px, 1vw, 12px);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--tile-ink) 77%, #747474);
+  font-weight: 460;
+  overflow-wrap: anywhere;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTileArrow {
+  display: grid;
+  place-items: center;
+  right: 13px;
+  bottom: 13px;
+  height: 33px;
+  width: 33px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.91);
+  border: 1px solid color-mix(in srgb, var(--tile-color) 18%, #ffffff);
+  box-shadow: 0 4px 13px rgba(36, 53, 37, .065);
+  font-size: 23px;
+  line-height: 1;
+  color: var(--tile-color);
+  opacity: 1;
+  transition: transform .2s ease;
+}
+@media (hover:hover) {
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--tile-color) 30%, white);
+    box-shadow: 0 14px 28px color-mix(in srgb, var(--tile-color) 13%, transparent);
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile:hover .memberPortalTileIcon {
+    transform: translateY(-2px);
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile:hover .memberPortalTileArrow {
+    transform: translateX(3px);
+  }
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTile:focus-visible {
+  outline: 3px solid #bb9442;
+  outline-offset: 4px;
+}
+.memberPortalDashboard .memberPortalAppMenu .memberPortalTile:disabled {
+  opacity: .65;
+  cursor: wait;
+  transform: none;
+}
+@media (max-width: 899px) {
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .memberPortalAppHero { min-height: 145px; }
+}
+@media (max-width: 600px) {
+  .memberPortalDashboard .memberPortalAppMenu { border-radius: 18px; padding-bottom: 17px; }
+  .memberPortalAppHero { padding: 20px 17px; min-height: 142px; }
+  .memberPortalAppHeroCopy { width: 82%; }
+  .memberPortalAppHeroArtwork { width: 64%; opacity: .29; right: -54px; bottom: -28px; }
+  .memberPortalAppHero h2 { font-size: clamp(22px, 5vw, 29px); }
+  .memberPortalAppHero p { font-size: 12px; line-height: 1.5; }
+  .memberPortalAppGridIntro { margin: 18px 13px 13px; }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0 11px;
+    gap: 10px;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile,
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile:last-child:nth-child(3n + 1) {
+    grid-column: auto;
+    flex-direction: column;
+    min-height: 164px;
+    padding: 13px 11px 15px;
+    border-radius: 17px;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+    border-radius: 15px;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon svg { width: 29px; height: 29px; }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileArt {
+    width: 95px;
+    height: 95px;
+    right: -17px;
+    top: 33px;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileText {
+    padding-right: 7px;
+    padding-top: 12px;
+    justify-content: flex-end;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileLabel {
+    font-size: 12px;
+    line-height: 1.34;
+    min-height: 0;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileDescription {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileArrow {
+    width: 24px;
+    height: 24px;
+    right: 7px;
+    bottom: 7px;
+    font-size: 17px;
+  }
+}
+@media (max-width: 360px) {
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid { gap: 7px; }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile { min-height: 167px; padding-inline: 9px; }
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileDescription { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTile,
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon,
+  .memberPortalDashboard .memberPortalAppMenu .memberPortalTileArrow { transition: none; }
+}
