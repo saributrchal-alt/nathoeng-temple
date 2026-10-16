@@ -40,22 +40,96 @@ function countryName(code, lang) {
 
 
 function MemberPortalIcon({ name }) {
+  // One cohesive, lightweight set of original two-tone SVG service icons.
+  // Drawn with currentColor so category palettes and contrast follow the theme.
   const shapes = {
-    profile: <><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></>,
-    card: <><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8" cy="11" r="2"/><path d="M5.5 16c.6-2 4.4-2 5 0M14 10h4.5M14 14h4.5"/></>,
-    donation: <><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 11v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5"/></>,
-    retreat: <><path d="M12 20c-5-2.6-8-6-8-10 4 .3 7 2 8 5 1-3 4-4.7 8-5 0 4-3 7.4-8 10Z"/><path d="M12 15c-2-2.2-2-5.1 0-9 2 3.9 2 6.8 0 9ZM3.5 21h17"/></>,
-    news: <><path d="m4 11 13-5v12L4 13.5H2.5v-2.5H4Z"/><path d="m6.5 14 2 6h3l-2.5-5M20 10l2-1.5M20 14l2 1.5"/></>,
-    library: <><path d="M12 6c-2.4-2-5.6-2.5-9-2v13c3.4-.5 6.6 0 9 2 2.4-2 5.6-2.5 9-2V4c-3.4-.5-6.6 0-9 2ZM12 6v13"/></>,
-    health: <><path d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2Z"/><path d="M6 11h3l1.5-2.5 2.5 5 1.5-2.5H18"/></>,
-    equipment: <><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5"/></>,
-    school: <><path d="m2 9.5 10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c3.5 3.5 8.5 3.5 12 0v-5M22 10v7"/></>,
-    contact: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.3 0-2.7-.3-3.8-1l-4.5 1.5 1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 11.5h.1M12.5 11.5h.1M16 11.5h.1"/></>,
-    accounting: <><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M8 7h8M8 11h8M8 15h3m4 0h1M8 18h3m4 0h1"/></>,
-    kathin: <><path d="M4 9h16M6 9l1 11h10l1-11M9 9V5a3 3 0 0 1 6 0v4M3 20h18M10 14h4M10 17h4"/></>,
-    settings: <><path d="M12 2.6 14 4l2.4-.3 1.1 2.2 2.3 1 .1 2.5 1.5 2-1.5 2-.1 2.5-2.3 1-1.1 2.2-2.4-.3-2 1.4-2-1.4-2.4.3-1.1-2.2-2.3-1-.1-2.5-1.5-2 1.5-2 .1-2.5 2.3-1 1.1-2.2L10 4Z"/><circle cx="12" cy="12" r="3.1"/></>
+    profile: <>
+      <circle cx="12" cy="7.3" r="3.4" fill="currentColor" fillOpacity=".11" />
+      <circle cx="12" cy="7.3" r="3.4" />
+      <path d="M4.2 20v-1.9c0-3.8 3.5-5.8 7.8-5.8s7.8 2 7.8 5.8V20" />
+      <path d="M8.2 16.6h7.6" opacity=".55" />
+    </>,
+    card: <>
+      <rect x="2.3" y="4.5" width="19.4" height="15" rx="3" fill="currentColor" fillOpacity=".08" />
+      <rect x="2.3" y="4.5" width="19.4" height="15" rx="3" />
+      <circle cx="8" cy="10.8" r="2.15" fill="currentColor" fillOpacity=".24" />
+      <circle cx="8" cy="10.8" r="2.15" />
+      <path d="M4.9 16c.45-2.65 5.75-2.65 6.2 0M13.6 9.5h5M13.6 12.7h5M13.6 16h3.6" />
+      <path d="M16.4 2.9v3.2M14.8 4.5H18" opacity=".55" />
+    </>,
+    donation: <>
+      <ellipse cx="10.6" cy="6.5" rx="6.8" ry="2.7" fill="currentColor" fillOpacity=".14" />
+      <ellipse cx="10.6" cy="6.5" rx="6.8" ry="2.7" />
+      <path d="M3.8 6.5v5.2c0 1.5 3 2.7 6.8 2.7 2 0 3.8-.35 5-1" />
+      <path d="M3.8 11.7v4.6c0 1.5 3 2.7 6.8 2.7 1.1 0 2.2-.12 3.2-.36" />
+      <path d="M16.1 13.8c.7-1.1 2.2-1.1 2.9 0 1-1.4 3.3-.35 3 1.4-.3 1.6-3 3.4-3 3.4s-2.7-1.8-3-3.4c-.3-1.75 2-2.8 3-1.4Z" fill="currentColor" fillOpacity=".21" />
+      <path d="M16.1 13.8c.7-1.1 2.2-1.1 2.9 0 1-1.4 3.3-.35 3 1.4-.3 1.6-3 3.4-3 3.4s-2.7-1.8-3-3.4c-.3-1.75 2-2.8 3-1.4Z" />
+    </>,
+    retreat: <>
+      <path d="M12 18.4C8.7 16 8.6 11.6 12 6.5c3.4 5.1 3.3 9.5 0 11.9Z" fill="currentColor" fillOpacity=".18" />
+      <path d="M12 18.4C8.7 16 8.6 11.6 12 6.5c3.4 5.1 3.3 9.5 0 11.9Z" />
+      <path d="M11.5 18.7c-5.3-.2-8.5-3-8.8-8.4 3.2.2 5.8 1.45 7.3 3.8M12.5 18.7c5.3-.2 8.5-3 8.8-8.4-3.2.2-5.8 1.45-7.3 3.8" />
+      <path d="M5.2 19.2c2.6 1.5 11 1.5 13.6 0M3.5 22h17" />
+      <circle cx="12" cy="3.5" r="1" fill="currentColor" stroke="none" />
+    </>,
+    news: <>
+      <path d="m4.3 10.1 12.2-4.8v12.8L4.3 13.9H2.5v-3.8Z" fill="currentColor" fillOpacity=".12" />
+      <path d="m4.3 10.1 12.2-4.8v12.8L4.3 13.9H2.5v-3.8Z" />
+      <path d="m6.2 14.5 2.2 5.8h3.2l-2.1-4.8M19.5 9.5l2.4-1.5M19.8 13.2H23M19.5 16.5l2.4 1.5" />
+      <circle cx="17.5" cy="4" r="1.4" fill="currentColor" stroke="none" />
+    </>,
+    library: <>
+      <path d="M12 6.4C9.4 4.5 6.6 4.1 3 4.4v13.8c3.7-.7 6.6-.1 9 2 2.4-2.1 5.3-2.7 9-2V4.4c-3.6-.3-6.4.1-9 2Z" fill="currentColor" fillOpacity=".10" />
+      <path d="M12 6.4C9.4 4.5 6.6 4.1 3 4.4v13.8c3.7-.7 6.6-.1 9 2 2.4-2.1 5.3-2.7 9-2V4.4c-3.6-.3-6.4.1-9 2Z" />
+      <path d="M12 6.4v13.8M5.6 8.4c1.5 0 2.8.25 3.8.8M5.6 11.6c1.5 0 2.8.25 3.8.8M14.6 9.2c1.2-.6 2.5-.8 4-.8M14.6 12.4c1.2-.6 2.5-.8 4-.8" />
+      <path d="M16 4.8V2.6l2.2 1.1" opacity=".6" />
+    </>,
+    health: <>
+      <path d="M12 20.7S3 15.5 3 9.7C3 4.8 9 3.6 12 7.7c3-4.1 9-2.9 9 2 0 5.8-9 11-9 11Z" fill="currentColor" fillOpacity=".12" />
+      <path d="M12 20.7S3 15.5 3 9.7C3 4.8 9 3.6 12 7.7c3-4.1 9-2.9 9 2 0 5.8-9 11-9 11Z" />
+      <path d="M4.9 12h3.5l1.5-3.2 3.1 6.4 1.6-3.2h4.5" />
+    </>,
+    equipment: <>
+      <path d="m12 2.5 9 5.1v9l-9 5-9-5v-9Z" fill="currentColor" fillOpacity=".10" />
+      <path d="m12 2.5 9 5.1v9l-9 5-9-5v-9Z" />
+      <path d="m3 7.6 9 5 9-5M12 12.6v9M7.3 5l9.2 5.2" />
+      <path d="M16.5 15.9h3M18 14.4v3" opacity=".55" />
+    </>,
+    school: <>
+      <path d="m2 9.2 10-5 10 5-10 5-10-5Z" fill="currentColor" fillOpacity=".16" />
+      <path d="m2 9.2 10-5 10 5-10 5-10-5ZM6.2 12v5c3.2 3.1 8.4 3.1 11.6 0v-5M21.8 9.4v7.1" />
+      <circle cx="21.8" cy="18" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M9.3 9.2h5.4" opacity=".6" />
+    </>,
+    accounting: <>
+      <rect x="5" y="2.5" width="14" height="19" rx="2.5" fill="currentColor" fillOpacity=".09" />
+      <rect x="5" y="2.5" width="14" height="19" rx="2.5" />
+      <path d="M8 6.8h8M8 10.3h8M8.2 14.4h2M14 14.4h2M8.2 18h2M14 18h2" />
+      <path d="M16.8 2.6v4.2" opacity=".5" />
+    </>,
+    kathin: <>
+      <path d="M4 9.5h16l-1.9 11H5.9L4 9.5Z" fill="currentColor" fillOpacity=".12" />
+      <path d="M4 9.5h16l-1.9 11H5.9L4 9.5ZM2.7 20.5h18.6M6.3 13.5h11.4" />
+      <path d="M12 9.5V3.4M9 5.9l3-3 3 3M12 14.1v3.3M10.3 15.7h3.4" />
+      <path d="m5.2 5.9-.7-1.3m14.3 1.3.7-1.3" opacity=".6" />
+      <circle cx="4" cy="3.3" r=".9" fill="currentColor" stroke="none" />
+      <circle cx="20" cy="3.3" r=".9" fill="currentColor" stroke="none" />
+    </>,
+    settings: <>
+      <path d="m12 2.7 1.7 1.6 2.3-.2 1.1 2.1 2.3.8v2.5l1.7 1.7-1.1 2.2.35 2.3-2.15 1.1-.8 2.4h-2.4L12 21l-2-1.8H7.5l-.8-2.4-2.15-1.1.35-2.3-1.1-2.2 1.7-1.7V7l2.3-.8 1.1-2.1 2.3.2Z" fill="currentColor" fillOpacity=".10" />
+      <path d="m12 2.7 1.7 1.6 2.3-.2 1.1 2.1 2.3.8v2.5l1.7 1.7-1.1 2.2.35 2.3-2.15 1.1-.8 2.4h-2.4L12 21l-2-1.8H7.5l-.8-2.4-2.15-1.1.35-2.3-1.1-2.2 1.7-1.7V7l2.3-.8 1.1-2.1 2.3.2Z" />
+      <circle cx="12" cy="10.1" r="2.35" />
+      <path d="M8.3 16.1c.5-2.5 6.9-2.5 7.4 0" />
+    </>,
+    contact: <>
+      <path d="M20.6 11.3a8.4 8.4 0 0 1-8.5 8.3c-1.5 0-2.6-.3-3.8-1L3.7 20l1.4-4.3a8.3 8.3 0 1 1 15.5-4.4Z" fill="currentColor" fillOpacity=".10" />
+      <path d="M20.6 11.3a8.4 8.4 0 0 1-8.5 8.3c-1.5 0-2.6-.3-3.8-1L3.7 20l1.4-4.3a8.3 8.3 0 1 1 15.5-4.4Z" />
+      <path d="m8.1 12.3 7.9-3.4-2.2 6.7-1.7-2.5-2.6-.8ZM12.1 13.1l3.9-4.2" />
+    </>
   };
-  return <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{shapes[name] || shapes.profile}</svg>;
+  return <svg viewBox="0 0 24 24" width="32" height="32" fill="none"
+    stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true" focusable="false">{shapes[name] || shapes.profile}</svg>;
 }
 
 function MyDashboard({
