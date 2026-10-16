@@ -4511,3 +4511,300 @@ img {
     white-space: nowrap;
   }
 }
+
+
+/* =========================================================
+   MEMBER PORTAL RESPONSIVE TILE NAVIGATION
+   Uses existing member data, routes, and digital card.
+   ========================================================= */
+.memberPortalPage {
+  padding: 26px 12px 72px;
+  background: radial-gradient(circle at 13% 6%, #fff9e9 0, transparent 35%), #f5f7f1;
+}
+.nathoengDashboard.memberPortalDashboard {
+  width: min(1160px, calc(100% - 12px));
+  max-width: 1160px;
+  padding: clamp(16px, 3vw, 30px);
+  border-radius: 25px;
+  background: #fffefa;
+  border-color: #e6e9dc;
+  box-shadow: 0 20px 56px rgba(32, 60, 44, .065);
+}
+.memberPortalDashboard .compactBackButton { margin-bottom: 14px !important; }
+.memberPortalDashboard .compactAccountHero {
+  position: relative;
+  isolation: isolate;
+  padding: clamp(24px, 4vw, 41px);
+  margin-bottom: 18px;
+  border: 1px solid #e9e5d1;
+  border-radius: 22px;
+  text-align: left;
+  overflow: hidden;
+  background: linear-gradient(90deg,rgba(255,253,239,.98),rgba(255,253,239,.94) 43%,rgba(255,253,239,.46) 100%), url('/images/hero-temple.png') center 38% / cover;
+}
+.memberPortalDashboard .compactAccountHero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 180px;
+  height: 180px;
+  border: 24px solid rgba(173,131,54,.06);
+  border-radius: 50%;
+  right: -42px;
+  top: -82px;
+}
+.memberPortalDashboard .compactAccountHero h1 {
+  font-size: clamp(29px, 4vw, 43px);
+  margin: 9px 0;
+  color: #1f5140;
+}
+.memberPortalDashboard .compactAccountHero p {
+  font-size: clamp(12px, 1.45vw, 14px);
+  line-height: 1.8;
+  max-width: 490px;
+  color: #5d7165;
+}
+.memberPortalIdentity {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 15px;
+  align-items: stretch;
+}
+.memberPortalDashboard .memberPortalIdentity .compactProfileCard {
+  min-width: 0;
+  min-height: 194px;
+  padding: clamp(15px, 2vw, 24px);
+  margin: 0;
+  background: linear-gradient(140deg,#fff 10%,#f1f8f0 100%);
+  border: 1px solid #e3eadd;
+  border-radius: 19px;
+  box-shadow: 0 5px 20px rgba(39,79,55,.055);
+}
+.memberPortalDashboard .compactProfileInfo { min-width: 0; }
+.memberPortalDashboard .compactProfileInfo strong { overflow-wrap: anywhere; line-height: 1.35; }
+.memberPortalDashboard .memberPortalCardWrap { min-width:0; scroll-margin-top:90px; }
+.memberPortalDashboard .memberPortalCardWrap .memberCardWidget {
+  margin: 0;
+  min-height: 100%;
+  padding: clamp(12px,2vw,18px);
+  border-radius: 19px;
+  background: linear-gradient(140deg,#fff9e9,#fffefa 60%,#edf5ea);
+  border-color: #e5d5ae;
+  box-shadow: 0 5px 20px rgba(102,75,32,.07);
+}
+.memberPortalDashboard .memberCardSurface { max-width: 420px; margin: 0 auto; }
+.memberPortalMetrics {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+.memberPortalMetric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid #e7e9df;
+  background: #fff;
+  border-radius: 16px;
+  padding: 15px 16px;
+}
+.memberPortalMetric > svg {
+  flex-shrink:0;
+  width: 31px;
+  height: 31px;
+  color: #bb8430;
+  padding: 5px;
+  border-radius: 11px;
+  box-sizing: content-box;
+  background: #fff4d9;
+}
+.memberPortalMetric > span { min-width: 0; display: flex; flex-direction: column; }
+.memberPortalMetric small { color: #657568; font-size: 11px; }
+.memberPortalMetric strong { color: #235141; font-size: 19px; line-height: 1.4; overflow-wrap:anywhere; }
+.memberPortalMetric strong small { font-size: 11px; }
+.memberPortalShortcuts {
+  background: #fff;
+  border: 1px solid #e3e9df;
+  padding: clamp(16px, 2.1vw, 24px);
+  border-radius: 20px;
+  box-shadow: 0 7px 24px rgba(41,69,51,.045);
+  margin: 18px 0;
+}
+.memberPortalShortcutsHeading { margin-bottom: 15px; }
+.memberPortalShortcutsHeading h2 {
+  font-size: clamp(18px,2.5vw,23px);
+  margin: 5px 0 3px;
+  color: #235141;
+}
+.memberPortalShortcutsHeading p {
+  margin: 0;
+  font-size: 12px;
+  color: #708075;
+}
+.memberPortalShortcutGrid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap: 11px;
+}
+.memberPortalTile {
+  --tile-color:#2e775a;
+  --tile-bg:#edf7ef;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 122px;
+  padding: 13px 8px 17px;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  background: var(--tile-bg);
+  text-decoration:none;
+  color:#234a3c;
+  font: inherit;
+  cursor:pointer;
+  text-align:center;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.memberPortalTile:hover {
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--tile-color) 26%,transparent);
+  box-shadow:0 7px 18px rgba(26,62,40,.095);
+}
+.memberPortalTile:focus-visible {
+  outline: 3px solid #b0803a;
+  outline-offset: 3px;
+}
+.memberPortalTile:disabled {cursor:wait;opacity:.6;transform:none;}
+.memberPortalTileIcon {
+  display:grid;
+  place-items:center;
+  width:47px;
+  height:47px;
+  border-radius:15px;
+  color:var(--tile-color);
+  background:rgba(255,255,255,.68);
+}
+.memberPortalTileIcon svg {width:29px;height:29px;}
+.memberPortalTileLabel {
+  font-size: clamp(11px, 1.15vw, 13px);
+  line-height:1.4;
+  font-weight:600;
+  min-height: 35px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow-wrap:anywhere;
+}
+.memberPortalTileArrow {
+  position:absolute;
+  bottom:5px;
+  right:11px;
+  color:var(--tile-color);
+  font-size:18px;
+  opacity:.7;
+}
+.memberPortalTileUnread {
+  position:absolute;
+  top:7px;
+  right:7px;
+  display:grid;
+  place-items:center;
+  min-width:22px;
+  height:22px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#b94337;
+  color:white;
+  font-size:10px;
+  font-weight:700;
+}
+.memberPortalTile.tone-gold {--tile-bg:#fcf5e5;--tile-color:#aa7d24;}
+.memberPortalTile.tone-amber {--tile-bg:#fff3dc;--tile-color:#b87912;}
+.memberPortalTile.tone-rose {--tile-bg:#fbf0f5;--tile-color:#a75580;}
+.memberPortalTile.tone-sky {--tile-bg:#edf6fb;--tile-color:#307d9e;}
+.memberPortalTile.tone-cream {--tile-bg:#faf5e9;--tile-color:#a97832;}
+.memberPortalTile.tone-mint {--tile-bg:#eaf7f2;--tile-color:#237959;}
+.memberPortalTileError {color:#ad4436;font-size:13px;}
+.memberPortalDashboard .accountOtherMenuButton {
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  min-height:52px;
+  padding:13px 18px;
+  margin:16px 0;
+  border:1px solid #dac9a9;
+  border-radius:15px;
+  background:#fffaf0;
+  color:#6e552e;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.memberPortalDashboard #account-profile,
+.memberPortalDashboard #member-portal-donations {scroll-margin-top:90px;}
+.memberPortalDashboard .accountOtherContent .compactSummaryCard {
+  box-shadow:0 3px 14px rgba(35,78,53,.04);
+}
+@media (min-width: 768px) and (max-width: 1050px) {
+  .memberPortalShortcutGrid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .memberPortalMetric {padding:12px 11px;gap:7px;}
+}
+@media (max-width: 767px) {
+  .memberPortalPage {padding: 12px 0 94px !important;}
+  .nathoengDashboard.memberPortalDashboard {
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    width:calc(100% - 16px) !important;
+    padding:12px !important;
+    border-radius:18px !important;
+  }
+  .memberPortalDashboard .compactAccountHero {
+    padding:24px 17px;
+    margin-bottom:13px;
+    background-position:center,right center;
+    text-align:left;
+    border-radius:18px;
+  }
+  .memberPortalDashboard .compactAccountHero h1 {font-size:30px;}
+  .memberPortalDashboard .compactAccountHero p {font-size:12px;}
+  .memberPortalIdentity {grid-template-columns:minmax(0,1fr);gap:11px;}
+  .memberPortalDashboard .memberPortalIdentity .compactProfileCard {
+    min-height:0;
+    padding:15px 13px;
+  }
+  .memberPortalDashboard .memberPortalCardWrap .memberCardWidget {padding:12px;}
+  .memberPortalMetrics {gap:6px;margin:10px 0;}
+  .memberPortalMetric {
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:9px 5px;
+    text-align:center;
+    border-radius:12px;
+  }
+  .memberPortalMetric > svg {width:20px;height:20px;padding:5px;border-radius:9px;}
+  .memberPortalMetric strong {font-size:15px;}
+  .memberPortalMetric small {font-size:9px;line-height:1.3;}
+  .memberPortalShortcuts {padding:14px 11px;border-radius:17px;margin:12px 0;}
+  .memberPortalShortcutGrid {grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}
+  .memberPortalTile {min-height:104px;padding:11px 5px 13px;gap:7px;border-radius:12px;}
+  .memberPortalTileIcon {width:40px;height:40px;border-radius:12px;}
+  .memberPortalTileIcon svg {width:25px;height:25px;}
+  .memberPortalTileLabel {font-size:11px;min-height:32px;line-height:1.4;}
+  .memberPortalTile:last-child:nth-child(3n + 1) {grid-column:1 / -1;min-height:70px;flex-direction:row;}
+  .memberPortalTile:last-child:nth-child(3n + 1) .memberPortalTileLabel {min-height:auto;}
+  .memberPortalTileArrow {bottom:3px;right:7px;}
+}
+@media (max-width: 360px) {
+  .memberPortalShortcutGrid {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .memberPortalTile:last-child:nth-child(3n + 1){grid-column:auto;min-height:104px;flex-direction:column;}
+  .memberPortalTileLabel {font-size:11px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .memberPortalTile {transition:none;}
+}
