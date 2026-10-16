@@ -819,8 +819,7 @@ function MyDashboard({
   ];
 
 
-  const scrollToMemberSection = (id, expand = false) => {
-    if (expand) setOtherMenuOpen(true);
+  const scrollToMemberSection = (id) => {
     if (typeof window !== 'undefined') {
       window.setTimeout(() => document.getElementById(id)?.scrollIntoView({
         behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth',
@@ -846,7 +845,7 @@ function MyDashboard({
 
   return (
     <div className="nathoengDashboardPage compactAccountPage memberPortalPage">
-      <div className={`nathoengDashboard compactAccountDashboard memberPortalDashboard${otherMenuOpen ? ' accountMenuOpen' : ''}`}>
+      <div className="nathoengDashboard compactAccountDashboard memberPortalDashboard">
 
 
         <button
