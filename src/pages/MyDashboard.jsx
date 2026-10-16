@@ -68,6 +68,36 @@ function MyDashboard({
 }) {
   const th = lang === 'th';
   const [infoPanel, setInfoPanel] = useState(null);
+  const [memberAccess, setMemberAccess] = useState(null);
+  const [memberAccessLoading, setMemberAccessLoading] = useState(false);
+  const [memberAccessError, setMemberAccessError] = useState('');
+
+  useEffect(() => {
+    if (infoPanel !== 'settings' || !user?.memberId) return undefined;
+    const controller = new AbortController();
+    const loadMemberAccess = async () => {
+      setMemberAccess(null);
+      setMemberAccessLoading(true);
+      setMemberAccessError('');
+      try {
+        const response = await fetch('/api/member-access', {
+          credentials: 'include', cache: 'no-store', signal: controller.signal
+        });
+        const result = await response.json();
+        if (!response.ok || !result?.success || !result?.access)
+          throw new Error(result?.message || 'Permission check failed');
+        if (!controller.signal.aborted) setMemberAccess(result.access);
+      } catch (error) {
+        if (!controller.signal.aborted) setMemberAccessError(
+          th ? 'ยังตรวจสอบสิทธิ์ไม่ได้ กรุณาเปิดอีกครั้ง' : 'Unable to check access. Please reopen this panel.'
+        );
+      } finally {
+        if (!controller.signal.aborted) setMemberAccessLoading(false);
+      }
+    };
+    loadMemberAccess();
+    return () => controller.abort();
+  }, [infoPanel, user?.memberId, th]);
   const contactTileRef = useRef(null);
   const settingsTileRef = useRef(null);
   const accountingTileRef = useRef(null);
@@ -890,16 +920,7 @@ function MyDashboard({
   ];
 
 
-  const scrollToMemberSection = (id) => {
-    if (typeof window !== 'undefined') {
-      window.setTimeout(() => document.getElementById(id)?.scrollIntoView({
-        behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth',
-        block: 'start'
-      }), 0);
-    }
-  };
   const memberShortcuts = [
-    { key: 'profile', icon: 'profile', tone: 'sage', th: 'ข้อมูลสมาชิก', en: 'My Profile', onClick: () => scrollToMemberSection('account-profile') },
     { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
     { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => goToPage('donation-list') },
     { key: 'retreat', icon: 'retreat', tone: 'rose', th: 'กิจกรรม / ปฏิบัติธรรม', en: 'Retreat & Activities', onClick: () => goToPage('my-stays') },
@@ -911,8 +932,8 @@ function MyDashboard({
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: openSchool, disabled: schoolOpening }
     ] : []),
     { key: 'accounting', icon: 'accounting', tone: 'sky', th: 'บัญชีวัด', en: 'Temple Accounting', onClick: openTempleAccounting, disabled: accountOpening },
-    { key: 'kathin', icon: 'kathin', tone: 'gold', th: 'งานกฐิน', en: 'Kathin Staff', onClick: openKathinStaff, disabled: kathinOpening },
-    ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ตั้งค่าบัญชี', en: 'Account Settings', onClick: () => setInfoPanel('settings') }] : []),
+    { key: 'kathin', icon: 'kathin', tone: 'gold', th: 'Staff งานกฐิน', en: 'Kathin Staff', onClick: openKathinStaff, disabled: kathinOpening },
+    ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ข้อมูลสมาชิก / ตั้งค่าบัญชี', en: 'Profile & Settings', onClick: () => setInfoPanel('settings') }] : []),
     { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => setInfoPanel('contact') }
   ];
 
@@ -1304,7 +1325,7 @@ function MyDashboard({
                 <div>
                   <span>NATHOENG CONNECT</span>
                   <h2 id="member-portal-info-title">
-                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : infoPanel.startsWith('account-') ? (th ? 'บัญชีวัด' : 'Temple Accounting') : infoPanel.startsWith('kathin-') ? (th ? 'งานกฐิน' : 'Kathin Staff') : (th ? 'ตั้งค่าบัญชีสมาชิก' : 'Account Settings')}
+                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : infoPanel.startsWith('account-') ? (th ? 'บัญชีวัด' : 'Temple Accounting') : infoPanel.startsWith('kathin-') ? (th ? 'งานกฐิน' : 'Kathin Staff') : (th ? 'ข้อมูลสมาชิกและตั้งค่าบัญชี' : 'Profile & Account Settings')}
                   </h2>
                 </div>
               </div>
@@ -1359,14 +1380,55 @@ function MyDashboard({
                   {th ? 'ดูที่ตั้งวัดและข้อมูลติดต่อเพิ่มเติม →' : 'Monastery location and other contact details →'}
                 </button>
               </> : <>
-                {!user?.actingAsMember && <section className="memberPortalInfoSection">
-                  <h3>{th ? 'ข้อมูลส่วนตัว' : 'My Profile'}</h3>
-                  <p>{th ? 'เปลี่ยนชื่อ รูปโปรไฟล์ และข้อมูลสมาชิก' : 'Edit your name, photo, and member details.'}</p>
-                  <button type="button" className="memberPortalInfoPrimary" onClick={() => {
-                    setInfoPanel(null);
-                    openProfileEditor();
-                  }}>{th ? 'แก้ไขโปรไฟล์' : 'Edit Profile'}</button>
-                </section>}
+                <section className="memberPortalSettingsProfile" aria-label={th ? 'ข้อมูลสมาชิกปัจจุบัน' : 'Current member profile'}>
+                  <div className="memberPortalSettingsAvatar">
+                    {(profilePicture || user?.picture) && !profileImageError
+                      ? <img src={profilePicture || user?.picture}
+                          referrerPolicy="no-referrer" alt=""
+                          onError={() => setProfileImageError(true)} />
+                      : <img src="/icons/meditation.svg" alt="" aria-hidden="true" />}
+                  </div>
+                  <strong className="memberPortalSettingsName">
+                    {identityLoading
+                      ? (th ? 'กำลังตรวจสอบข้อมูล...' : 'Checking profile...')
+                      : (verifiedFullName || user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng Member'))}
+                  </strong>
+                  <span className="memberPortalSettingsHint">NATHOENG CONNECT · MEMBER</span>
+                  {!user?.actingAsMember && <button type="button" className="memberPortalInfoPrimary"
+                    onClick={() => { setInfoPanel(null); openProfileEditor(); }}>
+                    {th ? 'แก้ไขข้อมูลส่วนตัว' : 'Edit Personal Information'}
+                  </button>}
+                </section>
+                <section className="memberPortalInfoSection" aria-labelledby="member-access-title">
+                  <h3 id="member-access-title">{th ? 'สิทธิ์การเข้าระบบ' : 'System Access Permissions'}</h3>
+                  {memberAccessLoading && <p role="status">{th ? 'กำลังตรวจสอบสิทธิ์ล่าสุด...' : 'Checking permissions...'}</p>}
+                  {memberAccessError && <p role="status" className="memberPortalInfoError">{memberAccessError}</p>}
+                  <div className="memberPortalAccessList">
+                    {[
+                      { key: 'library', th: 'ห้องสมุด', en: 'Library', icon: 'library' },
+                      { key: 'equipment', th: 'ยืม–คืนอุปกรณ์', en: 'Equipment Loans', icon: 'equipment' },
+                      { key: 'accounting', th: 'บัญชีวัด', en: 'Temple Accounting', icon: 'accounting' },
+                      { key: 'health', th: 'สุขภาพชุมชน', en: 'Community Health', icon: 'health' },
+                      { key: 'school', th: 'การเรียนออนไลน์', en: 'Nathoeng School', icon: 'school' },
+                      { key: 'kathin', th: 'Staff งานกฐิน', en: 'Kathin Staff', icon: 'kathin' }
+                    ].map(item => {
+                      const granted = memberAccess?.[item.key] === true;
+                      const unknown = !memberAccess || memberAccess[item.key] === null;
+                      return <div key={item.key} className={'memberPortalAccessItem ' + (granted ? 'is-allowed' : 'is-unavailable')}>
+                        <span className="memberPortalAccessName">
+                          <MemberPortalIcon name={item.icon} />
+                          <strong>{th ? item.th : item.en}</strong>
+                        </span>
+                        <span className="memberPortalAccessStatus">
+                          <span aria-hidden="true">{granted ? '✓' : unknown ? '!' : '–'}</span>
+                          {granted ? (th ? 'อนุญาต' : 'Allowed')
+                            : unknown ? (th ? 'ยังตรวจสอบไม่ได้' : 'Not verified')
+                              : (th ? 'ยังใช้งานไม่ได้' : 'Not available')}
+                        </span>
+                      </div>;
+                    })}
+                  </div>
+                </section>
                 <section className="memberPortalInfoSection">
                   <h3>{th ? 'รับข่าวสารและประกาศจากวัด' : 'Monastery notifications'}</h3>
                   <p>{th ? 'เปิดรับการแจ้งเตือนบนอุปกรณ์เครื่องนี้' : 'Enable notifications on this device.'}</p>
