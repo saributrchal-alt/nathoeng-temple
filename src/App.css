@@ -4749,7 +4749,7 @@ img {
 .memberPortalDashboard .accountOtherContent .compactSummaryCard {
   box-shadow:0 3px 14px rgba(35,78,53,.04);
 }
-@media (min-width: 768px) and (max-width: 1050px) {
+@media (min-width: 768px) and (max-width: 899px) {
   .memberPortalShortcutGrid { grid-template-columns:repeat(4,minmax(0,1fr)); }
   .memberPortalMetric {padding:12px 11px;gap:7px;}
 }
@@ -4808,3 +4808,51 @@ img {
 @media (prefers-reduced-motion:reduce){
   .memberPortalTile {transition:none;}
 }
+
+
+/* Desktop member account deliberately follows the tablet dashboard composition. */
+@media (min-width: 900px) {
+  .nathoengDashboard.memberPortalDashboard {
+    width: min(1180px, calc(100% - 36px));
+    max-width: 1180px;
+  }
+  .memberPortalDashboard .memberPortalIdentity {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .memberPortalDashboard .memberPortalShortcutGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .memberPortalDashboard .memberPortalTile {
+    min-height: 136px;
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .memberPortalDashboard .memberPortalTileIcon {
+    width: 52px;
+    height: 52px;
+  }
+  .memberPortalDashboard .memberPortalTileLabel {
+    font-size: 13px;
+  }
+  .memberPortalDashboard .memberPortalMetrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.memberEntryLoading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 13px;
+  min-height: 260px;
+  margin: 25px auto;
+  padding: 24px;
+  width: min(560px, 94%);
+  background: #fffdf7;
+  border: 1px solid #e8dfc9;
+  border-radius: 20px;
+  color: #315943;
+  text-align: center;
+}
+.memberEntryLoading img { display: block; width: 58px; height: 58px; object-fit: contain; }
+.memberEntryLoading p { margin: 0; font-size: 14px; }
