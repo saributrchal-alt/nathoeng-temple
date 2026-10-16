@@ -52,6 +52,7 @@ function MemberPortalIcon({ name }) {
     school: <><path d="m2 9.5 10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c3.5 3.5 8.5 3.5 12 0v-5M22 10v7"/></>,
     contact: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.3 0-2.7-.3-3.8-1l-4.5 1.5 1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 11.5h.1M12.5 11.5h.1M16 11.5h.1"/></>,
     accounting: <><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M8 7h8M8 11h8M8 15h3m4 0h1M8 18h3m4 0h1"/></>,
+    kathin: <><path d="M4 9h16M6 9l1 11h10l1-11M9 9V5a3 3 0 0 1 6 0v4M3 20h18M10 14h4M10 17h4"/></>,
     settings: <><path d="M12 2.6 14 4l2.4-.3 1.1 2.2 2.3 1 .1 2.5 1.5 2-1.5 2-.1 2.5-2.3 1-1.1 2.2-2.4-.3-2 1.4-2-1.4-2.4.3-1.1-2.2-2.3-1-.1-2.5-1.5-2 1.5-2 .1-2.5 2.3-1 1.1-2.2L10 4Z"/><circle cx="12" cy="12" r="3.1"/></>
   };
   return <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{shapes[name] || shapes.profile}</svg>;
@@ -70,6 +71,7 @@ function MyDashboard({
   const contactTileRef = useRef(null);
   const settingsTileRef = useRef(null);
   const accountingTileRef = useRef(null);
+  const kathinTileRef = useRef(null);
   const infoDialogRef = useRef(null);
   const infoCloseRef = useRef(null);
   useEffect(() => {
@@ -100,7 +102,7 @@ function MyDashboard({
       window.cancelAnimationFrame(animation);
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = oldOverflow;
-      (infoPanel === 'contact' ? contactTileRef : infoPanel.startsWith('account-') ? accountingTileRef : settingsTileRef).current?.focus({ preventScroll: true });
+      (infoPanel === 'contact' ? contactTileRef : infoPanel.startsWith('account-') ? accountingTileRef : infoPanel.startsWith('kathin-') ? kathinTileRef : settingsTileRef).current?.focus({ preventScroll: true });
     };
   }, [infoPanel]);
   const [memberCardOpen, setMemberCardOpen] = useState(false);
@@ -184,12 +186,48 @@ function MyDashboard({
   const [cancelMembershipWorking, setCancelMembershipWorking] = useState(false);
   const [cancelMembershipError, setCancelMembershipError] = useState('');
   const kathinDrinksActive = Date.now() < Date.parse('2026-11-08T17:00:00Z');
-  const [kathinStaff, setKathinStaff] = useState(false);
+  const [kathinOpening, setKathinOpening] = useState(false);
+  const [kathinAccessError, setKathinAccessError] = useState('');
   const [schoolOpening, setSchoolOpening] = useState(false);
   const [schoolError, setSchoolError] = useState('');
   const [accountOpening, setAccountOpening] = useState(false);
   const [accountError, setAccountError] = useState('');
 
+
+
+  const openKathinStaff = async () => {
+    if (kathinOpening) return;
+    if (user?.actingAsMember) {
+      setInfoPanel('kathin-denied');
+      return;
+    }
+    setKathinOpening(true);
+    setKathinAccessError('');
+    try {
+      const response = await fetch('/api/line-login?route=kathin-access', {
+        credentials: 'include', cache: 'no-store'
+      });
+      const result = await response.json();
+      if (response.ok && result?.success && (result.staff || result.admin)) {
+        window.location.assign('https://kathin.nathoeng.com/#queue-board');
+        return;
+      }
+      if (response.status === 401 || response.status === 403 ||
+          (response.ok && !result.staff && !result.admin)) {
+        setInfoPanel('kathin-denied');
+      } else {
+        throw Error('Kathin permission service unavailable');
+      }
+    } catch (error) {
+      console.error('Kathin access check:', error);
+      setKathinAccessError(th
+        ? 'ตรวจสอบสิทธิ์งานกฐินไม่สำเร็จ กรุณาลองใหม่หรือติดต่อทางวัด'
+        : 'Unable to verify Kathin access. Please try again or contact the monastery.');
+      setInfoPanel('kathin-error');
+    } finally {
+      setKathinOpening(false);
+    }
+  };
 
   const openTempleAccounting = async () => {
     if (accountOpening) return;
@@ -249,21 +287,6 @@ function MyDashboard({
     } catch (error) { setSchoolError(error.message); setSchoolOpening(false); }
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    setKathinStaff(false);
-    if (!user?.memberId) return undefined;
-    const check = async () => {
-      try {
-        const response = await fetch('/api/line-login?route=kathin-access', {credentials:'include',cache:'no-store'});
-        const result = await response.json();
-        if (!cancelled) setKathinStaff(response.ok && Boolean(result.staff || result.admin));
-      } catch { if (!cancelled) setKathinStaff(false); }
-    };
-    check();
-    window.addEventListener('focus', check);
-    return () => { cancelled = true; window.removeEventListener('focus', check); };
-  }, [user?.memberId]);
 
   const [donationSummary, setDonationSummary] = useState({
     moneyTotal: 0,
@@ -888,6 +911,7 @@ function MyDashboard({
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: openSchool, disabled: schoolOpening }
     ] : []),
     { key: 'accounting', icon: 'accounting', tone: 'sky', th: 'บัญชีวัด', en: 'Temple Accounting', onClick: openTempleAccounting, disabled: accountOpening },
+    { key: 'kathin', icon: 'kathin', tone: 'gold', th: 'งานกฐิน', en: 'Kathin Staff', onClick: openKathinStaff, disabled: kathinOpening },
     ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ตั้งค่าบัญชี', en: 'Account Settings', onClick: () => setInfoPanel('settings') }] : []),
     { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => setInfoPanel('contact') }
   ];
@@ -905,14 +929,9 @@ function MyDashboard({
           {th ? '← กลับสู่หน้าหลัก' : '← Back to Home'}
         </button>
 
-        {kathinDrinksActive && <a href="https://kathin.nathoeng.com/" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
+        {kathinDrinksActive && <a href="https://kathin.nathoeng.com/#order-drink" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
           <span aria-hidden="true" style={{ fontSize: 64, lineHeight: 1.15, flexShrink: 0 }}>☕</span>
           <strong style={{ fontSize: 21, lineHeight: 1.5, minWidth: 0 }}>{th ? 'กดรับกาแฟ เครื่องดื่มฟรีในงาน' : 'Tap for free coffee and drinks at the event'}</strong>
-        </a>}
-
-        {kathinStaff && <a href="https://kathin.nathoeng.com/#staff-dashboard" style={{display:'block',marginBottom:18,padding:18,borderRadius:16,background:'#edf6ef',border:'1px solid #b5d4bf',color:'#24563a',textDecoration:'none'}}>
-          <strong style={{display:'block',fontSize:18}}>{th?'แดชบอร์ดเจ้าหน้าที่งานกฐิน':'Kathin Staff dashboard'}</strong>
-          <small>{th?'จัดการคิว · เรียกรับ · ส่งเครื่องดื่ม · บริการสมาชิก':'Manage queues · Call and serve drinks · Assist members'}</small>
         </a>}
 
         <div className="memberPortalIdentity">
@@ -1017,7 +1036,7 @@ function MyDashboard({
               </>;
               return item.href
                 ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}>{content}</a>
-                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : item.key === 'accounting' ? accountingTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings', 'accounting'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
+                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : item.key === 'accounting' ? accountingTileRef : item.key === 'kathin' ? kathinTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings', 'accounting', 'kathin'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
             })}
           </div>
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
@@ -1280,12 +1299,12 @@ function MyDashboard({
             <header className="memberPortalCardDialogHeader">
               <div className="memberPortalCardDialogTitle">
                 <span className="memberPortalCardDialogIcon" aria-hidden="true">
-                  <MemberPortalIcon name={infoPanel === 'contact' ? 'contact' : infoPanel.startsWith('account-') ? 'accounting' : 'settings'} />
+                  <MemberPortalIcon name={infoPanel === 'contact' ? 'contact' : infoPanel.startsWith('account-') ? 'accounting' : infoPanel.startsWith('kathin-') ? 'kathin' : 'settings'} />
                 </span>
                 <div>
                   <span>NATHOENG CONNECT</span>
                   <h2 id="member-portal-info-title">
-                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : infoPanel.startsWith('account-') ? (th ? 'บัญชีวัด' : 'Temple Accounting') : (th ? 'ตั้งค่าบัญชีสมาชิก' : 'Account Settings')}
+                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : infoPanel.startsWith('account-') ? (th ? 'บัญชีวัด' : 'Temple Accounting') : infoPanel.startsWith('kathin-') ? (th ? 'งานกฐิน' : 'Kathin Staff') : (th ? 'ตั้งค่าบัญชีสมาชิก' : 'Account Settings')}
                   </h2>
                 </div>
               </div>
@@ -1295,14 +1314,14 @@ function MyDashboard({
             </header>
 
             <div className="memberPortalInfoBody">
-              {infoPanel.startsWith('account-') ? (
+              {(infoPanel.startsWith('account-') || infoPanel.startsWith('kathin-')) ? (
                 <section className="memberPortalAccountNotice" role="alert">
                   <span className="memberPortalAccountNoticeIcon" aria-hidden="true">🔒</span>
-                  <p>{infoPanel === 'account-denied'
+                  <p>{['account-denied', 'kathin-denied'].includes(infoPanel)
                     ? (th
                       ? 'ท่านยังไม่สามารถใช้รูปแบบนี้ในขณะนี้ กรุณาติดต่อทางวัด'
                       : 'You cannot use this service at this time. Please contact the monastery.')
-                    : accountError}</p>
+                    : (infoPanel === 'kathin-error' ? kathinAccessError : accountError)}</p>
                   <button type="button" className="memberPortalInfoSecondary" onClick={() => setInfoPanel('contact')}>
                     {th ? 'ติดต่อทางวัดผ่าน LINE หรือ Telegram' : 'Contact us via LINE or Telegram'}
                   </button>
