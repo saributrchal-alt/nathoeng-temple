@@ -471,7 +471,13 @@ function PublicSupportingTeam({ lang }) {
 
 function App() {
   const [lang, setLang] = useState('th')
-  const [currentPage, setCurrentPage] = useState('home')
+  // The default website/PWA entry is the member hub. Explicit deep links keep working.
+  const [currentPage, setCurrentPage] = useState(() =>
+    typeof window !== 'undefined' && window.location.hash.length > 1
+      ? 'home'
+      : 'my-dashboard'
+  )
+  const [memberSessionReady, setMemberSessionReady] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [openSubmenu, setOpenSubmenu] = useState(null)
   const [copied, setCopied] = useState(false)
@@ -512,6 +518,12 @@ useEffect(() => {
     const handleHashChange = () => {
       captureMobileCardReturn()
       const hash = window.location.hash.replace('#', '')
+      // Opening the domain without a hash starts at My Dashboard.
+      // Home, donation, retreat, login and other explicit links remain unchanged.
+      if (!hash) {
+        setCurrentPage('my-dashboard')
+        return
+      }
       if (
         hash === 'event-kathina' || 
         hash === 'dhamma-live' ||
@@ -606,6 +618,8 @@ useEffect(() => {
       localStorage.removeItem('nathoeng_user');
       localStorage.removeItem('line_user');
       setUser(null);
+    } finally {
+      if (!cancelled) setMemberSessionReady(true);
     }
   };
 
@@ -1930,7 +1944,12 @@ const handleLineLogin = async (mode = 'login') => {
           <DonationListPage lang={lang} goToPage={goToPage} />
         ) : currentPage === 'my-dashboard' ? (
           /* ================= PAGE: MY DASHBOARD ================= */
-          user ? (
+          !memberSessionReady ? (
+            <section className="memberEntryLoading" role="status" aria-live="polite">
+              <img src="/icons/nathoeng-brown-192.png" alt="" aria-hidden="true" />
+              <p>{lang === 'th' ? 'กำลังเปิดบัญชีสมาชิก...' : 'Opening your member account...'}</p>
+            </section>
+          ) : user ? (
             <MyDashboard
               lang={lang}
               goToPage={goToPage}
