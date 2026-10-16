@@ -4988,3 +4988,190 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .memberPortalCardDialog { scroll-behavior: auto; }
 }
+
+
+/* Compact member dashboard: only member identity, stats, service icons and logout. */
+.memberPortalDashboard .memberPortalIdentity {
+  grid-template-columns: minmax(0, 1fr);
+}
+.memberPortalDashboard .memberPortalShortcuts {
+  margin-bottom: 20px;
+}
+.memberPortalDashboard .compactLogoutWrap {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+.memberPortalInfoDialog {
+  width: min(100%, 580px);
+}
+.memberPortalInfoBody {
+  display: grid;
+  gap: 18px;
+  padding: 20px 22px;
+}
+.memberPortalInfoLead {
+  margin: 0;
+  color: #647467;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.memberPortalContactOptions {
+  display: grid;
+  gap: 12px;
+}
+.memberPortalContactOption {
+  min-height: 72px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 15px;
+  color: #fff !important;
+  text-decoration: none !important;
+  box-sizing: border-box;
+}
+.memberPortalContactLine { background: #08bd54; }
+.memberPortalContactTelegram { background: #258fcb; }
+.memberPortalContactOption:hover { filter: brightness(.94); }
+.memberPortalContactOption:focus-visible,
+.memberPortalInfoDialog button:focus-visible,
+.memberPortalInfoDialog input:focus-visible {
+  outline: 3px solid #b18536;
+  outline-offset: 2px;
+}
+.memberPortalSocialSymbol {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #21784c;
+  font-size: 12px;
+  font-weight: 900;
+}
+.memberPortalContactTelegram .memberPortalSocialSymbol {
+  color: #258fcb;
+  font-size: 26px;
+}
+.memberPortalContactOption > span:nth-child(2) { flex: 1; min-width: 0; }
+.memberPortalContactOption strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.memberPortalContactOption small {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  color: #ffffffd9;
+}
+.memberPortalInfoSection {
+  display: grid;
+  gap: 11px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #e3e9df;
+  background: #fff;
+}
+.memberPortalInfoSection h3 { color: #28523d; margin: 0; font-size: 17px; }
+.memberPortalInfoSection p {
+  color: #65766a;
+  margin: 0;
+  line-height: 1.6;
+  font-size: 13px;
+}
+.memberPortalConnection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f1f7f2;
+  border-radius: 12px;
+  padding: 12px;
+}
+.memberPortalConnection > div { min-width: 0; }
+.memberPortalConnection strong,
+.memberPortalConnection small { display: block; }
+.memberPortalConnection small { margin-top: 3px; color: #637767; font-size: 12px; }
+.memberPortalConnection button {
+  min-height: 40px;
+  border: 1px solid #a9c8b2;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px 12px;
+  color: #285a40;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.memberPortalInfoPrimary {
+  min-height: 46px;
+  border: 0;
+  border-radius: 11px;
+  background: #28664b;
+  color: #fff;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.memberPortalInfoPrimary:disabled { opacity: .65; cursor: default; }
+.memberPortalInfoSecondary {
+  border: 1px solid #d8c79f;
+  background: #fff9eb;
+  color: #5c7049;
+  padding: 13px 15px;
+  min-height: 47px;
+  width: 100%;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.memberPortalPasswordForm {
+  display: grid;
+  gap: 12px;
+}
+.memberPortalPasswordForm label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #415a49;
+}
+.memberPortalPasswordForm input {
+  border-radius: 10px;
+  border: 1px solid #cedaca;
+  min-height: 43px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.memberPortalInfoError { color: #af3f33 !important; }
+.memberPortalInfoDanger {
+  border-color: #edd5cf;
+  background: #fff9f8;
+}
+.memberPortalInfoDanger h3 { color: #964236; }
+.memberPortalInfoDanger button {
+  min-height: 46px;
+  padding: 9px 14px;
+  border: 1px solid #bd6657;
+  border-radius: 12px;
+  color: #a44336;
+  background: white;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .memberPortalInfoBody { padding: 14px 12px; gap: 13px; }
+  .memberPortalInfoSection { padding: 13px; }
+  .memberPortalContactOption { padding: 10px 12px; }
+}
