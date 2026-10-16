@@ -994,6 +994,25 @@ function MyDashboard({
   ];
 
 
+  const serviceDescriptions = {
+    card: { th: 'แสดงบัตรและเลขสมาชิก', en: 'Your digital member ID' },
+    donations: { th: 'ย้อนดูประวัติการร่วมบุญ', en: 'Your donation history' },
+    retreat: { th: 'กิจกรรมและการปฏิบัติธรรม', en: 'Retreats and meditation' },
+    news: { th: 'ข่าวใหม่และประกาศจากวัด', en: 'Updates from the monastery' },
+    health: { th: 'ดูแลสุขภาพของชุมชน', en: 'Community wellness' },
+    equipment: { th: 'บริการยืมและคืนสิ่งของ', en: 'Borrow and return items' },
+    school: { th: 'เรียนรู้ผ่านระบบออนไลน์', en: 'Learning wherever you are' },
+    library: { th: 'หนังสือธรรมะและความรู้', en: 'Books and knowledge' },
+    accounting: { th: 'รายรับ รายจ่าย และบัญชี', en: 'Temple financial records' },
+    kathin: { th: 'จัดการงานและคิวบริการ', en: 'Staff tools for Kathin' },
+    settings: { th: 'โปรไฟล์ ความปลอดภัย และสิทธิ์', en: 'Profile and security' },
+    contact: { th: 'สอบถามทาง LINE / Telegram', en: 'LINE and Telegram support' }
+  };
+  const shortcutDisplayOrder = [
+    'card', 'donations', 'retreat', 'news',
+    'health', 'equipment', 'school', 'library',
+    'accounting', 'kathin', 'settings', 'contact'
+  ];
   const memberShortcuts = [
     { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
     { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => goToPage('donation-list') },
@@ -1116,16 +1135,52 @@ function MyDashboard({
           <div className="memberPortalMetric"><MemberPortalIcon name="retreat" /><span><small>{th ? 'ครั้งที่ทำบุญเป็นเงิน' : 'Money donations'}</small><strong>{donationLoading ? '—' : donationSummary.moneyCount}</strong></span></div>
           <div className="memberPortalMetric"><MemberPortalIcon name="card" /><span><small>{th ? 'รายการสิ่งของถวาย' : 'Items offered'}</small><strong>{donationLoading ? '—' : donationSummary.itemCount}</strong></span></div>
         </section>
-        <section className="memberPortalShortcuts" aria-labelledby="member-portal-shortcuts-title">
-          <div className="memberPortalShortcutsHeading">
-            <h2 id="member-portal-shortcuts-title">{th ? 'เมนูบริการสำหรับสมาชิก' : 'Member Services'}</h2>
-            <p>{th ? 'เลือกไอคอนเพื่อเปิดบริการที่ต้องการ' : 'Choose an icon to open a service.'}</p>
+        <section className="memberPortalShortcuts memberPortalAppMenu" aria-labelledby="member-portal-shortcuts-title">
+          <div className="memberPortalAppHero">
+            <div className="memberPortalAppHeroCopy">
+              <span className="memberPortalAppEyebrow">
+                <span className="memberPortalAppEyebrowIcon" aria-hidden="true">✦</span>
+                NATHOENG CONNECT
+              </span>
+              <h2 id="member-portal-shortcuts-title">
+                {th ? 'บริการสำหรับสมาชิก' : 'Services for members'}
+              </h2>
+              <p>{th
+                ? 'เชื่อมโยงศรัทธาและบริการของวัดไว้ในที่เดียว'
+                : 'Everything you need from the monastery, in one place.'}</p>
+            </div>
+            <svg className="memberPortalAppHeroArtwork" viewBox="0 0 340 170"
+              fill="none" aria-hidden="true" focusable="false">
+              <circle cx="254" cy="46" r="37" fill="#F3DBAB" fillOpacity=".68"/>
+              <path d="M0 129q35-35 70-18t70-17 84 2 116-6v80H0Z" fill="#ACC7AF" fillOpacity=".22"/>
+              <path d="M0 142q55-19 110 0t116-14 114 8v34H0Z" fill="#749F87" fillOpacity=".23"/>
+              <path d="M108 143h148M123 131h118M136 121h91" stroke="#9E8053" strokeWidth="3" strokeLinecap="round"/>
+              <path d="M140 121V91l41-35 41 35v30M157 121V96h48v25" stroke="#99784D"
+                strokeWidth="3" strokeLinejoin="round" fill="#FFF9EB" fillOpacity=".54"/>
+              <path d="M129 94q51-13 103 0l-51-36Z" fill="#CFB077" fillOpacity=".5" stroke="#9B7B4C" strokeWidth="2"/>
+              <path d="M148 81q33-11 66 0M181 58V34M171 45l10-12 10 12" stroke="#9B7B4C" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M79 143V106M68 119l11-33 11 33M252 143V98M240 111l12-36 13 36" stroke="#668A6B"
+                strokeOpacity=".65" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M22 157h295" stroke="#8CAB93" strokeOpacity=".45" strokeWidth="2"/>
+            </svg>
+          </div>
+          <div className="memberPortalAppGridIntro">
+            <h3>{th ? 'เมนูบริการ' : 'Explore services'}</h3>
+            <span>{th ? 'เลือกบริการที่ต้องการ' : 'Choose a service'}</span>
           </div>
           <div className="memberPortalShortcutGrid">
-            {memberShortcuts.map((item) => {
+            {[...memberShortcuts].sort((a, b) =>
+              shortcutDisplayOrder.indexOf(a.key) - shortcutDisplayOrder.indexOf(b.key)
+            ).map((item) => {
               const content = <>
+                <span className="memberPortalTileArt" aria-hidden="true"><MemberPortalIcon name={item.icon} /></span>
                 <span className="memberPortalTileIcon"><MemberPortalIcon name={item.icon} /></span>
-                <span className="memberPortalTileLabel">{th ? item.th : item.en}</span>
+                <span className="memberPortalTileText">
+                  <span className="memberPortalTileLabel">{th ? item.th : item.en}</span>
+                  <span className="memberPortalTileDescription">
+                    {th ? serviceDescriptions[item.key]?.th : serviceDescriptions[item.key]?.en}
+                  </span>
+                </span>
                 {item.unread > 0 && <span className="memberPortalTileUnread" aria-label={th ? 'ข่าวที่ยังไม่ได้อ่าน' : 'Unread messages'}>{item.unread > 99 ? '99+' : item.unread}</span>}
                 <span className="memberPortalTileArrow" aria-hidden="true">›</span>
               </>;
