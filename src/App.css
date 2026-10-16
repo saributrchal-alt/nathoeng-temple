@@ -4566,13 +4566,13 @@ img {
 }
 .memberPortalIdentity {
   display: grid;
-  grid-template-columns: repeat(2,minmax(0,1fr));
+  grid-template-columns: minmax(0,1fr);
   gap: 15px;
   align-items: stretch;
 }
 .memberPortalDashboard .memberPortalIdentity .compactProfileCard {
   min-width: 0;
-  min-height: 194px;
+  min-height: 0;
   padding: clamp(15px, 2vw, 24px);
   margin: 0;
   background: linear-gradient(140deg,#fff 10%,#f1f8f0 100%);
@@ -4582,17 +4582,6 @@ img {
 }
 .memberPortalDashboard .compactProfileInfo { min-width: 0; }
 .memberPortalDashboard .compactProfileInfo strong { overflow-wrap: anywhere; line-height: 1.35; }
-.memberPortalDashboard .memberPortalCardWrap { min-width:0; scroll-margin-top:90px; }
-.memberPortalDashboard .memberPortalCardWrap .memberCardWidget {
-  margin: 0;
-  min-height: 100%;
-  padding: clamp(12px,2vw,18px);
-  border-radius: 19px;
-  background: linear-gradient(140deg,#fff9e9,#fffefa 60%,#edf5ea);
-  border-color: #e5d5ae;
-  box-shadow: 0 5px 20px rgba(102,75,32,.07);
-}
-.memberPortalDashboard .memberCardSurface { max-width: 420px; margin: 0 auto; }
 .memberPortalMetrics {
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
@@ -4777,7 +4766,6 @@ img {
     min-height:0;
     padding:15px 13px;
   }
-  .memberPortalDashboard .memberPortalCardWrap .memberCardWidget {padding:12px;}
   .memberPortalMetrics {gap:6px;margin:10px 0;}
   .memberPortalMetric {
     flex-direction:column;
@@ -4817,7 +4805,7 @@ img {
     max-width: 1180px;
   }
   .memberPortalDashboard .memberPortalIdentity {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
   .memberPortalDashboard .memberPortalShortcutGrid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -4856,3 +4844,147 @@ img {
 }
 .memberEntryLoading img { display: block; width: 58px; height: 58px; object-fit: contain; }
 .memberEntryLoading p { margin: 0; font-size: 14px; }
+
+
+/* On-demand member ID: hidden on the dashboard until the icon is pressed. */
+.memberPortalCardBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+  background: rgba(15, 34, 24, .68);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.memberPortalCardDialog {
+  box-sizing: border-box;
+  width: min(100%, 610px);
+  max-height: calc(100dvh - 40px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 24px;
+  border: 1px solid #e6d8b9;
+  outline: none;
+  background: linear-gradient(150deg, #fffdf6, #f6f8f0);
+  box-shadow: 0 24px 85px rgba(0, 0, 0, .3);
+  color: #254632;
+}
+.memberPortalCardDialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 19px 20px 15px;
+  border-bottom: 1px solid #ece5d4;
+}
+.memberPortalCardDialogTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.memberPortalCardDialogIcon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #fbefd4;
+  color: #a47827;
+}
+.memberPortalCardDialogTitle span:not(.memberPortalCardDialogIcon) {
+  display: block;
+  color: #a47c32;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .1em;
+}
+.memberPortalCardDialogTitle h2 {
+  margin: 2px 0 0;
+  font-size: clamp(20px, 3vw, 25px);
+  line-height: 1.3;
+  color: #24503d;
+}
+.memberPortalCardDialogClose {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 1px solid #e1d6c2;
+  border-radius: 50%;
+  background: #fff;
+  color: #586c5c;
+  font-size: 29px;
+  line-height: 1;
+  cursor: pointer;
+}
+.memberPortalCardDialogClose:hover { background: #f4ead7; }
+.memberPortalCardDialogClose:focus-visible,
+.memberPortalCardDialogFooter button:focus-visible {
+  outline: 3px solid #b98a3d;
+  outline-offset: 2px;
+}
+.memberPortalCardDialogBody { padding: 15px 22px 12px; }
+.memberPortalCardDialog .memberCardWidget {
+  margin: 0;
+  padding: 14px;
+  background: #fffdf8;
+  border: 1px solid #e7d7b4;
+  border-radius: 17px;
+}
+.memberPortalCardDialog .memberCardSurface {
+  margin-inline: auto;
+  max-width: 420px;
+}
+.memberPortalCardDialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 22px 20px;
+}
+.memberPortalCardDialogFooter button {
+  min-height: 45px;
+  min-width: 114px;
+  padding: 10px 20px;
+  border: 1px solid #d7c6a7;
+  border-radius: 12px;
+  background: #f6f0e4;
+  color: #42624c;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .memberPortalCardBackdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .memberPortalCardDialog {
+    width: 100%;
+    max-height: calc(100dvh - 12px);
+    border-radius: 23px 23px 0 0;
+    border-bottom: 0;
+  }
+  .memberPortalCardDialogHeader { padding: 15px 16px 12px; }
+  .memberPortalCardDialogIcon { width: 40px; height: 40px; flex-basis: 40px; }
+  .memberPortalCardDialogTitle h2 { font-size: 20px; }
+  .memberPortalCardDialogBody { padding: 12px 10px; }
+  .memberPortalCardDialog .memberCardWidget { padding: 10px; }
+  .memberPortalCardDialog .memberCardToolbar { gap: 10px; }
+  .memberPortalCardDialog .memberCardToolbarActions { gap: 8px; }
+  .memberPortalCardDialogFooter {
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .memberPortalCardDialogFooter button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .memberPortalCardDialog { scroll-behavior: auto; }
+}
