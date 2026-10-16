@@ -50,7 +50,8 @@ function MemberPortalIcon({ name }) {
     health: <><path d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2Z"/><path d="M6 11h3l1.5-2.5 2.5 5 1.5-2.5H18"/></>,
     equipment: <><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5"/></>,
     school: <><path d="m2 9.5 10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c3.5 3.5 8.5 3.5 12 0v-5M22 10v7"/></>,
-    contact: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.3 0-2.7-.3-3.8-1l-4.5 1.5 1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 11.5h.1M12.5 11.5h.1M16 11.5h.1"/></>
+    contact: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.3 0-2.7-.3-3.8-1l-4.5 1.5 1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 11.5h.1M12.5 11.5h.1M16 11.5h.1"/></>,
+    settings: <><path d="M12 2.6 14 4l2.4-.3 1.1 2.2 2.3 1 .1 2.5 1.5 2-1.5 2-.1 2.5-2.3 1-1.1 2.2-2.4-.3-2 1.4-2-1.4-2.4.3-1.1-2.2-2.3-1-.1-2.5-1.5-2 1.5-2 .1-2.5 2.3-1 1.1-2.2L10 4Z"/><circle cx="12" cy="12" r="3.1"/></>
   };
   return <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{shapes[name] || shapes.profile}</svg>;
 }
@@ -64,7 +65,42 @@ function MyDashboard({
   handleTelegramLogin
 }) {
   const th = lang === 'th';
-  const [otherMenuOpen, setOtherMenuOpen] = useState(false);
+  const [infoPanel, setInfoPanel] = useState(null);
+  const contactTileRef = useRef(null);
+  const settingsTileRef = useRef(null);
+  const infoDialogRef = useRef(null);
+  const infoCloseRef = useRef(null);
+  useEffect(() => {
+    if (!infoPanel) return undefined;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const animation = window.requestAnimationFrame(() => infoCloseRef.current?.focus());
+    const onKeyDown = event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setInfoPanel(null);
+      } else if (event.key === 'Tab') {
+        const dialog = infoDialogRef.current;
+        if (!dialog) return;
+        const controls = [...dialog.querySelectorAll(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )].filter(node => node.getClientRects().length > 0);
+        if (!controls.length) { event.preventDefault(); dialog.focus(); return; }
+        if (event.shiftKey && (document.activeElement === controls[0] || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); controls[controls.length - 1].focus();
+        } else if (!event.shiftKey && (document.activeElement === controls[controls.length - 1] || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); controls[0].focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(animation);
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = oldOverflow;
+      (infoPanel === 'contact' ? contactTileRef : settingsTileRef).current?.focus({ preventScroll: true });
+    };
+  }, [infoPanel]);
   const [memberCardOpen, setMemberCardOpen] = useState(false);
   const memberCardTriggerRef = useRef(null);
   const memberCardDialogRef = useRef(null);
@@ -795,7 +831,7 @@ function MyDashboard({
   const memberShortcuts = [
     { key: 'profile', icon: 'profile', tone: 'sage', th: 'ข้อมูลสมาชิก', en: 'My Profile', onClick: () => scrollToMemberSection('account-profile') },
     { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
-    { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => scrollToMemberSection('member-portal-donations', true) },
+    { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => goToPage('donation-list') },
     { key: 'retreat', icon: 'retreat', tone: 'rose', th: 'กิจกรรม / ปฏิบัติธรรม', en: 'Retreat & Activities', onClick: () => goToPage('my-stays') },
     { key: 'news', icon: 'news', tone: 'sky', th: 'ข่าวสารวัด', en: 'Monastery News', onClick: () => goToPage('practice-messages'), unread: connectUnreadCount },
     ...(!user?.actingAsMember ? [
@@ -804,21 +840,14 @@ function MyDashboard({
       { key: 'equipment', icon: 'equipment', tone: 'amber', th: 'ยืม–คืนอุปกรณ์', en: 'Equipment Loans', href: 'https://gears.nathoeng.com/#loans' },
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: openSchool, disabled: schoolOpening }
     ] : []),
-    { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => goToPage('contact-page') }
+    ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ตั้งค่าบัญชี', en: 'Account Settings', onClick: () => setInfoPanel('settings') }] : []),
+    { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => setInfoPanel('contact') }
   ];
 
   return (
     <div className="nathoengDashboardPage compactAccountPage memberPortalPage">
       <div className={`nathoengDashboard compactAccountDashboard memberPortalDashboard${otherMenuOpen ? ' accountMenuOpen' : ''}`}>
-        <style>{`
-          .memberPortalDashboard .accountOtherMenuButton { display: none; }
-          .memberPortalDashboard .accountOtherContent { display: block; }
-          @media (max-width: 767px) {
-            .memberPortalDashboard .accountOtherMenuButton { display: flex; }
-            .memberPortalDashboard:not(.accountMenuOpen) > .accountOtherContent,
-            .memberPortalDashboard:not(.accountMenuOpen) > .compactLogoutWrap { display: none; }
-          }
-        `}</style>
+
 
         <button
           type="button"
@@ -958,586 +987,11 @@ function MyDashboard({
               </>;
               return item.href
                 ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}>{content}</a>
-                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={item.key === 'card' ? 'dialog' : undefined}>{content}</button>;
+                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
             })}
           </div>
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
         </section>
-
-        <button
-          type="button"
-          className="accountOtherMenuButton"
-          aria-expanded={otherMenuOpen}
-          aria-controls="account-other-content account-logout"
-          onClick={() => setOtherMenuOpen((open) => !open)}
-        >
-          <span>{th ? (otherMenuOpen ? 'ซ่อนรายละเอียดเพิ่มเติม' : 'เปิดรายละเอียดและบริการเพิ่มเติม') : (otherMenuOpen ? 'Hide more details' : 'More account details')}</span>
-          <span aria-hidden="true">{otherMenuOpen ? '−' : '+'}</span>
-        </button>
-
-        <div id="account-other-content" className="accountOtherContent">
-        {!user?.actingAsMember && <>
-          <button type="button" className="compactDhammaStrip" onClick={openSchool} disabled={schoolOpening} style={{width:'100%',textAlign:'left',font:'inherit',border:'1px solid #d9e6dd',borderRadius:16,cursor:'pointer'}}>
-            <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-            <span><strong>{th?'การศึกษา School วัดนาเทิง':'Nathoeng School'}</strong><small>{schoolOpening?(th?'กำลังเข้า School...':'Opening School...'):(th?'หัวข้อเรียน · บันทึกการเรียนของฉัน · ใช้บัญชีสมาชิกเดิม':'Study topics · My learning progress · Your existing member account')}</small></span>
-            <span aria-hidden="true">›</span>
-          </button>
-          {schoolError && <p role="alert" style={{color:'#a0463d',fontSize:14}}>{schoolError}</p>}
-        </>}
-        {!user?.actingAsMember && <a
-          className="compactDhammaStrip"
-          href="https://library.nathoeng.com/?member=1#member-area"
-          style={{ textDecoration: 'none', border: '1px solid #d9e6dd', borderRadius: 16 }}
-        >
-          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-          <span>
-            <strong>{th ? 'ห้องสมุดวัดนาเทิง' : 'Nathoeng Library'}</strong>
-            <small>{th ? 'ค้นหาหนังสือ · รายการยืมของฉัน · ใช้บัญชีสมาชิกเดิม' : 'Find books · My loans · Continue with your member account'}</small>
-          </span>
-          <span aria-hidden="true">›</span>
-        </a>}
-
-        {!user?.actingAsMember && <a
-          className="compactDhammaStrip"
-          href="https://gears.nathoeng.com/#loans"
-          style={{ textDecoration: 'none', border: '1px solid #d9e6dd', borderRadius: 16 }}
-        >
-          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-          <span>
-            <strong>{th ? 'คลังเก็บของวัดนาเทิง' : 'Nathoeng Gears'}</strong>
-            <small>{th ? 'ค้นหาอุปกรณ์ · ยืม–คืนที่วัด · ติดตามรายการของฉัน' : 'Find equipment · Temple pickup · Track my loans'}</small>
-          </span>
-          <span aria-hidden="true">›</span>
-        </a>}
-
-        {user?.authProvider === 'password' && <details style={{ maxWidth: 590, margin: '12px auto 20px', padding: 18, background: '#fffdf8', border: '1px solid #e2d8c8', borderRadius: 14 }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 700 }}>{th ? 'เปลี่ยนรหัสผ่าน' : 'Change password'}</summary>
-          <form onSubmit={changePassword} style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-            <label>{th ? 'รหัสผ่านเดิม' : 'Current password'}<input type="password" required autoComplete="current-password" value={oldPassword} onChange={(event) => setOldPassword(event.target.value)} style={{ display: 'block', width: '100%', minHeight: 42 }} /></label>
-            <label>{th ? 'รหัสผ่านใหม่อย่างน้อย 12 ตัวอักษร' : 'New password, at least 12 characters'}<input type="password" required minLength={12} maxLength={128} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} style={{ display: 'block', width: '100%', minHeight: 42 }} /></label>
-            <button type="submit" disabled={passwordBusy}>{passwordBusy ? (th ? 'กำลังบันทึก…' : 'Saving…') : (th ? 'บันทึกรหัสผ่านใหม่' : 'Save new password')}</button>
-            {passwordMessage && <p role="status">{passwordMessage}</p>}
-          </form>
-        </details>}
-
-        <button
-          type="button"
-          className="compactDhammaStrip"
-          onClick={() => goToPage('practice-messages')}
-        >
-          <img src="/icons/dhamma-book.svg" alt="" aria-hidden="true" />
-          <span>
-            <strong>
-              Nathoeng Connect
-              {connectUnreadCount > 0 && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    minWidth: '20px',
-                    height: '20px',
-                    marginLeft: '8px',
-                    padding: '0 6px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '999px',
-                    background: '#b23a2f',
-                    color: '#fff',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    verticalAlign: 'middle'
-                  }}
-                >
-                  {connectUnreadCount > 99 ? '99+' : connectUnreadCount}
-                </span>
-              )}
-            </strong>
-            <small>
-              {th
-                ? 'ข้อความ ข่าวสาร และประกาศจากวัด'
-                : 'Messages, news and announcements from the monastery'}
-            </small>
-          </span>
-          <span aria-hidden="true">›</span>
-        </button>
-
-        {!user?.actingAsMember && <section
-          style={{
-            marginTop: '10px',
-            padding: pushDeviceStatus === 'registered' ? '0' : '10px',
-            borderRadius: '16px',
-            border: pushDeviceStatus === 'registered'
-              ? '1px solid #cfe5d6'
-              : '1px solid #f0b400',
-            background: pushDeviceStatus === 'registered'
-              ? '#e4f5e9'
-              : '#fff3a6'
-          }}
-        >
-          <button
-            type="button"
-            onClick={registerPushDevice}
-            disabled={
-              pushDeviceStatus === 'working' ||
-              pushDeviceStatus === 'registered'
-            }
-            style={{
-              width: '100%',
-              border: 0,
-              borderRadius: '12px',
-              padding: pushDeviceStatus === 'registered'
-                ? '12px 14px'
-                : '14px 16px',
-              background: pushDeviceStatus === 'registered'
-                ? '#e4f5e9'
-                : '#ffd91a',
-              color: pushDeviceStatus === 'registered'
-                ? '#176b3a'
-                : '#d82416',
-              fontWeight: 900,
-              fontSize: pushDeviceStatus === 'registered'
-                ? '15px'
-                : '17px',
-              cursor: pushDeviceStatus === 'working'
-                ? 'wait'
-                : pushDeviceStatus === 'registered'
-                  ? 'default'
-                  : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '9px'
-            }}
-          >
-            {pushDeviceStatus === 'working'
-              ? (th ? 'กำลังเปิดรับข่าว...' : 'Enabling notifications...')
-              : pushDeviceStatus === 'registered'
-                ? (th ? '✓ เปิดรับข่าวจากวัดแล้ว' : '✓ Monastery news enabled')
-                : (
-                  <>
-                    <span aria-hidden="true">🔔</span>
-                    <span>
-                      {th
-                        ? 'เปิดรับข่าวจากวัด'
-                        : 'Receive monastery news'}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      style={{ fontSize: '22px' }}
-                    >
-                      👆
-                    </span>
-                  </>
-                )}
-          </button>
-
-          {pushDeviceStatus !== 'registered' && (
-            <div
-              style={{
-                marginTop: '7px',
-                color: pushDeviceStatus === 'error'
-                  ? '#a12b22'
-                  : '#7b4b00',
-                fontSize: '12px',
-                lineHeight: 1.5,
-                textAlign: 'center',
-                fontWeight: 700
-              }}
-            >
-              {pushDeviceMessage || (th
-                ? 'กดที่นี่เพื่อรับข่าวสาร กิจกรรม และประกาศสำคัญจากวัด'
-                : 'Tap here to receive important monastery news and announcements.')}
-            </div>
-          )}
-        </section>}
-
-        <section
-          className="compactSummaryCard"
-          style={{ marginTop: '16px' }}
-        >
-          <div className="compactCardHead">
-            <div>
-              <span className="compactEyebrow">
-                {th ? 'ช่องทางสมาชิก' : 'MEMBER CHANNELS'}
-              </span>
-              <h2>{th ? 'บัญชีที่เชื่อมต่อ' : 'Connected Accounts'}</h2>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gap: '12px' }}>
-            <div className="compactStayAction" style={{ cursor: 'default' }}>
-              <span className="compactStayActionText">
-                <strong>LINE</strong>
-                <small>
-                  {user?.lineUid
-                    ? (th ? '✓ เชื่อมต่อแล้ว' : '✓ Connected')
-                    : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}
-                </small>
-              </span>
-              {!user?.actingAsMember && !user?.lineUid && (
-                <button
-                  type="button"
-                  className="compactViewButton"
-                  onClick={() => handleLineLogin?.('link')}
-                >
-                  {th ? 'เชื่อมต่อ' : 'Connect'}
-                </button>
-              )}
-            </div>
-
-            <div className="compactStayAction" style={{ cursor: 'default' }}>
-              <span className="compactStayActionText">
-                <strong>Telegram</strong>
-                <small>
-                  {user?.telegramUid
-                    ? (th ? '✓ เชื่อมต่อแล้ว' : '✓ Connected')
-                    : (th ? 'ยังไม่ได้เชื่อมต่อ' : 'Not connected')}
-                </small>
-              </span>
-              {!user?.actingAsMember && !user?.telegramUid && (
-                <button
-                  type="button"
-                  className="compactViewButton"
-                  onClick={() => handleTelegramLogin?.('link')}
-                >
-                  {th ? 'เชื่อมต่อ' : 'Connect'}
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="compactSummaryCard compactStaySummary">
-          <div className="compactCardHead">
-            <div>
-              <span className="compactEyebrow">{th ? 'เข้าพักปฏิบัติธรรม' : 'RETREAT STAY'}</span>
-              <h2>{th ? 'สถานะการเข้าพักของฉัน' : 'My Retreat Stay'}</h2>
-            </div>
-
-            <img
-              className="compactHeadIcon"
-              src="/icons/stay.svg"
-              alt=""
-              aria-hidden="true"
-            />
-          </div>
-
-          <button
-            type="button"
-            className="compactStayAction"
-            onClick={() => goToPage('my-stays')}
-          >
-            <span className="compactStayActionIcon">
-              <img src="/icons/meditation.svg" alt="" aria-hidden="true" />
-            </span>
-
-            <span className="compactStayActionText">
-              <strong>{th ? 'ดูการเข้าพักปฏิบัติธรรมของฉัน' : 'View my retreat stay'}</strong>
-              <small>
-                {th
-                  ? 'ตรวจสอบคำขอ สถานะ และขั้นตอนการเข้าพัก'
-                  : 'Check requests, status, and retreat progress.'}
-              </small>
-            </span>
-
-            <span className="compactArrow" aria-hidden="true">›</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => goToPage('booking-page')}
-            style={{
-              width: '100%',
-              minHeight: '50px',
-              marginTop: '16px',
-              borderRadius: '14px',
-              border: '1px solid #b1842b',
-              background: '#fffdf8',
-              color: '#9b7226',
-              fontWeight: 700,
-              fontSize: '15px',
-              cursor: 'pointer'
-            }}
-          >
-            ＋ {th ? 'ทำรายการเข้าพักปฏิบัติธรรม' : 'Make a Retreat Stay Request'}
-          </button>
-        </section>
-
-        <section id="member-portal-donations" className="compactSummaryCard compactDonationSummary">
-          <div className="compactCardHead">
-            <div>
-              <span className="compactEyebrow">{th ? 'บันทึกความจำ' : 'MEMORIES'}</span>
-              <h2>{th ? 'การบริจาคของฉัน' : 'My Donations'}</h2>
-            </div>
-
-            <button
-              type="button"
-              className="compactViewButton"
-              onClick={() => goToPage('donation-list')}
-            >
-              {th ? 'ดูทั้งหมด' : 'View all'} ›
-            </button>
-          </div>
-
-          <div className="compactDonationAmount">
-            <span>{th ? 'ยอดการบริจาคของฉัน' : 'My donation total'}</span>
-            <strong>{moneyTotalText} <small>{th ? 'บาท' : 'THB'}</small></strong>
-          </div>
-
-          <div className="compactStatsRow">
-            <div>
-              <img src="/icons/donation.svg" alt="" aria-hidden="true" />
-              <strong>{donationLoading ? '—' : donationSummary.moneyCount}</strong>
-              <span>{th ? 'ครั้งที่ทำบุญเป็นเงิน' : 'Money donations'}</span>
-            </div>
-
-            <div>
-              <img src="/icons/lotus.svg" alt="" aria-hidden="true" />
-              <strong>{donationLoading ? '—' : donationSummary.itemCount}</strong>
-              <span>{th ? 'รายการสิ่งของถวาย' : 'Items offered'}</span>
-            </div>
-
-            <div>
-              <img src="/icons/calendar.svg" alt="" aria-hidden="true" />
-              <strong>{latestDonationText}</strong>
-              <span>{th ? 'รายการล่าสุด' : 'Latest'}</span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => goToPage('donation-page')}
-            style={{
-              width: '100%',
-              minHeight: '50px',
-              marginTop: '16px',
-              borderRadius: '14px',
-              border: '1px solid #b1842b',
-              background: '#fffdf8',
-              color: '#9b7226',
-              fontWeight: 700,
-              fontSize: '15px',
-              cursor: 'pointer'
-            }}
-          >
-            ＋ {th ? 'ทำรายการบริจาคเพิ่ม' : 'Make Another Donation'}
-          </button>
-        </section>
-
-        <section className="compactServicesSection">
-          <div className="compactSectionTitle">
-            <span>{th ? 'บริการและข้อมูลสำคัญ' : 'Information & Services'}</span>
-          </div>
-
-          <div className="compactServicesGrid">
-            {services.map((service) => (
-              <button
-                key={service.key}
-                type="button"
-                className="compactServiceItem"
-                onClick={() => goToPage(service.page)}
-              >
-                <span className="compactServiceIcon">
-                  <img src={service.icon} alt="" aria-hidden="true" />
-                </span>
-                <span>{th ? service.titleTh : service.titleEn}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section
-          style={{
-            marginTop: '16px',
-            padding: '18px',
-            borderRadius: '18px',
-            border: '1px solid #d8e2d8',
-            background: '#fffdf8'
-          }}
-        >
-          <div style={{ marginBottom: '14px' }}>
-            <strong
-              style={{
-                display: 'block',
-                color: '#315f47',
-                fontSize: '17px',
-                marginBottom: '3px'
-              }}
-            >
-              {th ? 'ติดต่อวัด' : 'Contact the Monastery'}
-            </strong>
-
-            <span
-              style={{
-                color: '#746f67',
-                fontSize: '13px'
-              }}
-            >
-              {th
-                ? 'สามารถติดต่อวัดผ่านช่องทางต่อไปนี้'
-                : 'Contact the monastery through the following channels'}
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-              gap: '12px'
-            }}
-          >
-            <a
-              href="https://line.me/R/ti/p/@nathoeng"
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                minHeight: '66px',
-                borderRadius: '14px',
-                background: '#06c755',
-                color: '#ffffff',
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '10px 16px',
-                boxSizing: 'border-box'
-              }}
-            >
-              <span
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  background: '#ffffff',
-                  color: '#06c755',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '11px',
-                  fontWeight: 900,
-                  flexShrink: 0
-                }}
-              >
-                LINE
-              </span>
-
-              <span style={{ textAlign: 'left' }}>
-                <strong
-                  style={{
-                    display: 'block',
-                    fontSize: '15px',
-                    lineHeight: 1.3
-                  }}
-                >
-                  LINE OA @nathoeng
-                </strong>
-
-                <small
-                  style={{
-                    display: 'block',
-                    marginTop: '3px',
-                    color: 'rgba(255,255,255,0.9)'
-                  }}
-                >
-                  {th ? 'แชทกับวัดผ่าน LINE' : 'Chat with us on LINE'}
-                </small>
-              </span>
-            </a>
-
-            <a
-              href="https://t.me/NathoengConnectBot"
-              target="_blank"
-              rel="noreferrer"
-              onClick={(event) => {
-                if (typeof window === 'undefined') return;
-
-                const isMobile =
-                  /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-
-                if (!isMobile) return;
-
-                event.preventDefault();
-
-                window.location.href =
-                  'tg://resolve?domain=NathoengConnectBot';
-
-                window.setTimeout(() => {
-                  window.location.href =
-                    'https://t.me/NathoengConnectBot';
-                }, 900);
-              }}
-              style={{
-                minHeight: '66px',
-                borderRadius: '14px',
-                background: '#229ED9',
-                color: '#ffffff',
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                padding: '10px 16px',
-                boxSizing: 'border-box'
-              }}
-            >
-              <span
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  background: '#ffffff',
-                  color: '#229ED9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '21px',
-                  fontWeight: 900,
-                  flexShrink: 0
-                }}
-              >
-                ➤
-              </span>
-
-              <span style={{ textAlign: 'left' }}>
-                <strong
-                  style={{
-                    display: 'block',
-                    fontSize: '15px',
-                    lineHeight: 1.3
-                  }}
-                >
-                  Telegram @NathoengConnectBot
-                </strong>
-
-                <small
-                  style={{
-                    display: 'block',
-                    marginTop: '3px',
-                    color: 'rgba(255,255,255,0.9)'
-                  }}
-                >
-                  {th
-                    ? 'แชทกับวัดผ่าน Telegram'
-                    : 'Chat with us on Telegram'}
-                </small>
-              </span>
-            </a>
-          </div>
-        </section>
-
-
-        {!user?.actingAsMember && <section style={{ marginTop: '22px', padding: '18px', borderRadius: '18px', border: '1px solid #ead6d2', background: '#fffafa' }}>
-          <strong style={{ display: 'block', color: '#7f3f38', marginBottom: '5px' }}>
-            {th ? 'การเป็นสมาชิก' : 'Membership'}
-          </strong>
-          <p style={{ margin: '0 0 13px', color: '#786b68', fontSize: '13px', lineHeight: 1.6 }}>
-            {th ? 'หากไม่ประสงค์เป็นสมาชิกของวัดต่อ สามารถยกเลิกได้จากที่นี่' : 'If you no longer wish to remain a monastery member, you can cancel here.'}
-          </p>
-          <button type="button" onClick={() => { setCancelMembershipOpen(true); setCancelMembershipError(''); }} style={{ width: '100%', minHeight: '46px', borderRadius: '13px', border: '1px solid #c9675b', background: '#fff', color: '#a23f34', fontWeight: 800, cursor: 'pointer' }}>
-            {th ? 'ยกเลิกการเป็นสมาชิกวัดพุทธอุทยานนาเทิง' : 'Cancel Nathoeng Monastery Membership'}
-          </button>
-        </section>}
-
-        </div>
 
         {cancelMembershipOpen && (
           <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(34,28,18,.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
