@@ -4,7 +4,7 @@
   "short_name": "Nathoeng",
   "description": "วัดพุทธอุทยานนาเทิง · Nathoeng Connect",
   "lang": "th",
-  "start_url": "/",
+  "start_url": "/#my-dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
