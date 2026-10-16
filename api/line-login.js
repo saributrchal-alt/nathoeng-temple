@@ -244,7 +244,7 @@ async function memberAccessHandler(req, res) {
     if (!member || (member.membership_status && member.membership_status !== 'active')) {
       return res.status(200).json({ success: true, access: empty, checkedAt: new Date().toISOString() });
     }
-    const admin = member.role === 'admin';
+    const admin = member.role === 'admin' && session.role === 'admin';
     const settled = await Promise.allSettled([
       readOne('school_members', 'is_active,can_study,can_teach,can_manage'),
       readOne('health_members', 'is_active'),
