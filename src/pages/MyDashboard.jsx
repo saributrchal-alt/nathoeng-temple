@@ -1281,12 +1281,12 @@ function MyDashboard({
             <header className="memberPortalCardDialogHeader">
               <div className="memberPortalCardDialogTitle">
                 <span className="memberPortalCardDialogIcon" aria-hidden="true">
-                  <MemberPortalIcon name={infoPanel === 'contact' ? 'contact' : 'settings'} />
+                  <MemberPortalIcon name={infoPanel === 'contact' ? 'contact' : infoPanel.startsWith('account-') ? 'accounting' : 'settings'} />
                 </span>
                 <div>
                   <span>NATHOENG CONNECT</span>
                   <h2 id="member-portal-info-title">
-                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : (th ? 'ตั้งค่าบัญชีสมาชิก' : 'Account Settings')}
+                    {infoPanel === 'contact' ? (th ? 'ติดต่อวัด' : 'Contact Monastery') : infoPanel.startsWith('account-') ? (th ? 'บัญชีวัด' : 'Temple Accounting') : (th ? 'ตั้งค่าบัญชีสมาชิก' : 'Account Settings')}
                   </h2>
                 </div>
               </div>
@@ -1296,7 +1296,19 @@ function MyDashboard({
             </header>
 
             <div className="memberPortalInfoBody">
-              {infoPanel === 'contact' ? <>
+              {infoPanel.startsWith('account-') ? (
+                <section className="memberPortalAccountNotice" role="alert">
+                  <span className="memberPortalAccountNoticeIcon" aria-hidden="true">🔒</span>
+                  <p>{infoPanel === 'account-denied'
+                    ? (th
+                      ? 'ท่านยังไม่สามารถใช้รูปแบบนี้ในขณะนี้ กรุณาติดต่อทางวัด'
+                      : 'You cannot use this service at this time. Please contact the monastery.')
+                    : accountError}</p>
+                  <button type="button" className="memberPortalInfoSecondary" onClick={() => setInfoPanel('contact')}>
+                    {th ? 'ติดต่อทางวัดผ่าน LINE หรือ Telegram' : 'Contact us via LINE or Telegram'}
+                  </button>
+                </section>
+              ) : infoPanel === 'contact' ? <>
                 <p className="memberPortalInfoLead">
                   {th ? 'เลือกช่องทางที่สะดวกเพื่อติดต่อเจ้าหน้าที่วัดพุทธอุทยานนาเทิง' : 'Choose a channel to contact the monastery.'}
                 </p>
