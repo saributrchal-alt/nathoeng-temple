@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import MemberPhotoEditor from '../components/MemberPhotoEditor';
 import MemberCard from '../components/MemberCard';
 import ThaiAddressFields from '../components/ThaiAddressFields.jsx';
@@ -64,6 +65,51 @@ function MyDashboard({
 }) {
   const th = lang === 'th';
   const [otherMenuOpen, setOtherMenuOpen] = useState(false);
+  const [memberCardOpen, setMemberCardOpen] = useState(false);
+  const memberCardTriggerRef = useRef(null);
+  const memberCardDialogRef = useRef(null);
+  const memberCardCloseRef = useRef(null);
+
+  // The digital card and its barcode are loaded only when requested.
+  // Trap keyboard focus, allow Escape to close, and restore the last trigger.
+  useEffect(() => {
+    if (!memberCardOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const frame = window.requestAnimationFrame(() => memberCardCloseRef.current?.focus());
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setMemberCardOpen(false);
+      } else if (event.key === 'Tab') {
+        const dialog = memberCardDialogRef.current;
+        if (!dialog) return;
+        const controls = [...dialog.querySelectorAll(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )].filter(node => node.getClientRects().length > 0);
+        if (!controls.length) {
+          event.preventDefault();
+          dialog.focus();
+          return;
+        }
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      memberCardTriggerRef.current?.focus({ preventScroll: true });
+    };
+  }, [memberCardOpen]);
   const [profileImageError, setProfileImageError] = useState(false);
   const [verifiedFullName, setVerifiedFullName] = useState('');
   const [countryCode, setCountryCode] = useState('');
@@ -748,7 +794,7 @@ function MyDashboard({
   };
   const memberShortcuts = [
     { key: 'profile', icon: 'profile', tone: 'sage', th: 'ข้อมูลสมาชิก', en: 'My Profile', onClick: () => scrollToMemberSection('account-profile') },
-    { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => scrollToMemberSection('member-portal-card') },
+    { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
     { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => scrollToMemberSection('member-portal-donations', true) },
     { key: 'retreat', icon: 'retreat', tone: 'rose', th: 'กิจกรรม / ปฏิบัติธรรม', en: 'Retreat & Activities', onClick: () => goToPage('my-stays') },
     { key: 'news', icon: 'news', tone: 'sky', th: 'ข่าวสารวัด', en: 'Monastery News', onClick: () => goToPage('practice-messages'), unread: connectUnreadCount },
@@ -890,14 +936,6 @@ function MyDashboard({
           </div>
         </section>
 
-        <div id="member-portal-card" className="memberPortalCardWrap">
-        <MemberCard
-          memberId={user?.memberId}
-          fullName={verifiedFullName || user?.name}
-          photo={profilePicture || user?.picture}
-          lang={lang}
-        />
-        </div>
         </div>
         <section className="memberPortalMetrics" aria-label={th ? 'สรุปการทำบุญของฉัน' : 'My donations at a glance'}>
           <div className="memberPortalMetric"><MemberPortalIcon name="donation" /><span><small>{th ? 'ยอดทำบุญที่บันทึก' : 'Recorded donations'}</small><strong>{moneyTotalText} <small>{th ? 'บาท' : 'THB'}</small></strong></span></div>
@@ -920,7 +958,7 @@ function MyDashboard({
               </>;
               return item.href
                 ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}>{content}</a>
-                : <button key={item.key} type="button" className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled}>{content}</button>;
+                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={item.key === 'card' ? 'dialog' : undefined}>{content}</button>;
             })}
           </div>
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
@@ -1750,6 +1788,54 @@ function MyDashboard({
           </button>
         </div>
       </div>
+      {memberCardOpen && createPortal(
+        <div
+          className="memberPortalCardBackdrop"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setMemberCardOpen(false); }}
+        >
+          <section
+            ref={memberCardDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="member-card-dialog-heading"
+            className="memberPortalCardDialog"
+            tabIndex={-1}
+          >
+            <header className="memberPortalCardDialogHeader">
+              <div className="memberPortalCardDialogTitle">
+                <span className="memberPortalCardDialogIcon" aria-hidden="true"><MemberPortalIcon name="card" /></span>
+                <div>
+                  <span>NATHOENG CONNECT</span>
+                  <h2 id="member-card-dialog-heading">{th ? 'บัตรสมาชิกของฉัน' : 'My Member Card'}</h2>
+                </div>
+              </div>
+              <button
+                ref={memberCardCloseRef}
+                type="button"
+                className="memberPortalCardDialogClose"
+                onClick={() => setMemberCardOpen(false)}
+                aria-label={th ? 'ปิดหน้าต่างบัตรสมาชิก' : 'Close member card'}
+              >
+                ×
+              </button>
+            </header>
+            <div className="memberPortalCardDialogBody">
+              <MemberCard
+                memberId={user?.memberId}
+                fullName={verifiedFullName || user?.name}
+                photo={profilePicture || user?.picture}
+                lang={lang}
+              />
+            </div>
+            <footer className="memberPortalCardDialogFooter">
+              <button type="button" onClick={() => setMemberCardOpen(false)}>
+                {th ? 'ปิดหน้าต่าง' : 'Close'}
+              </button>
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
