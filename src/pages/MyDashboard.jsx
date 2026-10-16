@@ -51,6 +51,7 @@ function MemberPortalIcon({ name }) {
     equipment: <><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5"/></>,
     school: <><path d="m2 9.5 10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c3.5 3.5 8.5 3.5 12 0v-5M22 10v7"/></>,
     contact: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.3 0-2.7-.3-3.8-1l-4.5 1.5 1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 11.5h.1M12.5 11.5h.1M16 11.5h.1"/></>,
+    accounting: <><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M8 7h8M8 11h8M8 15h3m4 0h1M8 18h3m4 0h1"/></>,
     settings: <><path d="M12 2.6 14 4l2.4-.3 1.1 2.2 2.3 1 .1 2.5 1.5 2-1.5 2-.1 2.5-2.3 1-1.1 2.2-2.4-.3-2 1.4-2-1.4-2.4.3-1.1-2.2-2.3-1-.1-2.5-1.5-2 1.5-2 .1-2.5 2.3-1 1.1-2.2L10 4Z"/><circle cx="12" cy="12" r="3.1"/></>
   };
   return <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{shapes[name] || shapes.profile}</svg>;
@@ -68,6 +69,7 @@ function MyDashboard({
   const [infoPanel, setInfoPanel] = useState(null);
   const contactTileRef = useRef(null);
   const settingsTileRef = useRef(null);
+  const accountingTileRef = useRef(null);
   const infoDialogRef = useRef(null);
   const infoCloseRef = useRef(null);
   useEffect(() => {
@@ -98,7 +100,7 @@ function MyDashboard({
       window.cancelAnimationFrame(animation);
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = oldOverflow;
-      (infoPanel === 'contact' ? contactTileRef : settingsTileRef).current?.focus({ preventScroll: true });
+      (infoPanel === 'contact' ? contactTileRef : infoPanel.startsWith('account-') ? accountingTileRef : settingsTileRef).current?.focus({ preventScroll: true });
     };
   }, [infoPanel]);
   const [memberCardOpen, setMemberCardOpen] = useState(false);
@@ -185,6 +187,52 @@ function MyDashboard({
   const [kathinStaff, setKathinStaff] = useState(false);
   const [schoolOpening, setSchoolOpening] = useState(false);
   const [schoolError, setSchoolError] = useState('');
+  const [accountOpening, setAccountOpening] = useState(false);
+  const [accountError, setAccountError] = useState('');
+
+
+  const openTempleAccounting = async () => {
+    if (accountOpening) return;
+    setAccountError('');
+    // The currently deployed accounting app authorizes Admin only.
+    // Its API verifies the user again before issuing a handoff token.
+    if (!user?.isAdmin || user?.actingAsMember) {
+      setInfoPanel('account-denied');
+      return;
+    }
+    setAccountOpening(true);
+    try {
+      const response = await fetch('/api/admin-bookings?route=account-handoff', {
+        credentials: 'same-origin', cache: 'no-store'
+      });
+      if (response.status === 401 || response.status === 403) {
+        setInfoPanel('account-denied');
+        return;
+      }
+      const result = await response.json();
+      if (!response.ok || !result?.success || !result?.token)
+        throw new Error(result?.message || 'Unable to open Temple Accounting');
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://account.nathoeng.com/api/session';
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'token';
+      input.value = result.token;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
+    } catch (error) {
+      console.error('Temple accounting handoff:', error);
+      setAccountError(th
+        ? 'ขณะนี้ไม่สามารถเปิดระบบบัญชีวัดได้ กรุณาลองอีกครั้งหรือติดต่อทางวัด'
+        : 'Temple Accounting is temporarily unavailable. Please try again or contact the monastery.');
+      setInfoPanel('account-error');
+    } finally {
+      setAccountOpening(false);
+    }
+  };
 
   const openSchool = async () => {
     if (schoolOpening) return;
@@ -839,6 +887,7 @@ function MyDashboard({
       { key: 'equipment', icon: 'equipment', tone: 'amber', th: 'ยืม–คืนอุปกรณ์', en: 'Equipment Loans', href: 'https://gears.nathoeng.com/#loans' },
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: openSchool, disabled: schoolOpening }
     ] : []),
+    { key: 'accounting', icon: 'accounting', tone: 'sky', th: 'บัญชีวัด', en: 'Temple Accounting', onClick: openTempleAccounting, disabled: accountOpening },
     ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ตั้งค่าบัญชี', en: 'Account Settings', onClick: () => setInfoPanel('settings') }] : []),
     { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => setInfoPanel('contact') }
   ];
@@ -855,16 +904,6 @@ function MyDashboard({
         >
           {th ? '← กลับสู่หน้าหลัก' : '← Back to Home'}
         </button>
-
-        <div className="compactAccountHero">
-          <span className="eyebrow">NATHOENG CONNECT</span>
-          <h1>{th ? 'บัญชีของฉัน' : 'My Account'}</h1>
-          <p>
-            {th
-              ? 'ข้อมูลส่วนตัว การเข้าพักปฏิบัติธรรม และบันทึกการร่วมบุญ'
-              : 'Your profile, retreat stay, and donation memories.'}
-          </p>
-        </div>
 
         {kathinDrinksActive && <a href="https://kathin.nathoeng.com/" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
           <span aria-hidden="true" style={{ fontSize: 64, lineHeight: 1.15, flexShrink: 0 }}>☕</span>
@@ -897,6 +936,7 @@ function MyDashboard({
           </div>
 
           <div className="compactProfileInfo">
+            <span className="memberPortalIdentityBrand">NATHOENG CONNECT</span>
             <small>{th ? 'สมาชิก : โยมปฏิบัติ' : 'Member: Practitioner'}</small>
             <strong>
               {identityLoading
@@ -953,14 +993,6 @@ function MyDashboard({
                     : `✓ ${th ? 'สมาชิกที่สมัครกับเจ้าหน้าที่วัด' : 'Registered at the monastery'}`}
             </span>
 
-            {!user?.actingAsMember && <button
-              type="button"
-              className="compactViewButton"
-              onClick={openProfileEditor}
-              style={{ marginTop: '10px', alignSelf: 'flex-start' }}
-            >
-              {th ? 'แก้ไขโปรไฟล์' : 'Update Profile'}
-            </button>}
           </div>
         </section>
 
@@ -986,7 +1018,7 @@ function MyDashboard({
               </>;
               return item.href
                 ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}>{content}</a>
-                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
+                : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : item.key === 'accounting' ? accountingTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings', 'accounting'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
             })}
           </div>
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
@@ -1297,6 +1329,14 @@ function MyDashboard({
                   {th ? 'ดูที่ตั้งวัดและข้อมูลติดต่อเพิ่มเติม →' : 'Monastery location and other contact details →'}
                 </button>
               </> : <>
+                {!user?.actingAsMember && <section className="memberPortalInfoSection">
+                  <h3>{th ? 'ข้อมูลส่วนตัว' : 'My Profile'}</h3>
+                  <p>{th ? 'เปลี่ยนชื่อ รูปโปรไฟล์ และข้อมูลสมาชิก' : 'Edit your name, photo, and member details.'}</p>
+                  <button type="button" className="memberPortalInfoPrimary" onClick={() => {
+                    setInfoPanel(null);
+                    openProfileEditor();
+                  }}>{th ? 'แก้ไขโปรไฟล์' : 'Edit Profile'}</button>
+                </section>}
                 <section className="memberPortalInfoSection">
                   <h3>{th ? 'รับข่าวสารและประกาศจากวัด' : 'Monastery notifications'}</h3>
                   <p>{th ? 'เปิดรับการแจ้งเตือนบนอุปกรณ์เครื่องนี้' : 'Enable notifications on this device.'}</p>
