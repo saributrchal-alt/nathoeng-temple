@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import KathinDrinkPanel from './components/KathinDrinkPanel.jsx';
+import KathinQueueBoard from './components/KathinQueueBoard.jsx';
 
 export default function App() {
   const [sessionState, setSessionState] = useState('checking');
   const [canStaff, setCanStaff] = useState(false);
   const [staffMode, setStaffMode] = useState(false);
+  const [showBoard, setShowBoard] = useState(() => window.location.hash === '#queue-board');
+  useEffect(() => {
+    const syncBoard = () => setShowBoard(window.location.hash === '#queue-board');
+    window.addEventListener('hashchange', syncBoard);
+    return () => window.removeEventListener('hashchange', syncBoard);
+  }, []);
+  const openBoard = () => { setShowBoard(true); window.location.hash = 'queue-board'; };
+  const leaveBoard = () => { setShowBoard(false); window.history.replaceState({}, '', '/'); setStaffMode(true); };
 
   useEffect(() => {
     let cancelled = false;
@@ -36,9 +45,9 @@ export default function App() {
   }, []);
 
   return <>
-    <header style={{ padding: '14px max(16px, calc((100vw - 1000px) / 2))', background: '#fffaf0', borderBottom: '1px solid #e8dfd0', color: '#57462b', fontWeight: 800 }}>วัดพุทธอุทยานนาเทิง · งานกฐิน 2569</header>
-    {sessionState === 'checking' ? <main style={{ padding: 28, textAlign: 'center' }}>กำลังตรวจสอบบัญชีสมาชิก…</main> : sessionState === 'signed-out' ? <main style={{ maxWidth: 620, margin: '8vh auto', padding: 24, textAlign: 'center' }}><h1>เข้าสู่ระบบสมาชิกก่อน</h1><p>ใช้บัญชีสมาชิกวัดเพื่อดูสิทธิ์ สั่งเครื่องดื่ม และติดตามคิว</p><a href="https://watt.nathoeng.com/#login-page" style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 12, background: '#376b4d', color: 'white', fontWeight: 800, textDecoration: 'none' }}>เข้าสู่ระบบสมาชิก</a><p style={{ color: '#756d61' }}>หลังเข้าสู่ระบบแล้ว กลับมาที่ kathin.nathoeng.com</p></main> : sessionState === 'offline' ? <main style={{ padding: 28, textAlign: 'center' }}>เชื่อมต่อระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</main> : <>
-      {canStaff && <nav style={{ maxWidth: 1000, margin: '16px auto 0', padding: '0 16px', display: 'flex', gap: 8 }}><button onClick={() => setStaffMode(false)} style={{ padding: '10px 15px', border: 0, borderRadius: 10, background: staffMode ? '#ede7dd' : '#376b4d', color: staffMode ? '#4b4134' : 'white', fontWeight: 800 }}>คิวของฉัน</button><button onClick={() => setStaffMode(true)} style={{ padding: '10px 15px', border: 0, borderRadius: 10, background: staffMode ? '#376b4d' : '#ede7dd', color: staffMode ? 'white' : '#4b4134', fontWeight: 800 }}>จุดบริการ Staff</button></nav>}
+    {!(showBoard && sessionState === 'ready' && canStaff) && <header style={{ padding: '14px max(16px, calc((100vw - 1000px) / 2))', background: '#fffaf0', borderBottom: '1px solid #e8dfd0', color: '#57462b', fontWeight: 800 }}>วัดพุทธอุทยานนาเทิง · งานกฐิน 2569</header>}
+    {sessionState === 'ready' && showBoard && canStaff ? <KathinQueueBoard onClose={leaveBoard} /> : sessionState === 'checking' ? <main style={{ padding: 28, textAlign: 'center' }}>กำลังตรวจสอบบัญชีสมาชิก…</main> : sessionState === 'signed-out' ? <main style={{ maxWidth: 620, margin: '8vh auto', padding: 24, textAlign: 'center' }}><h1>เข้าสู่ระบบสมาชิกก่อน</h1><p>ใช้บัญชีสมาชิกวัดเพื่อดูสิทธิ์ สั่งเครื่องดื่ม และติดตามคิว</p><a href="https://watt.nathoeng.com/#login-page" style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 12, background: '#376b4d', color: 'white', fontWeight: 800, textDecoration: 'none' }}>เข้าสู่ระบบสมาชิก</a><p style={{ color: '#756d61' }}>หลังเข้าสู่ระบบแล้ว กลับมาที่ kathin.nathoeng.com</p></main> : sessionState === 'offline' ? <main style={{ padding: 28, textAlign: 'center' }}>เชื่อมต่อระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</main> : <>
+      {canStaff && <nav style={{ maxWidth: 1000, margin: '16px auto 0', padding: '0 16px', display: 'flex', gap: 8 }}><button onClick={() => setStaffMode(false)} style={{ padding: '10px 15px', border: 0, borderRadius: 10, background: staffMode ? '#ede7dd' : '#376b4d', color: staffMode ? '#4b4134' : 'white', fontWeight: 800 }}>คิวของฉัน</button><button onClick={() => setStaffMode(true)} style={{ padding: '10px 15px', border: 0, borderRadius: 10, background: staffMode ? '#376b4d' : '#ede7dd', color: staffMode ? 'white' : '#4b4134', fontWeight: 800 }}>จุดบริการ Staff</button><button type="button" onClick={openBoard} style={{ padding: '10px 15px', border: 0, borderRadius: 10, background: '#9a732a', color: 'white', fontWeight: 800 }}>☕ จอคิวกาแฟ · จัดการบนจอ</button></nav>}
       <KathinDrinkPanel key={staffMode ? 'staff' : 'member'} lang="th" staffMode={staffMode} />
     </>}
   </>;
