@@ -824,7 +824,7 @@ function MyDashboard({
       window.setTimeout(() => document.getElementById(id)?.scrollIntoView({
         behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth',
         block: 'start'
-      }), expand ? 120 : 0);
+      }), 0);
     }
   };
   const memberShortcuts = [
