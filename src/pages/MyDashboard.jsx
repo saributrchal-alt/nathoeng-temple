@@ -1004,7 +1004,6 @@ function MyDashboard({
         </section>
         <section className="memberPortalShortcuts" aria-labelledby="member-portal-shortcuts-title">
           <div className="memberPortalShortcutsHeading">
-            <span className="compactEyebrow">NATHOENG CONNECT</span>
             <h2 id="member-portal-shortcuts-title">{th ? 'เมนูบริการสำหรับสมาชิก' : 'Member Services'}</h2>
             <p>{th ? 'เลือกไอคอนเพื่อเปิดบริการที่ต้องการ' : 'Choose an icon to open a service.'}</p>
           </div>
