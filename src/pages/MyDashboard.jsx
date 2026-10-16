@@ -37,6 +37,23 @@ function countryName(code, lang) {
   }
 }
 
+
+function MemberPortalIcon({ name }) {
+  const shapes = {
+    profile: <><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></>,
+    card: <><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8" cy="11" r="2"/><path d="M5.5 16c.6-2 4.4-2 5 0M14 10h4.5M14 14h4.5"/></>,
+    donation: <><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 11v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5"/></>,
+    retreat: <><path d="M12 20c-5-2.6-8-6-8-10 4 .3 7 2 8 5 1-3 4-4.7 8-5 0 4-3 7.4-8 10Z"/><path d="M12 15c-2-2.2-2-5.1 0-9 2 3.9 2 6.8 0 9ZM3.5 21h17"/></>,
+    news: <><path d="m4 11 13-5v12L4 13.5H2.5v-2.5H4Z"/><path d="m6.5 14 2 6h3l-2.5-5M20 10l2-1.5M20 14l2 1.5"/></>,
+    library: <><path d="M12 6c-2.4-2-5.6-2.5-9-2v13c3.4-.5 6.6 0 9 2 2.4-2 5.6-2.5 9-2V4c-3.4-.5-6.6 0-9 2ZM12 6v13"/></>,
+    health: <><path d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2Z"/><path d="M6 11h3l1.5-2.5 2.5 5 1.5-2.5H18"/></>,
+    equipment: <><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5"/></>,
+    school: <><path d="m2 9.5 10-5 10 5-10 5-10-5Z"/><path d="M6 12v5c3.5 3.5 8.5 3.5 12 0v-5M22 10v7"/></>,
+    contact: <><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.3 0-2.7-.3-3.8-1l-4.5 1.5 1.4-4.2A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 11.5h.1M12.5 11.5h.1M16 11.5h.1"/></>
+  };
+  return <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{shapes[name] || shapes.profile}</svg>;
+}
+
 function MyDashboard({
   lang,
   goToPage,
@@ -719,28 +736,41 @@ function MyDashboard({
     }
   ];
 
+
+  const scrollToMemberSection = (id, expand = false) => {
+    if (expand) setOtherMenuOpen(true);
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => document.getElementById(id)?.scrollIntoView({
+        behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth',
+        block: 'start'
+      }), expand ? 120 : 0);
+    }
+  };
+  const memberShortcuts = [
+    { key: 'profile', icon: 'profile', tone: 'sage', th: 'ข้อมูลสมาชิก', en: 'My Profile', onClick: () => scrollToMemberSection('account-profile') },
+    { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => scrollToMemberSection('member-portal-card') },
+    { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => scrollToMemberSection('member-portal-donations', true) },
+    { key: 'retreat', icon: 'retreat', tone: 'rose', th: 'กิจกรรม / ปฏิบัติธรรม', en: 'Retreat & Activities', onClick: () => goToPage('my-stays') },
+    { key: 'news', icon: 'news', tone: 'sky', th: 'ข่าวสารวัด', en: 'Monastery News', onClick: () => goToPage('practice-messages'), unread: connectUnreadCount },
+    ...(!user?.actingAsMember ? [
+      { key: 'library', icon: 'library', tone: 'cream', th: 'ห้องสมุด', en: 'Library', href: 'https://library.nathoeng.com/?member=1#member-area' },
+      { key: 'health', icon: 'health', tone: 'sage', th: 'สุขภาพชุมชน', en: 'Community Health', href: 'https://health.nathoeng.com/' },
+      { key: 'equipment', icon: 'equipment', tone: 'amber', th: 'ยืม–คืนอุปกรณ์', en: 'Equipment Loans', href: 'https://gears.nathoeng.com/#loans' },
+      { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: openSchool, disabled: schoolOpening }
+    ] : []),
+    { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => goToPage('contact-page') }
+  ];
+
   return (
-    <div className="nathoengDashboardPage compactAccountPage">
-      <div className={`nathoengDashboard compactAccountDashboard${otherMenuOpen ? ' accountMenuOpen' : ''}`}>
+    <div className="nathoengDashboardPage compactAccountPage memberPortalPage">
+      <div className={`nathoengDashboard compactAccountDashboard memberPortalDashboard${otherMenuOpen ? ' accountMenuOpen' : ''}`}>
         <style>{`
-          .accountOtherMenuButton { display: none; }
-          .accountOtherContent { display: contents; }
+          .memberPortalDashboard .accountOtherMenuButton { display: none; }
+          .memberPortalDashboard .accountOtherContent { display: block; }
           @media (max-width: 767px) {
-            .compactAccountDashboard { display: flex; flex-direction: column; }
-            .compactAccountDashboard > .compactProfileCard { order: 4; }
-            .compactAccountDashboard > .accountOtherContent { order: 5; display: block; }
-            .compactAccountDashboard > .compactLogoutWrap { order: 6; }
-            .compactAccountDashboard:not(.accountMenuOpen) > .compactProfileCard,
-            .compactAccountDashboard:not(.accountMenuOpen) > .accountOtherContent,
-            .compactAccountDashboard:not(.accountMenuOpen) > .compactLogoutWrap { display: none; }
-            .accountOtherMenuButton {
-              display: flex; align-items: center; justify-content: space-between;
-              width: 100%; min-height: 52px; margin: 16px 0; padding: 14px 18px;
-              border: 1px solid #ddcfb8; border-radius: 16px;
-              background: #fffdf8; color: #64502c; font: inherit; font-weight: 700;
-              cursor: pointer;
-            }
-            .accountOtherMenuButton:focus-visible { outline: 3px solid #b58a3b; outline-offset: 3px; }
+            .memberPortalDashboard .accountOtherMenuButton { display: flex; }
+            .memberPortalDashboard:not(.accountMenuOpen) > .accountOtherContent,
+            .memberPortalDashboard:not(.accountMenuOpen) > .compactLogoutWrap { display: none; }
           }
         `}</style>
 
@@ -772,6 +802,7 @@ function MyDashboard({
           <small>{th?'จัดการคิว · เรียกรับ · ส่งเครื่องดื่ม · บริการสมาชิก':'Manage queues · Call and serve drinks · Assist members'}</small>
         </a>}
 
+        <div className="memberPortalIdentity">
         <section id="account-profile" className="compactProfileCard">
           <div className="compactProfileAvatar">
             {(profilePicture || user?.picture) && !profileImageError ? (
@@ -859,21 +890,50 @@ function MyDashboard({
           </div>
         </section>
 
+        <div id="member-portal-card" className="memberPortalCardWrap">
         <MemberCard
           memberId={user?.memberId}
           fullName={verifiedFullName || user?.name}
           photo={profilePicture || user?.picture}
           lang={lang}
         />
+        </div>
+        </div>
+        <section className="memberPortalMetrics" aria-label={th ? 'สรุปการทำบุญของฉัน' : 'My donations at a glance'}>
+          <div className="memberPortalMetric"><MemberPortalIcon name="donation" /><span><small>{th ? 'ยอดทำบุญที่บันทึก' : 'Recorded donations'}</small><strong>{moneyTotalText} <small>{th ? 'บาท' : 'THB'}</small></strong></span></div>
+          <div className="memberPortalMetric"><MemberPortalIcon name="retreat" /><span><small>{th ? 'ครั้งที่ทำบุญเป็นเงิน' : 'Money donations'}</small><strong>{donationLoading ? '—' : donationSummary.moneyCount}</strong></span></div>
+          <div className="memberPortalMetric"><MemberPortalIcon name="card" /><span><small>{th ? 'รายการสิ่งของถวาย' : 'Items offered'}</small><strong>{donationLoading ? '—' : donationSummary.itemCount}</strong></span></div>
+        </section>
+        <section className="memberPortalShortcuts" aria-labelledby="member-portal-shortcuts-title">
+          <div className="memberPortalShortcutsHeading">
+            <span className="compactEyebrow">NATHOENG CONNECT</span>
+            <h2 id="member-portal-shortcuts-title">{th ? 'เมนูบริการสำหรับสมาชิก' : 'Member Services'}</h2>
+            <p>{th ? 'เลือกไอคอนเพื่อเปิดบริการที่ต้องการ' : 'Choose an icon to open a service.'}</p>
+          </div>
+          <div className="memberPortalShortcutGrid">
+            {memberShortcuts.map((item) => {
+              const content = <>
+                <span className="memberPortalTileIcon"><MemberPortalIcon name={item.icon} /></span>
+                <span className="memberPortalTileLabel">{th ? item.th : item.en}</span>
+                {item.unread > 0 && <span className="memberPortalTileUnread" aria-label={th ? 'ข่าวที่ยังไม่ได้อ่าน' : 'Unread messages'}>{item.unread > 99 ? '99+' : item.unread}</span>}
+                <span className="memberPortalTileArrow" aria-hidden="true">›</span>
+              </>;
+              return item.href
+                ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}>{content}</a>
+                : <button key={item.key} type="button" className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled}>{content}</button>;
+            })}
+          </div>
+          {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
+        </section>
 
         <button
           type="button"
           className="accountOtherMenuButton"
           aria-expanded={otherMenuOpen}
-          aria-controls="account-profile account-other-content account-logout"
+          aria-controls="account-other-content account-logout"
           onClick={() => setOtherMenuOpen((open) => !open)}
         >
-          <span>{th ? (otherMenuOpen ? 'ซ่อนเมนูอื่น ๆ' : 'เมนูอื่น ๆ') : (otherMenuOpen ? 'Hide other menus' : 'Other menus')}</span>
+          <span>{th ? (otherMenuOpen ? 'ซ่อนรายละเอียดเพิ่มเติม' : 'เปิดรายละเอียดและบริการเพิ่มเติม') : (otherMenuOpen ? 'Hide more details' : 'More account details')}</span>
           <span aria-hidden="true">{otherMenuOpen ? '−' : '+'}</span>
         </button>
 
@@ -1164,7 +1224,7 @@ function MyDashboard({
           </button>
         </section>
 
-        <section className="compactSummaryCard compactDonationSummary">
+        <section id="member-portal-donations" className="compactSummaryCard compactDonationSummary">
           <div className="compactCardHead">
             <div>
               <span className="compactEyebrow">{th ? 'บันทึกความจำ' : 'MEMORIES'}</span>
