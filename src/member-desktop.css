@@ -1,6 +1,6 @@
-/* Desktop-only member app shell. Public pages and mobile retain their layouts. */
+/* Member app shell for desktop and tablet (700px+). Phone views remain unchanged. */
 .memberPortalDesktopSidebar,.memberPortalDesktopTopbar{display:none}
-@media(min-width:1100px){
+@media(min-width:700px){
   #root:has(.site--member-app){width:100%;max-width:none;border:0;text-align:left}
   .site--member-app{min-height:100vh;background:#f5f7f2}
   .site--member-app>.siteHeader,.site--member-app>.siteFooter,.site--member-app>.dashboardBottomNav{display:none}
@@ -51,10 +51,10 @@
 }
 
 
-/* Shared workspace structure; hidden on tablets/phones to preserve their original flow. */
+/* The shared workspace remains hidden only on smaller phone screens. */
 .memberPortalWorkspace { display:none; }
 .memberPortalRemotePane[hidden] { display:none !important; }
-@media (min-width:1100px) {
+@media (min-width:700px) {
   .site--member-app .memberPortalDesktopSidebar { padding-top:20px; }
   .site--member-app .memberPortalDesktopBrand { padding-bottom:22px; }
   .site--member-app .memberPortalDesktopNav { gap:2px; }
@@ -106,4 +106,148 @@
     display:block;width:100%;height:max(680px,calc(100dvh - 250px));min-height:520px;
     border:1px solid #e4e9e2;border-radius:12px;background:#fff;
   }
+}
+
+/* Tablet controls are hidden on a desktop and under the phone breakpoint. */
+.memberPortalTabletMenuToggle,
+.memberPortalTabletBackdrop { display: none; }
+
+/* Tablet landscape and compact laptops: a persistent, slimmer sidebar. */
+@media (min-width:900px) and (max-width:1099px) {
+  .site--member-app .memberPortalPage {
+    padding:18px 16px 30px 223px;
+  }
+  .site--member-app .memberPortalDesktopSidebar {
+    width:205px;
+    padding:18px 9px 16px;
+  }
+  .site--member-app .memberPortalDesktopBrand {
+    gap:8px;
+    padding:2px 6px 16px;
+  }
+  .site--member-app .memberPortalDesktopBrand img { width:35px;height:35px; }
+  .site--member-app .memberPortalDesktopBrand strong { font-size:13px; }
+  .site--member-app .memberPortalDesktopBrand small { font-size:9px; }
+  .site--member-app .memberPortalDesktopNavItem {
+    min-height:40px;
+    padding:8px 9px;
+    gap:9px;
+    font-size:11px;
+  }
+  .site--member-app .memberPortalDesktopNavItem > svg { width:19px;height:19px;flex-basis:19px; }
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    padding-inline:14px;
+    gap:12px;
+  }
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTile {
+    min-height:157px;
+    padding:13px;
+  }
+  .site--member-app .memberPortalWorkspaceHeading { padding:17px 19px; }
+  .site--member-app .memberPortalWorkspaceBody { padding:14px; }
+  .site--member-app .memberPortalDashboard .memberPortalAppHero {
+    min-height:145px;padding-inline:24px;
+  }
+}
+
+/* Portrait tablet: full-width workspace, with an accessible slide-out nav. */
+@media (min-width:700px) and (max-width:899px) {
+  .site--member-app .memberPortalPage {
+    padding:12px 12px 26px;
+    min-height:100dvh;
+  }
+  .site--member-app .memberPortalDesktopSidebar {
+    width:min(295px,86vw);
+    left:0;
+    transform:translateX(-110%);
+    transition:transform 190ms ease;
+    padding:20px 14px 18px;
+    z-index:102;
+    box-shadow:12px 0 36px rgba(22,49,31,.12);
+  }
+  .site--member-app .memberPortalDesktopSidebar.is-open {
+    transform:translateX(0);
+  }
+  .site--member-app .memberPortalTabletBackdrop {
+    position:fixed;
+    display:block;
+    inset:0;
+    z-index:101;
+    border:0;
+    border-radius:0;
+    background:rgba(24,43,32,.38);
+    cursor:pointer;
+  }
+  .site--member-app .memberPortalTabletMenuToggle {
+    display:grid;
+    flex:0 0 44px;
+    place-items:center;
+    width:44px;
+    height:44px;
+    padding:0;
+    border:1px solid #dbe6d8;
+    border-radius:12px;
+    background:#fffef9;
+    color:#315a43;
+    font-size:21px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .site--member-app .memberPortalTabletMenuToggle:focus-visible {
+    outline:3px solid #c19d60;
+    outline-offset:2px;
+  }
+  .site--member-app .memberPortalDesktopTopbar {
+    min-height:65px;
+    gap:12px;
+    padding:0 2px 12px;
+  }
+  .site--member-app .memberPortalDesktopTopbarTitle {
+    flex:1;
+  }
+  .site--member-app .memberPortalDesktopTopbarTitle > strong {
+    font-size:clamp(19px,3vw,25px);
+  }
+  .site--member-app .memberPortalDesktopTopbarUser strong {
+    max-width:130px;
+    font-size:11px;
+  }
+  .site--member-app .memberPortalDesktopTopbarUser small { font-size:10px; }
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    padding:0 14px;
+    gap:12px;
+  }
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTile {
+    min-height:151px;
+    padding:14px;
+  }
+  .site--member-app .memberPortalDashboard .memberPortalAppHero {
+    min-height:145px;
+    padding:22px 24px;
+  }
+  .site--member-app .memberPortalDashboard .memberPortalAppHeroCopy { width:70%; }
+  .site--member-app .memberPortalDashboard .memberPortalAppHeroArtwork { width:43%; }
+  .site--member-app .memberPortalDashboard .memberPortalAppGridIntro {
+    margin:17px 16px 13px;
+  }
+  .site--member-app .memberPortalWorkspaceHeading {
+    padding:17px 18px;
+    gap:14px;
+  }
+  .site--member-app .memberPortalWorkspaceBody {
+    min-height:480px;
+    padding:12px;
+  }
+  .site--member-app .memberPortalServiceFrame {
+    min-height:460px;
+    height:max(520px,calc(100dvh - 235px));
+  }
+  .site--member-app .memberPortalDashboard .memberPortalMetrics { gap:9px; }
+  .site--member-app .memberPortalDashboard .memberPortalMetric { padding:12px 10px;gap:8px; }
+  .site--member-app .memberPortalDashboard .memberPortalMetric strong { font-size:16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .site--member-app .memberPortalDesktopSidebar { transition:none; }
 }
