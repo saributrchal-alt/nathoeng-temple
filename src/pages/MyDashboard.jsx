@@ -8,6 +8,9 @@ import DonationPage from './DonationPage';
 import MyStaysPage from './MyStaysPage';
 import BookingPage from './BookingPage';
 import PracticeMessagesPage from './PracticeMessagesPage';
+import CheckinPage from './CheckinPage';
+import StayProcessPage from './StayProcessPage';
+import StayPreparationPage from './StayPreparationPage';
 import { structuredAddress, emptyThaiAddress } from '../lib/thaiAddress.js';
 
 
@@ -181,7 +184,9 @@ function MyDashboard({
     const embedded = {
       'my-dashboard': 'overview', 'donation-list': 'donations',
       'donation-page': 'donation-entry', 'my-stays': 'retreat',
-      'booking-page': 'booking', 'practice-messages': 'news'
+      'booking-page': 'booking', 'practice-messages': 'news',
+      'checkin-page': 'checkin', 'stay-process': 'stay-process',
+      'prepare-stay': 'prepare-stay'
     };
     if (embedded[page]) return showService(embedded[page]);
     return goToPage(page);
@@ -1173,9 +1178,9 @@ function MyDashboard({
             <strong>{activeService === 'overview'
               ? (th ? 'ภาพรวมบริการสมาชิก' : 'Member dashboard')
               : (th ? (memberShortcuts.find(item => item.key === activeService)?.th ||
-                (activeService === 'booking' ? 'จองเข้าพัก' : activeService === 'donation-entry' ? 'ทำรายการบริจาค' : 'บริการสมาชิก'))
+                (activeService === 'booking' ? 'จองเข้าพัก' : activeService === 'donation-entry' ? 'ทำรายการบริจาค' : activeService === 'checkin' ? 'เช็กอินเข้าพัก' : 'บริการสมาชิก'))
                 : (memberShortcuts.find(item => item.key === activeService)?.en ||
-                  (activeService === 'booking' ? 'Book a stay' : activeService === 'donation-entry' ? 'New donation' : 'Member services')))}</strong>
+                  (activeService === 'booking' ? 'Book a stay' : activeService === 'donation-entry' ? 'New donation' : activeService === 'checkin' ? 'Check-in' : 'Member services')))}</strong>
           </div>
           <div className="memberPortalDesktopTopbarUser">
             <span><strong>{verifiedFullName || user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng member')}</strong>
@@ -1394,6 +1399,13 @@ function MyDashboard({
               <div className="memberPortalNativePage"><BookingPage lang={lang} goToPage={goToWorkspacePage} /></div>}
             {desktopWorkspace && activeService === 'news' &&
               <div className="memberPortalNativePage"><PracticeMessagesPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && activeService === 'checkin' &&
+              <div className="memberPortalNativePage"><CheckinPage lang={lang} goToPage={goToWorkspacePage}
+                 user={user} handleLineLogin={handleLineLogin} /></div>}
+            {desktopWorkspace && activeService === 'stay-process' &&
+              <div className="memberPortalNativePage"><StayProcessPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && activeService === 'prepare-stay' &&
+              <div className="memberPortalNativePage"><StayPreparationPage lang={lang} goToPage={goToWorkspacePage} /></div>}
             {desktopWorkspace && ['library', 'equipment', 'health', 'kathin'].map(key =>
               openedFrames.includes(key) && (
                 <div className="memberPortalRemotePane" key={key} hidden={activeService !== key}>
