@@ -1034,6 +1034,52 @@ function MyDashboard({
     <div className="nathoengDashboardPage compactAccountPage memberPortalPage">
       <div className="nathoengDashboard compactAccountDashboard memberPortalDashboard">
 
+        {/* Desktop dashboard shell; shortcut actions stay attached to the same service handlers. */}
+        <aside className="memberPortalDesktopSidebar" aria-label={th ? 'เมนูบริการสมาชิก' : 'Member navigation'}>
+          <div className="memberPortalDesktopBrand">
+            <img src="/logo-brown.png" alt="" aria-hidden="true" />
+            <span><strong>NATHOENG</strong><small>CONNECT</small></span>
+          </div>
+          <div className="memberPortalDesktopNavLabel">{th ? 'เมนูหลัก' : 'MAIN MENU'}</div>
+          <nav className="memberPortalDesktopNav">
+            <button className="memberPortalDesktopNavItem is-current" type="button" aria-current="page"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <MemberPortalIcon name="card" /><span>{th ? 'ภาพรวมบริการ' : 'Overview'}</span>
+            </button>
+            {['news','retreat','library','health','settings','contact'].map(key => {
+              const item = memberShortcuts.find(shortcut => shortcut.key === key);
+              if (!item) return null;
+              const content = <><MemberPortalIcon name={item.icon} /><span>{th ? item.th : item.en}</span>
+                {item.unread > 0 && <b className="memberPortalDesktopUnread">{item.unread > 99 ? '99+' : item.unread}</b>}</>;
+              return item.href
+                ? <a key={key} className="memberPortalDesktopNavItem" href={item.href}>{content}</a>
+                : <button key={key} type="button" className="memberPortalDesktopNavItem"
+                    onClick={item.onClick} disabled={item.disabled}>{content}</button>;
+            })}
+          </nav>
+          <div className="memberPortalDesktopSidebarBottom">
+            <button className="memberPortalDesktopNavItem" type="button" onClick={() => goToPage('home')}>
+              <MemberPortalIcon name="retreat" /><span>{th ? 'กลับเว็บไซต์วัด' : 'Monastery website'}</span>
+            </button>
+            <button className="memberPortalDesktopNavItem" type="button" onClick={handleLogout}>
+              <span className="memberPortalDesktopExitIcon" aria-hidden="true">↪</span>
+              <span>{th ? 'ออกจากระบบ' : 'Sign out'}</span>
+            </button>
+          </div>
+        </aside>
+        <header className="memberPortalDesktopTopbar">
+          <div className="memberPortalDesktopTopbarTitle">
+            <small>NATHOENG CONNECT <span aria-hidden="true">/</span> {th ? 'บัญชีสมาชิก' : 'MEMBER AREA'}</small>
+            <strong>{th ? 'ภาพรวมบริการสมาชิก' : 'Member dashboard'}</strong>
+          </div>
+          <div className="memberPortalDesktopTopbarUser">
+            <span><strong>{verifiedFullName || user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng member')}</strong>
+              <small>{th ? 'ยินดีต้อนรับ' : 'Welcome back'}</small></span>
+            {(profilePicture || user?.picture) && !profileImageError
+              ? <img src={profilePicture || user.picture} alt="" referrerPolicy="no-referrer" onError={() => setProfileImageError(true)} />
+              : <span className="memberPortalDesktopUserFallback" aria-hidden="true">✦</span>}
+          </div>
+        </header>
 
         <button
           type="button"
