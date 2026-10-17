@@ -44,7 +44,8 @@
   .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon svg{width:29px;height:29px}
   .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTileLabel{font-size:clamp(12px,1vw,14px);min-height:0}
   .site--member-app .memberPortalDashboard .memberPortalMetrics{order:1;margin:0}
-  .site--member-app .memberPortalDashboard .memberPortalIdentity{order:2}
+  /* Profile details already appear in the top-right desktop user bar. */
+  .site--member-app .memberPortalDashboard .memberPortalIdentity{display:none}
   .site--member-app .memberPortalDashboard .memberPortalIdentity .compactProfileCard{padding:14px 18px}
   .site--member-app .memberPortalDashboard .compactLogoutWrap{order:3;margin-top:0}
 }
