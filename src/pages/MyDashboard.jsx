@@ -3,6 +3,11 @@ import { createPortal } from 'react-dom';
 import MemberPhotoEditor from '../components/MemberPhotoEditor';
 import MemberCard from '../components/MemberCard';
 import ThaiAddressFields from '../components/ThaiAddressFields.jsx';
+import DonationListPage from './DonationListPage';
+import DonationPage from './DonationPage';
+import MyStaysPage from './MyStaysPage';
+import BookingPage from './BookingPage';
+import PracticeMessagesPage from './PracticeMessagesPage';
 import { structuredAddress, emptyThaiAddress } from '../lib/thaiAddress.js';
 
 
@@ -141,6 +146,48 @@ function MyDashboard({
   handleTelegramLogin
 }) {
   const th = lang === 'th';
+  const [desktopWorkspace, setDesktopWorkspace] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 1100px)').matches);
+  const [activeService, setActiveService] = useState('overview');
+  const [openedFrames, setOpenedFrames] = useState([]);
+  const [accountWorkspaceLoaded, setAccountWorkspaceLoaded] = useState(false);
+  const [schoolWorkspaceLoaded, setSchoolWorkspaceLoaded] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1100px)');
+    const handleChange = () => {
+      setDesktopWorkspace(media.matches);
+      if (!media.matches) setActiveService('overview');
+    };
+    handleChange();
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
+  const serviceFrameSources = {
+    library: 'https://library.nathoeng.com/?member=1#member-area',
+    equipment: 'https://gears.nathoeng.com/#loans',
+    health: 'https://health.nathoeng.com/',
+    kathin: 'https://kathin.nathoeng.com/#queue-board'
+  };
+  const showService = (service) => {
+    if (!desktopWorkspace) return;
+    setActiveService(service);
+    if (serviceFrameSources[service]) {
+      setOpenedFrames(prev => prev.includes(service) ? prev : [...prev, service]);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const goToWorkspacePage = page => {
+    if (!desktopWorkspace) return goToPage(page);
+    const embedded = {
+      'my-dashboard': 'overview', 'donation-list': 'donations',
+      'donation-page': 'donation-entry', 'my-stays': 'retreat',
+      'booking-page': 'booking', 'practice-messages': 'news'
+    };
+    if (embedded[page]) return showService(embedded[page]);
+    return goToPage(page);
+  };
+  const navigateMemberService = (page, service) =>
+    desktopWorkspace ? showService(service) : goToPage(page);
   const [infoPanel, setInfoPanel] = useState(null);
   const [memberAccess, setMemberAccess] = useState(null);
   const [memberAccessLoading, setMemberAccessLoading] = useState(false);
@@ -299,7 +346,32 @@ function MyDashboard({
 
 
 
-  const openKathinStaff = async () => {
+
+  // Keep the member hub visible. Handoff tokens are POSTed, never placed in URLs.
+  // A named iframe is used in the desktop workspace; mobile keeps normal navigation.
+  const submitServiceHandoff = (token, action, target) => {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action;
+    form.target = target;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'token';
+    input.value = token;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    try { form.submit(); }
+    finally { form.remove(); }
+  };
+  const openHandoffWindow = name => {
+    const popup = window.open('about:blank', name);
+    if (popup) {
+      try { popup.opener = null; } catch {}
+      return popup;
+    }
+    return null;
+  };
+  const openKathinStaff = async (mode = 'inline') => {
     if (kathinOpening) return;
     if (user?.actingAsMember) {
       setInfoPanel('kathin-denied');
@@ -313,7 +385,13 @@ function MyDashboard({
       });
       const result = await response.json();
       if (response.ok && result?.success && (result.staff || result.admin)) {
-        window.location.assign('https://kathin.nathoeng.com/#queue-board');
+        if (desktopWorkspace && mode !== 'window') {
+          showService('kathin');
+        } else if (desktopWorkspace) {
+          window.open('https://kathin.nathoeng.com/#queue-board', '_blank', 'noopener,noreferrer');
+        } else {
+          window.location.assign('https://kathin.nathoeng.com/#queue-board');
+        }
         return;
       }
       if (response.status === 401 || response.status === 403 ||
@@ -332,14 +410,17 @@ function MyDashboard({
       setKathinOpening(false);
     }
   };
-
-  const openTempleAccounting = async () => {
+  const openTempleAccounting = async (mode = 'inline') => {
     if (accountOpening) return;
     setAccountError('');
-    // The currently deployed accounting app authorizes Admin only.
-    // Its API verifies the user again before issuing a handoff token.
     if (!user?.isAdmin || user?.actingAsMember) {
       setInfoPanel('account-denied');
+      return;
+    }
+    const pop = desktopWorkspace && mode === 'window' ? openHandoffWindow('nathoeng_account_window') : null;
+    if (desktopWorkspace && mode === 'window' && !pop) {
+      setAccountError(th ? 'เบราว์เซอร์ปิดกั้นหน้าต่างใหม่ กรุณาอนุญาต Pop-up' : 'Please allow pop-ups for this site.');
+      setInfoPanel('account-error');
       return;
     }
     setAccountOpening(true);
@@ -348,24 +429,22 @@ function MyDashboard({
         credentials: 'same-origin', cache: 'no-store'
       });
       if (response.status === 401 || response.status === 403) {
+        pop?.close();
         setInfoPanel('account-denied');
         return;
       }
       const result = await response.json();
       if (!response.ok || !result?.success || !result?.token)
         throw new Error(result?.message || 'Unable to open Temple Accounting');
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'https://account.nathoeng.com/api/session';
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'token';
-      input.value = result.token;
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
-      form.remove();
+      const target = pop ? 'nathoeng_account_window' :
+        desktopWorkspace ? 'nathoeng_account_workspace' : '_self';
+      if (desktopWorkspace && !pop) {
+        setAccountWorkspaceLoaded(true);
+        showService('accounting');
+      }
+      submitServiceHandoff(result.token, 'https://account.nathoeng.com/api/session', target);
     } catch (error) {
+      pop?.close();
       console.error('Temple accounting handoff:', error);
       setAccountError(th
         ? 'ขณะนี้ไม่สามารถเปิดระบบบัญชีวัดได้ กรุณาลองอีกครั้งหรือติดต่อทางวัด'
@@ -375,20 +454,35 @@ function MyDashboard({
       setAccountOpening(false);
     }
   };
-
-  const openSchool = async () => {
+  const openSchool = async (mode = 'inline') => {
     if (schoolOpening) return;
-    setSchoolOpening(true); setSchoolError('');
+    const pop = desktopWorkspace && mode === 'window' ? openHandoffWindow('nathoeng_school_window') : null;
+    if (desktopWorkspace && mode === 'window' && !pop) {
+      setSchoolError(th ? 'เบราว์เซอร์ปิดกั้นหน้าต่างใหม่' : 'Pop-up blocked');
+      return;
+    }
+    setSchoolOpening(true);
+    setSchoolError('');
     try {
-      const response = await fetch('/api/my-bookings?route=school-handoff', {credentials:'include',cache:'no-store'});
+      const response = await fetch('/api/my-bookings?route=school-handoff', {
+        credentials: 'include', cache: 'no-store'
+      });
       const result = await response.json();
-      if (!response.ok || !result?.success || !result.token) throw new Error(result?.message || (th?'เข้า School ไม่สำเร็จ':'Unable to open School'));
-      const form = document.createElement('form');
-      form.method = 'POST'; form.action = 'https://school.nathoeng.com/api/session';
-      const input = document.createElement('input');
-      input.type = 'hidden'; input.name = 'token'; input.value = result.token;
-      form.appendChild(input); document.body.appendChild(form); form.submit(); form.remove();
-    } catch (error) { setSchoolError(error.message); setSchoolOpening(false); }
+      if (!response.ok || !result?.success || !result.token)
+        throw new Error(result?.message || (th ? 'เข้า School ไม่สำเร็จ' : 'Unable to open School'));
+      const target = pop ? 'nathoeng_school_window' :
+        desktopWorkspace ? 'nathoeng_school_workspace' : '_self';
+      if (desktopWorkspace && !pop) {
+        setSchoolWorkspaceLoaded(true);
+        showService('school');
+      }
+      submitServiceHandoff(result.token, 'https://school.nathoeng.com/api/session', target);
+    } catch (error) {
+      pop?.close();
+      setSchoolError(error.message);
+    } finally {
+      setSchoolOpening(false);
+    }
   };
 
 
@@ -1015,9 +1109,9 @@ function MyDashboard({
   ];
   const memberShortcuts = [
     { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
-    { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => goToPage('donation-list') },
-    { key: 'retreat', icon: 'retreat', tone: 'rose', th: 'กิจกรรม / ปฏิบัติธรรม', en: 'Retreat & Activities', onClick: () => goToPage('my-stays') },
-    { key: 'news', icon: 'news', tone: 'sky', th: 'ข่าวสารวัด', en: 'Monastery News', onClick: () => goToPage('practice-messages'), unread: connectUnreadCount },
+    { key: 'donations', icon: 'donation', tone: 'amber', th: 'ประวัติทำบุญ', en: 'My Donations', onClick: () => navigateMemberService('donation-list', 'donations') },
+    { key: 'retreat', icon: 'retreat', tone: 'rose', th: 'กิจกรรม / ปฏิบัติธรรม', en: 'Retreat & Activities', onClick: () => navigateMemberService('my-stays', 'retreat') },
+    { key: 'news', icon: 'news', tone: 'sky', th: 'ข่าวสารวัด', en: 'Monastery News', onClick: () => navigateMemberService('practice-messages', 'news'), unread: connectUnreadCount },
     ...(!user?.actingAsMember ? [
       { key: 'library', icon: 'library', tone: 'cream', th: 'ห้องสมุด', en: 'Library', href: 'https://library.nathoeng.com/?member=1#member-area' },
       { key: 'health', icon: 'health', tone: 'sage', th: 'สุขภาพชุมชน', en: 'Community Health', href: 'https://health.nathoeng.com/' },
@@ -1032,7 +1126,7 @@ function MyDashboard({
 
   return (
     <div className="nathoengDashboardPage compactAccountPage memberPortalPage">
-      <div className="nathoengDashboard compactAccountDashboard memberPortalDashboard">
+      <div className={`nathoengDashboard compactAccountDashboard memberPortalDashboard ${activeService !== 'overview' && desktopWorkspace ? 'has-member-workspace' : ''}`}>
 
         {/* Desktop dashboard shell; shortcut actions stay attached to the same service handlers. */}
         <aside className="memberPortalDesktopSidebar" aria-label={th ? 'เมนูบริการสมาชิก' : 'Member navigation'}>
@@ -1042,18 +1136,24 @@ function MyDashboard({
           </div>
           <div className="memberPortalDesktopNavLabel">{th ? 'เมนูหลัก' : 'MAIN MENU'}</div>
           <nav className="memberPortalDesktopNav">
-            <button className="memberPortalDesktopNavItem is-current" type="button" aria-current="page"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <button className={`memberPortalDesktopNavItem ${activeService === 'overview' ? 'is-current' : ''}`}
+              type="button" aria-current={activeService === 'overview' ? 'page' : undefined}
+              onClick={() => showService('overview')}>
               <MemberPortalIcon name="card" /><span>{th ? 'ภาพรวมบริการ' : 'Overview'}</span>
             </button>
-            {['news','retreat','library','health','settings','contact'].map(key => {
+            {shortcutDisplayOrder.map(key => {
               const item = memberShortcuts.find(shortcut => shortcut.key === key);
               if (!item) return null;
+              const current = activeService === key;
               const content = <><MemberPortalIcon name={item.icon} /><span>{th ? item.th : item.en}</span>
                 {item.unread > 0 && <b className="memberPortalDesktopUnread">{item.unread > 99 ? '99+' : item.unread}</b>}</>;
               return item.href
-                ? <a key={key} className="memberPortalDesktopNavItem" href={item.href}>{content}</a>
-                : <button key={key} type="button" className="memberPortalDesktopNavItem"
+                ? <a key={key} className={`memberPortalDesktopNavItem ${current ? 'is-current' : ''}`}
+                    href={item.href} aria-current={current ? 'page' : undefined}
+                    onClick={event => { event.preventDefault(); showService(key); }}>{content}</a>
+                : <button key={key} type="button"
+                    className={`memberPortalDesktopNavItem ${current ? 'is-current' : ''}`}
+                    aria-current={current ? 'page' : undefined}
                     onClick={item.onClick} disabled={item.disabled}>{content}</button>;
             })}
           </nav>
@@ -1070,7 +1170,12 @@ function MyDashboard({
         <header className="memberPortalDesktopTopbar">
           <div className="memberPortalDesktopTopbarTitle">
             <small>NATHOENG CONNECT <span aria-hidden="true">/</span> {th ? 'บัญชีสมาชิก' : 'MEMBER AREA'}</small>
-            <strong>{th ? 'ภาพรวมบริการสมาชิก' : 'Member dashboard'}</strong>
+            <strong>{activeService === 'overview'
+              ? (th ? 'ภาพรวมบริการสมาชิก' : 'Member dashboard')
+              : (th ? (memberShortcuts.find(item => item.key === activeService)?.th ||
+                (activeService === 'booking' ? 'จองเข้าพัก' : activeService === 'donation-entry' ? 'ทำรายการบริจาค' : 'บริการสมาชิก'))
+                : (memberShortcuts.find(item => item.key === activeService)?.en ||
+                  (activeService === 'booking' ? 'Book a stay' : activeService === 'donation-entry' ? 'New donation' : 'Member services')))}</strong>
           </div>
           <div className="memberPortalDesktopTopbarUser">
             <span><strong>{verifiedFullName || user?.name || (th ? 'สมาชิกนาเทิง' : 'Nathoeng member')}</strong>
@@ -1089,7 +1194,7 @@ function MyDashboard({
           {th ? '← กลับสู่หน้าหลัก' : '← Back to Home'}
         </button>
 
-        {kathinDrinksActive && <a href="https://kathin.nathoeng.com/#order-drink" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
+        {kathinDrinksActive && <a className="memberPortalCafeBanner" href="https://kathin.nathoeng.com/#order-drink" style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', margin: '0 0 18px', padding: '20px', border: '2px solid #b58a3b', borderRadius: 18, background: 'linear-gradient(120deg,#fff9e8,#f2e6ca)', color: '#3d3322', boxShadow: '0 8px 22px rgba(94,70,27,.12)' }}>
           <span aria-hidden="true" style={{ fontSize: 64, lineHeight: 1.15, flexShrink: 0 }}>☕</span>
           <strong style={{ fontSize: 21, lineHeight: 1.5, minWidth: 0 }}>{th ? 'กดรับกาแฟ เครื่องดื่มฟรีในงาน' : 'Tap for free coffee and drinks at the event'}</strong>
         </a>}
@@ -1231,7 +1336,8 @@ function MyDashboard({
                 <span className="memberPortalTileArrow" aria-hidden="true">›</span>
               </>;
               return item.href
-                ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}>{content}</a>
+                ? <a key={item.key} className={'memberPortalTile tone-' + item.tone} href={item.href}
+                    onClick={event => { if (desktopWorkspace) { event.preventDefault(); showService(item.key); } }}>{content}</a>
                 : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : item.key === 'accounting' ? accountingTileRef : item.key === 'kathin' ? kathinTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings', 'accounting', 'kathin'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
             })}
           </div>
