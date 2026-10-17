@@ -149,22 +149,53 @@ function MyDashboard({
   handleTelegramLogin
 }) {
   const th = lang === 'th';
+  // Tablet and desktop share the same member workspace; phones keep the original layout.
   const [desktopWorkspace, setDesktopWorkspace] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia('(min-width: 1100px)').matches);
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 700px)').matches);
+  const [tabletPortrait, setTabletPortrait] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 700px) and (max-width: 899px)').matches);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarToggleRef = useRef(null);
   const [activeService, setActiveService] = useState('overview');
   const [openedFrames, setOpenedFrames] = useState([]);
   const [accountWorkspaceLoaded, setAccountWorkspaceLoaded] = useState(false);
   const [schoolWorkspaceLoaded, setSchoolWorkspaceLoaded] = useState(false);
   useEffect(() => {
-    const media = window.matchMedia('(min-width: 1100px)');
-    const handleChange = () => {
-      setDesktopWorkspace(media.matches);
-      if (!media.matches) setActiveService('overview');
+    const workspaceMedia = window.matchMedia('(min-width: 700px)');
+    const portraitMedia = window.matchMedia('(min-width: 700px) and (max-width: 899px)');
+    const updateLayout = () => {
+      setDesktopWorkspace(workspaceMedia.matches);
+      setTabletPortrait(portraitMedia.matches);
+      if (!workspaceMedia.matches) setActiveService('overview');
+      if (!portraitMedia.matches) setSidebarOpen(false);
     };
-    handleChange();
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
+    updateLayout();
+    workspaceMedia.addEventListener('change', updateLayout);
+    portraitMedia.addEventListener('change', updateLayout);
+    return () => {
+      workspaceMedia.removeEventListener('change', updateLayout);
+      portraitMedia.removeEventListener('change', updateLayout);
+    };
   }, []);
+  useEffect(() => {
+    if (!sidebarOpen || !tabletPortrait) return undefined;
+    const priorOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const firstNav = document.querySelector('#member-portal-nav .memberPortalDesktopNavItem');
+    firstNav?.focus({ preventScroll: true });
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setSidebarOpen(false);
+        sidebarToggleRef.current?.focus({ preventScroll: true });
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.body.style.overflow = priorOverflow;
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [sidebarOpen, tabletPortrait]);
   const serviceFrameSources = {
     library: 'https://library.nathoeng.com/?member=1#member-area',
     equipment: 'https://gears.nathoeng.com/#loans',
@@ -174,6 +205,7 @@ function MyDashboard({
   const showService = (service) => {
     if (!desktopWorkspace) return;
     setActiveService(service);
+    setSidebarOpen(false);
     if (serviceFrameSources[service]) {
       setOpenedFrames(prev => prev.includes(service) ? prev : [...prev, service]);
     }
@@ -1133,8 +1165,17 @@ function MyDashboard({
     <div className="nathoengDashboardPage compactAccountPage memberPortalPage">
       <div className={`nathoengDashboard compactAccountDashboard memberPortalDashboard ${activeService !== 'overview' && desktopWorkspace ? 'has-member-workspace' : ''}`}>
 
-        {/* Desktop dashboard shell; shortcut actions stay attached to the same service handlers. */}
-        <aside className="memberPortalDesktopSidebar" aria-label={th ? 'เมนูบริการสมาชิก' : 'Member navigation'}>
+        {/* Shared desktop/tablet app shell: the sidebar becomes a drawer on portrait tablets. */}
+        {tabletPortrait && sidebarOpen && (
+          <button type="button" className="memberPortalTabletBackdrop"
+            aria-label={th ? 'ปิดเมนูด้านข้าง' : 'Close side navigation'}
+            onClick={() => { setSidebarOpen(false); sidebarToggleRef.current?.focus(); }} />
+        )}
+        <aside id="member-portal-nav"
+          className={`memberPortalDesktopSidebar ${sidebarOpen ? 'is-open' : ''}`}
+          aria-label={th ? 'เมนูบริการสมาชิก' : 'Member navigation'}
+          aria-hidden={tabletPortrait && !sidebarOpen ? true : undefined}
+          inert={tabletPortrait && !sidebarOpen}>
           <div className="memberPortalDesktopBrand">
             <img src="/logo-brown.png" alt="" aria-hidden="true" />
             <span><strong>NATHOENG</strong><small>CONNECT</small></span>
@@ -1159,7 +1200,7 @@ function MyDashboard({
                 : <button key={key} type="button"
                     className={`memberPortalDesktopNavItem ${current ? 'is-current' : ''}`}
                     aria-current={current ? 'page' : undefined}
-                    onClick={item.onClick} disabled={item.disabled}>{content}</button>;
+                    onClick={() => { setSidebarOpen(false); item.onClick?.(); }} disabled={item.disabled}>{content}</button>;
             })}
           </nav>
           <div className="memberPortalDesktopSidebarBottom">
@@ -1173,6 +1214,14 @@ function MyDashboard({
           </div>
         </aside>
         <header className="memberPortalDesktopTopbar">
+          <button ref={sidebarToggleRef} type="button" className="memberPortalTabletMenuToggle"
+            aria-controls="member-portal-nav" aria-expanded={sidebarOpen}
+            aria-label={sidebarOpen
+              ? (th ? 'ปิดเมนูบริการ' : 'Close services menu')
+              : (th ? 'เปิดเมนูบริการ' : 'Open services menu')}
+            onClick={() => setSidebarOpen(open => !open)}>
+            <span aria-hidden="true">{sidebarOpen ? '✕' : '☰'}</span>
+          </button>
           <div className="memberPortalDesktopTopbarTitle">
             <small>NATHOENG CONNECT <span aria-hidden="true">/</span> {th ? 'บัญชีสมาชิก' : 'MEMBER AREA'}</small>
             <strong>{activeService === 'overview'
