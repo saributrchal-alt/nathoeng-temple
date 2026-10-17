@@ -1344,6 +1344,103 @@ function MyDashboard({
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
         </section>
 
+
+        {/* One persistent working area: native pages render here, external systems
+            are framed only when allowed by their own security policies. */}
+        <section className="memberPortalWorkspace" aria-label={th ? 'พื้นที่ทำงานบริการสมาชิก' : 'Member service workspace'}>
+          <div className="memberPortalWorkspaceHeading">
+            <div className="memberPortalWorkspaceHeadingCopy">
+              <span className="memberPortalWorkspaceEyebrow">NATHOENG CONNECT / {th ? 'บริการสมาชิก' : 'MEMBER SERVICES'}</span>
+              <h2>{th
+                ? (memberShortcuts.find(item => item.key === activeService)?.th ||
+                    (activeService === 'donation-entry' ? 'บันทึกการทำบุญ' : activeService === 'booking' ? 'จองเข้าพัก' : 'พื้นที่ทำงาน'))
+                : (memberShortcuts.find(item => item.key === activeService)?.en ||
+                    (activeService === 'donation-entry' ? 'Make a donation' : activeService === 'booking' ? 'Book a retreat' : 'Workspace'))}</h2>
+              <p>{th ? 'ใช้งานบริการโดยไม่ต้องออกจากหน้าหลัก NATHOENG CONNECT' :
+                'Your member tools in one continuous workspace.'}</p>
+            </div>
+            <div className="memberPortalWorkspaceActions">
+              <button type="button" className="memberPortalWorkspaceBack" onClick={() => showService('overview')}>
+                <span aria-hidden="true">⌂</span> {th ? 'ภาพรวม' : 'Overview'}
+              </button>
+              {serviceFrameSources[activeService] && (
+                <a className="memberPortalWorkspacePopout" href={serviceFrameSources[activeService]}
+                   target="_blank" rel="noopener noreferrer">
+                   ↗ {th ? 'เปิดหน้าต่างใหม่' : 'Open new window'}
+                </a>
+              )}
+              {activeService === 'accounting' && (
+                <button type="button" className="memberPortalWorkspacePopout"
+                  disabled={accountOpening} onClick={() => openTempleAccounting('window')}>
+                  ↗ {th ? 'เปิดหน้าต่างใหม่' : 'Open new window'}
+                </button>
+              )}
+              {activeService === 'school' && (
+                <button type="button" className="memberPortalWorkspacePopout"
+                  disabled={schoolOpening} onClick={() => openSchool('window')}>
+                  ↗ {th ? 'เปิดหน้าต่างใหม่' : 'Open new window'}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="memberPortalWorkspaceBody">
+            {desktopWorkspace && activeService === 'donations' &&
+              <div className="memberPortalNativePage"><DonationListPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && activeService === 'donation-entry' &&
+              <div className="memberPortalNativePage"><DonationPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && activeService === 'retreat' &&
+              <div className="memberPortalNativePage"><MyStaysPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && activeService === 'booking' &&
+              <div className="memberPortalNativePage"><BookingPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && activeService === 'news' &&
+              <div className="memberPortalNativePage"><PracticeMessagesPage lang={lang} goToPage={goToWorkspacePage} /></div>}
+            {desktopWorkspace && ['library', 'equipment', 'health', 'kathin'].map(key =>
+              openedFrames.includes(key) && (
+                <div className="memberPortalRemotePane" key={key} hidden={activeService !== key}>
+                  <p className="memberPortalFrameNotice">
+                    {th
+                      ? 'ระบบนี้เชื่อมจากบริการของวัดโดยตรง หากผู้ให้บริการจำกัดการแสดงในหน้านี้ ให้กด “เปิดหน้าต่างใหม่” ด้านบน'
+                      : 'This service runs on its own domain. If embedded viewing is restricted, use Open new window above.'}
+                  </p>
+                  <iframe className="memberPortalServiceFrame" title={th
+                    ? (memberShortcuts.find(item => item.key === key)?.th || key)
+                    : (memberShortcuts.find(item => item.key === key)?.en || key)}
+                    src={serviceFrameSources[key]} loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin" />
+                </div>
+              )
+            )}
+            {desktopWorkspace && (
+              <div className="memberPortalRemotePane" hidden={activeService !== 'accounting'}>
+                <p className="memberPortalFrameNotice">
+                  {th
+                    ? 'ระบบบัญชีสงวนสิทธิ์สำหรับผู้ดูแล หากไม่สามารถแสดงในกรอบได้ กรุณาเลือกเปิดหน้าต่างใหม่'
+                    : 'Accounting requires admin access. Open in a new window if the embedded view is restricted.'}
+                </p>
+                {!accountWorkspaceLoaded && <p className="memberPortalWorkspaceHint">{th ? 'เลือก “บัญชีวัด” เพื่อยืนยันสิทธิ์และเปิดระบบ' : 'Select Accounting to authorize access.'}</p>}
+                <iframe className="memberPortalServiceFrame" title={th ? 'ระบบบัญชีวัด' : 'Temple accounting'}
+                  name="nathoeng_account_workspace" src="about:blank"
+                  style={{ display: accountWorkspaceLoaded ? 'block' : 'none' }}
+                  referrerPolicy="strict-origin-when-cross-origin" />
+              </div>
+            )}
+            {desktopWorkspace && (
+              <div className="memberPortalRemotePane" hidden={activeService !== 'school'}>
+                <p className="memberPortalFrameNotice">
+                  {th ? 'หากเบราว์เซอร์ไม่อนุญาตให้แสดงระบบ School ในหน้าเดียวกัน ให้เลือกเปิดหน้าต่างใหม่' :
+                    'If the school cannot appear in this frame, select Open new window.'}
+                </p>
+                {!schoolWorkspaceLoaded && <p className="memberPortalWorkspaceHint">{th ? 'เลือก “การเรียนออนไลน์” เพื่อเข้าสู่ระบบ' : 'Select School to sign in.'}</p>}
+                {schoolError && <p className="memberPortalTileError" role="alert">{schoolError}</p>}
+                <iframe className="memberPortalServiceFrame" title={th ? 'การเรียนออนไลน์' : 'Nathoeng School'}
+                  name="nathoeng_school_workspace" src="about:blank"
+                  style={{ display: schoolWorkspaceLoaded ? 'block' : 'none' }}
+                  referrerPolicy="strict-origin-when-cross-origin" />
+              </div>
+            )}
+          </div>
+        </section>
+
         {cancelMembershipOpen && (
           <div role="presentation" style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(34,28,18,.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '18px' }}>
             <section role="dialog" aria-modal="true" aria-labelledby="cancel-membership-title" style={{ width: 'min(100%, 520px)', maxHeight: '90vh', overflowY: 'auto', background: '#fffdf8', borderRadius: '22px', padding: '23px', boxShadow: '0 24px 70px rgba(32,25,15,.3)' }}>
