@@ -3,6 +3,7 @@ import { geoGraticule10, geoNaturalEarth1, geoPath } from 'd3-geo'
 import { feature } from 'topojson-client'
 import worldTopology from 'world-atlas/countries-110m.json'
 import './App.css'
+import './member-desktop.css'
 import BookingPage from './pages/BookingPage'
 import CalendarPage from './pages/CalendarPage'
 import DonationPage from './pages/DonationPage'
@@ -1381,7 +1382,7 @@ const handleLineLogin = async (mode = 'login') => {
   }
 
   return (
-    <div className="site">
+    <div className={`site ${currentPage === 'my-dashboard' && user ? 'site--member-app' : ''}`}>
 
       {/* HEADER */}
       <header className="siteHeader">
