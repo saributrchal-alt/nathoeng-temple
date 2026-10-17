@@ -1,0 +1,50 @@
+/* Desktop-only member app shell. Public pages and mobile retain their layouts. */
+.memberPortalDesktopSidebar,.memberPortalDesktopTopbar{display:none}
+@media(min-width:1100px){
+  #root:has(.site--member-app){width:100%;max-width:none;border:0;text-align:left}
+  .site--member-app{min-height:100vh;background:#f5f7f2}
+  .site--member-app>.siteHeader,.site--member-app>.siteFooter,.site--member-app>.dashboardBottomNav{display:none}
+  .site--member-app .memberPortalPage{min-height:100vh;padding:26px 28px 42px 284px;background:#f5f7f2}
+  .site--member-app .nathoengDashboard.memberPortalDashboard{display:flex;flex-direction:column;gap:19px;width:100%;max-width:1480px;min-width:0;margin:0 auto;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+  .site--member-app .memberPortalDesktopSidebar{position:fixed;z-index:80;inset:0 auto 0 0;display:flex;flex-direction:column;width:256px;height:100dvh;padding:28px 15px 18px;overflow-y:auto;border-right:1px solid #e2e7de;background:linear-gradient(180deg,#ecf3eb 0%,#fffefb 36%,#fffefa 100%);box-shadow:4px 0 25px rgba(37,75,52,.035)}
+  .memberPortalDesktopBrand{display:flex;align-items:center;gap:12px;padding:3px 11px 29px;color:#264c3a}
+  .memberPortalDesktopBrand img{width:43px;height:43px;object-fit:contain}
+  .memberPortalDesktopBrand>span{display:flex;flex-direction:column;gap:1px}
+  .memberPortalDesktopBrand strong{font-size:16px;font-weight:800;letter-spacing:.07em;line-height:1.3}
+  .memberPortalDesktopBrand small{font-size:11px;font-weight:700;letter-spacing:.19em}
+  .memberPortalDesktopNavLabel{margin:0 13px 12px;color:#91a094;font-size:10px;font-weight:750;letter-spacing:.12em}
+  .memberPortalDesktopNav{display:grid;gap:5px}
+  .memberPortalDesktopNavItem{display:flex;align-items:center;gap:13px;min-height:45px;width:100%;padding:10px 14px;border:0;border-radius:13px;background:transparent;color:#546b5c;font:inherit;font-size:13px;font-weight:600;line-height:1.4;text-decoration:none!important;text-align:left;cursor:pointer}
+  .memberPortalDesktopNavItem>svg{width:21px;height:21px;flex:0 0 21px;stroke-width:1.8}
+  .memberPortalDesktopNavItem>span:not(.memberPortalDesktopExitIcon){min-width:0}
+  .memberPortalDesktopNavItem.is-current{background:#e5efe5;color:#234f3a;box-shadow:inset 3px 0 0 #678b73;font-weight:780}
+  .memberPortalDesktopNavItem:hover:not(:disabled){background:#e9f0e7;color:#214e39}
+  .memberPortalDesktopNavItem:focus-visible{outline:2px solid #9c7d42;outline-offset:2px}
+  .memberPortalDesktopNavItem:disabled{opacity:.55;cursor:wait}
+  .memberPortalDesktopUnread{margin-left:auto;min-width:22px;padding:2px 6px;border-radius:50px;background:#c46e4c;color:#fff;text-align:center;font-size:10px}
+  .memberPortalDesktopSidebarBottom{display:grid;gap:4px;margin-top:auto;padding-top:20px;border-top:1px solid #e9e9e1}
+  .memberPortalDesktopExitIcon{display:inline-grid;place-items:center;flex:0 0 21px;width:21px;font-size:23px;line-height:1}
+  .site--member-app .memberPortalDesktopTopbar{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:74px;padding:3px 2px 18px;border-bottom:1px solid #e6eae2;order:-10}
+  .memberPortalDesktopTopbarTitle{display:flex;flex-direction:column;min-width:0;gap:4px;text-align:left}
+  .memberPortalDesktopTopbarTitle small{color:#ac8b56;font-size:10px;font-weight:750;letter-spacing:.07em}
+  .memberPortalDesktopTopbarTitle small span{padding-inline:6px;color:#acb8a8}
+  .memberPortalDesktopTopbarTitle>strong{color:#244b39;font-size:clamp(20px,2.2vw,28px);font-weight:780;line-height:1.3}
+  .memberPortalDesktopTopbarUser{display:flex;align-items:center;gap:11px;min-width:0;text-align:right}
+  .memberPortalDesktopTopbarUser>span:first-child{display:flex;flex-direction:column;min-width:0}
+  .memberPortalDesktopTopbarUser strong{max-width:220px;color:#2d503f;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+  .memberPortalDesktopTopbarUser small{color:#94a194;font-size:11px}
+  .memberPortalDesktopTopbarUser>img,.memberPortalDesktopUserFallback{flex:0 0 42px;width:42px;height:42px;border:2px solid white;border-radius:50%;object-fit:cover;box-shadow:0 2px 10px rgba(40,70,48,.1)}
+  .memberPortalDesktopUserFallback{display:grid;place-items:center;background:#e1eadd;color:#52725b;font-size:22px}
+  .site--member-app .memberPortalDashboard>.compactBackButton{display:none}
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu{order:0;margin:0;border-radius:21px;box-shadow:0 10px 40px rgba(41,67,46,.055)}
+  .site--member-app .memberPortalDashboard .memberPortalAppHero{min-height:150px;padding-top:22px;padding-bottom:22px}
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalShortcutGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.3vw,18px)}
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTile{min-height:156px;padding:14px}
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon{width:51px;height:51px;flex-basis:51px;border-radius:15px}
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTileIcon svg{width:29px;height:29px}
+  .site--member-app .memberPortalDashboard .memberPortalAppMenu .memberPortalTileLabel{font-size:clamp(12px,1vw,14px);min-height:0}
+  .site--member-app .memberPortalDashboard .memberPortalMetrics{order:1;margin:0}
+  .site--member-app .memberPortalDashboard .memberPortalIdentity{order:2}
+  .site--member-app .memberPortalDashboard .memberPortalIdentity .compactProfileCard{padding:14px 18px}
+  .site--member-app .memberPortalDashboard .compactLogoutWrap{order:3;margin-top:0}
+}
