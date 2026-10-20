@@ -380,6 +380,32 @@ function MyDashboard({
   const [tripLoading, setTripLoading] = useState(false);
   const [tripSaving, setTripSaving] = useState(false);
   const [tripMessage, setTripMessage] = useState('');
+  const [tripAdminSearch, setTripAdminSearch] = useState('');
+  const [tripAdminResults, setTripAdminResults] = useState([]);
+  const [tripAdminMember, setTripAdminMember] = useState(null);
+  const [tripAdminBusy, setTripAdminBusy] = useState(false);
+  const searchKathinMembers = async () => {
+    setTripAdminBusy(true);
+    try {
+      const r=await fetch('/api/my-bookings?route=kathin-trip-admin&q='+encodeURIComponent(tripAdminSearch),{credentials:'include',cache:'no-store'});
+      const data=await r.json();
+      if(!r.ok||!data.success) throw Error(data.message||'ค้นหาสมาชิกไม่สำเร็จ');
+      setTripAdminResults(data.members);
+    } catch(e){setTripMessage(e.message);}finally{setTripAdminBusy(false);}
+  };
+  const assignKathinSeat = async (van_id,seat_number) => {
+    if(!tripAdminMember||tripAdminBusy) return;
+    setTripAdminBusy(true);
+    try{
+      const r=await fetch('/api/my-bookings?route=kathin-trip-admin',{method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({member_id:tripAdminMember.id,van_id,seat_number})});
+      const data=await r.json();
+      if(!r.ok||!data.success) throw Error(data.message||'ไม่สามารถกำหนดที่นั่งได้');
+      await loadKathinTrip();
+      setTripMessage((th?'จัดที่นั่งให้ ':'Seat assigned to ')+tripAdminMember.name);
+    }catch(e){setTripMessage(e.message);await loadKathinTrip();}
+    finally{setTripAdminBusy(false);}
+  };
   const loadKathinTrip = async () => {
     setTripLoading(true);
     try {
@@ -1457,6 +1483,27 @@ function MyDashboard({
                 <h3>{th?'จองทริปทัศนาจร':'Trip reservations'}</h3>
                 <p>{th?'กดเลือกที่นั่งที่ว่างได้ทันที (สีเทา = มีผู้จองแล้ว, สีเขียว = ที่นั่งของท่าน)':'Select any available seat (grey = booked, green = your seat)'}</p>
                 <button type="button" onClick={loadKathinTrip} disabled={tripLoading||tripSaving}>{th?'↻ อัปเดตที่นั่ง':'↻ Refresh seats'}</button>
+                {user?.isAdmin && !user?.actingAsMember && <div style={{padding:14,margin:'12px 0',background:'#f0f5f0',border:'1px solid #bed5c0',borderRadius:14}}>
+                  <strong>{th?'แอดมิน: จัดที่นั่งให้สมาชิกวัด':'Admin: assign a seat to a temple member'}</strong>
+                  <div style={{display:'flex',gap:8,margin:'10px 0',flexWrap:'wrap'}}>
+                    <input type="search" value={tripAdminSearch} onChange={e=>setTripAdminSearch(e.target.value)}
+                      placeholder={th?'พิมพ์ชื่อสมาชิกอย่างน้อย 2 ตัวอักษร':'Search member name'}
+                      style={{flex:'1 1 180px',padding:9,borderRadius:8,border:'1px solid #b5cbb8'}}/>
+                    <button type="button" onClick={searchKathinMembers} disabled={tripAdminBusy||tripAdminSearch.trim().length<2}>{th?'ค้นหา':'Search'}</button>
+                  </div>
+                  <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                    {tripAdminResults.map(m=><button key={m.id} type="button" onClick={()=>setTripAdminMember(m)}
+                       aria-pressed={tripAdminMember?.id===m.id}
+                       style={{display:'flex',alignItems:'center',gap:6,padding:6,borderRadius:9,
+                         border:tripAdminMember?.id===m.id?'2px solid #1b7348':'1px solid #bcc6b9',
+                         background:'white'}}>
+                       {m.picture_url && <img src={m.picture_url} alt="" style={{width:28,height:28,borderRadius:'50%',objectFit:'cover'}}/>}
+                       {m.name}
+                    </button>)}
+                  </div>
+                  {tripAdminMember && <p style={{fontWeight:700,color:'#19643e'}}>{th?'กำลังจัดเบาะให้: ':'Assigning seat for: '}{tripAdminMember.name} — {th?'กดเบาะว่างบนผังรถ':'Click an available seat on the van map'}</p>}
+                </div>}
+
                 {tripMessage && <p role="status" style={{color:'#795320'}}>{tripMessage}</p>}
                 {tripLoading && <p>{th?'กำลังโหลดผังที่นั่ง…':'Loading seats…'}</p>}
                 {tripData && <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(215px,1fr))',gap:14,marginTop:14}}>
@@ -1480,7 +1527,7 @@ function MyDashboard({
                           const occupied=tripData.occupied.find(b=>b.van_id===van.id && b.seat_number===seat.n);
                           const mine=occupied?.is_mine;
                           return <button key={seat.n} type="button" disabled={tripSaving||tripLoading||Boolean(occupied)}
-                            onClick={()=>chooseKathinSeat(van.id,seat.n)}
+                            onClick={()=>user?.isAdmin && !user?.actingAsMember && tripAdminMember ? assignKathinSeat(van.id,seat.n) : chooseKathinSeat(van.id,seat.n)}
                             aria-label={(th?'รถคันที่ ':'Van ')+van.van_number+(th?' ที่นั่ง ':' seat ')+seat.n+
                               (occupied?' — '+occupied.passenger_name:'')}
                             title={occupied?occupied.passenger_name:(th?'กดเลือกที่นั่ง':'Select seat')}
