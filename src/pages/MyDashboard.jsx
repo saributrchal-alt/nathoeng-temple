@@ -1462,21 +1462,43 @@ function MyDashboard({
                 {tripData && <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(215px,1fr))',gap:14,marginTop:14}}>
                   {tripData.vans.map(van=><div key={van.id} style={{padding:14,border:'1px solid #dfd4b8',borderRadius:14,background:'white'}}>
                     <h4>{th?'รถตู้คันที่':'Van'} {van.van_number}</h4>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:7}}>
-                      {Array.from({length:van.seat_count},(_,i)=>i+1).map(n=>{
-                        const occupied=tripData.occupied.find(seat=>seat.van_id===van.id && seat.seat_number===n);
-                        const mine=occupied?.is_mine;
-                        return <button key={n} type="button" disabled={tripSaving||tripLoading||Boolean(occupied)}
-                          onClick={()=>chooseKathinSeat(van.id,n)}
-                          aria-label={(th?'รถคันที่ ':'Van ')+van.van_number+(th?' ที่นั่ง ':' seat ')+n}
-                          title={mine?(th?'ที่นั่งของท่าน':'Your seat'):occupied?(th?'มีผู้จองแล้ว':'Booked'):(th?'เลือกที่นั่ง':'Book seat')}
-                          style={{minHeight:42,borderRadius:10,border:'1px solid #d3d2bd',fontWeight:700,
-                            background:mine?'#b6dfc6':occupied?'#d4d6d5':'#fff9e9',
-                            color:occupied&&!mine?'#777':'#214536',cursor:occupied?'not-allowed':'pointer'}}>
-                          {n}{mine?' ✓':''}
-                        </button>;
-                      })}
+                    <div style={{position:'relative',width:'100%',aspectRatio:'2.35/1',minHeight:128,margin:'10px auto'}}>
+                      <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
+                        <rect x="8" y="12" width="454" height="176" rx="50" fill="#f5f1e7" stroke="#9b9586" strokeWidth="4"/>
+                        <rect x="35" y="26" width="170" height="148" rx="25" fill="#e8edeb" stroke="#bdc9c7" strokeWidth="2"/>
+                        <circle cx="67" cy="65" r="16" fill="none" stroke="#687d79" strokeWidth="6"/>
+                        <path d="M112 26 V174 M207 26 V174 M456 55 V148" stroke="#bdc9c7" strokeWidth="3"/>
+                        <path d="M120 95 H450" stroke="#c9c2b2" strokeWidth="2" strokeDasharray="6 6"/>
+                        <rect x="151" y="102" width="40" height="42" rx="5" fill="#3c4545" opacity=".45"/>
+                      </svg>
+                      {[{n:1,x:37,y:77},{n:2,x:51,y:73},{n:3,x:51,y:49},{n:4,x:51,y:25},
+                        {n:5,x:64,y:73},{n:6,x:64,y:49},{n:7,x:64,y:25},
+                        {n:8,x:77,y:73},{n:9,x:77,y:49},{n:10,x:77,y:25},
+                        {n:11,x:90,y:73},{n:12,x:90,y:49},{n:13,x:90,y:25}]
+                        .filter(seat=>seat.n<=van.seat_count)
+                        .map(seat=>{
+                          const occupied=tripData.occupied.find(b=>b.van_id===van.id && b.seat_number===seat.n);
+                          const mine=occupied?.is_mine;
+                          return <button key={seat.n} type="button" disabled={tripSaving||tripLoading||Boolean(occupied)}
+                            onClick={()=>chooseKathinSeat(van.id,seat.n)}
+                            aria-label={(th?'รถคันที่ ':'Van ')+van.van_number+(th?' ที่นั่ง ':' seat ')+seat.n+
+                              (occupied?' — '+occupied.passenger_name:'')}
+                            title={occupied?occupied.passenger_name:(th?'กดเลือกที่นั่ง':'Select seat')}
+                            style={{position:'absolute',left:seat.x+'%',top:seat.y+'%',transform:'translate(-50%,-50%)',
+                              width:'11%',maxWidth:47,aspectRatio:'1/1',padding:2,overflow:'hidden',
+                              borderRadius:7,border:mine?'2px solid #217d4d':'1px solid #998f78',
+                              background:mine?'#b4e3c1':occupied?'#dce4e1':'#fffdf5',
+                              boxShadow:'0 1px 4px #796b5533',cursor:occupied?'not-allowed':'pointer'}}>
+                            {occupied?.picture_url
+                              ? <img src={occupied.picture_url} alt="" referrerPolicy="no-referrer"
+                                  style={{display:'block',width:'100%',height:'100%',objectFit:'cover',borderRadius:5}}/>
+                              : <span style={{fontSize:occupied?10:14,color:'#2c4d40',fontWeight:700}}>{occupied?(occupied.passenger_name||'สมาชิก').slice(0,2):seat.n}</span>}
+                            {occupied?.picture_url && <span style={{position:'absolute',right:0,bottom:0,fontSize:9,lineHeight:'12px',borderRadius:3,
+                              padding:'0 2px',background:'#fffdf5',color:'#224433'}}>{seat.n}</span>}
+                          </button>;
+                        })}
                     </div>
+                    <p style={{fontSize:12,color:'#526057'}}>{th?'กดเบาะว่างเพื่อจอง • รูปภาพบนเบาะคือสมาชิกที่จองแล้ว':'Tap an empty seat to reserve • Booked seats show member photos'}</p>
                   </div>)}
                 </div>}
                 {tripData?.mine && <p style={{fontWeight:700,color:'#276244'}}>{th?'ที่นั่งปัจจุบัน:':'Current seat:'} {th?'รถคันที่':'Van'} {tripData.vans.find(v=>v.id===tripData.mine.van_id)?.van_number} / {th?'เลขที่นั่ง':'Seat'} {tripData.mine.seat_number}</p>}
