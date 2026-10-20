@@ -1512,7 +1512,7 @@ function MyDashboard({
                     </button>)}
                   </div>
                   {tripAdminMember && <p style={{fontWeight:700,color:'#19643e'}}>{th?'กำลังจัดเบาะให้: ':'Assigning seat for: '}{tripAdminMember.name} — {th?'กดเบาะว่างบนผังรถ':'Click an available seat on the van map'}</p>}
-                  </>
+                  </>}
                 </div>}
 
                 {tripMessage && <p role="status" style={{color:'#795320'}}>{tripMessage}</p>}
