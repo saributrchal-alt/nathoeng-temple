@@ -377,6 +377,7 @@ function MyDashboard({
   const [kathinHostOpen, setKathinHostOpen] = useState(false);
   const [kathinHostTab, setKathinHostTab] = useState('trip');
   const [tripData, setTripData] = useState(null);
+  const [tripAdminSeats, setTripAdminSeats] = useState([]);
   const [tripLoading, setTripLoading] = useState(false);
   const [tripSaving, setTripSaving] = useState(false);
   const [tripMessage, setTripMessage] = useState('');
@@ -431,6 +432,12 @@ function MyDashboard({
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.message || 'อ่านข้อมูลรถตู้ไม่สำเร็จ');
       setTripData(data);
+      if (user?.isAdmin && !user?.actingAsMember) {
+        const adminResponse=await fetch('/api/my-bookings?route=kathin-trip-admin&view=seats',{credentials:'include',cache:'no-store'});
+        const adminData=await adminResponse.json();
+        if (!adminResponse.ok || !adminData.success) throw new Error(adminData.message||'อ่านสถานะ Passport ไม่สำเร็จ');
+        setTripAdminSeats(adminData.seats);
+      }
       setTripMessage('');
     } catch(error) { setTripMessage(error.message); }
     finally { setTripLoading(false); }
@@ -1665,7 +1672,12 @@ function MyDashboard({
                           <div key={b.seat_number} style={{display:'flex',alignItems:'center',gap:8,marginTop:7,fontSize:12}}>
                             {b.picture_url && <img src={b.picture_url} alt="" referrerPolicy="no-referrer"
                               style={{width:26,height:26,objectFit:'cover',borderRadius:'50%'}}/>}
-                            <span style={{flex:1}}>{b.seat_number} · {b.passenger_name}</span>
+                            <span style={{flex:1}}>{b.seat_number} · {tripAdminSeats.find(a=>a.van_id===van.id && a.seat_number===b.seat_number)?.name||b.passenger_name}
+                              <span style={{display:'block',color:'#655c4c',fontSize:11}}>
+                                {(()=>{const status=tripAdminSeats.find(a=>a.van_id===van.id && a.seat_number===b.seat_number)?.passport_status;
+                                  return status==='has_passport'?'✓ มี Passport':status==='no_passport'?'ไม่มี Passport':'ยังไม่แจ้งสถานะ Passport';})()}
+                              </span>
+                            </span>
                             <button type="button" onClick={()=>cancelKathinSeat(van.id,b.seat_number,b.passenger_name)}
                               disabled={tripAdminBusy||tripSaving} style={{color:'#973d32',border:'1px solid #e0aea9',background:'#fff8f6',borderRadius:7,padding:'5px 8px'}}>
                               {th?'ยกเลิกจอง':'Cancel'}
