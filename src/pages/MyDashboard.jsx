@@ -1568,8 +1568,27 @@ function MyDashboard({
                                 border:mine?'2px solid #248253':'2px solid #fff',
                                 background:occupied.booking_mode==='placeholder_male'?'#d8eafa':occupied.booking_mode==='placeholder_female'?'#ffe1ed':'#e9f0eb',
                                 boxShadow:'0 1px 3px #3332'}}>
-                                {occupied.booking_mode==='placeholder_male'?<span role="img" aria-label="สำรองชาย" style={{fontSize:20}}>👨</span>:
-                                  occupied.booking_mode==='placeholder_female'?<span role="img" aria-label="สำรองหญิง" style={{fontSize:20}}>👩</span>:
+                                {occupied.booking_mode==='placeholder_male'?
+                                  <svg viewBox="0 0 48 48" role="img" aria-label="สำรองชาย" style={{width:'100%',height:'100%'}}>
+                                    <circle cx="24" cy="24" r="24" fill="#cfe5f6"/>
+                                    <path d="M6 47c1-11 8-17 18-17s17 6 18 17" fill="#4f86a6"/>
+                                    <path d="M18 29h12v8l-6 5-6-5z" fill="#dfab83"/>
+                                    <ellipse cx="24" cy="20" rx="11" ry="13" fill="#f2c6a0"/>
+                                    <path d="M13 21c-2-13 4-17 11-17 10 0 14 7 11 17l-4-8c-6 3-10 4-16 3z" fill="#364952"/>
+                                    <path d="M19 22h2m6 0h2" stroke="#59493e" strokeWidth="1.8" strokeLinecap="round"/>
+                                    <path d="M22 27q2 2 4 0" fill="none" stroke="#a65f55" strokeWidth="1.4" strokeLinecap="round"/>
+                                  </svg>:
+                                  occupied.booking_mode==='placeholder_female'?
+                                  <svg viewBox="0 0 48 48" role="img" aria-label="สำรองหญิง" style={{width:'100%',height:'100%'}}>
+                                    <circle cx="24" cy="24" r="24" fill="#f9dbe7"/>
+                                    <path d="M10 39V20C10 8 17 4 24 4s14 4 14 16v19" fill="#594744"/>
+                                    <path d="M5 47c2-11 9-16 19-16s17 5 19 16" fill="#b36f91"/>
+                                    <path d="M18 29h12v8l-6 5-6-5z" fill="#dfaa8a"/>
+                                    <ellipse cx="24" cy="21" rx="10.5" ry="12.5" fill="#f4c9a9"/>
+                                    <path d="M13 20c0-13 8-16 16-14 7 2 8 10 6 15-3-1-5-6-6-10-5 5-10 6-16 6z" fill="#594744"/>
+                                    <path d="M19 23h2m6 0h2" stroke="#59493e" strokeWidth="1.8" strokeLinecap="round"/>
+                                    <path d="M22 28q2 2 4 0" fill="none" stroke="#b66d70" strokeWidth="1.4" strokeLinecap="round"/>
+                                  </svg>:
                                   occupied.picture_url?<img src={occupied.picture_url} alt="" referrerPolicy="no-referrer"
                                     style={{width:'100%',height:'100%',objectFit:'cover'}}/>:
                                     <span aria-label={occupied.passenger_name||'สมาชิก'} style={{fontSize:19}}>👤</span>}
