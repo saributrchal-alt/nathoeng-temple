@@ -1547,12 +1547,22 @@ function MyDashboard({
                               borderRadius:7,border:mine?'2px solid #217d4d':'1px solid #998f78',
                               background:mine?'#b4e3c1':occupied?.booking_mode==='placeholder_male'?'#d8eafa':occupied?.booking_mode==='placeholder_female'?'#ffe1ed':occupied?'#dce4e1':'#fffdf5',
                               boxShadow:'0 1px 4px #796b5533',cursor:occupied?'not-allowed':'pointer'}}>
-                            {occupied?.booking_mode==='placeholder_male' ? <span role="img" aria-label="สำรองชาย" style={{fontSize:23}}>👨</span> : occupied?.booking_mode==='placeholder_female' ? <span role="img" aria-label="สำรองหญิง" style={{fontSize:23}}>👩</span> : occupied?.picture_url
-                              ? <img src={occupied.picture_url} alt="" referrerPolicy="no-referrer"
-                                  style={{display:'block',width:'100%',height:'100%',objectFit:'cover',borderRadius:5}}/>
-                              : <span style={{fontSize:occupied?10:14,color:'#2c4d40',fontWeight:700}}>{occupied?(occupied.passenger_name||'สมาชิก').slice(0,2):seat.n}</span>}
-                            {occupied?.picture_url && <span style={{position:'absolute',right:0,bottom:0,fontSize:9,lineHeight:'12px',borderRadius:3,
-                              padding:'0 2px',background:'#fffdf5',color:'#224433'}}>{seat.n}</span>}
+                            {occupied ? <span style={{display:'flex',position:'relative',width:'100%',height:'100%',alignItems:'center',justifyContent:'center'}}>
+                              <span style={{width:'84%',height:'84%',aspectRatio:'1/1',borderRadius:'50%',overflow:'hidden',
+                                display:'flex',alignItems:'center',justifyContent:'center',
+                                border:mine?'2px solid #248253':'2px solid #fff',
+                                background:occupied.booking_mode==='placeholder_male'?'#d8eafa':occupied.booking_mode==='placeholder_female'?'#ffe1ed':'#e9f0eb',
+                                boxShadow:'0 1px 3px #3332'}}>
+                                {occupied.booking_mode==='placeholder_male'?<span role="img" aria-label="สำรองชาย" style={{fontSize:20}}>👨</span>:
+                                  occupied.booking_mode==='placeholder_female'?<span role="img" aria-label="สำรองหญิง" style={{fontSize:20}}>👩</span>:
+                                  occupied.picture_url?<img src={occupied.picture_url} alt="" referrerPolicy="no-referrer"
+                                    style={{width:'100%',height:'100%',objectFit:'cover'}}/>:
+                                    <span aria-label={occupied.passenger_name||'สมาชิก'} style={{fontSize:19}}>👤</span>}
+                              </span>
+                              <span style={{position:'absolute',bottom:-2,right:-2,fontSize:10,lineHeight:'13px',
+                                fontWeight:700,borderRadius:9,padding:'0 3px',background:'#fffdf5',
+                                color:'#214536',border:'1px solid #b7b4a4'}}>{seat.n}</span>
+                            </span> : <span style={{fontSize:14,color:'#2c4d40',fontWeight:700}}>{seat.n}</span>}
                           </button>;
                         })}
                     </div>
