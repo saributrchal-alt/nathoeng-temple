@@ -387,6 +387,8 @@ function MyDashboard({
   const [tripAdminResults, setTripAdminResults] = useState([]);
   const [tripAdminMember, setTripAdminMember] = useState(null);
   const [tripAdminMode, setTripAdminMode] = useState('member');
+  const [tripAdminPending, setTripAdminPending] = useState(null);
+  const [tripAdminPassport, setTripAdminPassport] = useState('');
   const [tripAdminBusy, setTripAdminBusy] = useState(false);
   const searchKathinMembers = async () => {
     setTripAdminBusy(true);
@@ -397,14 +399,15 @@ function MyDashboard({
       setTripAdminResults(data.members);
     } catch(e){setTripMessage(e.message);}finally{setTripAdminBusy(false);}
   };
-  const assignKathinSeat = async (van_id,seat_number) => {
+  const assignKathinSeat = async (van_id,seat_number,passport_status=null) => {
     if((tripAdminMode==='member' && !tripAdminMember)||tripAdminBusy) return;
     setTripAdminBusy(true);
     try{
       const r=await fetch('/api/my-bookings?route=kathin-trip-admin',{method:'POST',credentials:'include',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify({member_id:tripAdminMode==='member'?tripAdminMember.id:null,booking_mode:tripAdminMode,van_id,seat_number})});
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({member_id:tripAdminMode==='member'?tripAdminMember.id:null,booking_mode:tripAdminMode,van_id,seat_number,passport_status})});
       const data=await r.json();
       if(!r.ok||!data.success) throw Error(data.message||'ไม่สามารถกำหนดที่นั่งได้');
+      setTripAdminPending(null);
       await loadKathinTrip();
       setTripMessage(th?'บันทึกเบาะสำเร็จ':'Seat reserved successfully');
     }catch(e){setTripMessage(e.message);await loadKathinTrip();}
@@ -1551,6 +1554,30 @@ function MyDashboard({
                   </>}
                 </div>}
 
+                {tripAdminPending && user?.isAdmin && !user?.actingAsMember && <div role="presentation"
+                  style={{position:'fixed',inset:0,zIndex:10003,background:'rgba(12,27,22,.64)',display:'grid',placeItems:'center',padding:16}}>
+                  <section role="dialog" aria-modal="true" aria-label={th?'แอดมินยืนยันการจอง':'Admin booking confirmation'}
+                    style={{width:'min(440px,100%)',background:'#fffef9',border:'1px solid #d4bd84',
+                      borderRadius:18,padding:22,boxShadow:'0 18px 60px #0005'}}>
+                    <h3>{th?'ยืนยันจัดที่นั่งให้เจ้าภาพ':'Confirm assigned seat'}</h3>
+                    <p>{th?'รถตู้คันที่':'Van'} {tripAdminPending.van_number} · {th?'เบาะที่':'Seat'} {tripAdminPending.seat_number}</p>
+                    <p>{tripAdminMode==='member'?(tripAdminMember?.name||'สมาชิก'):tripAdminMode==='placeholder_male'?'สำรองชาย':'สำรองหญิง'}</p>
+                    {tripAdminMode==='member' && <fieldset style={{border:'1px solid #d9d9ce',borderRadius:10,padding:12}}>
+                      <legend>{th?'สมาชิกมี Passport หรือไม่? *':'Does the member have a passport? *'}</legend>
+                      <label style={{display:'block',margin:'10px 0'}}><input type="radio" name="kathin-admin-passport" checked={tripAdminPassport==='has_passport'} onChange={()=>setTripAdminPassport('has_passport')}/> {th?'มี Passport':'Has Passport'}</label>
+                      <label style={{display:'block'}}><input type="radio" name="kathin-admin-passport" checked={tripAdminPassport==='no_passport'} onChange={()=>setTripAdminPassport('no_passport')}/> {th?'ไม่มี Passport':'No Passport'}</label>
+                    </fieldset>}
+                    <div style={{display:'flex',justifyContent:'flex-end',gap:10,marginTop:18}}>
+                      <button type="button" disabled={tripAdminBusy} onClick={()=>setTripAdminPending(null)}>{th?'กลับ':'Back'}</button>
+                      <button type="button" disabled={tripAdminBusy||(tripAdminMode==='member'&&!tripAdminPassport)}
+                        onClick={()=>assignKathinSeat(tripAdminPending.van_id,tripAdminPending.seat_number,
+                          tripAdminMode==='member'?tripAdminPassport:null)}
+                        style={{background:'#285c43',color:'white',padding:'9px 15px',borderRadius:9}}>
+                        {tripAdminBusy?(th?'กำลังบันทึก…':'Saving…'):(th?'ยืนยันการจอง':'Confirm booking')}
+                      </button>
+                    </div>
+                  </section>
+                </div>}
                 {tripSeatPending && <div role="presentation" style={{position:'fixed',inset:0,zIndex:10002,
                   background:'rgba(12,27,22,.64)',display:'grid',placeItems:'center',padding:16}}>
                   <section role="dialog" aria-modal="true" aria-label={th?'ยืนยันการจองทริป':'Confirm trip seat'}
@@ -1614,7 +1641,7 @@ function MyDashboard({
                           const mine=occupied?.is_mine;
                           return <button key={seat.n} type="button" disabled={tripSaving||tripLoading||tripAdminBusy||(Boolean(occupied)&&!mine)}
                             onClick={()=>{
-                              if(user?.isAdmin && !user?.actingAsMember){if(!occupied)assignKathinSeat(van.id,seat.n);return;}
+                              if(user?.isAdmin && !user?.actingAsMember){if(!occupied){setTripAdminPassport('');setTripAdminPending({van_id:van.id,seat_number:seat.n,van_number:van.van_number});}return;}
                               if(mine){setTripSeatPending({van_id:van.id,seat_number:seat.n,van_number:van.van_number,action:'cancel'});return;}
                               if(!occupied){setTripPassportChoice('');setTripSeatPending({van_id:van.id,seat_number:seat.n,van_number:van.van_number,action:'confirm'});}
                             }}
