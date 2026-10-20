@@ -742,6 +742,45 @@ export default async function handler(req, res) {
     );
   }
 
+  if (route === 'kathin-trip') {
+    const session = getSessionFromRequest(req);
+    if (!session?.memberId || session.actingAdminId)
+      return res.status(401).json({success:false,message:'กรุณาเข้าสู่ระบบด้วยบัญชีสมาชิกจริง'});
+    const memberId = session.memberId;
+    const headers = jsonHeaders(supabaseSecretKey);
+    try {
+      const memberRes = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=id,membership_status&limit=1`,
+        {headers,cache:'no-store'});
+      const memberRows = await readJson(memberRes);
+      if (!memberRes.ok || !Array.isArray(memberRows)) throw new Error('ตรวจสมาชิกไม่สำเร็จ');
+      if (!memberRows[0] || (memberRows[0].membership_status && memberRows[0].membership_status !== 'active'))
+        return res.status(403).json({success:false,message:'สมาชิกไม่อยู่ในสถานะใช้งาน'});
+      if (req.method === 'GET') {
+        const [vansRes,bookRes] = await Promise.all([
+          fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?active=eq.true&select=id,van_number,seat_count&order=van_number.asc`,{headers,cache:'no-store'}),
+          fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&status=eq.booked&select=member_id,van_id,seat_number`,{headers,cache:'no-store'})
+        ]);
+        const [vans,bookings] = await Promise.all([readJson(vansRes),readJson(bookRes)]);
+        if (!vansRes.ok || !bookRes.ok || !Array.isArray(vans) || !Array.isArray(bookings)) throw new Error('อ่านที่นั่งไม่สำเร็จ');
+        res.setHeader('Cache-Control','no-store');
+        return res.status(200).json({success:true,vans,occupied:bookings.map(b=>({van_id:b.van_id,seat_number:b.seat_number,is_mine:b.member_id===memberId})),
+          mine:bookings.find(b=>b.member_id===memberId)?{van_id:bookings.find(b=>b.member_id===memberId).van_id,seat_number:bookings.find(b=>b.member_id===memberId).seat_number}:null});
+      }
+      if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
+      const vanId=String(req.body?.van_id||'');
+      const seatNumber=Number(req.body?.seat_number);
+      if (!/^[a-f0-9-]{36}$/i.test(vanId) || !Number.isInteger(seatNumber) || seatNumber<1 || seatNumber>30)
+        return res.status(400).json({success:false,message:'ข้อมูลที่นั่งไม่ถูกต้อง'});
+      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_choose_seat`,{
+        method:'POST',headers:{...headers,Prefer:'return=representation'},
+        body:JSON.stringify({p_member_id:memberId,p_van_id:vanId,p_seat_number:seatNumber})
+      });
+      const result=await readJson(response);
+      if (!response.ok) return res.status(response.status===409?409:400).json({success:false,message:String(result?.message||'ไม่สามารถจองที่นั่งได้')});
+      return res.status(200).json({success:true,booking:result});
+    } catch(error) { console.error('Kathin trip booking:',error); return res.status(503).json({success:false,message:'ระบบจองทริปไม่พร้อม กรุณาลองอีกครั้ง'}); }
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
