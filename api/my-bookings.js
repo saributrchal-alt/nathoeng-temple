@@ -795,12 +795,15 @@ export default async function handler(req, res) {
       }
       const targetId=String(req.body?.member_id||'');
       const bookingMode=String(req.body?.booking_mode||'member');
+      const passportStatus=req.body?.passport_status==null?null:String(req.body.passport_status);
       const vanId=String(req.body?.van_id||'');
       const seat=Number(req.body?.seat_number);
       if(!['member','placeholder_male','placeholder_female'].includes(bookingMode) || (bookingMode==='member' && !/^[a-f\d-]{36}$/i.test(targetId)) || !/^[a-f\d-]{36}$/i.test(vanId)||!Number.isInteger(seat)||seat<1||seat>13)
         return res.status(400).json({success:false,message:'ข้อมูลสมาชิกหรือเบาะไม่ถูกต้อง'});
-      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_admin_assign`,{
-        method:'POST',headers,body:JSON.stringify({p_member_id:bookingMode==='member'?targetId:null,p_booking_mode:bookingMode,p_van_id:vanId,p_seat_number:seat})
+      if(bookingMode==='member' && !['has_passport','no_passport'].includes(passportStatus))
+        return res.status(400).json({success:false,message:'กรุณาเลือกสถานะ Passport ของสมาชิก'});
+      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_admin_assign_with_passport`,{
+        method:'POST',headers,body:JSON.stringify({p_member_id:bookingMode==='member'?targetId:null,p_booking_mode:bookingMode,p_van_id:vanId,p_seat_number:seat,p_passport_status:passportStatus})
       });
       const result=await readJson(response);
       if(!response.ok) return res.status(409).json({success:false,message:result?.message||'เบาะถูกจองแล้ว'});
