@@ -761,14 +761,24 @@ export default async function handler(req, res) {
         }))});
       }
       if(req.method!=='POST') return res.status(405).json({success:false,message:'Method not allowed'});
+      if(req.body?.action==='cancel'){
+        const van=String(req.body?.van_id||'');
+        const seat=Number(req.body?.seat_number);
+        if(!/^[a-f\d-]{36}$/i.test(van)||!Number.isInteger(seat)||seat<1||seat>13) return res.status(400).json({success:false,message:'เบาะไม่ถูกต้อง'});
+        const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?van_id=eq.${encodeURIComponent(van)}&seat_number=eq.${seat}&status=eq.booked`,{
+          method:'PATCH',headers:{...headers,Prefer:'return=representation'},body:JSON.stringify({status:'cancelled',cancelled_at:new Date().toISOString(),cancelled_by:admin.memberId})
+        });
+        if(!response.ok) return res.status(503).json({success:false,message:'ยกเลิกไม่สำเร็จ'});
+        return res.status(200).json({success:true});
+      }
       const targetId=String(req.body?.member_id||'');
       const bookingMode=String(req.body?.booking_mode||'member');
       const vanId=String(req.body?.van_id||'');
       const seat=Number(req.body?.seat_number);
       if(!['member','placeholder_male','placeholder_female'].includes(bookingMode) || (bookingMode==='member' && !/^[a-f\d-]{36}$/i.test(targetId)) || !/^[a-f\d-]{36}$/i.test(vanId)||!Number.isInteger(seat)||seat<1||seat>13)
         return res.status(400).json({success:false,message:'ข้อมูลสมาชิกหรือเบาะไม่ถูกต้อง'});
-      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_choose_seat`,{
-        method:'POST',headers,body:JSON.stringify({p_member_id:targetId,p_van_id:vanId,p_seat_number:seat})
+      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_admin_assign`,{
+        method:'POST',headers,body:JSON.stringify({p_member_id:bookingMode==='member'?targetId:null,p_booking_mode:bookingMode,p_van_id:vanId,p_seat_number:seat})
       });
       const result=await readJson(response);
       if(!response.ok) return res.status(409).json({success:false,message:result?.message||'เบาะถูกจองแล้ว'});
@@ -792,7 +802,7 @@ export default async function handler(req, res) {
       if (req.method === 'GET') {
         const [vansRes,bookRes] = await Promise.all([
           fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?active=eq.true&select=id,van_number,seat_count&order=van_number.asc`,{headers,cache:'no-store'}),
-          fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&status=eq.booked&select=member_id,van_id,seat_number`,{headers,cache:'no-store'})
+          fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&status=eq.booked&select=member_id,van_id,seat_number,booking_mode`,{headers,cache:'no-store'})
         ]);
         const [vans,bookings] = await Promise.all([readJson(vansRes),readJson(bookRes)]);
         if (!vansRes.ok || !bookRes.ok || !Array.isArray(vans) || !Array.isArray(bookings)) throw new Error('อ่านที่นั่งไม่สำเร็จ');
