@@ -376,6 +376,41 @@ function MyDashboard({
   const kathinDrinksActive = Date.now() < Date.parse('2026-11-08T17:00:00Z');
   const [kathinHostOpen, setKathinHostOpen] = useState(false);
   const [kathinHostTab, setKathinHostTab] = useState('trip');
+  const [tripData, setTripData] = useState(null);
+  const [tripLoading, setTripLoading] = useState(false);
+  const [tripSaving, setTripSaving] = useState(false);
+  const [tripMessage, setTripMessage] = useState('');
+  const loadKathinTrip = async () => {
+    setTripLoading(true);
+    try {
+      const response = await fetch('/api/my-bookings?route=kathin-trip',{credentials:'include',cache:'no-store'});
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'อ่านข้อมูลรถตู้ไม่สำเร็จ');
+      setTripData(data);
+      setTripMessage('');
+    } catch(error) { setTripMessage(error.message); }
+    finally { setTripLoading(false); }
+  };
+  const chooseKathinSeat = async (van_id, seat_number) => {
+    if (tripSaving) return;
+    setTripSaving(true);
+    setTripMessage('');
+    try {
+      const response = await fetch('/api/my-bookings?route=kathin-trip',{
+        method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({van_id,seat_number})
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'จองที่นั่งไม่สำเร็จ');
+      await loadKathinTrip();
+      setTripMessage(th?'บันทึกที่นั่งเรียบร้อยแล้ว':'Seat saved successfully');
+    } catch(error) { setTripMessage(error.message); await loadKathinTrip(); }
+    finally {setTripSaving(false);}
+  };
+  useEffect(() => {
+    if (!kathinHostOpen || kathinHostTab !== 'trip') return;
+    loadKathinTrip();
+  }, [kathinHostOpen,kathinHostTab]);
   const [kathinOpening, setKathinOpening] = useState(false);
   const [kathinAccessError, setKathinAccessError] = useState('');
   const [schoolOpening, setSchoolOpening] = useState(false);
@@ -1418,7 +1453,35 @@ function MyDashboard({
               {kathinHostTab==='drinks' && <div><h3>{th?'รายการเครื่องดื่ม':'Drinks'}</h3><p>{th?'เลือกเครื่องดื่มจากระบบคาเฟ่กฐิน':'Choose drinks from the Kathin café'}</p><a href="https://kathin.nathoeng.com/#order-drink" target="_blank" rel="noopener noreferrer">{th?'ไปหน้าสั่งเครื่องดื่ม →':'Open drink orders →'}</a></div>}
               {kathinHostTab==='program' && <div><h3>{th?'ตารางงานกฐิน':'Kathin schedule'}</h3><p>{th?'งานกฐินจัดวันที่ ๗–๘ พฤศจิกายน ๒๕๖๙ โปรดดูรายละเอียดกิจกรรมจากประกาศทางวัด':'Kathin takes place 7–8 November 2026. Please consult the monastery programme.'}</p></div>}
               {kathinHostTab==='excursion' && <div><h3>{th?'ทัศนาจร สปป.ลาว':'Laos excursion'}</h3><p>{th?'รถตู้จาก สปป.ลาว มารับที่ฝั่งไทย พาข้ามสะพานมิตรภาพไทย–ลาว และกลับมาส่งฝั่งไทย กำหนดการรายชั่วโมงรอผู้ดูแลยืนยัน':'Vans pick up on the Thai side, cross the Thai–Lao Friendship Bridge, and return to Thailand. Timetable awaits confirmation.'}</p></div>}
-              {kathinHostTab==='trip' && <div><h3>{th?'จองทริปทัศนาจร':'Trip reservations'}</h3><p>{th?'เตรียมรถตู้ ๓ คัน คันละ ๑๓ ที่นั่ง รวม ๓๙ ที่นั่ง':'Three vans, 13 seats each, 39 seats total'}</p><p style={{color:'#875521'}}>{th?'ระบบเลือกและยืนยันที่นั่งกำลังเชื่อมต่อฐานข้อมูล ยังไม่เปิดรับการจอง เพื่อป้องกันการจองซ้ำ':'Seat reservation is being connected to the database. Booking remains closed until duplicate-seat protection is verified.'}</p></div>}
+              {kathinHostTab==='trip' && <div>
+                <h3>{th?'จองทริปทัศนาจร':'Trip reservations'}</h3>
+                <p>{th?'กดเลือกที่นั่งที่ว่างได้ทันที (สีเทา = มีผู้จองแล้ว, สีเขียว = ที่นั่งของท่าน)':'Select any available seat (grey = booked, green = your seat)'}</p>
+                <button type="button" onClick={loadKathinTrip} disabled={tripLoading||tripSaving}>{th?'↻ อัปเดตที่นั่ง':'↻ Refresh seats'}</button>
+                {tripMessage && <p role="status" style={{color:'#795320'}}>{tripMessage}</p>}
+                {tripLoading && <p>{th?'กำลังโหลดผังที่นั่ง…':'Loading seats…'}</p>}
+                {tripData && <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(215px,1fr))',gap:14,marginTop:14}}>
+                  {tripData.vans.map(van=><div key={van.id} style={{padding:14,border:'1px solid #dfd4b8',borderRadius:14,background:'white'}}>
+                    <h4>{th?'รถตู้คันที่':'Van'} {van.van_number}</h4>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:7}}>
+                      {Array.from({length:van.seat_count},(_,i)=>i+1).map(n=>{
+                        const occupied=tripData.occupied.find(seat=>seat.van_id===van.id && seat.seat_number===n);
+                        const mine=occupied?.is_mine;
+                        return <button key={n} type="button" disabled={tripSaving||tripLoading||Boolean(occupied)}
+                          onClick={()=>chooseKathinSeat(van.id,n)}
+                          aria-label={(th?'รถคันที่ ':'Van ')+van.van_number+(th?' ที่นั่ง ':' seat ')+n}
+                          title={mine?(th?'ที่นั่งของท่าน':'Your seat'):occupied?(th?'มีผู้จองแล้ว':'Booked'):(th?'เลือกที่นั่ง':'Book seat')}
+                          style={{minHeight:42,borderRadius:10,border:'1px solid #d3d2bd',fontWeight:700,
+                            background:mine?'#b6dfc6':occupied?'#d4d6d5':'#fff9e9',
+                            color:occupied&&!mine?'#777':'#214536',cursor:occupied?'not-allowed':'pointer'}}>
+                          {n}{mine?' ✓':''}
+                        </button>;
+                      })}
+                    </div>
+                  </div>)}
+                </div>}
+                {tripData?.mine && <p style={{fontWeight:700,color:'#276244'}}>{th?'ที่นั่งปัจจุบัน:':'Current seat:'} {th?'รถคันที่':'Van'} {tripData.vans.find(v=>v.id===tripData.mine.van_id)?.van_number} / {th?'เลขที่นั่ง':'Seat'} {tripData.mine.seat_number}</p>}
+                <p style={{fontSize:12,color:'#705f43'}}>{th?'สามารถเลือกที่นั่งว่างอื่นเพื่อเปลี่ยนที่นั่งได้ ระบบบันทึกทันทีหลังการเลือก':'Select another available seat to switch. The server saves the selection immediately.'}</p>
+              </div>}
             </section>
           )}
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
