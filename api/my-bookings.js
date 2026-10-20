@@ -830,13 +830,25 @@ export default async function handler(req, res) {
           mine:bookings.find(b=>b.member_id===memberId)?{van_id:bookings.find(b=>b.member_id===memberId).van_id,seat_number:bookings.find(b=>b.member_id===memberId).seat_number}:null});
       }
       if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
+      if (req.body?.action==='cancel') {
+        const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&member_id=eq.${encodeURIComponent(memberId)}&status=eq.booked`,{
+          method:'PATCH',headers:{...headers,Prefer:'return=representation'},
+          body:JSON.stringify({status:'cancelled',cancelled_at:new Date().toISOString(),cancelled_by:memberId})
+        });
+        const cancelled=await readJson(response);
+        if(!response.ok || !Array.isArray(cancelled)) throw Error('ยกเลิกการจองไม่สำเร็จ');
+        return res.status(200).json({success:true,cancelled:cancelled.length});
+      }
+      const passportStatus=String(req.body?.passport_status||'');
+      if(!['has_passport','no_passport'].includes(passportStatus))
+        return res.status(400).json({success:false,message:'กรุณาเลือกสถานะ Passport ก่อนยืนยัน'});
       const vanId=String(req.body?.van_id||'');
       const seatNumber=Number(req.body?.seat_number);
       if (!/^[a-f0-9-]{36}$/i.test(vanId) || !Number.isInteger(seatNumber) || seatNumber<1 || seatNumber>30)
         return res.status(400).json({success:false,message:'ข้อมูลที่นั่งไม่ถูกต้อง'});
-      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_choose_seat`,{
+      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_confirm_seat`,{
         method:'POST',headers:{...headers,Prefer:'return=representation'},
-        body:JSON.stringify({p_member_id:memberId,p_van_id:vanId,p_seat_number:seatNumber})
+        body:JSON.stringify({p_member_id:memberId,p_van_id:vanId,p_seat_number:seatNumber,p_passport_status:passportStatus})
       });
       const result=await readJson(response);
       if (!response.ok) return res.status(response.status===409?409:400).json({success:false,message:String(result?.message||'ไม่สามารถจองที่นั่งได้')});
