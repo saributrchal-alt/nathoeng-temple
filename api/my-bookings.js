@@ -762,9 +762,10 @@ export default async function handler(req, res) {
       }
       if(req.method!=='POST') return res.status(405).json({success:false,message:'Method not allowed'});
       const targetId=String(req.body?.member_id||'');
+      const bookingMode=String(req.body?.booking_mode||'member');
       const vanId=String(req.body?.van_id||'');
       const seat=Number(req.body?.seat_number);
-      if(!/^[a-f\d-]{36}$/i.test(targetId)||!/^[a-f\d-]{36}$/i.test(vanId)||!Number.isInteger(seat)||seat<1||seat>13)
+      if(!['member','placeholder_male','placeholder_female'].includes(bookingMode) || (bookingMode==='member' && !/^[a-f\d-]{36}$/i.test(targetId)) || !/^[a-f\d-]{36}$/i.test(vanId)||!Number.isInteger(seat)||seat<1||seat>13)
         return res.status(400).json({success:false,message:'ข้อมูลสมาชิกหรือเบาะไม่ถูกต้อง'});
       const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_choose_seat`,{
         method:'POST',headers,body:JSON.stringify({p_member_id:targetId,p_van_id:vanId,p_seat_number:seat})
@@ -813,8 +814,8 @@ export default async function handler(req, res) {
         return res.status(200).json({success:true,vans,occupied:bookings.map(b=>{
             const passenger=passengerMap.get(b.member_id);
             return {van_id:b.van_id,seat_number:b.seat_number,is_mine:b.member_id===memberId,
-              passenger_name:passenger?.display_name||passenger?.full_name||'สมาชิก',
-              picture_url:passenger?.profile_image_url||passenger?.picture_url||null};
+              booking_mode:b.booking_mode||'member',passenger_name:b.booking_mode==='placeholder_male'?'สำรองชาย':b.booking_mode==='placeholder_female'?'สำรองหญิง':passenger?.display_name||passenger?.full_name||'สมาชิก',
+              picture_url:b.booking_mode==='member'?(passenger?.profile_image_url||passenger?.picture_url||null):null};
           }),
           mine:bookings.find(b=>b.member_id===memberId)?{van_id:bookings.find(b=>b.member_id===memberId).van_id,seat_number:bookings.find(b=>b.member_id===memberId).seat_number}:null});
       }
