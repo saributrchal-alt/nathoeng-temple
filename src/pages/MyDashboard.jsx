@@ -383,6 +383,7 @@ function MyDashboard({
   const [tripAdminSearch, setTripAdminSearch] = useState('');
   const [tripAdminResults, setTripAdminResults] = useState([]);
   const [tripAdminMember, setTripAdminMember] = useState(null);
+  const [tripAdminMode, setTripAdminMode] = useState('member');
   const [tripAdminBusy, setTripAdminBusy] = useState(false);
   const searchKathinMembers = async () => {
     setTripAdminBusy(true);
@@ -394,15 +395,15 @@ function MyDashboard({
     } catch(e){setTripMessage(e.message);}finally{setTripAdminBusy(false);}
   };
   const assignKathinSeat = async (van_id,seat_number) => {
-    if(!tripAdminMember||tripAdminBusy) return;
+    if((tripAdminMode==='member' && !tripAdminMember)||tripAdminBusy) return;
     setTripAdminBusy(true);
     try{
       const r=await fetch('/api/my-bookings?route=kathin-trip-admin',{method:'POST',credentials:'include',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify({member_id:tripAdminMember.id,van_id,seat_number})});
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({member_id:tripAdminMode==='member'?tripAdminMember.id:null,booking_mode:tripAdminMode,van_id,seat_number})});
       const data=await r.json();
       if(!r.ok||!data.success) throw Error(data.message||'ไม่สามารถกำหนดที่นั่งได้');
       await loadKathinTrip();
-      setTripMessage((th?'จัดที่นั่งให้ ':'Seat assigned to ')+tripAdminMember.name);
+      setTripMessage(th?'บันทึกเบาะสำเร็จ':'Seat reserved successfully');
     }catch(e){setTripMessage(e.message);await loadKathinTrip();}
     finally{setTripAdminBusy(false);}
   };
@@ -1485,6 +1486,15 @@ function MyDashboard({
                 <button type="button" onClick={loadKathinTrip} disabled={tripLoading||tripSaving}>{th?'↻ อัปเดตที่นั่ง':'↻ Refresh seats'}</button>
                 {user?.isAdmin && !user?.actingAsMember && <div style={{padding:14,margin:'12px 0',background:'#f0f5f0',border:'1px solid #bed5c0',borderRadius:14}}>
                   <strong>{th?'แอดมิน: จัดที่นั่งให้สมาชิกวัด':'Admin: assign a seat to a temple member'}</strong>
+                  <div style={{display:'flex',gap:8,flexWrap:'wrap',margin:'10px 0'}}>
+                    {[['member','จองให้สมาชิก','Member'],['placeholder_male','สำรองชาย','Reserve male'],['placeholder_female','สำรองหญิง','Reserve female']].map(([mode,label,en])=>
+                      <button type="button" key={mode} onClick={()=>setTripAdminMode(mode)} aria-pressed={tripAdminMode===mode}
+                        style={{padding:'9px 12px',background:tripAdminMode===mode?'#c8e7d3':'#fff',border:'1px solid #8ea994',borderRadius:9}}>
+                        {th?label:en}
+                      </button>)}
+                  </div>
+                  {tripAdminMode!=='member' && <p>{th?'กดเบาะว่างเพื่อจองสำรองด้วยรูปการ์ตูน':'Tap an available seat for a cartoon placeholder'}</p>}
+                  {tripAdminMode==='member' && <>
                   <div style={{display:'flex',gap:8,margin:'10px 0',flexWrap:'wrap'}}>
                     <input type="search" value={tripAdminSearch} onChange={e=>setTripAdminSearch(e.target.value)}
                       placeholder={th?'พิมพ์ชื่อสมาชิกอย่างน้อย 2 ตัวอักษร':'Search member name'}
@@ -1502,6 +1512,7 @@ function MyDashboard({
                     </button>)}
                   </div>
                   {tripAdminMember && <p style={{fontWeight:700,color:'#19643e'}}>{th?'กำลังจัดเบาะให้: ':'Assigning seat for: '}{tripAdminMember.name} — {th?'กดเบาะว่างบนผังรถ':'Click an available seat on the van map'}</p>}
+                  </>
                 </div>}
 
                 {tripMessage && <p role="status" style={{color:'#795320'}}>{tripMessage}</p>}
@@ -1526,17 +1537,17 @@ function MyDashboard({
                         .map(seat=>{
                           const occupied=tripData.occupied.find(b=>b.van_id===van.id && b.seat_number===seat.n);
                           const mine=occupied?.is_mine;
-                          return <button key={seat.n} type="button" disabled={tripSaving||tripLoading||Boolean(occupied)}
-                            onClick={()=>user?.isAdmin && !user?.actingAsMember && tripAdminMember ? assignKathinSeat(van.id,seat.n) : chooseKathinSeat(van.id,seat.n)}
+                          return <button key={seat.n} type="button" disabled={tripSaving||tripLoading||tripAdminBusy||Boolean(occupied)}
+                            onClick={()=>user?.isAdmin && !user?.actingAsMember ? assignKathinSeat(van.id,seat.n) : chooseKathinSeat(van.id,seat.n)}
                             aria-label={(th?'รถคันที่ ':'Van ')+van.van_number+(th?' ที่นั่ง ':' seat ')+seat.n+
                               (occupied?' — '+occupied.passenger_name:'')}
                             title={occupied?occupied.passenger_name:(th?'กดเลือกที่นั่ง':'Select seat')}
                             style={{position:'absolute',left:seat.x+'%',top:seat.y+'%',transform:'translate(-50%,-50%)',
                               width:'11%',maxWidth:47,aspectRatio:'1/1',padding:2,overflow:'hidden',
                               borderRadius:7,border:mine?'2px solid #217d4d':'1px solid #998f78',
-                              background:mine?'#b4e3c1':occupied?'#dce4e1':'#fffdf5',
+                              background:mine?'#b4e3c1':occupied?.booking_mode==='placeholder_male'?'#d8eafa':occupied?.booking_mode==='placeholder_female'?'#ffe1ed':occupied?'#dce4e1':'#fffdf5',
                               boxShadow:'0 1px 4px #796b5533',cursor:occupied?'not-allowed':'pointer'}}>
-                            {occupied?.picture_url
+                            {occupied?.booking_mode==='placeholder_male' ? <span role="img" aria-label="สำรองชาย" style={{fontSize:23}}>👨</span> : occupied?.booking_mode==='placeholder_female' ? <span role="img" aria-label="สำรองหญิง" style={{fontSize:23}}>👩</span> : occupied?.picture_url
                               ? <img src={occupied.picture_url} alt="" referrerPolicy="no-referrer"
                                   style={{display:'block',width:'100%',height:'100%',objectFit:'cover',borderRadius:5}}/>
                               : <span style={{fontSize:occupied?10:14,color:'#2c4d40',fontWeight:700}}>{occupied?(occupied.passenger_name||'สมาชิก').slice(0,2):seat.n}</span>}
