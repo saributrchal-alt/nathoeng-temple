@@ -407,6 +407,21 @@ function MyDashboard({
     }catch(e){setTripMessage(e.message);await loadKathinTrip();}
     finally{setTripAdminBusy(false);}
   };
+  const cancelKathinSeat = async (van_id,seat_number,name) => {
+    if(tripAdminBusy || !window.confirm(th?
+      'ยืนยันยกเลิกการจองเบาะ '+seat_number+' ของ '+name+'?':
+      'Cancel seat '+seat_number+' for '+name+'?')) return;
+    setTripAdminBusy(true);
+    try {
+      const r=await fetch('/api/my-bookings?route=kathin-trip-admin',{method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'cancel',van_id,seat_number})});
+      const result=await r.json();
+      if(!r.ok||!result.success) throw Error(result.message||'ยกเลิกไม่สำเร็จ');
+      await loadKathinTrip();
+      setTripMessage(th?'ยกเลิกการจองเรียบร้อย':'Reservation cancelled');
+    } catch(e){setTripMessage(e.message);await loadKathinTrip();}
+    finally{setTripAdminBusy(false);}
+  };
   const loadKathinTrip = async () => {
     setTripLoading(true);
     try {
@@ -1567,6 +1582,21 @@ function MyDashboard({
                         })}
                     </div>
                     <p style={{fontSize:12,color:'#526057'}}>{th?'กดเบาะว่างเพื่อจอง • รูปภาพบนเบาะคือสมาชิกที่จองแล้ว':'Tap an empty seat to reserve • Booked seats show member photos'}</p>
+                    {user?.isAdmin && !user?.actingAsMember && tripData.occupied.filter(b=>b.van_id===van.id).length>0 && (
+                      <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #e8e0ce'}}>
+                        <strong style={{fontSize:12}}>{th?'จัดการเบาะที่จองแล้ว':'Manage booked seats'}</strong>
+                        {tripData.occupied.filter(b=>b.van_id===van.id).map(b=>
+                          <div key={b.seat_number} style={{display:'flex',alignItems:'center',gap:8,marginTop:7,fontSize:12}}>
+                            {b.picture_url && <img src={b.picture_url} alt="" referrerPolicy="no-referrer"
+                              style={{width:26,height:26,objectFit:'cover',borderRadius:'50%'}}/>}
+                            <span style={{flex:1}}>{b.seat_number} · {b.passenger_name}</span>
+                            <button type="button" onClick={()=>cancelKathinSeat(van.id,b.seat_number,b.passenger_name)}
+                              disabled={tripAdminBusy||tripSaving} style={{color:'#973d32',border:'1px solid #e0aea9',background:'#fff8f6',borderRadius:7,padding:'5px 8px'}}>
+                              {th?'ยกเลิกจอง':'Cancel'}
+                            </button>
+                          </div>)}
+                      </div>
+                    )}
                   </div>)}
                 </div>}
                 {tripData?.mine && <p style={{fontWeight:700,color:'#276244'}}>{th?'ที่นั่งปัจจุบัน:':'Current seat:'} {th?'รถคันที่':'Van'} {tripData.vans.find(v=>v.id===tripData.mine.van_id)?.van_number} / {th?'เลขที่นั่ง':'Seat'} {tripData.mine.seat_number}</p>}
