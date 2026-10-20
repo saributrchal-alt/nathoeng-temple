@@ -768,14 +768,18 @@ export default async function handler(req, res) {
       if (!memberResponse.ok || !Array.isArray(rows)) return res.status(503).json({success:false,message:'ตรวจสมาชิกไม่สำเร็จ'});
       const member = rows[0];
       if (!member || (member.membership_status && member.membership_status !== 'active')) return res.status(403).json({success:false,message:'บัญชีสมาชิกนี้หยุดใช้งานแล้ว'});
+      // School membership is stored in the same Supabase project as Temple.
+      // Avoid a brittle cross-domain round-trip for this preflight check;
+      // School still verifies member permissions and Temple status on POST /api/session.
+      const schoolResponse = await fetch(
+        `${supabaseUrl}/rest/v1/school_members?member_id=eq.${encodeURIComponent(member.id)}&select=member_id,is_active,can_study,can_teach,can_manage&limit=1`,
+        {headers:jsonHeaders(supabaseSecretKey),cache:'no-store',signal:AbortSignal.timeout(8000)}
+      );
+      if (!schoolResponse.ok) return res.status(503).json({success:false,message:'ตรวจสิทธิ์ School ไม่สำเร็จ'});
+      const schoolRows = await schoolResponse.json();
+      if (!Array.isArray(schoolRows)) return res.status(503).json({success:false,message:'ตรวจสิทธิ์ School ไม่สำเร็จ'});
+      const school = schoolRows[0];
       const crypto = await import('node:crypto');
-      const lookup = {member_id:String(member.id),issued_at:new Date().toISOString()};
-      const raw = JSON.stringify(lookup);
-      const signature = crypto.createHmac('sha256',bridgeKey).update(raw).digest('hex');
-      const response = await fetch('https://school.nathoeng.com/api/school?route=member-status', {method:'POST',headers:{'Content-Type':'application/json','X-School-Signature':signature},body:raw,cache:'no-store',signal:AbortSignal.timeout(8000)});
-      const access = await response.json();
-      if (!response.ok || !access?.success) return res.status(503).json({success:false,message:'ตรวจสิทธิ์ School ไม่สำเร็จ'});
-      const school = access.member;
       if (!school?.is_active || !(school.can_study || school.can_teach || school.can_manage)) return res.status(403).json({success:false,message:'กรุณาให้ผู้ดูแลวัดมอบสิทธิ์ School จากรายการสมาชิกก่อน'});
       const now = Date.now();
       const encoded = Buffer.from(JSON.stringify({memberId:String(member.id),purpose:'school-handoff',aud:'school.nathoeng.com',iat:now,exp:now+300000})).toString('base64url');
