@@ -1477,7 +1477,14 @@ function MyDashboard({
             })}
           </div>
           {kathinHostOpen && (
-            <section aria-label={th ? 'เจ้าภาพงานกฐิน' : 'Kathin hosts'} style={{margin:'18px 0',padding:22,border:'1px solid #c5b37b',borderRadius:20,background:'#fffdf4'}}>
+            <div role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setKathinHostOpen(false);}}
+              style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(14,30,25,.60)',display:'flex',
+                justifyContent:'center',alignItems:'center',padding:12}}>
+              <section role="dialog" aria-modal="true" aria-label={th ? 'เจ้าภาพงานกฐิน' : 'Kathin hosts'}
+                onKeyDown={e=>{if(e.key==='Escape')setKathinHostOpen(false);}}
+                style={{width:'min(1120px,100%)',maxHeight:'94dvh',overflowY:'auto',overscrollBehavior:'contain',
+                  padding:'clamp(12px,2.6vw,26px)',border:'1px solid #c5b37b',borderRadius:20,
+                  background:'#fffdf4',boxShadow:'0 24px 80px #0006'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
                 <h2 style={{margin:0,color:'#65501c'}}>{th ? 'เจ้าภาพงานกฐิน ๒๕๖๙' : 'Kathin Hosts 2026'}</h2>
                 <button type="button" onClick={()=>setKathinHostOpen(false)} aria-label={th?'ปิด':'Close'}>✕</button>
@@ -1621,7 +1628,8 @@ function MyDashboard({
                 {tripData?.mine && <p style={{fontWeight:700,color:'#276244'}}>{th?'ที่นั่งปัจจุบัน:':'Current seat:'} {th?'รถคันที่':'Van'} {tripData.vans.find(v=>v.id===tripData.mine.van_id)?.van_number} / {th?'เลขที่นั่ง':'Seat'} {tripData.mine.seat_number}</p>}
                 <p style={{fontSize:12,color:'#705f43'}}>{th?'สามารถเลือกที่นั่งว่างอื่นเพื่อเปลี่ยนที่นั่งได้ ระบบบันทึกทันทีหลังการเลือก':'Select another available seat to switch. The server saves the selection immediately.'}</p>
               </div>}
-            </section>
+              </section>
+            </div>
           )}
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
         </section>
