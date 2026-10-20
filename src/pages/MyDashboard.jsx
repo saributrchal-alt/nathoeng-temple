@@ -491,10 +491,13 @@ function MyDashboard({
       setAccountOpening(false);
     }
   };
-  const openSchool = async (mode = 'inline') => {
+  // School must complete its signed POST handoff in a top-level browsing context.
+  // An embedded, cross-origin iframe can be restricted by browser frame/cookie
+  // policies and appear blank even though the School access check succeeded.
+  const openSchool = async (mode = 'page') => {
     if (schoolOpening) return;
-    const pop = desktopWorkspace && mode === 'window' ? openHandoffWindow('nathoeng_school_window') : null;
-    if (desktopWorkspace && mode === 'window' && !pop) {
+    const pop = mode === 'window' ? openHandoffWindow('nathoeng_school_window') : null;
+    if (mode === 'window' && !pop) {
       setSchoolError(th ? 'เบราว์เซอร์ปิดกั้นหน้าต่างใหม่' : 'Pop-up blocked');
       return;
     }
@@ -507,13 +510,10 @@ function MyDashboard({
       const result = await response.json();
       if (!response.ok || !result?.success || !result.token)
         throw new Error(result?.message || (th ? 'เข้า School ไม่สำเร็จ' : 'Unable to open School'));
-      const target = pop ? 'nathoeng_school_window' :
-        desktopWorkspace ? 'nathoeng_school_workspace' : '_self';
-      if (desktopWorkspace && !pop) {
-        setSchoolWorkspaceLoaded(true);
-        showService('school');
-      }
-      submitServiceHandoff(result.token, 'https://school.nathoeng.com/api/session', target);
+      // Navigate the current tab, not the hidden desktop iframe. The handoff
+      // token stays in the POST body and never leaks into the URL.
+      submitServiceHandoff(result.token, 'https://school.nathoeng.com/api/session',
+        pop ? 'nathoeng_school_window' : '_self');
     } catch (error) {
       pop?.close();
       setSchoolError(error.message);
@@ -1153,7 +1153,7 @@ function MyDashboard({
       { key: 'library', icon: 'library', tone: 'cream', th: 'ห้องสมุด', en: 'Library', href: 'https://library.nathoeng.com/?member=1#member-area' },
       { key: 'health', icon: 'health', tone: 'sage', th: 'สุขภาพชุมชน', en: 'Community Health', href: 'https://health.nathoeng.com/' },
       { key: 'equipment', icon: 'equipment', tone: 'amber', th: 'ยืม–คืนอุปกรณ์', en: 'Equipment Loans', href: 'https://gears.nathoeng.com/#loans' },
-      { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: openSchool, disabled: schoolOpening }
+      { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: () => openSchool(), disabled: schoolOpening }
     ] : []),
     { key: 'accounting', icon: 'accounting', tone: 'sky', th: 'บัญชีวัด', en: 'Temple Accounting', onClick: openTempleAccounting, disabled: accountOpening },
     { key: 'kathin', icon: 'kathin', tone: 'gold', th: 'Staff งานกฐิน', en: 'Kathin Staff', onClick: openKathinStaff, disabled: kathinOpening },
