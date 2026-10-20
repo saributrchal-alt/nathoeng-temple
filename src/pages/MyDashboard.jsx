@@ -374,6 +374,8 @@ function MyDashboard({
   const [cancelMembershipWorking, setCancelMembershipWorking] = useState(false);
   const [cancelMembershipError, setCancelMembershipError] = useState('');
   const kathinDrinksActive = Date.now() < Date.parse('2026-11-08T17:00:00Z');
+  const [kathinHostOpen, setKathinHostOpen] = useState(false);
+  const [kathinHostTab, setKathinHostTab] = useState('trip');
   const [kathinOpening, setKathinOpening] = useState(false);
   const [kathinAccessError, setKathinAccessError] = useState('');
   const [schoolOpening, setSchoolOpening] = useState(false);
@@ -1136,13 +1138,14 @@ function MyDashboard({
     library: { th: 'หนังสือธรรมะและความรู้', en: 'Books and knowledge' },
     accounting: { th: 'รายรับ รายจ่าย และบัญชี', en: 'Temple financial records' },
     kathin: { th: 'จัดการงานและคิวบริการ', en: 'Staff tools for Kathin' },
+    'kathin-host': { th: 'กำหนดการ สั่งเครื่องดื่ม และจองทริปทัศนาจร', en: 'Kathin programme, drinks and trip bookings' },
     settings: { th: 'โปรไฟล์ ความปลอดภัย และสิทธิ์', en: 'Profile and security' },
     contact: { th: 'สอบถามทาง LINE / Telegram', en: 'LINE and Telegram support' }
   };
   const shortcutDisplayOrder = [
     'card', 'donations', 'retreat', 'news',
     'health', 'equipment', 'school', 'library',
-    'accounting', 'kathin', 'settings', 'contact'
+    'kathin-host', 'accounting', 'kathin', 'settings', 'contact'
   ];
   const memberShortcuts = [
     { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
@@ -1156,6 +1159,7 @@ function MyDashboard({
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: () => openSchool(), disabled: schoolOpening }
     ] : []),
     { key: 'accounting', icon: 'accounting', tone: 'sky', th: 'บัญชีวัด', en: 'Temple Accounting', onClick: openTempleAccounting, disabled: accountOpening },
+    { key: 'kathin-host', icon: 'kathin', tone: 'gold', th: 'เจ้าภาพงานกฐิน', en: 'Kathin Hosts', onClick: () => { setKathinHostOpen(true); setKathinHostTab('trip'); } },
     { key: 'kathin', icon: 'kathin', tone: 'gold', th: 'Staff งานกฐิน', en: 'Kathin Staff', onClick: openKathinStaff, disabled: kathinOpening },
     ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ข้อมูลสมาชิก / ตั้งค่าบัญชี', en: 'Profile & Settings', onClick: () => setInfoPanel('settings') }] : []),
     { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => setInfoPanel('contact') }
@@ -1395,6 +1399,28 @@ function MyDashboard({
                 : <button key={item.key} type="button" ref={item.key === 'card' ? memberCardTriggerRef : item.key === 'contact' ? contactTileRef : item.key === 'settings' ? settingsTileRef : item.key === 'accounting' ? accountingTileRef : item.key === 'kathin' ? kathinTileRef : undefined} className={'memberPortalTile tone-' + item.tone} onClick={item.onClick} disabled={item.disabled} aria-haspopup={['card', 'contact', 'settings', 'accounting', 'kathin'].includes(item.key) ? 'dialog' : undefined}>{content}</button>;
             })}
           </div>
+          {kathinHostOpen && (
+            <section aria-label={th ? 'เจ้าภาพงานกฐิน' : 'Kathin hosts'} style={{margin:'18px 0',padding:22,border:'1px solid #c5b37b',borderRadius:20,background:'#fffdf4'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
+                <h2 style={{margin:0,color:'#65501c'}}>{th ? 'เจ้าภาพงานกฐิน ๒๕๖๙' : 'Kathin Hosts 2026'}</h2>
+                <button type="button" onClick={()=>setKathinHostOpen(false)} aria-label={th?'ปิด':'Close'}>✕</button>
+              </div>
+              <p>{th?'กิจกรรมวันที่ ๗–๘ พฤศจิกายน ๒๕๖๙ · วัดพุทธอุทยานนาเทิง':'7–8 November 2026 · Wat Phuttha Uthayan Na Thoeng'}</p>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',margin:'14px 0'}}>
+                {[
+                  ['drinks',th?'สั่งเครื่องดื่ม':'Order drinks'],
+                  ['program',th?'กำหนดการกฐิน':'Kathin programme'],
+                  ['excursion',th?'กำหนดการทัศนาจร':'Excursion schedule'],
+                  ['trip',th?'จองทริป / ที่นั่ง':'Trip / seats']
+                ].map(([key,label])=><button key={key} type="button" onClick={()=>setKathinHostTab(key)}
+                   aria-pressed={kathinHostTab===key} style={{padding:'10px 13px',borderRadius:12,border:'1px solid #b4a273',background:kathinHostTab===key?'#e9deb8':'white',color:'#44391b'}}>{label}</button>)}
+              </div>
+              {kathinHostTab==='drinks' && <div><h3>{th?'รายการเครื่องดื่ม':'Drinks'}</h3><p>{th?'เลือกเครื่องดื่มจากระบบคาเฟ่กฐิน':'Choose drinks from the Kathin café'}</p><a href="https://kathin.nathoeng.com/#order-drink" target="_blank" rel="noopener noreferrer">{th?'ไปหน้าสั่งเครื่องดื่ม →':'Open drink orders →'}</a></div>}
+              {kathinHostTab==='program' && <div><h3>{th?'ตารางงานกฐิน':'Kathin schedule'}</h3><p>{th?'งานกฐินจัดวันที่ ๗–๘ พฤศจิกายน ๒๕๖๙ โปรดดูรายละเอียดกิจกรรมจากประกาศทางวัด':'Kathin takes place 7–8 November 2026. Please consult the monastery programme.'}</p></div>}
+              {kathinHostTab==='excursion' && <div><h3>{th?'ทัศนาจร สปป.ลาว':'Laos excursion'}</h3><p>{th?'รถตู้จาก สปป.ลาว มารับที่ฝั่งไทย พาข้ามสะพานมิตรภาพไทย–ลาว และกลับมาส่งฝั่งไทย กำหนดการรายชั่วโมงรอผู้ดูแลยืนยัน':'Vans pick up on the Thai side, cross the Thai–Lao Friendship Bridge, and return to Thailand. Timetable awaits confirmation.'}</p></div>}
+              {kathinHostTab==='trip' && <div><h3>{th?'จองทริปทัศนาจร':'Trip reservations'}</h3><p>{th?'เตรียมรถตู้ ๓ คัน คันละ ๑๓ ที่นั่ง รวม ๓๙ ที่นั่ง':'Three vans, 13 seats each, 39 seats total'}</p><p style={{color:'#875521'}}>{th?'ระบบเลือกและยืนยันที่นั่งกำลังเชื่อมต่อฐานข้อมูล ยังไม่เปิดรับการจอง เพื่อป้องกันการจองซ้ำ':'Seat reservation is being connected to the database. Booking remains closed until duplicate-seat protection is verified.'}</p></div>}
+            </section>
+          )}
           {schoolError && <p role="alert" className="memberPortalTileError">{schoolError}</p>}
         </section>
 
