@@ -749,6 +749,28 @@ export default async function handler(req, res) {
     try {
       if (req.method==='GET') {
         const q=String(req.query?.q||'').trim().slice(0,65);
+        if (String(req.query?.view||'')==='seats') {
+          const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&status=eq.booked&select=member_id,van_id,seat_number,booking_mode,passport_status&order=van_id.asc,seat_number.asc`,{headers,cache:'no-store'});
+          const bookings=await readJson(response);
+          if(!response.ok||!Array.isArray(bookings)) throw Error('Cannot read seat reservations');
+          const ids=[...new Set(bookings.map(b=>b.member_id).filter(Boolean))];
+          let members=[];
+          if(ids.length){
+            const filter=encodeURIComponent(ids.map(id=>'"'+id+'"').join(','));
+            const mr=await fetch(`${supabaseUrl}/rest/v1/members?id=in.(${filter})&select=id,full_name,display_name,picture_url,profile_image_url`,{headers,cache:'no-store'});
+            members=await readJson(mr);
+            if(!mr.ok||!Array.isArray(members)) throw Error('Cannot read member profiles');
+          }
+          const byId=new Map(members.map(m=>[m.id,m]));
+          res.setHeader('Cache-Control','private, no-store');
+          return res.status(200).json({success:true,seats:bookings.map(b=>{
+            const m=byId.get(b.member_id);
+            return {van_id:b.van_id,seat_number:b.seat_number,booking_mode:b.booking_mode,
+              name:b.booking_mode==='placeholder_male'?'สำรองชาย':b.booking_mode==='placeholder_female'?'สำรองหญิง':m?.full_name||m?.display_name||'สมาชิก',
+              picture_url:m?.picture_url||m?.profile_image_url||null,
+              passport_status:b.passport_status||null};
+          })});
+        }
         if (q.length<2) return res.status(200).json({success:true,members:[]});
         const term=q.replace(/[%*(),.]/g,' ').trim();
         const filter=encodeURIComponent('*'+term+'*');
