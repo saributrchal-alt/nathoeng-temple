@@ -375,6 +375,7 @@ function MyDashboard({
   const [cancelMembershipError, setCancelMembershipError] = useState('');
   const kathinDrinksActive = Date.now() < Date.parse('2026-11-08T17:00:00Z');
   const [kathinOpening, setKathinOpening] = useState(false);
+  const [kathinEventOpening, setKathinEventOpening] = useState(false);
   const [kathinAccessError, setKathinAccessError] = useState('');
   const [schoolOpening, setSchoolOpening] = useState(false);
   const [schoolError, setSchoolError] = useState('');
@@ -445,6 +446,32 @@ function MyDashboard({
       setInfoPanel('kathin-error');
     } finally {
       setKathinOpening(false);
+    }
+  };
+  const openKathinEvent = async () => {
+    if (kathinEventOpening) return;
+    if (user?.actingAsMember) {
+      setInfoPanel('kathin-denied');
+      return;
+    }
+    setKathinEventOpening(true);
+    setKathinAccessError('');
+    try {
+      const response = await fetch('/api/line-login?route=kathin-session', {
+        credentials: 'include', cache: 'no-store'
+      });
+      const result = await response.json();
+      if (!response.ok || !result?.token) throw new Error(result?.error || 'Kathin member handoff failed');
+      submitServiceHandoff(result.token,
+        'https://kathin.nathoeng.com/api/kathin-drinks?handoff=event&next=event-home', '_self');
+    } catch (error) {
+      console.error('Kathin event handoff:', error);
+      setKathinAccessError(th
+        ? 'เปิดหน้ากิจกรรมงานกฐินไม่สำเร็จ กรุณาลองใหม่หรือติดต่อทางวัด'
+        : 'Unable to open the Kathin event portal. Please try again or contact the monastery.');
+      setInfoPanel('kathin-error');
+    } finally {
+      setKathinEventOpening(false);
     }
   };
   const openTempleAccounting = async (mode = 'inline') => {
@@ -1136,13 +1163,14 @@ function MyDashboard({
     library: { th: 'หนังสือธรรมะและความรู้', en: 'Books and knowledge' },
     accounting: { th: 'รายรับ รายจ่าย และบัญชี', en: 'Temple financial records' },
     kathin: { th: 'จัดการงานและคิวบริการ', en: 'Staff tools for Kathin' },
+    'kathin-event': { th: 'กำหนดการและจองทริปสำหรับเจ้าภาพ', en: 'Event schedule and trip booking' },
     settings: { th: 'โปรไฟล์ ความปลอดภัย และสิทธิ์', en: 'Profile and security' },
     contact: { th: 'สอบถามทาง LINE / Telegram', en: 'LINE and Telegram support' }
   };
   const shortcutDisplayOrder = [
     'card', 'donations', 'retreat', 'news',
     'health', 'equipment', 'school', 'library',
-    'accounting', 'kathin', 'settings', 'contact'
+    'accounting', 'kathin-event', 'kathin', 'settings', 'contact'
   ];
   const memberShortcuts = [
     { key: 'card', icon: 'card', tone: 'gold', th: 'บัตรสมาชิก', en: 'Member Card', onClick: () => setMemberCardOpen(true) },
@@ -1156,6 +1184,7 @@ function MyDashboard({
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: () => openSchool(), disabled: schoolOpening }
     ] : []),
     { key: 'accounting', icon: 'accounting', tone: 'sky', th: 'บัญชีวัด', en: 'Temple Accounting', onClick: openTempleAccounting, disabled: accountOpening },
+    ...(!user?.actingAsMember ? [{ key: 'kathin-event', icon: 'kathin', tone: 'gold', th: 'เจ้าภาพงานกฐิน', en: 'Kathin Hosts', onClick: openKathinEvent, disabled: kathinEventOpening }] : []),
     { key: 'kathin', icon: 'kathin', tone: 'gold', th: 'Staff งานกฐิน', en: 'Kathin Staff', onClick: openKathinStaff, disabled: kathinOpening },
     ...(!user?.actingAsMember ? [{ key: 'settings', icon: 'settings', tone: 'cream', th: 'ข้อมูลสมาชิก / ตั้งค่าบัญชี', en: 'Profile & Settings', onClick: () => setInfoPanel('settings') }] : []),
     { key: 'contact', icon: 'contact', tone: 'mint', th: 'ติดต่อวัด', en: 'Contact Monastery', onClick: () => setInfoPanel('contact') }
