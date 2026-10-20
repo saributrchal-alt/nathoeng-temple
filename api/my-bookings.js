@@ -762,8 +762,27 @@ export default async function handler(req, res) {
         ]);
         const [vans,bookings] = await Promise.all([readJson(vansRes),readJson(bookRes)]);
         if (!vansRes.ok || !bookRes.ok || !Array.isArray(vans) || !Array.isArray(bookings)) throw new Error('อ่านที่นั่งไม่สำเร็จ');
-        res.setHeader('Cache-Control','no-store');
-        return res.status(200).json({success:true,vans,occupied:bookings.map(b=>({van_id:b.van_id,seat_number:b.seat_number,is_mine:b.member_id===memberId})),
+        // Restrict passenger profiles to authenticated active members on this trip page.
+        // Never expose phone, ID documents, or account identifiers in the response.
+        let passengers = [];
+        if (bookings.length) {
+          const ids = [...new Set(bookings.map(b=>b.member_id).filter(Boolean))];
+          const list = ids.map(id=>'\"'+id+'\"').join(',');
+          const passengersRes = await fetch(
+            `${supabaseUrl}/rest/v1/members?id=in.(${encodeURIComponent(list)})&select=id,display_name,full_name,picture_url,profile_image_url`,
+            {headers,cache:'no-store'}
+          );
+          passengers = await readJson(passengersRes);
+          if (!passengersRes.ok || !Array.isArray(passengers)) throw new Error('อ่านรูปโปรไฟล์ไม่สำเร็จ');
+        }
+        const passengerMap = new Map(passengers.map(p=>[p.id,p]));
+        res.setHeader('Cache-Control','private, no-store');
+        return res.status(200).json({success:true,vans,occupied:bookings.map(b=>{
+            const passenger=passengerMap.get(b.member_id);
+            return {van_id:b.van_id,seat_number:b.seat_number,is_mine:b.member_id===memberId,
+              passenger_name:passenger?.display_name||passenger?.full_name||'สมาชิก',
+              picture_url:passenger?.profile_image_url||passenger?.picture_url||null};
+          }),
           mine:bookings.find(b=>b.member_id===memberId)?{van_id:bookings.find(b=>b.member_id===memberId).van_id,seat_number:bookings.find(b=>b.member_id===memberId).seat_number}:null});
       }
       if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
