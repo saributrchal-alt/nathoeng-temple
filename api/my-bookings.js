@@ -742,6 +742,39 @@ export default async function handler(req, res) {
     );
   }
 
+  if (route === 'kathin-trip-admin') {
+    const admin = requireAdmin(req,res);
+    if (!admin) return;
+    const headers=jsonHeaders(supabaseSecretKey);
+    try {
+      if (req.method==='GET') {
+        const q=String(req.query?.q||'').trim().slice(0,65);
+        if (q.length<2) return res.status(200).json({success:true,members:[]});
+        const term=q.replace(/[%*(),.]/g,' ').trim();
+        const filter=encodeURIComponent('*'+term+'*');
+        const response=await fetch(`${supabaseUrl}/rest/v1/members?or=(full_name.ilike.${filter},display_name.ilike.${filter})&select=id,full_name,display_name,picture_url,profile_image_url,membership_status&limit=20`,
+          {headers,cache:'no-store'});
+        const members=await readJson(response);
+        if(!response.ok || !Array.isArray(members)) throw Error('Member search failed');
+        return res.status(200).json({success:true,members:members.filter(m=>!m.membership_status||m.membership_status==='active').map(m=>({
+          id:m.id,name:m.display_name||m.full_name||'สมาชิก',picture_url:m.profile_image_url||m.picture_url||null
+        }))});
+      }
+      if(req.method!=='POST') return res.status(405).json({success:false,message:'Method not allowed'});
+      const targetId=String(req.body?.member_id||'');
+      const vanId=String(req.body?.van_id||'');
+      const seat=Number(req.body?.seat_number);
+      if(!/^[a-f\d-]{36}$/i.test(targetId)||!/^[a-f\d-]{36}$/i.test(vanId)||!Number.isInteger(seat)||seat<1||seat>13)
+        return res.status(400).json({success:false,message:'ข้อมูลสมาชิกหรือเบาะไม่ถูกต้อง'});
+      const response=await fetch(`${supabaseUrl}/rest/v1/rpc/kathin_trip_choose_seat`,{
+        method:'POST',headers,body:JSON.stringify({p_member_id:targetId,p_van_id:vanId,p_seat_number:seat})
+      });
+      const result=await readJson(response);
+      if(!response.ok) return res.status(409).json({success:false,message:result?.message||'เบาะถูกจองแล้ว'});
+      return res.status(200).json({success:true,booking:result});
+    }catch(error){console.error('Kathin admin seat:',error);return res.status(503).json({success:false,message:'ระบบแอดมินจองที่นั่งไม่พร้อม'});}
+  }
+
   if (route === 'kathin-trip') {
     const session = getSessionFromRequest(req);
     if (!session?.memberId || session.actingAdminId)
