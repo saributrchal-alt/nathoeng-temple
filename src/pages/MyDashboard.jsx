@@ -1496,11 +1496,15 @@ function MyDashboard({
                   ['program',th?'กำหนดการกฐิน':'Kathin programme'],
                   ['excursion',th?'กำหนดการทัศนาจร':'Excursion schedule'],
                   ['trip',th?'จองทริป / ที่นั่ง':'Trip / seats']
-                ].map(([key,label])=><button key={key} type="button" onClick={()=>setKathinHostTab(key)}
+                ].map(([key,label])=><button key={key} type="button" onClick={()=>{
+                    if (key==='drinks') { window.location.assign('https://kathin.nathoeng.com/'); return; }
+                    if (key==='program') { window.location.assign('/#event-kathina'); return; }
+                    setKathinHostTab(key);
+                  }}
                    aria-pressed={kathinHostTab===key} style={{padding:'10px 13px',borderRadius:12,border:'1px solid #b4a273',background:kathinHostTab===key?'#e9deb8':'white',color:'#44391b'}}>{label}</button>)}
               </div>
-              {kathinHostTab==='drinks' && <div><h3>{th?'รายการเครื่องดื่ม':'Drinks'}</h3><p>{th?'เลือกเครื่องดื่มจากระบบคาเฟ่กฐิน':'Choose drinks from the Kathin café'}</p><a href="https://kathin.nathoeng.com/#order-drink" target="_blank" rel="noopener noreferrer">{th?'ไปหน้าสั่งเครื่องดื่ม →':'Open drink orders →'}</a></div>}
-              {kathinHostTab==='program' && <div><h3>{th?'ตารางงานกฐิน':'Kathin schedule'}</h3><p>{th?'งานกฐินจัดวันที่ ๗–๘ พฤศจิกายน ๒๕๖๙ โปรดดูรายละเอียดกิจกรรมจากประกาศทางวัด':'Kathin takes place 7–8 November 2026. Please consult the monastery programme.'}</p></div>}
+              
+              
               {kathinHostTab==='excursion' && <div><h3>{th?'ทัศนาจร สปป.ลาว':'Laos excursion'}</h3><p>{th?'รถตู้จาก สปป.ลาว มารับที่ฝั่งไทย พาข้ามสะพานมิตรภาพไทย–ลาว และกลับมาส่งฝั่งไทย กำหนดการรายชั่วโมงรอผู้ดูแลยืนยัน':'Vans pick up on the Thai side, cross the Thai–Lao Friendship Bridge, and return to Thailand. Timetable awaits confirmation.'}</p></div>}
               {kathinHostTab==='trip' && <div>
                 <h3>{th?'จองทริปทัศนาจร':'Trip reservations'}</h3>
