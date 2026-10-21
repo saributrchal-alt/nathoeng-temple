@@ -14,6 +14,9 @@ import StayPreparationPage from './StayPreparationPage';
 import { structuredAddress, emptyThaiAddress } from '../lib/thaiAddress.js';
 
 
+// SUV 7 seats includes the driver; the six passenger seats are bookable.
+const KATHIN_SUV_ID = 'e2438656-877f-42c1-91f5-689b127424eb';
+
 const ISO_COUNTRY_CODES = [
   'AD','AE','AF','AG','AI','AL','AM','AO','AQ','AR','AS','AT','AU','AW','AX','AZ',
   'BA','BB','BD','BE','BF','BG','BH','BI','BJ','BL','BM','BN','BO','BQ','BR','BS','BT','BV','BW','BY','BZ',
@@ -1560,7 +1563,7 @@ function MyDashboard({
                     style={{width:'min(440px,100%)',background:'#fffef9',border:'1px solid #d4bd84',
                       borderRadius:18,padding:22,boxShadow:'0 18px 60px #0005'}}>
                     <h3>{th?'ยืนยันจัดที่นั่งให้เจ้าภาพ':'Confirm assigned seat'}</h3>
-                    <p>{th?'รถตู้คันที่':'Van'} {tripAdminPending.van_number} · {th?'เบาะที่':'Seat'} {tripAdminPending.seat_number}</p>
+                    <p>{th?'รถคันที่':'Vehicle'} {tripAdminPending.van_number} · {th?'เบาะที่':'Seat'} {tripAdminPending.seat_number}</p>
                     <p>{tripAdminMode==='member'?(tripAdminMember?.name||'สมาชิก'):tripAdminMode==='placeholder_male'?'สำรองชาย':'สำรองหญิง'}</p>
                     {tripAdminMode==='member' && <fieldset style={{border:'1px solid #d9d9ce',borderRadius:10,padding:12}}>
                       <legend>{th?'สมาชิกมี Passport หรือไม่? *':'Does the member have a passport? *'}</legend>
@@ -1584,7 +1587,7 @@ function MyDashboard({
                     style={{width:'min(440px,100%)',background:'#fffef9',border:'1px solid #d4bd84',borderRadius:18,
                       padding:22,boxShadow:'0 18px 60px #0005'}}>
                     <h3>{tripSeatPending.action==='cancel'?(th?'ยกเลิกการจองหรือไม่?':'Cancel reservation?'):(th?'ยืนยันการจองที่นั่ง':'Confirm your seat')}</h3>
-                    <p>{th?'รถตู้คันที่':'Van'} {tripSeatPending.van_number} · {th?'เบาะที่':'Seat'} {tripSeatPending.seat_number}</p>
+                    <p>{th?'รถคันที่':'Vehicle'} {tripSeatPending.van_number} · {th?'เบาะที่':'Seat'} {tripSeatPending.seat_number}</p>
                     {tripSeatPending.action==='confirm' && <fieldset style={{border:'1px solid #d9d9ce',borderRadius:10,padding:12}}>
                       <legend>{th?'ท่านมี Passport หรือไม่? *':'Do you have a passport? *'}</legend>
                       <label style={{display:'block',margin:'10px 0'}}><input type="radio" name="kathin-passport" checked={tripPassportChoice==='has_passport'}
@@ -1621,20 +1624,27 @@ function MyDashboard({
                 {tripLoading && <p>{th?'กำลังโหลดผังที่นั่ง…':'Loading seats…'}</p>}
                 {tripData && <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(215px,1fr))',gap:14,marginTop:14}}>
                   {tripData.vans.map(van=><div key={van.id} style={{padding:14,border:'1px solid #dfd4b8',borderRadius:14,background:'white'}}>
-                    <h4>{th?'รถตู้คันที่':'Van'} {van.van_number}</h4>
+                    <h4>{th?'รถคันที่':'Vehicle'} {van.van_number}{van.id===KATHIN_SUV_ID?' · SUV':''}</h4>
+                    {van.id===KATHIN_SUV_ID && <p style={{fontSize:13}}>{th?'7 ที่นั่งรวมคนขับ · จองได้ 6 ที่นั่ง · ด้านหน้ารถอยู่ทางซ้าย':'7 seats including driver · 6 passenger seats · Front on the left'}</p>}
                     <div style={{position:'relative',width:'100%',aspectRatio:'2.35/1',minHeight:128,margin:'10px auto'}}>
-                      <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
+                      {van.id===KATHIN_SUV_ID ? <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
+                        <rect x="8" y="12" width="454" height="176" rx="62" fill="#eaf1ed" stroke="#5e7b6b" strokeWidth="4"/>
+                        <path d="M90 27 Q45 100 90 173 M185 28 V172 M320 28 V172" fill="none" stroke="#9fb5a8" strokeWidth="3"/>
+                        <rect x="120" y="32" width="45" height="48" rx="10" fill="#77867f"/>
+                        <circle cx="113" cy="55" r="14" fill="#eaf1ed" stroke="#455e52" strokeWidth="4"/>
+                        <text x="145" y="98" textAnchor="middle" fontSize="16" fill="#455e52">{th?'คนขับ':'Driver'}</text>
+                      </svg> : <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
                         <rect x="8" y="12" width="454" height="176" rx="50" fill="#f5f1e7" stroke="#9b9586" strokeWidth="4"/>
                         <rect x="35" y="26" width="170" height="148" rx="25" fill="#e8edeb" stroke="#bdc9c7" strokeWidth="2"/>
                         <circle cx="67" cy="65" r="16" fill="none" stroke="#687d79" strokeWidth="6"/>
                         <path d="M112 26 V174 M207 26 V174 M456 55 V148" stroke="#bdc9c7" strokeWidth="3"/>
                         <path d="M120 95 H450" stroke="#c9c2b2" strokeWidth="2" strokeDasharray="6 6"/>
                         <rect x="151" y="102" width="40" height="42" rx="5" fill="#3c4545" opacity=".45"/>
-                      </svg>
-                      {[{n:1,x:37,y:77},{n:2,x:51,y:73},{n:3,x:51,y:49},{n:4,x:51,y:25},
+                      </svg>}
+                      {(van.id===KATHIN_SUV_ID ? [{n:1,x:31,y:72},{n:2,x:54,y:75},{n:3,x:54,y:50},{n:4,x:54,y:25},{n:5,x:81,y:72},{n:6,x:81,y:28}] : [{n:1,x:37,y:77},{n:2,x:51,y:73},{n:3,x:51,y:49},{n:4,x:51,y:25},
                         {n:5,x:64,y:73},{n:6,x:64,y:49},{n:7,x:64,y:25},
                         {n:8,x:77,y:73},{n:9,x:77,y:49},{n:10,x:77,y:25},
-                        {n:11,x:90,y:73},{n:12,x:90,y:49},{n:13,x:90,y:25}]
+                        {n:11,x:90,y:73},{n:12,x:90,y:49},{n:13,x:90,y:25}])
                         .filter(seat=>seat.n<=van.seat_count)
                         .map(seat=>{
                           const occupied=tripData.occupied.find(b=>b.van_id===van.id && b.seat_number===seat.n);
