@@ -16,6 +16,8 @@ import { structuredAddress, emptyThaiAddress } from '../lib/thaiAddress.js';
 
 // SUV 7 seats includes the driver; the six passenger seats are bookable.
 const KATHIN_SUV_ID = 'e2438656-877f-42c1-91f5-689b127424eb';
+// Toyota Vigo double cab: driver plus four bookable cabin seats.
+const KATHIN_VIGO_ID = 'bcc65a40-499e-4d68-b898-f1237077c390';
 
 const ISO_COUNTRY_CODES = [
   'AD','AE','AF','AG','AI','AL','AM','AO','AQ','AR','AS','AT','AU','AW','AX','AZ',
@@ -1624,10 +1626,20 @@ function MyDashboard({
                 {tripLoading && <p>{th?'กำลังโหลดผังที่นั่ง…':'Loading seats…'}</p>}
                 {tripData && <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(215px,1fr))',gap:14,marginTop:14}}>
                   {tripData.vans.map(van=><div key={van.id} style={{padding:14,border:'1px solid #dfd4b8',borderRadius:14,background:'white'}}>
-                    <h4>{th?'รถคันที่':'Vehicle'} {van.van_number}{van.id===KATHIN_SUV_ID?' · SUV':''}</h4>
+                    <h4>{th?'รถคันที่':'Vehicle'} {van.van_number}{van.id===KATHIN_SUV_ID?' · SUV':van.id===KATHIN_VIGO_ID?' · Toyota Vigo':''}</h4>
                     {van.id===KATHIN_SUV_ID && <p style={{fontSize:13}}>{th?'7 ที่นั่งรวมคนขับ · จองได้ 6 ที่นั่ง · ด้านหน้ารถอยู่ทางซ้าย':'7 seats including driver · 6 passenger seats · Front on the left'}</p>}
+                    {van.id===KATHIN_VIGO_ID && <p style={{fontSize:13}}>{th?'กระบะ 4 ประตู · 5 ที่นั่งรวมคนขับ · จองได้ 4 ที่นั่งในห้องโดยสาร · ด้านหน้ารถอยู่ทางซ้าย':'Double cab · 5 seats including driver · 4 cabin passenger seats · Front on the left'}</p>}
                     <div style={{position:'relative',width:'100%',aspectRatio:'2.35/1',minHeight:128,margin:'10px auto'}}>
-                      {van.id===KATHIN_SUV_ID ? <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
+                      {van.id===KATHIN_VIGO_ID ? <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
+                        <rect x="8" y="12" width="454" height="176" rx="35" fill="#edf0f5" stroke="#68798c" strokeWidth="4"/>
+                        <path d="M90 27 Q45 100 90 173 M185 28 V172" fill="none" stroke="#a6b3c1" strokeWidth="3"/>
+                        <rect x="318" y="27" width="128" height="146" rx="8" fill="#d6dee7" stroke="#9eacba" strokeWidth="3"/>
+                        <path d="M340 40 V160 M365 40 V160 M390 40 V160 M415 40 V160" stroke="#bec9d5" strokeWidth="3"/>
+                        <text x="382" y="104" textAnchor="middle" fontSize="16" fill="#526477">{th?'กระบะ':'Cargo bed'}</text>
+                        <rect x="120" y="32" width="45" height="48" rx="10" fill="#778493"/>
+                        <circle cx="113" cy="55" r="14" fill="#edf0f5" stroke="#465a70" strokeWidth="4"/>
+                        <text x="145" y="98" textAnchor="middle" fontSize="16" fill="#465a70">{th?'คนขับ':'Driver'}</text>
+                      </svg> : van.id===KATHIN_SUV_ID ? <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
                         <rect x="8" y="12" width="454" height="176" rx="62" fill="#eaf1ed" stroke="#5e7b6b" strokeWidth="4"/>
                         <path d="M90 27 Q45 100 90 173 M185 28 V172 M320 28 V172" fill="none" stroke="#9fb5a8" strokeWidth="3"/>
                         <rect x="120" y="32" width="45" height="48" rx="10" fill="#77867f"/>
@@ -1641,7 +1653,7 @@ function MyDashboard({
                         <path d="M120 95 H450" stroke="#c9c2b2" strokeWidth="2" strokeDasharray="6 6"/>
                         <rect x="151" y="102" width="40" height="42" rx="5" fill="#3c4545" opacity=".45"/>
                       </svg>}
-                      {(van.id===KATHIN_SUV_ID ? [{n:1,x:31,y:72},{n:2,x:54,y:75},{n:3,x:54,y:50},{n:4,x:54,y:25},{n:5,x:81,y:72},{n:6,x:81,y:28}] : [{n:1,x:37,y:77},{n:2,x:51,y:73},{n:3,x:51,y:49},{n:4,x:51,y:25},
+                      {(van.id===KATHIN_VIGO_ID ? [{n:1,x:31,y:72},{n:2,x:54,y:75},{n:3,x:54,y:50},{n:4,x:54,y:25}] : van.id===KATHIN_SUV_ID ? [{n:1,x:31,y:72},{n:2,x:54,y:75},{n:3,x:54,y:50},{n:4,x:54,y:25},{n:5,x:81,y:72},{n:6,x:81,y:28}] : [{n:1,x:37,y:77},{n:2,x:51,y:73},{n:3,x:51,y:49},{n:4,x:51,y:25},
                         {n:5,x:64,y:73},{n:6,x:64,y:49},{n:7,x:64,y:25},
                         {n:8,x:77,y:73},{n:9,x:77,y:49},{n:10,x:77,y:25},
                         {n:11,x:90,y:73},{n:12,x:90,y:49},{n:13,x:90,y:25}])
