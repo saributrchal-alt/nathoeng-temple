@@ -433,6 +433,22 @@ function MyDashboard({
     } catch(e){setTripMessage(e.message);await loadKathinTrip();}
     finally{setTripAdminBusy(false);}
   };
+  const setKathinVehicleActive = async (van, active) => {
+    if(tripAdminBusy || tripSaving || tripLoading) return;
+    setTripAdminBusy(true);
+    setTripAdminPending(null);setTripSeatPending(null);
+    try {
+      const response=await fetch('/api/my-bookings?route=kathin-trip-admin',{
+        method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'set-vehicle-active',van_id:van.id,active})
+      });
+      const result=await response.json();
+      if(!response.ok||!result.success) throw Error(result.message||'เปลี่ยนสถานะรถไม่สำเร็จ');
+      await loadKathinTrip();
+      setTripMessage(th?`รถคันที่ ${van.van_number}: ${active?'เปิดให้จองแล้ว':'ปิดการจองแล้ว (เก็บรายการจองเดิมไว้)'}`:active?'Vehicle opened for booking':'Vehicle closed; existing bookings retained');
+    }catch(error){setTripMessage(error.message);}
+    finally{setTripAdminBusy(false);}
+  };
   const loadKathinTrip = async () => {
     setTripLoading(true);
     try {
@@ -1627,9 +1643,19 @@ function MyDashboard({
                 {tripData && <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(215px,1fr))',gap:14,marginTop:14}}>
                   {tripData.vans.map(van=><div key={van.id} style={{padding:14,border:'1px solid #dfd4b8',borderRadius:14,background:'white'}}>
                     <h4>{th?'รถคันที่':'Vehicle'} {van.van_number}{van.id===KATHIN_SUV_ID?' · SUV':van.id===KATHIN_VIGO_ID?' · Toyota Vigo':''}</h4>
+                    {user?.isAdmin && !user?.actingAsMember && <div role="group" aria-label={(th?'สถานะรถคันที่ ':'Vehicle status ')+van.van_number} style={{display:'flex',gap:6,flexWrap:'wrap',margin:'8px 0'}}>
+                      {[true,false].map(active=><button key={String(active)} type="button" aria-pressed={van.active===active}
+                        disabled={tripAdminBusy||tripSaving||tripLoading||van.active===active}
+                        onClick={()=>setKathinVehicleActive(van,active)}
+                        style={{padding:'8px 10px',borderRadius:8,border:'1px solid #a7b2a9',fontWeight:700,
+                          background:van.active===active?(active?'#286644':'#62676b'):'#f4f5f4',color:van.active===active?'white':'#34463a'}}>
+                        {active?(th?'เปิดให้จอง':'Open for booking'):(th?'ไม่เปิดให้จอง':'Closed for booking')}
+                      </button>)}
+                    </div>}
+                    {van.active===false && <p role="status" style={{color:'#62676b',fontSize:13}}>{th?'ไม่เปิดให้จอง · สมาชิกมองไม่เห็น · เก็บรายการจองเดิมไว้':'Closed · Hidden from members · Existing bookings retained'}</p>}
                     {van.id===KATHIN_SUV_ID && <p style={{fontSize:13}}>{th?'7 ที่นั่งรวมคนขับ · จองได้ 6 ที่นั่ง · ด้านหน้ารถอยู่ทางซ้าย':'7 seats including driver · 6 passenger seats · Front on the left'}</p>}
                     {van.id===KATHIN_VIGO_ID && <p style={{fontSize:13}}>{th?'กระบะ 4 ประตู · 5 ที่นั่งรวมคนขับ · จองได้ 4 ที่นั่งในห้องโดยสาร · ด้านหน้ารถอยู่ทางซ้าย':'Double cab · 5 seats including driver · 4 cabin passenger seats · Front on the left'}</p>}
-                    <div style={{position:'relative',width:'100%',aspectRatio:'2.35/1',minHeight:128,margin:'10px auto'}}>
+                    <div style={{position:'relative',width:'100%',aspectRatio:'2.35/1',minHeight:128,margin:'10px auto',filter:van.active===false?'grayscale(1)':undefined,opacity:van.active===false?0.45:1}}>
                       {van.id===KATHIN_VIGO_ID ? <svg viewBox="0 0 470 200" aria-hidden="true" style={{position:'absolute',width:'100%',height:'100%',inset:0}}>
                         <rect x="8" y="12" width="454" height="176" rx="35" fill="#edf0f5" stroke="#68798c" strokeWidth="4"/>
                         <path d="M90 27 Q45 100 90 173 M185 28 V172" fill="none" stroke="#a6b3c1" strokeWidth="3"/>
@@ -1661,7 +1687,7 @@ function MyDashboard({
                         .map(seat=>{
                           const occupied=tripData.occupied.find(b=>b.van_id===van.id && b.seat_number===seat.n);
                           const mine=occupied?.is_mine;
-                          return <button key={seat.n} type="button" disabled={tripSaving||tripLoading||tripAdminBusy||(Boolean(occupied)&&!mine)}
+                          return <button key={seat.n} type="button" disabled={van.active===false||tripSaving||tripLoading||tripAdminBusy||(Boolean(occupied)&&!mine)}
                             onClick={()=>{
                               if(user?.isAdmin && !user?.actingAsMember){if(!occupied){setTripAdminPassport('');setTripAdminPending({van_id:van.id,seat_number:seat.n,van_number:van.van_number});}return;}
                               if(mine){setTripSeatPending({van_id:van.id,seat_number:seat.n,van_number:van.van_number,action:'cancel'});return;}
@@ -1728,7 +1754,7 @@ function MyDashboard({
                               </span>
                             </span>
                             <button type="button" onClick={()=>cancelKathinSeat(van.id,b.seat_number,b.passenger_name)}
-                              disabled={tripAdminBusy||tripSaving} style={{color:'#973d32',border:'1px solid #e0aea9',background:'#fff8f6',borderRadius:7,padding:'5px 8px'}}>
+                              disabled={van.active===false||tripAdminBusy||tripSaving} style={{color:'#973d32',border:'1px solid #e0aea9',background:'#fff8f6',borderRadius:7,padding:'5px 8px'}}>
                               {th?'ยกเลิกจอง':'Cancel'}
                             </button>
                           </div>)}

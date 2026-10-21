@@ -783,10 +783,32 @@ export default async function handler(req, res) {
         }))});
       }
       if(req.method!=='POST') return res.status(405).json({success:false,message:'Method not allowed'});
+      if(req.body?.action==='set-vehicle-active'){
+        const van=String(req.body?.van_id||'');
+        if(!/^[a-f\d-]{36}$/i.test(van)||typeof req.body?.active!=='boolean')
+          return res.status(400).json({success:false,message:'ข้อมูลสถานะรถไม่ถูกต้อง'});
+        const actorRes=await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(admin.memberId)}&select=role,membership_status&limit=1`,{headers,cache:'no-store'});
+        const actors=await readJson(actorRes);
+        if(!actorRes.ok||!Array.isArray(actors)) throw Error('Cannot verify admin');
+        if(actors[0]?.role!=='admin'||(actors[0]?.membership_status&&actors[0].membership_status!=='active'))
+          return res.status(403).json({success:false,message:'ไม่มีสิทธิ์จัดการรถ'});
+        const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?id=eq.${encodeURIComponent(van)}&select=id,van_number,seat_count,active`,{
+          method:'PATCH',headers:{...headers,Prefer:'return=representation'},body:JSON.stringify({active:req.body.active})
+        });
+        const rows=await readJson(response);
+        if(!response.ok||!Array.isArray(rows)) throw Error('Cannot update vehicle');
+        if(!rows[0]) return res.status(404).json({success:false,message:'ไม่พบรถ'});
+        res.setHeader('Cache-Control','private, no-store');
+        return res.status(200).json({success:true,vehicle:rows[0]});
+      }
       if(req.body?.action==='cancel'){
         const van=String(req.body?.van_id||'');
         const seat=Number(req.body?.seat_number);
         if(!/^[a-f\d-]{36}$/i.test(van)||!Number.isInteger(seat)||seat<1||seat>13) return res.status(400).json({success:false,message:'เบาะไม่ถูกต้อง'});
+        const vehicleRes=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?id=eq.${encodeURIComponent(van)}&active=eq.true&select=id`,{headers,cache:'no-store'});
+        const vehicles=await readJson(vehicleRes);
+        if(!vehicleRes.ok||!Array.isArray(vehicles)) throw Error('Cannot check vehicle');
+        if(!vehicles.length) return res.status(409).json({success:false,message:'รถคันนี้ไม่เปิดให้จอง กรุณาเปิดรถก่อนทำรายการ'});
         const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?van_id=eq.${encodeURIComponent(van)}&seat_number=eq.${seat}&status=eq.booked`,{
           method:'PATCH',headers:{...headers,Prefer:'return=representation'},body:JSON.stringify({status:'cancelled',cancelled_at:new Date().toISOString(),cancelled_by:admin.memberId})
         });
@@ -818,19 +840,22 @@ export default async function handler(req, res) {
     const memberId = session.memberId;
     const headers = jsonHeaders(supabaseSecretKey);
     try {
-      const memberRes = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=id,membership_status&limit=1`,
+      const memberRes = await fetch(`${supabaseUrl}/rest/v1/members?id=eq.${encodeURIComponent(memberId)}&select=id,role,membership_status&limit=1`,
         {headers,cache:'no-store'});
       const memberRows = await readJson(memberRes);
       if (!memberRes.ok || !Array.isArray(memberRows)) throw new Error('ตรวจสมาชิกไม่สำเร็จ');
       if (!memberRows[0] || (memberRows[0].membership_status && memberRows[0].membership_status !== 'active'))
         return res.status(403).json({success:false,message:'สมาชิกไม่อยู่ในสถานะใช้งาน'});
       if (req.method === 'GET') {
+        const isTripAdmin=session.role==='admin' && memberRows[0].role==='admin';
         const [vansRes,bookRes] = await Promise.all([
-          fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?active=eq.true&select=id,van_number,seat_count&order=van_number.asc`,{headers,cache:'no-store'}),
+          fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?${isTripAdmin?'':'active=eq.true&'}select=id,van_number,seat_count,active&order=van_number.asc`,{headers,cache:'no-store'}),
           fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&status=eq.booked&select=member_id,van_id,seat_number,booking_mode`,{headers,cache:'no-store'})
         ]);
-        const [vans,bookings] = await Promise.all([readJson(vansRes),readJson(bookRes)]);
-        if (!vansRes.ok || !bookRes.ok || !Array.isArray(vans) || !Array.isArray(bookings)) throw new Error('อ่านที่นั่งไม่สำเร็จ');
+        const [vans,allBookings] = await Promise.all([readJson(vansRes),readJson(bookRes)]);
+        if (!vansRes.ok || !bookRes.ok || !Array.isArray(vans) || !Array.isArray(allBookings)) throw new Error('อ่านที่นั่งไม่สำเร็จ');
+        const visibleVanIds=new Set(vans.map(v=>v.id));
+        const bookings=allBookings.filter(b=>visibleVanIds.has(b.van_id));
         // Restrict passenger profiles to authenticated active members on this trip page.
         // Never expose phone, ID documents, or account identifiers in the response.
         let passengers = [];
@@ -856,7 +881,12 @@ export default async function handler(req, res) {
       }
       if (req.method !== 'POST') return res.status(405).json({success:false,message:'Method not allowed'});
       if (req.body?.action==='cancel') {
-        const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?event_key=eq.kathin-2569-trip-2026-11-07&member_id=eq.${encodeURIComponent(memberId)}&status=eq.booked`,{
+        const openRes=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_vans?active=eq.true&select=id`,{headers,cache:'no-store'});
+        const openVans=await readJson(openRes);
+        if(!openRes.ok||!Array.isArray(openVans)) throw Error('Cannot check vehicles');
+        if(!openVans.length) return res.status(409).json({success:false,message:'รถไม่เปิดให้ทำรายการ'});
+        const openIds=encodeURIComponent(openVans.map(v=>'"'+v.id+'"').join(','));
+        const response=await fetch(`${supabaseUrl}/rest/v1/kathin_trip_bookings?van_id=in.(${openIds})&event_key=eq.kathin-2569-trip-2026-11-07&member_id=eq.${encodeURIComponent(memberId)}&status=eq.booked`,{
           method:'PATCH',headers:{...headers,Prefer:'return=representation'},
           body:JSON.stringify({status:'cancelled',cancelled_at:new Date().toISOString(),cancelled_by:memberId})
         });
