@@ -24,8 +24,16 @@ export default async function handler(req, res) {
     });
     if (!response.ok) throw new Error('Lookup failed');
     const member = (await response.json())?.[0];
-    if (!member || member.role !== 'admin' || (member.membership_status && member.membership_status !== 'active')) {
-      return res.status(403).json({ success: false, message: 'Health admin permission required' });
+    if (!member || (member.membership_status && member.membership_status !== 'active')) {
+      return res.status(403).json({ success: false, message: 'Membership inactive' });
+    }
+    const allowedResponse = await fetch(base + '/rest/v1/health_members?member_id=eq.' + encodeURIComponent(member.id) + '&is_active=eq.true&select=member_id&limit=1', {
+      headers: { apikey: key, Authorization: 'Bearer ' + key }, cache: 'no-store'
+    });
+    if (!allowedResponse.ok) throw new Error('Health authorization lookup failed');
+    const allowed = (await allowedResponse.json())?.[0];
+    if (!allowed) {
+      return res.status(403).json({ success: false, message: 'Community Health access not approved' });
     }
     const ticket = JSON.stringify({
       v: 1, iss: 'nathoeng.com', aud: 'health.nathoeng.com',
