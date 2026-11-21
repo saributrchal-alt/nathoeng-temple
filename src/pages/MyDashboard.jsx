@@ -201,6 +201,24 @@ function MyDashboard({
       document.removeEventListener('keydown', handleEscape);
     };
   }, [sidebarOpen, tabletPortrait]);
+  async function openCommunityHealth() {
+    // The session cookie is only sent to nathoeng.com; the browser never supplies a member ID.
+    const popup = window.open('', '_blank');
+    try {
+      const response = await fetch('/api/health-connect-ticket', {
+        method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: '{}'
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw Error(data.message || 'ไม่ได้รับอนุญาตเข้าสุขภาพชุมชน');
+      const fragment = new URLSearchParams({ticket:data.ticket,signature:data.signature});
+      const target = 'https://health.nathoeng.com/connect#' + fragment.toString();
+      if (popup && !popup.closed) popup.location.replace(target);
+      else window.location.assign(target);
+    } catch (error) {
+      if (popup && !popup.closed) popup.close();
+      window.alert(error.message || 'เชื่อมต่อสุขภาพชุมชนไม่สำเร็จ');
+    }
+  }
   const serviceFrameSources = {
     library: 'https://library.nathoeng.com/?member=1#member-area',
     equipment: 'https://gears.nathoeng.com/#loans',
@@ -1265,7 +1283,7 @@ function MyDashboard({
     { key: 'news', icon: 'news', tone: 'sky', th: 'ข่าวสารวัด', en: 'Monastery News', onClick: () => navigateMemberService('practice-messages', 'news'), unread: connectUnreadCount },
     ...(!user?.actingAsMember ? [
       { key: 'library', icon: 'library', tone: 'cream', th: 'ห้องสมุด', en: 'Library', href: 'https://library.nathoeng.com/?member=1#member-area' },
-      { key: 'health', icon: 'health', tone: 'sage', th: 'สุขภาพชุมชน', en: 'Community Health', href: 'https://health.nathoeng.com/' },
+      { key: 'health', icon: 'health', tone: 'sage', th: 'สุขภาพชุมชน', en: 'Community Health', onClick: openCommunityHealth },
       { key: 'equipment', icon: 'equipment', tone: 'amber', th: 'ยืม–คืนอุปกรณ์', en: 'Equipment Loans', href: 'https://gears.nathoeng.com/#loans' },
       { key: 'school', icon: 'school', tone: 'mint', th: 'การเรียนออนไลน์', en: 'Nathoeng School', onClick: () => openSchool(), disabled: schoolOpening }
     ] : []),
