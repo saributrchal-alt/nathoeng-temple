@@ -205,7 +205,7 @@ function MyDashboard({
     // The session cookie is only sent to nathoeng.com; the browser never supplies a member ID.
     const popup = window.open('', '_blank');
     try {
-      const response = await fetch('/api/health-connect-ticket', {
+      const response = await fetch('/api/donation-profile?health_connect=1', {
         method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: '{}'
       });
       const data = await response.json();
