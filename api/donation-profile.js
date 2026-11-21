@@ -1,4 +1,5 @@
 import memberPhoto from '../lib/_member-photo.js';
+import healthConnect from '../lib/_health-connect.js';
 import { storeMemberPicture } from '../lib/_private-media.js';
 import {
   getSessionFromRequest,
@@ -24,6 +25,7 @@ function supabaseHeaders(secretKey, extra = {}) {
 
 export default async function handler(req, res) {
   if (req.method === 'GET' && req.query?.media !== undefined) return memberPhoto(req, res);
+  if (req.method === 'POST' && req.query?.health_connect === '1') return healthConnect(req, res);
   // Share an existing Vercel function for member registration and password login.
   if (req.method === 'POST' && req.body && Object.hasOwn(req.body, 'action')) {
     return handleWalkinMemberRequest(req, res);
